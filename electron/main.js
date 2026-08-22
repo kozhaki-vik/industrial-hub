@@ -1,0 +1,948 @@
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import path from 'path';
+import fs from 'fs';
+import child_process from 'child_process';
+import { fileURLToPath } from 'url';
+import os from 'os';
+import crypto from 'crypto';
+import http from 'http';
+import https from 'https';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const isDev = process.env.NODE_ENV === 'development';
+
+let mainWindow = null;
+
+// --- Single Instance Lock ---
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  // We are the second instance, quit immediately.
+  app.quit();
+} else {
+  // We are the primary instance.
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // User requested to close the old instance and start the new one.
+    app.relaunch();
+    app.exit(0);
+  });
+}
+// --- Gamma Logic ---
+const getGammaScript = () => `
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class GammaController {
+    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr CreateDC(string lpszDriver, string lpszDevice, string lpszOutput, IntPtr lpInitData);
+    
+    [DllImport("gdi32.dll")]
+    public static extern bool SetDeviceGammaRamp(IntPtr hdc, ref RAMP lpRamp);
+    
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    public struct RAMP {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+        public UInt16[] Red;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+        public UInt16[] Green;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+        public UInt16[] Blue;
+    }
+
+    public static void SetGamma(int gamma, string deviceName) {
+        RAMP ramp = new RAMP();
+        ramp.Red = new UInt16[256];
+        ramp.Green = new UInt16[256];
+        ramp.Blue = new UInt16[256];
+        
+        for (int i = 0; i < 256; i++) {
+            int val = i * 257 * gamma / 128;
+            if (val > 65535) val = 65535;
+            ramp.Red[i] = ramp.Green[i] = ramp.Blue[i] = (UInt16)val;
+        }
+        
+        IntPtr dc = CreateDC(deviceName, null, null, IntPtr.Zero);
+        if (dc != IntPtr.Zero) {
+            SetDeviceGammaRamp(dc, ref ramp);
+        }
+    }
+}
+"@
+`;
+
+let psGammaProcess = null;
+const initGammaProcess = () => {
+  if (psGammaProcess) return psGammaProcess;
+  if (process.platform !== 'win32') return null;
+  
+  psGammaProcess = child_process.spawn('powershell', ['-NoProfile', '-Command', '-']);
+  psGammaProcess.on('error', (err) => {
+    console.error('Persistent PowerShell error:', err);
+    psGammaProcess = null;
+  });
+  psGammaProcess.on('exit', () => {
+    psGammaProcess = null;
+  });
+  
+  const script = getGammaScript();
+  psGammaProcess.stdin.write(script + "\n");
+  return psGammaProcess;
+};
+setTimeout(() => initGammaProcess(), 1000);
+
+// --- Hook Logic ---
+let currentHookProcess = null;
+const hookScriptTemplate = (vkCode) => `
+Add-Type -ReferencedAssemblies System.Windows.Forms -TypeDefinition @"
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+
+public class KeyboardHook {
+    private const int WH_KEYBOARD_LL = 13;
+    private const int WM_KEYDOWN = 0x0100;
+    private const int WM_SYSKEYDOWN = 0x0104;
+    private static LowLevelKeyboardProc _proc = HookCallback;
+    private static IntPtr _hookID = IntPtr.Zero;
+    private static int _targetKeyCode = ${vkCode};
+
+    public static void Start() {
+        _hookID = SetHook(_proc);
+        Application.Run();
+    }
+
+    private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+    private static IntPtr SetHook(LowLevelKeyboardProc proc) {
+        using (Process curProcess = Process.GetCurrentProcess())
+        using (ProcessModule curModule = curProcess.MainModule) {
+            return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
+        }
+    }
+
+    private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) {
+        if (nCode >= 0 && (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)) {
+            int vkCode = Marshal.ReadInt32(lParam);
+            if (vkCode == _targetKeyCode) {
+                Console.WriteLine("HOTKEY_PRESSED");
+            }
+        }
+        return CallNextHookEx(_hookID, nCode, wParam, lParam);
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    private static extern IntPtr GetModuleHandle(string lpModuleName);
+}
+"@
+
+[KeyboardHook]::Start()
+`;
+
+
+// Disable hardware acceleration to fix GPU crashes on some Windows systems
+app.disableHardwareAcceleration();
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    show: false, // Don't show until ready
+    autoHideMenuBar: true, // Remove the top menu (File, Edit, View, Window)
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+  mainWindow.setMenu(null); // Completely removes the top menu
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.center();
+    mainWindow.setAlwaysOnTop(true);
+    mainWindow.focus();
+    mainWindow.setAlwaysOnTop(false);
+  });
+
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:5173');
+    // mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
+}
+
+function sendCrashReport(errorStack) {
+  try {
+    const hwid = crypto.createHash('sha256').update(os.hostname() + '_' + os.userInfo().username).digest('hex');
+    const version = app.getVersion();
+    
+    const postData = JSON.stringify({
+      hwid,
+      version,
+      errorStack
+    });
+
+    const options = {
+      hostname: 'industrial-hub.duckdns.org',
+      port: 443,
+      path: '/api/crash',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = https.request(options, () => {});
+    req.on('error', () => {});
+    req.write(postData);
+    req.end();
+  } catch (e) {}
+}
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  sendCrashReport(err.stack || err.message);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  sendCrashReport(reason instanceof Error ? reason.stack : String(reason));
+});
+
+app.on('render-process-gone', (event, webContents, details) => {
+  sendCrashReport(`Renderer process gone! Reason: ${details.reason}, Exit code: ${details.exitCode}`);
+});
+
+app.whenReady().then(async () => {
+  // Handle auto-update cleanup args from the new process
+  let cleanupPid = null;
+  let cleanupDir = null;
+  for (const arg of process.argv) {
+    if (arg.startsWith('--cleanup-pid=')) cleanupPid = parseInt(arg.split('=')[1]);
+    if (arg.startsWith('--cleanup-dir=')) cleanupDir = arg.split('=')[1];
+  }
+
+  if (cleanupPid && cleanupDir) {
+    console.log(`Waiting for old process ${cleanupPid} to exit...`);
+    const waitForPid = (pid, maxRetries = 20) => {
+      return new Promise((resolve) => {
+        let attempts = 0;
+        const check = setInterval(() => {
+          try {
+            process.kill(pid, 0); // Throws if process doesn't exist
+            attempts++;
+            if (attempts >= maxRetries) {
+              clearInterval(check);
+              resolve(false);
+            }
+          } catch (e) {
+            clearInterval(check);
+            resolve(true); // Process is gone
+          }
+        }, 500);
+      });
+    };
+    
+    await waitForPid(cleanupPid);
+    
+    try {
+      const folderName = path.basename(cleanupDir);
+      if (folderName.startsWith('app-') && fs.existsSync(cleanupDir)) {
+        fs.rmSync(cleanupDir, { recursive: true, force: true });
+        console.log(`Cleaned up old version directory: ${cleanupDir}`);
+      }
+    } catch (e) {
+      console.error(`Failed to clean up old directory ${cleanupDir}:`, e);
+    }
+  }
+
+  // Cleanup old app-* folders
+  try {
+    const appPath = path.dirname(app.getPath('exe'));
+    const clientDir = path.resolve(appPath, '..');
+    const currentFolder = path.basename(appPath);
+    if (currentFolder.startsWith('app-')) {
+      const folders = fs.readdirSync(clientDir);
+      for (const folder of folders) {
+        if (folder.startsWith('app-') && folder !== currentFolder) {
+          const fullPath = path.join(clientDir, folder);
+          try {
+            fs.rmSync(fullPath, { recursive: true, force: true });
+            console.log('Cleaned old version folder:', folder);
+          } catch (e) {
+            console.error('Failed to clean old folder:', folder, e);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Cleanup error:', e);
+  }
+
+  ipcMain.handle('autoDetectRustPath', () => {
+    try {
+      if (process.platform !== 'win32') return null;
+      
+      const regResult = child_process.execSync('reg query "HKCU\\Software\\Valve\\Steam" /v SteamPath').toString();
+      const match = regResult.match(/SteamPath\s+REG_SZ\s+(.*)/i);
+      if (!match || !match[1]) return null;
+
+      let steamPath = match[1].trim();
+      steamPath = steamPath.replace(/\//g, '\\');
+
+      const defaultRustPath = path.join(steamPath, 'steamapps', 'common', 'Rust');
+      if (fs.existsSync(defaultRustPath)) {
+        return defaultRustPath;
+      }
+
+      const vdfPath = path.join(steamPath, 'steamapps', 'libraryfolders.vdf');
+      if (!fs.existsSync(vdfPath)) return null;
+
+      const vdfContent = fs.readFileSync(vdfPath, 'utf8');
+      const pathRegex = /"path"\s+"([^"]+)"/g;
+      let libMatch;
+      
+      while ((libMatch = pathRegex.exec(vdfContent)) !== null) {
+        let libPath = libMatch[1];
+        libPath = libPath.replace(/\\\\/g, '\\');
+        
+        const possibleRustPath = path.join(libPath, 'steamapps', 'common', 'Rust');
+        if (fs.existsSync(possibleRustPath)) {
+          return possibleRustPath;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error detecting Rust path in main:', error);
+      return null;
+    }
+  });
+
+  ipcMain.handle('browseForRustPath', async () => {
+    const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+      title: 'Select Rust Folder'
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+      return result.filePaths[0];
+    }
+    return null;
+  });
+
+  ipcMain.handle('diagnostics:pingUrl', (event, urlStr) => {
+    return new Promise((resolve) => {
+      const start = Date.now();
+      try {
+        const url = new URL(urlStr);
+        const protocol = url.protocol === 'https:' ? https : http;
+        
+        const req = protocol.get(urlStr, { timeout: 3000 }, (res) => {
+          const time = Date.now() - start;
+          if (res.statusCode >= 200 && res.statusCode < 400) {
+            resolve({ status: 'ok', time, msg: `${res.statusCode} OK` });
+          } else {
+            resolve({ status: 'warning', time, msg: `HTTP ${res.statusCode}` });
+          }
+        });
+        
+        req.on('timeout', () => {
+          req.destroy();
+          resolve({ status: 'error', time: Date.now() - start, msg: 'Timeout' });
+        });
+        
+        req.on('error', (err) => {
+          resolve({ status: 'error', time: Date.now() - start, msg: err.message });
+        });
+      } catch (e) {
+        console.error(e);
+        resolve({ status: 'error', time: 0, msg: 'Invalid URL' });
+      }
+    });
+  });
+
+  let totalUptimeBase = 0;
+  try {
+    const uptimeFile = path.join(app.getPath('userData'), 'total_uptime.json');
+    if (fs.existsSync(uptimeFile)) {
+      const uData = JSON.parse(fs.readFileSync(uptimeFile, 'utf8'));
+      totalUptimeBase = uData.totalSeconds || 0;
+    }
+  } catch (e) {
+    console.error('Failed to read total_uptime:', e);
+  }
+
+  const sessionStartTime = Date.now();
+  setInterval(() => {
+    try {
+      const currentSessionSec = Math.floor((Date.now() - sessionStartTime) / 1000);
+      const uptimeFile = path.join(app.getPath('userData'), 'total_uptime.json');
+      fs.writeFileSync(uptimeFile, JSON.stringify({ totalSeconds: totalUptimeBase + currentSessionSec }), 'utf8');
+    } catch {}
+  }, 5000);
+
+  ipcMain.handle('diagnostics:getHardwareInfo', async () => {
+    const cpus = os.cpus();
+    let gpuName = 'Unknown';
+    try {
+      gpuName = await new Promise((resolve) => {
+        child_process.exec('powershell -Command "(Get-CimInstance Win32_VideoController).Name"', { timeout: 3000 }, (error, stdout) => {
+          if (error || !stdout.trim()) resolve('Unknown');
+          else resolve(stdout.split('\n')[0].trim());
+        });
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    const currentSessionSec = Math.floor((Date.now() - sessionStartTime) / 1000);
+    return {
+      pcName: os.hostname(),
+      platform: os.platform(),
+      release: os.release(),
+      arch: os.arch(),
+      cpu: cpus.length > 0 ? cpus[0].model : 'Unknown',
+      gpu: gpuName,
+      cores: cpus.length,
+      ramTotal: Math.round(os.totalmem() / (1024 * 1024 * 1024)),
+      ramFree: Math.round(os.freemem() / (1024 * 1024 * 1024)),
+      appUptime: Math.floor(process.uptime()),
+      totalAppUptime: totalUptimeBase + currentSessionSec,
+      systemUptime: os.uptime()
+    };
+  });
+
+  ipcMain.handle('diagnostics:getAppPath', () => {
+    return path.dirname(app.getPath('exe'));
+  });
+
+  ipcMain.handle('diagnostics:getAppVersionInfo', () => {
+    let version = app.getVersion();
+    let lastUpdated = null;
+    try {
+      const lastUpdateFile = path.join(app.getPath('userData'), 'last_update.json');
+      if (fs.existsSync(lastUpdateFile)) {
+        const uData = JSON.parse(fs.readFileSync(lastUpdateFile, 'utf8'));
+        if (uData && uData.lastUpdated) {
+          lastUpdated = uData.lastUpdated;
+        }
+        if (uData && uData.version) {
+          version = uData.version;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return { version, lastUpdated };
+  });
+
+  ipcMain.handle('diagnostics:checkAppIntegrity', () => {
+    const appPath = process.cwd();
+    const isPackaged = app.isPackaged || !fs.existsSync(path.join(appPath, 'src'));
+
+    let checks = [
+          { name: 'package.json (Config)', relative: 'package.json', checkPath: path.join(appPath, 'package.json') },
+          { name: 'electron/main.js (Main Process)', relative: 'electron/main.js', checkPath: path.join(appPath, 'electron', 'main.js') },
+          { name: 'src/App.jsx (React Root)', relative: 'src/App.jsx', checkPath: path.join(appPath, 'src', 'App.jsx') },
+          { name: 'src/index.css (Styles)', relative: 'src/index.css', checkPath: path.join(appPath, 'src', 'index.css') },
+          { name: 'src/views/Developer.jsx', relative: 'src/views/Developer.jsx', checkPath: path.join(appPath, 'src', 'views', 'Developer.jsx') },
+          { name: 'node_modules (Dependencies)', relative: 'node_modules', checkPath: path.join(appPath, 'node_modules') },
+          { name: 'dist (Build Output)', relative: 'dist', checkPath: path.join(appPath, 'dist') },
+          { name: 'index.html (Entry)', relative: 'index.html', checkPath: path.join(appPath, 'index.html') },
+          { name: 'vite.config.js (Vite Config)', relative: 'vite.config.js', checkPath: path.join(appPath, 'vite.config.js') },
+          { name: 'tailwind.config.js (Tailwind)', relative: 'tailwind.config.js', checkPath: path.join(appPath, 'tailwind.config.js') }
+        ];
+    if (isPackaged) {
+      const resourcesPath = path.join(appPath, 'resources');
+      checks = [
+          { name: 'package.json (Config)', relative: 'package.json', checkPath: fs.existsSync(path.join(appPath, 'package.json')) ? path.join(appPath, 'package.json') : path.join(resourcesPath, 'app.asar') },
+          { name: 'app.asar (Core Bundle)', relative: 'resources/app.asar', checkPath: path.join(resourcesPath, 'app.asar') },
+          { name: 'dist/assets (Compiled Assets)', relative: 'dist/assets', checkPath: fs.existsSync(path.join(appPath, 'dist', 'assets')) ? path.join(appPath, 'dist', 'assets') : path.join(resourcesPath, 'app.asar') },
+          { name: 'Executable (Binary)', relative: path.basename(process.execPath), checkPath: process.execPath },
+          { name: 'chrome_100_percent.pak (UI Assets)', relative: 'chrome_100_percent.pak', checkPath: path.join(appPath, 'chrome_100_percent.pak') },
+          { name: 'chrome_200_percent.pak (UI Assets HiDPI)', relative: 'chrome_200_percent.pak', checkPath: path.join(appPath, 'chrome_200_percent.pak') },
+          { name: 'd3dcompiler_47.dll (Direct3D Compiler)', relative: 'd3dcompiler_47.dll', checkPath: path.join(appPath, 'd3dcompiler_47.dll') },
+          { name: 'ffmpeg.dll (Media Engine)', relative: 'ffmpeg.dll', checkPath: path.join(appPath, 'ffmpeg.dll') },
+          { name: 'icudtl.dat (Unicode Data)', relative: 'icudtl.dat', checkPath: path.join(appPath, 'icudtl.dat') },
+          { name: 'libEGL.dll (EGL Library)', relative: 'libEGL.dll', checkPath: path.join(appPath, 'libEGL.dll') }
+        ];
+    } else {
+      checks = [
+        { name: 'package.json (Config)', relative: 'package.json', checkPath: path.join(appPath, 'package.json') },
+        { name: 'src/assets (Images/Icons)', relative: 'src/assets', checkPath: path.join(appPath, 'src', 'assets') },
+        { name: 'electron/main.js (Core DLL/Main)', relative: 'electron/main.js', checkPath: path.join(appPath, 'electron', 'main.js') },
+        { name: 'index.html (Entry)', relative: 'index.html', checkPath: path.join(appPath, 'index.html') }
+      ];
+    }
+    
+    const results = checks.map(item => {
+      let exists = false;
+      let type = 'missing';
+      try {
+        if (fs.existsSync(item.checkPath)) {
+          exists = true;
+          const stat = fs.statSync(item.checkPath);
+          type = stat.isDirectory() ? 'folder' : 'file';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      return { name: item.name, relative: item.relative, fullPath: item.checkPath, exists, type };
+    });
+    
+    const allExist = results.every(r => r.exists);
+    return { status: allExist ? 'ok' : 'warning', details: results };
+  });
+
+    ipcMain.handle('diagnostics:checkRustIntegrity', (event, rustPath) => {
+    if (!rustPath) {
+      return { status: 'error', details: [] };
+    }
+    
+    const checks = [
+        { name: 'keys.cfg', relative: path.join('cfg', 'keys.cfg') },
+        { name: 'client.cfg', relative: path.join('cfg', 'client.cfg') }
+      ];
+    
+    const results = checks.map(item => {
+      const checkPath = path.join(rustPath, item.relative);
+      let exists = false;
+      let type = 'missing';
+      try {
+        if (fs.existsSync(checkPath)) {
+          exists = true;
+          const stat = fs.statSync(checkPath);
+          type = stat.isDirectory() ? 'folder' : 'file';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      return { name: item.name, relative: item.relative, fullPath: checkPath, exists, type };
+    });
+    
+    const allExist = results.every(r => r.exists);
+    return { status: allExist ? 'ok' : 'warning', details: results };
+  });
+
+  ipcMain.handle('config:readConfig', (event, rustPath, filename) => {
+    if (!rustPath) return null;
+    const cfgPath = path.join(rustPath, 'cfg', filename);
+    try {
+      if (!fs.existsSync(cfgPath)) return '';
+      return fs.readFileSync(cfgPath, 'utf8');
+    } catch (err) {
+      console.error(`Failed to read config ${filename}:`, err);
+      return '';
+    }
+  });
+
+  ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
+    if (!rustPath) return false;
+    const cfgDir = path.join(rustPath, 'cfg');
+    if (!fs.existsSync(cfgDir)) {
+      fs.mkdirSync(cfgDir, { recursive: true });
+    }
+    const cfgPath = path.join(cfgDir, filename);
+    try {
+      fs.writeFileSync(cfgPath, content, 'utf8');
+      return true;
+    } catch (err) {
+      console.error(`Failed to write config ${filename}:`, err);
+      return false;
+    }
+  });
+
+  ipcMain.handle('config:isRustRunning', () => {
+    return new Promise((resolve) => {
+      child_process.exec('tasklist', (err, stdout) => {
+        if (err) {
+          console.error('Error checking processes:', err);
+          return resolve(false);
+        }
+        const isRunning = stdout.toLowerCase().includes('rustclient.exe');
+        resolve(isRunning);
+      });
+    });
+  });
+
+  ipcMain.handle('config:fileExists', (event, fullPath) => {
+    try {
+      return fs.existsSync(fullPath);
+    } catch {
+      return false;
+    }
+  });
+
+  ipcMain.handle('config:copyFile', (event, srcPath, destPath) => {
+    try {
+      fs.copyFileSync(srcPath, destPath);
+      return true;
+    } catch (e) {
+      console.error('Failed to copy file:', e);
+      return false;
+    }
+  });
+
+  ipcMain.handle('config:ensureDir', (event, dirPath) => {
+    try {
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+      return true;
+    } catch (e) {
+      console.error('Failed to create directory:', e);
+      return false;
+    }
+  });
+
+  ipcMain.handle('gamma:getDisplays', () => {
+    return new Promise((resolve) => {
+      if (process.platform !== 'win32') return resolve([]);
+      const script = `
+Add-Type -AssemblyName System.Windows.Forms
+$screens = [System.Windows.Forms.Screen]::AllScreens
+$screens | Select-Object DeviceName | ConvertTo-Json -Compress
+`;
+      const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
+      child_process.exec(`powershell -NoProfile -EncodedCommand ${encodedCommand}`, (err, stdout) => {
+        if (err) return resolve([]);
+        try {
+          const text = stdout.trim();
+          if (!text) return resolve([]);
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) resolve(parsed.map(d => d.DeviceName));
+          else if (parsed && parsed.DeviceName) resolve([parsed.DeviceName]);
+          else resolve([]);
+        } catch {
+          resolve([]);
+        }
+      });
+    });
+  });
+
+  ipcMain.handle('gamma:setDisplayGamma', (event, brightnessLevel, deviceName = "\\\\.\\DISPLAY1") => {
+    if (process.platform !== 'win32') return;
+    try {
+      const ps = initGammaProcess();
+      if (ps && ps.stdin) {
+        ps.stdin.write(`[GammaController]::SetGamma(${brightnessLevel}, "${deviceName}")\n`);
+      }
+    } catch (err) {
+      console.error('Exception setting gamma:', err);
+    }
+  });
+
+  ipcMain.handle('gamma:registerHook', (event, vkCode) => {
+    if (process.platform !== 'win32') return false;
+    
+    if (currentHookProcess) {
+      currentHookProcess.kill();
+      currentHookProcess = null;
+    }
+    
+    if (!vkCode) return false;
+    
+    const script = hookScriptTemplate(vkCode);
+    const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
+    
+    currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-EncodedCommand', encodedCommand]);
+    
+    currentHookProcess.stdout.on('data', (data) => {
+      const output = data.toString().trim();
+      if (output === 'HOTKEY_PRESSED' && mainWindow) {
+        mainWindow.webContents.send('gamma:hotkey_pressed');
+      }
+    });
+    
+    currentHookProcess.on('error', (err) => {
+      console.error('Keyboard hook error:', err);
+    });
+    
+    return true;
+  });
+
+  ipcMain.handle('gamma:unregisterHook', () => {
+    if (currentHookProcess) {
+      currentHookProcess.kill();
+      currentHookProcess = null;
+    }
+    return true;
+  });
+
+  // NETWORK HANDLERS
+  ipcMain.handle('network:get-hwid', () => {
+    try {
+      const hash = crypto.createHash('sha256');
+      hash.update(os.hostname() + '_' + os.userInfo().username);
+      return hash.digest('hex');
+    } catch {
+      return 'unknown_hwid';
+    }
+  });
+
+  ipcMain.handle('app:relaunch', () => {
+    app.relaunch();
+    app.exit(0);
+  });
+
+  ipcMain.handle('shell:openExternal', (event, url) => {
+    require('electron').shell.openExternal(url);
+  });
+
+  ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion) => {
+    const appPath = path.dirname(app.getPath('exe'));
+    const tempExePath = path.join(os.tmpdir(), ih_update_.exe);
+
+    const downloadWithRedirects = (targetUrl, destPath, onProgress, maxRedirects = 5) => {
+      return new Promise((resolve, reject) => {
+        if (maxRedirects <= 0) return reject(new Error('Too many HTTP redirects'));
+        
+        const parsed = new URL(targetUrl);
+        const lib = parsed.protocol === 'https:' ? https : http;
+
+        const options = {
+          rejectUnauthorized: false,
+          headers: {
+            'User-Agent': 'Industrial-Hub-Updater/1.0'
+          }
+        };
+
+        const req = lib.get(targetUrl, options, (res) => {
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            let redirectUrl = res.headers.location;
+            if (redirectUrl.startsWith('/')) {
+              redirectUrl = ${parsed.protocol}//;
+            }
+            return downloadWithRedirects(redirectUrl, destPath, onProgress, maxRedirects - 1).then(resolve).catch(reject);
+          }
+
+          if (res.statusCode !== 200) {
+            return reject(new Error(HTTP ));
+          }
+
+          const totalBytes = parseInt(res.headers['content-length'] || '0', 10);
+          let downloadedBytes = 0;
+          const fileStream = fs.createWriteStream(destPath);
+
+          res.on('data', (chunk) => {
+            downloadedBytes += chunk.length;
+            if (onProgress) onProgress(downloadedBytes, totalBytes);
+          });
+
+          res.pipe(fileStream);
+          fileStream.on('finish', () => {
+            fileStream.close();
+            resolve();
+          });
+          fileStream.on('error', reject);
+        });
+
+        req.setTimeout(60000, () => {
+          req.destroy(new Error('Download timeout'));
+        });
+
+        req.on('error', reject);
+      });
+    };
+
+    try {
+      event.sender.send('update-progress', {
+        status: 'downloading',
+        downloadedBytes: 0,
+        totalBytes: 1,
+        currentFile: 'app.exe'
+      });
+
+      await downloadWithRedirects(exeUrl, tempExePath, (downloadedBytes, totalBytes) => {
+        event.sender.send('update-progress', {
+          status: 'downloading',
+          downloadedBytes,
+          totalBytes,
+          currentFile: 'app.exe'
+        });
+      });
+
+      event.sender.send('update-progress', {
+        status: 'extracting',
+        downloadedBytes: 100,
+        totalBytes: 100,
+        currentFile: 'Применение обновления...'
+      });
+
+      if (newVersion === app.getVersion()) {
+        throw new Error(Скачанный файл имеет ту же версию (), что и запущена.);
+      }
+
+      const clientDir = path.resolve(appPath, '..');
+      const newAppDir = path.join(clientDir, pp-);
+      const exeName = 'Industrial Hub.exe';
+      const targetExePath = path.join(newAppDir, exeName);
+      const shortcutPath = path.join(process.env.USERPROFILE || '', 'Desktop', 'Industrial Hub.lnk');
+
+      if (fs.existsSync(newAppDir)) {
+        fs.rmSync(newAppDir, { recursive: true, force: true });
+      }
+      fs.mkdirSync(newAppDir, { recursive: true });
+
+      fs.copyFileSync(tempExePath, targetExePath);
+      try {
+        fs.unlinkSync(tempExePath);
+      } catch (e) {}
+
+      try {
+        const lastUpdateFile = path.join(app.getPath('userData'), 'last_update.json');
+        fs.writeFileSync(lastUpdateFile, JSON.stringify({ lastUpdated: new Date().toISOString(), version: newVersion }), 'utf8');
+      } catch (e) {
+        console.error('Failed to save last_update.json:', e);
+      }
+
+      try {
+        const psShortcut = $wshell = New-Object -ComObject WScript.Shell;  = .CreateShortcut(''); .TargetPath = ''; .WorkingDirectory = ''; .Save();
+        child_process.execSync(powershell -NoProfile -Command "");
+      } catch (e) {
+        console.error("Failed to update shortcut:", e);
+      }
+
+      const child = child_process.spawn(targetExePath, [
+        --cleanup-pid=,
+        --cleanup-dir=
+      ], {
+        detached: true,
+        stdio: 'ignore',
+        cwd: newAppDir
+      });
+      child.unref();
+
+      app.exit(0);
+
+      return { success: true, updated: 1, total: 1, requiresRestart: true };
+    } catch (err) {
+      console.error('Failed to apply EXE update in main:', err);
+      event.sender.send('update-progress', { status: 'error', error: err.message });
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('network:apply-updates', async (event, files, baseUrl) => {
+    const appPath = process.cwd();
+    let successCount = 0;
+    let requiresRestart = false;
+    
+    const filesToDownload = [];
+    let totalBytes = 0;
+    
+    for (const file of files) {
+      const destPath = path.join(appPath, file.path);
+      let needsDownload = true;
+      if (fs.existsSync(destPath)) {
+        const localBuffer = fs.readFileSync(destPath);
+        const localHash = crypto.createHash('sha256').update(localBuffer).digest('hex');
+        if (localHash === file.hash) {
+          needsDownload = false;
+        }
+      }
+      
+      if (needsDownload) {
+        filesToDownload.push(file);
+        totalBytes += (file.size || 0);
+        if (file.path.includes('package.json') || file.path.includes('electron') || file.path.includes('app.asar') || file.path.includes('.exe')) {
+          requiresRestart = true;
+        }
+      }
+    }
+    
+    if (filesToDownload.length === 0) {
+      return { success: true, updated: 0, total: files.length, requiresRestart: false };
+    }
+    
+    let downloadedBytes = 0;
+for (const file of filesToDownload) {
+      try {
+        const destPath = path.join(appPath, file.path);
+        const fileUrl = `${baseUrl}/updates/files/${file.path}`;
+        const destDir = path.dirname(destPath);
+        
+        if (!fs.existsSync(destDir)) {
+          fs.mkdirSync(destDir, { recursive: true });
+        }
+        
+        event.sender.send('update-progress', {
+          status: 'downloading',
+          downloadedBytes,
+          totalBytes,
+          currentFile: file.path
+        });
+        
+        await new Promise((resolve, reject) => {
+          const req = (fileUrl.startsWith('https') ? https : http).get(fileUrl, (res) => {
+            if (res.statusCode !== 200) {
+              return reject(new Error(`HTTP ${res.statusCode}`));
+            }
+            const fileStream = fs.createWriteStream(destPath);
+            res.pipe(fileStream);
+            
+            res.on('data', (chunk) => {
+              downloadedBytes += chunk.length;
+              const now = Date.now();
+              if (!file._lastEmit || now - file._lastEmit > 50) {
+                file._lastEmit = now;
+                event.sender.send('update-progress', {
+                  status: 'downloading',
+                  downloadedBytes,
+                  totalBytes,
+                  currentFile: file.path
+                });
+              }
+            });
+
+            fileStream.on('finish', () => {
+              fileStream.close();
+              resolve();
+            });
+          });
+          req.on('error', reject);
+        });
+        
+        const fileBuffer = fs.readFileSync(destPath);
+        const downloadedHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+        if (downloadedHash === file.hash) {
+          successCount++;
+        } else {
+          console.error(`Hash mismatch for ${file.path}`);
+        }
+      } catch (err) {
+        console.error(`Failed to download ${file.path}:`, err);
+        event.sender.send('update-progress', { status: 'error', error: err.message });
+      }
+    }
+    
+    return { success: true, updated: successCount, total: files.length, requiresRestart };
+  });
+
+  createWindow();
+
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', function () {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+

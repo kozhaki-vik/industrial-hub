@@ -1,0 +1,9601 @@
+{
+  "2module car chassis": {
+    "name": "Шасси 2-модульного автомобиля",
+    "aliases": [
+      "шасси 2"
+    ]
+  },
+  "2module car": {
+    "name": "2-модульный автомобиль",
+    "aliases": [
+      "машина 2"
+    ]
+  },
+  "3module car chassis": {
+    "name": "Шасси 3-модульного автомобиля",
+    "aliases": [
+      "шасси 3"
+    ]
+  },
+  "3module car": {
+    "name": "3-модульный автомобиль",
+    "aliases": [
+      "машина 3"
+    ]
+  },
+  "4module car chassis": {
+    "name": "Шасси 4-модульного автомобиля",
+    "aliases": [
+      "шасси 4"
+    ]
+  },
+  "4module car": {
+    "name": "4-модульный автомобиль",
+    "aliases": [
+      "машина 4"
+    ]
+  },
+  "50cal.mounted.left": {
+    "name": "Установленный .50 калибр (влево)",
+    "aliases": [
+      "полтинник левый"
+    ]
+  },
+  "50cal.mounted": {
+    "name": "Установленный .50 калибр",
+    "aliases": [
+      "пулемет 50",
+      "полтинник"
+    ]
+  },
+  "50cal.mounted.right": {
+    "name": "Установленный .50 калибр (вправо)",
+    "aliases": [
+      "полтинник правый"
+    ]
+  },
+  "abovegroundpool": {
+    "name": "Наземный бассейн",
+    "aliases": [
+      "бассейн"
+    ]
+  },
+  "abyss.barrel.horizontal": {
+    "name": "Горизонтальная бочка бездны",
+    "aliases": []
+  },
+  "abyss.barrel.vertical": {
+    "name": "Вертикальная бочка бездны",
+    "aliases": []
+  },
+  "advancedblueprintfragment": {
+    "name": "Фрагмент продвинутого чертежа",
+    "aliases": [
+      "синий фрагмент"
+    ]
+  },
+  "advancedcoolingtea": {
+    "name": "Продвинутый охлаждающий чай",
+    "aliases": []
+  },
+  "advancedcraftingtea_quality": {
+    "name": "Продвинутый чай крафта",
+    "aliases": []
+  },
+  "advancedwarmingtea": {
+    "name": "Продвинутый согревающий чай",
+    "aliases": []
+  },
+  "advanceharvestingtea": {
+    "name": "Продвинутый чай сборщика",
+    "aliases": [
+      "чай на фарм"
+    ]
+  },
+  "aiming.module.mlrs": {
+    "name": "Модуль прицеливания РСЗО",
+    "aliases": [
+      "модуль рсзо",
+      "прицел млрс"
+    ]
+  },
+  "ammo.grenadelauncher.buckshot": {
+    "name": "Картечь для гранатомета",
+    "aliases": [
+      "картечь"
+    ]
+  },
+  "ammo.grenadelauncher.he": {
+    "name": "Осколочно-фугасная граната",
+    "aliases": [
+      "осколочная",
+      "граната"
+    ]
+  },
+  "ammo.grenadelauncher.smoke": {
+    "name": "Дымовая граната",
+    "aliases": [
+      "дым",
+      "смок"
+    ]
+  },
+  "ammo.handmade.shell": {
+    "name": "Самодельные патроны",
+    "aliases": [
+      "гвозди",
+      "самоделки",
+      "дробь"
+    ]
+  },
+  "ammo.nailgun.nails": {
+    "name": "Гвозди",
+    "aliases": [
+      "гвоздики"
+    ]
+  },
+  "ammo.paintball": {
+    "name": "Пейнтбольные шарики",
+    "aliases": [
+      "шарики"
+    ]
+  },
+  "ammo.pistol.fire": {
+    "name": "Зажигательный пистолетный патрон",
+    "aliases": [
+      "пистолетка зажига",
+      "зажигалки"
+    ]
+  },
+  "ammo.pistol.hv": {
+    "name": "Скоростной пистолетный патрон",
+    "aliases": [
+      "пистолетка скоростная",
+      "быстрые"
+    ]
+  },
+  "ammo.pistol": {
+    "name": "Пистолетный патрон",
+    "aliases": [
+      "девятка",
+      "пистолетка"
+    ]
+  },
+  "ammo.rifle.explosive": {
+    "name": "Разрывной винтовочный патрон",
+    "aliases": [
+      "разрывные",
+      "экспа"
+    ]
+  },
+  "ammo.rifle.hv": {
+    "name": "Скоростной винтовочный патрон",
+    "aliases": [
+      "быстрые",
+      "скоростные"
+    ]
+  },
+  "ammo.rifle.incendiary": {
+    "name": "Зажигательный винтовочный патрон",
+    "aliases": [
+      "зажига",
+      "зажигательные"
+    ]
+  },
+  "ammo.rifle": {
+    "name": "Винтовочный патрон",
+    "aliases": [
+      "пятерка",
+      "калашниковский"
+    ]
+  },
+  "ammo.rocket.basic": {
+    "name": "Ракета",
+    "aliases": [
+      "обычная ракета",
+      "рокета"
+    ]
+  },
+  "ammo.rocket.fire": {
+    "name": "Зажигательная ракета",
+    "aliases": [
+      "зажига",
+      "огненная ракета"
+    ]
+  },
+  "ammo.rocket.hv": {
+    "name": "Скоростная ракета",
+    "aliases": [
+      "скоростная",
+      "хв ракета"
+    ]
+  },
+  "ammo.rocket.mlrs": {
+    "name": "Ракета РСЗО",
+    "aliases": [
+      "ракета млрс",
+      "рсзо"
+    ]
+  },
+  "ammo.rocket.sam": {
+    "name": "Ракета ПВО",
+    "aliases": [
+      "пво ракета"
+    ]
+  },
+  "ammo.rocket.seeker": {
+    "name": "Самонаводящаяся ракета",
+    "aliases": [
+      "самонаводка"
+    ]
+  },
+  "ammo.rocket.smoke": {
+    "name": "Дымовая ракета",
+    "aliases": [
+      "дымовуха",
+      "смок ракета"
+    ]
+  },
+  "ammo.shotgun.fire": {
+    "name": "Зажигательный патрон для дробовика",
+    "aliases": [
+      "зажига дробь",
+      "дыхание дракона"
+    ]
+  },
+  "ammo.shotgun": {
+    "name": "Патрон 12 калибра",
+    "aliases": [
+      "дробь",
+      "патрон на дробаш"
+    ]
+  },
+  "ammo.shotgun.slug": {
+    "name": "Жакан",
+    "aliases": [
+      "слаг",
+      "пуля"
+    ]
+  },
+  "ammo.snowballgun": {
+    "name": "Снежок",
+    "aliases": [
+      "снежок"
+    ]
+  },
+  "anchor": {
+    "name": "Якорь",
+    "aliases": [
+      "якорь"
+    ]
+  },
+  "antiradpills": {
+    "name": "Антирадиационные таблетки",
+    "aliases": [
+      "антирад",
+      "таблы"
+    ]
+  },
+  "apple": {
+    "name": "Яблоко",
+    "aliases": [
+      "яблочко"
+    ]
+  },
+  "apple.spoiled": {
+    "name": "Испорченное яблоко",
+    "aliases": [
+      "гнилое яблоко"
+    ]
+  },
+  "arcade.machine.chippy": {
+    "name": "Аркадный автомат Chippy",
+    "aliases": [
+      "игровой автомат"
+    ]
+  },
+  "arrow.bone": {
+    "name": "Костяная стрела",
+    "aliases": [
+      "костянка"
+    ]
+  },
+  "arrow.fire": {
+    "name": "Огненная стрела",
+    "aliases": [
+      "зажигалка"
+    ]
+  },
+  "arrow.hv": {
+    "name": "Скоростная стрела",
+    "aliases": [
+      "быстрая стрела",
+      "скоростная"
+    ]
+  },
+  "arrow.wooden": {
+    "name": "Деревянная стрела",
+    "aliases": [
+      "стрела",
+      "обычная стрела"
+    ]
+  },
+  "attackhelicopter": {
+    "name": "Боевой вертолет",
+    "aliases": [
+      "коптер",
+      "патрульный вертолет",
+      "верт"
+    ]
+  },
+  "attire.banditguard": {
+    "name": "Одежда охранника бандитки",
+    "aliases": []
+  },
+  "attire.bunny.onesie": {
+    "name": "Костюм кролика",
+    "aliases": [
+      "кролик"
+    ]
+  },
+  "attire.bunnyears": {
+    "name": "Заячьи уши",
+    "aliases": [
+      "уши кролика"
+    ]
+  },
+  "attire.egg.suit": {
+    "name": "Костюм яйца",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "attire.hide.boots": {
+    "name": "Обувь из шкуры",
+    "aliases": [
+      "кожаные ботинки"
+    ]
+  },
+  "attire.hide.helterneck": {
+    "name": "Топ из шкуры",
+    "aliases": [
+      "кожаный топ"
+    ]
+  },
+  "attire.hide.pants": {
+    "name": "Штаны из шкуры",
+    "aliases": [
+      "кожаные штаны"
+    ]
+  },
+  "attire.hide.poncho": {
+    "name": "Пончо из шкуры",
+    "aliases": [
+      "кожаное пончо",
+      "пончо"
+    ]
+  },
+  "attire.hide.skirt": {
+    "name": "Юбка из шкуры",
+    "aliases": [
+      "кожаная юбка"
+    ]
+  },
+  "attire.hide.vest": {
+    "name": "Жилетка из шкуры",
+    "aliases": [
+      "кожаная жилетка"
+    ]
+  },
+  "attire.nesthat": {
+    "name": "Шляпа-гнездо",
+    "aliases": [
+      "гнездо"
+    ]
+  },
+  "attire.ninja.suit": {
+    "name": "Костюм ниндзя",
+    "aliases": [
+      "ниндзя"
+    ]
+  },
+  "attire.reindeer.headband": {
+    "name": "Оленьи рога",
+    "aliases": [
+      "рога"
+    ]
+  },
+  "attire.snowman.helmet": {
+    "name": "Шлем снеговика",
+    "aliases": [
+      "снеговик"
+    ]
+  },
+  "autoturret": {
+    "name": "Автоматическая турель",
+    "aliases": [
+      "турелька",
+      "автотурель"
+    ]
+  },
+  "axe.salvaged": {
+    "name": "Самодельный топор",
+    "aliases": [
+      "топор",
+      "сальваг топор"
+    ]
+  },
+  "ball": {
+    "name": "Мяч",
+    "aliases": [
+      "мячик"
+    ]
+  },
+  "ballista.bolt.hammerhead": {
+    "name": "Болт для баллисты (молот)",
+    "aliases": [
+      "болт молот"
+    ]
+  },
+  "ballista.bolt.incendiary": {
+    "name": "Зажигательный болт для баллисты",
+    "aliases": [
+      "огненный болт"
+    ]
+  },
+  "ballista.bolt.piercer": {
+    "name": "Бронебойный болт для баллисты",
+    "aliases": [
+      "бронебойный"
+    ]
+  },
+  "ballista.bolt.pitchfork": {
+    "name": "Болт для баллисты (вилы)",
+    "aliases": [
+      "болт вилы"
+    ]
+  },
+  "ballista.mounted": {
+    "name": "Установленная баллиста",
+    "aliases": [
+      "баллиста"
+    ]
+  },
+  "ballista.static": {
+    "name": "Статическая баллиста",
+    "aliases": []
+  },
+  "bamboo.barrel": {
+    "name": "Бамбуковая бочка",
+    "aliases": [
+      "бочка бамбук"
+    ]
+  },
+  "bandage": {
+    "name": "Бинт",
+    "aliases": [
+      "бинтик"
+    ]
+  },
+  "barrelcostume": {
+    "name": "Костюм бочки",
+    "aliases": [
+      "бочка-костюм"
+    ]
+  },
+  "barricade.concrete": {
+    "name": "Бетонная баррикада",
+    "aliases": [
+      "бетонка"
+    ]
+  },
+  "barricade.medieval": {
+    "name": "Средневековая баррикада",
+    "aliases": []
+  },
+  "barricade.metal": {
+    "name": "Металлическая баррикада",
+    "aliases": [
+      "железная баррикада"
+    ]
+  },
+  "barricade.sandbags": {
+    "name": "Баррикада из мешков с песком",
+    "aliases": [
+      "мешки"
+    ]
+  },
+  "barricade.stone": {
+    "name": "Каменная баррикада",
+    "aliases": [
+      "каменка"
+    ]
+  },
+  "barricade.wood.cover": {
+    "name": "Деревянное укрытие",
+    "aliases": [
+      "укрытие"
+    ]
+  },
+  "barricade.wood": {
+    "name": "Деревянная баррикада",
+    "aliases": [
+      "ежи",
+      "деревяшка"
+    ]
+  },
+  "barricade.woodwire": {
+    "name": "Баррикада с колючей проволокой",
+    "aliases": [
+      "колючка"
+    ]
+  },
+  "basicblueprintfragment": {
+    "name": "Фрагмент базового чертежа",
+    "aliases": [
+      "зеленый фрагмент"
+    ]
+  },
+  "bathtub.planter": {
+    "name": "Ванна-грядка",
+    "aliases": [
+      "ванна"
+    ]
+  },
+  "batteringram": {
+    "name": "Таран",
+    "aliases": [
+      "таран"
+    ]
+  },
+  "battery.small": {
+    "name": "Маленькая батарейка",
+    "aliases": [
+      "батарейка"
+    ]
+  },
+  "bbq": {
+    "name": "Мангал",
+    "aliases": [
+      "барбекюшница"
+    ]
+  },
+  "beachchair.camo": {
+    "name": "Шезлонг (камуфляж)",
+    "aliases": [
+      "шезлонг"
+    ]
+  },
+  "beachchair.flamingo": {
+    "name": "Шезлонг (фламинго)",
+    "aliases": []
+  },
+  "beachchair.leaves": {
+    "name": "Шезлонг (листья)",
+    "aliases": []
+  },
+  "beachchair.pizza": {
+    "name": "Шезлонг (пицца)",
+    "aliases": []
+  },
+  "beachchair": {
+    "name": "Шезлонг",
+    "aliases": [
+      "стул"
+    ]
+  },
+  "beachchair.target": {
+    "name": "Шезлонг (мишень)",
+    "aliases": []
+  },
+  "beachchair.tarp": {
+    "name": "Шезлонг (брезент)",
+    "aliases": []
+  },
+  "beachchair.zenlabs": {
+    "name": "Шезлонг (Zenlabs)",
+    "aliases": []
+  },
+  "beachparasol.camo": {
+    "name": "Пляжный зонт (камуфляж)",
+    "aliases": [
+      "зонтик"
+    ]
+  },
+  "beachparasol.flamingo": {
+    "name": "Пляжный зонт (фламинго)",
+    "aliases": []
+  },
+  "beachparasol.leaves": {
+    "name": "Пляжный зонт (листья)",
+    "aliases": []
+  },
+  "beachparasol.pizza": {
+    "name": "Пляжный зонт (пицца)",
+    "aliases": []
+  },
+  "beachparasol": {
+    "name": "Пляжный зонт",
+    "aliases": [
+      "зонт"
+    ]
+  },
+  "beachparasol.target": {
+    "name": "Пляжный зонт (мишень)",
+    "aliases": []
+  },
+  "beachparasol.tarp": {
+    "name": "Пляжный зонт (брезент)",
+    "aliases": []
+  },
+  "beachparasol.zenlabs": {
+    "name": "Пляжный зонт (Zenlabs)",
+    "aliases": []
+  },
+  "beachtable": {
+    "name": "Пляжный стол",
+    "aliases": [
+      "столик"
+    ]
+  },
+  "beachtowel.brownstripes": {
+    "name": "Пляжное полотенце (коричневые полосы)",
+    "aliases": [
+      "полотенце"
+    ]
+  },
+  "beachtowel.cobalt": {
+    "name": "Пляжное полотенце (Cobalt)",
+    "aliases": []
+  },
+  "beachtowel.dye": {
+    "name": "Пляжное полотенце (краска)",
+    "aliases": []
+  },
+  "beachtowel.fish": {
+    "name": "Пляжное полотенце (рыбы)",
+    "aliases": []
+  },
+  "beachtowel": {
+    "name": "Пляжное полотенце",
+    "aliases": [
+      "полотенце"
+    ]
+  },
+  "beachtowel.shell": {
+    "name": "Пляжное полотенце (ракушки)",
+    "aliases": []
+  },
+  "beachtowel.stripes": {
+    "name": "Пляжное полотенце (полосы)",
+    "aliases": []
+  },
+  "beachtowel.waves": {
+    "name": "Пляжное полотенце (волны)",
+    "aliases": []
+  },
+  "beanbagseatfabric": {
+    "name": "Кресло-мешок (ткань)",
+    "aliases": [
+      "пуфик"
+    ]
+  },
+  "beanbagseatleather": {
+    "name": "Кресло-мешок (кожа)",
+    "aliases": [
+      "пуфик кожаный"
+    ]
+  },
+  "bearmeat.burned": {
+    "name": "Сгоревшая медвежатина",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "bearmeat.cooked": {
+    "name": "Жареная медвежатина",
+    "aliases": [
+      "мясо медведя"
+    ]
+  },
+  "bearmeat": {
+    "name": "Сырая медвежатина",
+    "aliases": [
+      "сырое мясо"
+    ]
+  },
+  "bearmeat.spoiled": {
+    "name": "Испорченная медвежатина",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "bed": {
+    "name": "Кровать",
+    "aliases": [
+      "шконка",
+      "спалка"
+    ]
+  },
+  "beehive": {
+    "name": "Улей",
+    "aliases": [
+      "улей"
+    ]
+  },
+  "bicycle": {
+    "name": "Велосипед",
+    "aliases": [
+      "велик"
+    ]
+  },
+  "bigcatmeat.cooked": {
+    "name": "Жареное мясо крупной кошки",
+    "aliases": [
+      "мясо"
+    ]
+  },
+  "bigcatmeat": {
+    "name": "Сырое мясо крупной кошки",
+    "aliases": [
+      "сырое мясо"
+    ]
+  },
+  "bigcatmeat.spoiled": {
+    "name": "Испорченное мясо крупной кошки",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "black.berry": {
+    "name": "Черная ягода",
+    "aliases": [
+      "ежевика"
+    ]
+  },
+  "black.raspberries": {
+    "name": "Ежевика",
+    "aliases": [
+      "малина"
+    ]
+  },
+  "bleach": {
+    "name": "Отбеливатель",
+    "aliases": [
+      "хлорка"
+    ]
+  },
+  "blood": {
+    "name": "Кровь",
+    "aliases": [
+      "кровь"
+    ]
+  },
+  "blowpipe": {
+    "name": "Духовая трубка",
+    "aliases": [
+      "плевалка"
+    ]
+  },
+  "blue.berry": {
+    "name": "Синяя ягода",
+    "aliases": [
+      "черника"
+    ]
+  },
+  "blueberries": {
+    "name": "Черника",
+    "aliases": [
+      "ягода"
+    ]
+  },
+  "bluedogtags": {
+    "name": "Синие армейские жетоны",
+    "aliases": [
+      "жетоны"
+    ]
+  },
+  "blueidtag": {
+    "name": "Синий идентификационный бейдж",
+    "aliases": [
+      "бейдж синий"
+    ]
+  },
+  "blueprintbase": {
+    "name": "Чертеж",
+    "aliases": [
+      "рецепт"
+    ]
+  },
+  "blunderbuss": {
+    "name": "Мушкетон",
+    "aliases": [
+      "мушкет"
+    ]
+  },
+  "boat.planner": {
+    "name": "План лодки",
+    "aliases": [
+      "план"
+    ]
+  },
+  "boatbuildingstation": {
+    "name": "Верстак для лодок",
+    "aliases": [
+      "лодочная"
+    ]
+  },
+  "bone.armor.suit": {
+    "name": "Костяная броня",
+    "aliases": [
+      "костянка"
+    ]
+  },
+  "bone.club": {
+    "name": "Костяная дубинка",
+    "aliases": [
+      "кость",
+      "дубинка"
+    ]
+  },
+  "bone.fragments": {
+    "name": "Фрагменты костей",
+    "aliases": [
+      "кости"
+    ]
+  },
+  "boogieboard.corrugated": {
+    "name": "Доска для серфинга (гофрированная)",
+    "aliases": [
+      "доска"
+    ]
+  },
+  "boogieboard.crashtest": {
+    "name": "Доска для серфинга (краш-тест)",
+    "aliases": []
+  },
+  "boogieboard.flames": {
+    "name": "Доска для серфинга (пламя)",
+    "aliases": []
+  },
+  "boogieboard.marbled": {
+    "name": "Доска для серфинга (мрамор)",
+    "aliases": []
+  },
+  "boogieboard": {
+    "name": "Доска для серфинга",
+    "aliases": [
+      "борд"
+    ]
+  },
+  "boogieboard.shark": {
+    "name": "Доска для серфинга (акула)",
+    "aliases": []
+  },
+  "boogieboard.stars": {
+    "name": "Доска для серфинга (звезды)",
+    "aliases": []
+  },
+  "boombox": {
+    "name": "Бумбокс",
+    "aliases": [
+      "колонка",
+      "магнитола"
+    ]
+  },
+  "boomerang": {
+    "name": "Бумеранг",
+    "aliases": [
+      "бумеранг"
+    ]
+  },
+  "boots.frog": {
+    "name": "Жабьи сапоги",
+    "aliases": [
+      "жабки",
+      "резиновые сапоги"
+    ]
+  },
+  "botabag": {
+    "name": "Бурдюк",
+    "aliases": [
+      "фляга"
+    ]
+  },
+  "bottle.vodka": {
+    "name": "Бутылка водки",
+    "aliases": [
+      "водка",
+      "бутылка"
+    ]
+  },
+  "bow.compound": {
+    "name": "Блочный лук",
+    "aliases": [
+      "компаунд"
+    ]
+  },
+  "bow.hunting.legacybow.skin": {
+    "name": "Охотничий лук (Legacy)",
+    "aliases": [
+      "лук легаси"
+    ]
+  },
+  "bow.hunting": {
+    "name": "Охотничий лук",
+    "aliases": [
+      "лук",
+      "классика"
+    ]
+  },
+  "box.repair.bench": {
+    "name": "Ремонтный верстак",
+    "aliases": [
+      "ремонтилка"
+    ]
+  },
+  "box.wooden.large.component.ammo.skin": {
+    "name": "Большой ящик (патроны)",
+    "aliases": [
+      "ящик патронов"
+    ]
+  },
+  "box.wooden.large.component.armor.skin": {
+    "name": "Большой ящик (броня)",
+    "aliases": [
+      "ящик брони"
+    ]
+  },
+  "box.wooden.large.component.charcoal.skin": {
+    "name": "Большой ящик (уголь)",
+    "aliases": [
+      "ящик угля"
+    ]
+  },
+  "box.wooden.large.component.clothing.skin": {
+    "name": "Большой ящик (одежда)",
+    "aliases": [
+      "ящик одежды"
+    ]
+  },
+  "box.wooden.large.component.components.skin": {
+    "name": "Большой ящик (компоненты)",
+    "aliases": [
+      "ящик компов"
+    ]
+  },
+  "box.wooden.large.component.explosives.skin": {
+    "name": "Большой ящик (взрывчатка)",
+    "aliases": [
+      "ящик взрывчатки"
+    ]
+  },
+  "box.wooden.large.component.food.skin": {
+    "name": "Большой ящик (еда)",
+    "aliases": [
+      "ящик еды"
+    ]
+  },
+  "box.wooden.large.component.guns.skin": {
+    "name": "Большой ящик (оружие)",
+    "aliases": [
+      "ящик оружия"
+    ]
+  },
+  "box.wooden.large.component.meds.skin": {
+    "name": "Большой ящик (медикаменты)",
+    "aliases": [
+      "ящик аптечек"
+    ]
+  },
+  "box.wooden.large.component.metal.skin": {
+    "name": "Большой ящик (металл)",
+    "aliases": [
+      "ящик металла"
+    ]
+  },
+  "box.wooden.large.component.ore.skin": {
+    "name": "Большой ящик (руда)",
+    "aliases": [
+      "ящик руды"
+    ]
+  },
+  "box.wooden.large.component.scrap.skin": {
+    "name": "Большой ящик (скрап)",
+    "aliases": [
+      "ящик скрапа"
+    ]
+  },
+  "box.wooden.large.component.stone.skin": {
+    "name": "Большой ящик (камень)",
+    "aliases": [
+      "ящик камня"
+    ]
+  },
+  "box.wooden.large.component.sulfur.skin": {
+    "name": "Большой ящик (сера)",
+    "aliases": [
+      "ящик серы"
+    ]
+  },
+  "box.wooden.large.component.tools.skin": {
+    "name": "Большой ящик (инструменты)",
+    "aliases": [
+      "ящик инструментов"
+    ]
+  },
+  "box.wooden.large.component.wood.skin": {
+    "name": "Большой ящик (дерево)",
+    "aliases": [
+      "ящик дерева"
+    ]
+  },
+  "box.wooden.large.medieval.skin": {
+    "name": "Большой ящик (средневековье)",
+    "aliases": [
+      "лардж"
+    ]
+  },
+  "box.wooden.large": {
+    "name": "Большой деревянный ящик",
+    "aliases": [
+      "большой ящик",
+      "лардж"
+    ]
+  },
+  "box.wooden.large.skin.woodstorage.ammowoodenbox": {
+    "name": "Деревянный ящик для патронов",
+    "aliases": [
+      "лардж патроны"
+    ]
+  },
+  "box.wooden.large.skin.woodstorage.christmasstorage": {
+    "name": "Новогодний большой ящик",
+    "aliases": [
+      "новогодний лардж"
+    ]
+  },
+  "box.wooden.large.skin.woodstorage.firstaidgreen": {
+    "name": "Зеленый ящик первой помощи",
+    "aliases": [
+      "аптечка лардж"
+    ]
+  },
+  "box.wooden.large.skin.woodstorage.gunbox": {
+    "name": "Оружейный ящик",
+    "aliases": [
+      "оружейка"
+    ]
+  },
+  "box.wooden.pilot.hazmat.skin": {
+    "name": "Малый ящик (пилот)",
+    "aliases": [
+      "ящик"
+    ]
+  },
+  "box.wooden": {
+    "name": "Деревянный ящик",
+    "aliases": [
+      "маленький ящик",
+      "смол бокс"
+    ]
+  },
+  "bread.loaf": {
+    "name": "Буханка хлеба",
+    "aliases": [
+      "хлеб"
+    ]
+  },
+  "bucket.helmet": {
+    "name": "Шлем из ведра",
+    "aliases": [
+      "ведро"
+    ]
+  },
+  "bucket.helmet.skin.buckethat.medichelmet": {
+    "name": "Медицинский шлем из ведра",
+    "aliases": [
+      "ведро медика"
+    ]
+  },
+  "bucket.water": {
+    "name": "Ведро воды",
+    "aliases": [
+      "ведро"
+    ]
+  },
+  "building.planner": {
+    "name": "План постройки",
+    "aliases": [
+      "билд план",
+      "чертеж постройки"
+    ]
+  },
+  "bunny.suit": {
+    "name": "Костюм кролика",
+    "aliases": [
+      "кролик"
+    ]
+  },
+  "burlap.gloves.new": {
+    "name": "Холщовые перчатки (новые)",
+    "aliases": [
+      "перчи"
+    ]
+  },
+  "burlap.gloves": {
+    "name": "Холщовые перчатки",
+    "aliases": [
+      "тряпочные перчатки"
+    ]
+  },
+  "burlap.gloves.skin.burlapgloves.boxer'sbandages": {
+    "name": "Бинты боксера",
+    "aliases": [
+      "боксерки"
+    ]
+  },
+  "burlap.headwrap": {
+    "name": "Холщовая повязка на голову",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "burlap.shirt": {
+    "name": "Холщовая рубашка",
+    "aliases": [
+      "рубашка",
+      "тряпка"
+    ]
+  },
+  "burlap.shirt.skin.burlapshirt.piratevest&shirt": {
+    "name": "Пиратская рубашка",
+    "aliases": [
+      "рубашка пирата"
+    ]
+  },
+  "burlap.shoes": {
+    "name": "Холщовые ботинки",
+    "aliases": [
+      "тапки"
+    ]
+  },
+  "burlap.trousers": {
+    "name": "Холщовые штаны",
+    "aliases": [
+      "штаны"
+    ]
+  },
+  "caboose": {
+    "name": "Вагон-кабус",
+    "aliases": [
+      "хвостовой вагон"
+    ]
+  },
+  "cactusflesh": {
+    "name": "Мякоть кактуса",
+    "aliases": [
+      "кактус"
+    ]
+  },
+  "cakefiveyear": {
+    "name": "Праздничный торт",
+    "aliases": [
+      "торт"
+    ]
+  },
+  "campfire": {
+    "name": "Костер",
+    "aliases": [
+      "костер",
+      "кампфайр"
+    ]
+  },
+  "can.beans.empty": {
+    "name": "Пустая банка из-под бобов",
+    "aliases": [
+      "пустая банка"
+    ]
+  },
+  "can.beans": {
+    "name": "Банка бобов",
+    "aliases": [
+      "бобы"
+    ]
+  },
+  "can.tuna.empty": {
+    "name": "Пустая банка из-под тунца",
+    "aliases": [
+      "банка от тунца"
+    ]
+  },
+  "can.tuna": {
+    "name": "Банка тунца",
+    "aliases": [
+      "тунец"
+    ]
+  },
+  "candycane": {
+    "name": "Карамельная трость",
+    "aliases": [
+      "леденец"
+    ]
+  },
+  "candycaneclub": {
+    "name": "Дубинка-леденец",
+    "aliases": [
+      "леденец-дубинка"
+    ]
+  },
+  "cannon": {
+    "name": "Пушка",
+    "aliases": [
+      "пушка"
+    ]
+  },
+  "cannonball": {
+    "name": "Пушечное ядро",
+    "aliases": [
+      "ядро"
+    ]
+  },
+  "captainslog": {
+    "name": "Капитанский журнал",
+    "aliases": [
+      "журнал"
+    ]
+  },
+  "carburetor1": {
+    "name": "Карбюратор 1-го уровня",
+    "aliases": [
+      "карбюратор",
+      "деталь низкого качества"
+    ]
+  },
+  "carburetor2": {
+    "name": "Карбюратор 2-го уровня",
+    "aliases": [
+      "средний карбюратор"
+    ]
+  },
+  "carburetor3": {
+    "name": "Карбюратор 3-го уровня",
+    "aliases": [
+      "топовый карбюратор"
+    ]
+  },
+  "cardtable": {
+    "name": "Карточный стол",
+    "aliases": [
+      "покерный стол"
+    ]
+  },
+  "carvable.pumpkin": {
+    "name": "Тыква для вырезания",
+    "aliases": [
+      "хеллоуинская тыква"
+    ]
+  },
+  "cassette.medium": {
+    "name": "Средняя кассета",
+    "aliases": [
+      "кассета"
+    ]
+  },
+  "cassette": {
+    "name": "Кассета",
+    "aliases": []
+  },
+  "cassette.short": {
+    "name": "Короткая кассета",
+    "aliases": [
+      "короткая кассета"
+    ]
+  },
+  "catapult.ammo.bee": {
+    "name": "Снаряд для катапульты (пчелы)",
+    "aliases": [
+      "пчелы"
+    ]
+  },
+  "catapult.ammo.boulder": {
+    "name": "Снаряд для катапульты (валун)",
+    "aliases": [
+      "камень катапульты"
+    ]
+  },
+  "catapult.ammo.explosive": {
+    "name": "Снаряд для катапульты (взрывной)",
+    "aliases": [
+      "взрывная бочка"
+    ]
+  },
+  "catapult.ammo.incendiary": {
+    "name": "Снаряд для катапульты (зажигательный)",
+    "aliases": [
+      "зажигалка"
+    ]
+  },
+  "catapult": {
+    "name": "Катапульта",
+    "aliases": [
+      "катапульта"
+    ]
+  },
+  "cctv.camera": {
+    "name": "Камера видеонаблюдения",
+    "aliases": [
+      "камера"
+    ]
+  },
+  "ceilinglight.electric.fluorescentlight.ceiling.skin": {
+    "name": "Люминесцентная лампа",
+    "aliases": [
+      "потолочная лампа"
+    ]
+  },
+  "ceilinglight": {
+    "name": "Потолочный светильник",
+    "aliases": [
+      "люстра"
+    ]
+  },
+  "chainsaw.krieg.chainsword.skin": {
+    "name": "Цепной меч Крига",
+    "aliases": [
+      "цепной меч"
+    ]
+  },
+  "chainsaw": {
+    "name": "Бензопила",
+    "aliases": [
+      "пила"
+    ]
+  },
+  "chair.beanbag.seat.fabric.skin": {
+    "name": "Кресло-мешок (ткань)",
+    "aliases": [
+      "пуфик"
+    ]
+  },
+  "chair.beanbag.seat.leather.skin": {
+    "name": "Кресло-мешок (кожа)",
+    "aliases": [
+      "пуфик кожаный"
+    ]
+  },
+  "chair.ejector.seat": {
+    "name": "Катапультируемое кресло",
+    "aliases": [
+      "катапульта"
+    ]
+  },
+  "chair.ejector.seat.skin": {
+    "name": "Катапультируемое кресло (скин)",
+    "aliases": []
+  },
+  "chair.icethrone": {
+    "name": "Ледяной трон",
+    "aliases": [
+      "трон"
+    ]
+  },
+  "chair.icethrone.skin": {
+    "name": "Ледяной трон (скин)",
+    "aliases": []
+  },
+  "chair": {
+    "name": "Стул",
+    "aliases": [
+      "кресло"
+    ]
+  },
+  "charcoal": {
+    "name": "Уголь",
+    "aliases": [
+      "уголек"
+    ]
+  },
+  "charity.plushy.01": {
+    "name": "Благотворительная игрушка 1",
+    "aliases": [
+      "плюшевая игрушка"
+    ]
+  },
+  "charity.plushy.02": {
+    "name": "Благотворительная игрушка 2",
+    "aliases": [
+      "плюшевая игрушка"
+    ]
+  },
+  "chicken.burned": {
+    "name": "Сгоревшая курятина",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "chicken.cooked": {
+    "name": "Жареная курятина",
+    "aliases": [
+      "курица"
+    ]
+  },
+  "chicken.costume": {
+    "name": "Костюм курицы",
+    "aliases": [
+      "курица"
+    ]
+  },
+  "chicken.raw": {
+    "name": "Сырая курятина",
+    "aliases": [
+      "сырая курица"
+    ]
+  },
+  "chicken.spoiled": {
+    "name": "Испорченная курятина",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "chickencoop": {
+    "name": "Курятник",
+    "aliases": [
+      "курятник"
+    ]
+  },
+  "chineselantern": {
+    "name": "Китайский фонарик",
+    "aliases": [
+      "фонарь"
+    ]
+  },
+  "chineselanternwhite": {
+    "name": "Белый китайский фонарик",
+    "aliases": [
+      "фонарь"
+    ]
+  },
+  "chocolate": {
+    "name": "Шоколад",
+    "aliases": [
+      "шоколадка"
+    ]
+  },
+  "circleballoon2025": {
+    "name": "Круглый шар 2025",
+    "aliases": [
+      "воздушный шар"
+    ]
+  },
+  "clantable": {
+    "name": "Клан стол",
+    "aliases": [
+      "стол клана"
+    ]
+  },
+  "clatter.helmet": {
+    "name": "Шлем Clatter",
+    "aliases": [
+      "шлем"
+    ]
+  },
+  "clone.black.berry": {
+    "name": "Клон: Черная ягода",
+    "aliases": [
+      "семечко ежевики"
+    ]
+  },
+  "clone.blue.berry": {
+    "name": "Клон: Синяя ягода",
+    "aliases": [
+      "семечко черники"
+    ]
+  },
+  "clone.corn": {
+    "name": "Клон: Кукуруза",
+    "aliases": [
+      "кукуруза"
+    ]
+  },
+  "clone.green.berry": {
+    "name": "Клон: Зеленая ягода",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "clone.hemp": {
+    "name": "Клон: Конопля",
+    "aliases": [
+      "семечко ткани"
+    ]
+  },
+  "clone.orchid": {
+    "name": "Клон: Орхидея",
+    "aliases": [
+      "орхидея"
+    ]
+  },
+  "clone.potato": {
+    "name": "Клон: Картофель",
+    "aliases": [
+      "картошка"
+    ]
+  },
+  "clone.pumpkin": {
+    "name": "Клон: Тыква",
+    "aliases": [
+      "семечко тыквы"
+    ]
+  },
+  "clone.red.berry": {
+    "name": "Клон: Красная ягода",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "clone.rose": {
+    "name": "Клон: Роза",
+    "aliases": [
+      "роза"
+    ]
+  },
+  "clone.sunflower": {
+    "name": "Клон: Подсолнух",
+    "aliases": [
+      "подсолнух"
+    ]
+  },
+  "clone.wheat": {
+    "name": "Клон: Пшеница",
+    "aliases": [
+      "пшеница"
+    ]
+  },
+  "clone.white.berry": {
+    "name": "Клон: Белая ягода",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "clone.yellow.berry": {
+    "name": "Клон: Желтая ягода",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "cloth": {
+    "name": "Ткань",
+    "aliases": [
+      "тряпки",
+      "ткань"
+    ]
+  },
+  "clothing.mannequin": {
+    "name": "Манекен",
+    "aliases": [
+      "манекен"
+    ]
+  },
+  "clothing.mod.armorinsert_asbestos": {
+    "name": "Асбестовая вставка",
+    "aliases": [
+      "вставка асбест"
+    ]
+  },
+  "clothing.mod.armorinsert_lead": {
+    "name": "Свинцовая вставка",
+    "aliases": [
+      "вставка свинец"
+    ]
+  },
+  "clothing.mod.armorinsert_metal": {
+    "name": "Металлическая вставка",
+    "aliases": [
+      "железная вставка"
+    ]
+  },
+  "clothing.mod.armorinsert_wood": {
+    "name": "Деревянная вставка",
+    "aliases": [
+      "вставка дерево"
+    ]
+  },
+  "coal": {
+    "name": "Каменный уголь",
+    "aliases": [
+      "камень уголь"
+    ]
+  },
+  "cocoknight.armor.gloves": {
+    "name": "Перчатки коко-рыцаря",
+    "aliases": [
+      "перчатки"
+    ]
+  },
+  "cocoknight.armor.helmet": {
+    "name": "Шлем коко-рыцаря",
+    "aliases": [
+      "коко шлем"
+    ]
+  },
+  "cocoknight.armor.pants": {
+    "name": "Поножи коко-рыцаря",
+    "aliases": [
+      "коко штаны"
+    ]
+  },
+  "cocoknight.armor.torso": {
+    "name": "Нагрудник коко-рыцаря",
+    "aliases": [
+      "коко нагрудник"
+    ]
+  },
+  "coconut": {
+    "name": "Кокос",
+    "aliases": [
+      "кокос"
+    ]
+  },
+  "coffeecan.helmet.hat.knightarmour.skin": {
+    "name": "Шлем рыцаря",
+    "aliases": [
+      "ведро рыцаря"
+    ]
+  },
+  "coffeecan.helmet": {
+    "name": "Шлем из кофейной банки",
+    "aliases": [
+      "ведро",
+      "банка"
+    ]
+  },
+  "coffin.storage": {
+    "name": "Гроб",
+    "aliases": [
+      "гроб ящик"
+    ]
+  },
+  "command.block": {
+    "name": "Командный блок",
+    "aliases": [
+      "блок команд"
+    ]
+  },
+  "compass": {
+    "name": "Компас",
+    "aliases": [
+      "компас"
+    ]
+  },
+  "component.box.ammo.large": {
+    "name": "Коробка с патронами (большая)",
+    "aliases": [
+      "патроны"
+    ]
+  },
+  "component.box.armor.large": {
+    "name": "Коробка с броней (большая)",
+    "aliases": [
+      "броня"
+    ]
+  },
+  "component.box.charcoal.large": {
+    "name": "Коробка с углем (большая)",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "component.box.clothing.large": {
+    "name": "Коробка с одеждой (большая)",
+    "aliases": [
+      "шмот"
+    ]
+  },
+  "component.box.comps.large": {
+    "name": "Коробка с компонентами (большая)",
+    "aliases": [
+      "компоненты"
+    ]
+  },
+  "component.box.explosives.large": {
+    "name": "Коробка со взрывчаткой (большая)",
+    "aliases": [
+      "взрывчатка"
+    ]
+  },
+  "component.box.food.large": {
+    "name": "Коробка с едой (большая)",
+    "aliases": [
+      "еда"
+    ]
+  },
+  "component.box.guns.large": {
+    "name": "Коробка с оружием (большая)",
+    "aliases": [
+      "оружие"
+    ]
+  },
+  "component.box.meds.large": {
+    "name": "Коробка с медикаментами (большая)",
+    "aliases": [
+      "медицина"
+    ]
+  },
+  "component.box.metal.large": {
+    "name": "Коробка с металлом (большая)",
+    "aliases": [
+      "железо"
+    ]
+  },
+  "component.box.ore.large": {
+    "name": "Коробка с рудой (большая)",
+    "aliases": [
+      "руда"
+    ]
+  },
+  "component.box.scrap.large": {
+    "name": "Коробка со скрапом (большая)",
+    "aliases": [
+      "скрап"
+    ]
+  },
+  "component.box.stone.large": {
+    "name": "Коробка с камнем (большая)",
+    "aliases": [
+      "камни"
+    ]
+  },
+  "component.box.sulfur.large": {
+    "name": "Коробка с серой (большая)",
+    "aliases": [
+      "сера"
+    ]
+  },
+  "component.box.tools.large": {
+    "name": "Коробка с инструментами (большая)",
+    "aliases": [
+      "инструменты"
+    ]
+  },
+  "component.box.wood.large": {
+    "name": "Коробка с деревом (большая)",
+    "aliases": [
+      "дерево"
+    ]
+  },
+  "composter": {
+    "name": "Компостер",
+    "aliases": [
+      "компостная яма"
+    ]
+  },
+  "computerstation": {
+    "name": "Компьютерная станция",
+    "aliases": [
+      "пк",
+      "станция камер"
+    ]
+  },
+  "computerstation.twitchrivals.sitem": {
+    "name": "Компьютер Twitch Rivals",
+    "aliases": [
+      "пк твич"
+    ]
+  },
+  "concretehatchet": {
+    "name": "Бетонный топорик",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "concretepickaxe": {
+    "name": "Бетонная кирка",
+    "aliases": [
+      "кирка"
+    ]
+  },
+  "confetticannon": {
+    "name": "Хлопушка с конфетти",
+    "aliases": [
+      "хлопушка"
+    ]
+  },
+  "connected.speaker": {
+    "name": "Динамик",
+    "aliases": [
+      "колонка"
+    ]
+  },
+  "cookingworkbench": {
+    "name": "Кухонный стол",
+    "aliases": [
+      "кухня",
+      "плита"
+    ]
+  },
+  "coolingtea": {
+    "name": "Охлаждающий чай",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "corn": {
+    "name": "Кукуруза",
+    "aliases": [
+      "кукуруза"
+    ]
+  },
+  "craftingtea_quality": {
+    "name": "Чай крафта",
+    "aliases": [
+      "чай на крафт"
+    ]
+  },
+  "crankshaft1": {
+    "name": "Коленвал 1-го уровня",
+    "aliases": [
+      "деталь двигателя"
+    ]
+  },
+  "crankshaft2": {
+    "name": "Коленвал 2-го уровня",
+    "aliases": [
+      "коленвал средний"
+    ]
+  },
+  "crankshaft3": {
+    "name": "Коленвал 3-го уровня",
+    "aliases": [
+      "топовый коленвал"
+    ]
+  },
+  "cratecostume": {
+    "name": "Костюм ящика",
+    "aliases": [
+      "ящик"
+    ]
+  },
+  "crocodilemeat.cooked": {
+    "name": "Жареное мясо крокодила",
+    "aliases": [
+      "мясо крокодила"
+    ]
+  },
+  "crocodilemeat": {
+    "name": "Сырое мясо крокодила",
+    "aliases": [
+      "сырое мясо"
+    ]
+  },
+  "crocodilemeat.spoiled": {
+    "name": "Испорченное мясо крокодила",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "crossbow": {
+    "name": "Арбалет",
+    "aliases": [
+      "арбик",
+      "кроссбоу"
+    ]
+  },
+  "crude.oil": {
+    "name": "Сырая нефть",
+    "aliases": [
+      "нефть",
+      "жижа"
+    ]
+  },
+  "cupboard.tool": {
+    "name": "Шкаф для инструментов",
+    "aliases": [
+      "шкаф",
+      "тц"
+    ]
+  },
+  "cupboard.tool.retro": {
+    "name": "Ретро-шкаф",
+    "aliases": [
+      "ретро тц"
+    ]
+  },
+  "cupboard.tool.retro.skin": {
+    "name": "Ретро-шкаф (скин)",
+    "aliases": [
+      "ретро тц"
+    ]
+  },
+  "cupboard.tool.shockbyte": {
+    "name": "Шкаф Shockbyte",
+    "aliases": [
+      "шкаф"
+    ]
+  },
+  "cupboard.tool.shockbyte.skin": {
+    "name": "Шкаф Shockbyte (скин)",
+    "aliases": []
+  },
+  "cursedcauldron": {
+    "name": "Проклятый котел",
+    "aliases": [
+      "котел"
+    ]
+  },
+  "dart.incapacitate": {
+    "name": "Парализующий дротик",
+    "aliases": [
+      "дротик"
+    ]
+  },
+  "dart.radiation": {
+    "name": "Радиоактивный дротик",
+    "aliases": [
+      "рад дротик"
+    ]
+  },
+  "dart.scatter": {
+    "name": "Дротик-распылитель",
+    "aliases": [
+      "разрывной дротик"
+    ]
+  },
+  "dart.wood": {
+    "name": "Деревянный дротик",
+    "aliases": [
+      "деревяшка"
+    ]
+  },
+  "deer.skull.mask": {
+    "name": "Маска из черепа оленя",
+    "aliases": [
+      "маска оленя"
+    ]
+  },
+  "deermeat.burned": {
+    "name": "Сгоревшая оленина",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "deermeat.cooked": {
+    "name": "Жареная оленина",
+    "aliases": [
+      "мясо оленя"
+    ]
+  },
+  "deermeat.raw": {
+    "name": "Сырая оленина",
+    "aliases": [
+      "сырое мясо"
+    ]
+  },
+  "deermeat.spoiled": {
+    "name": "Испорченная оленина",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "diesel_barrel": {
+    "name": "Бочка дизельного топлива",
+    "aliases": [
+      "дизель",
+      "соляра"
+    ]
+  },
+  "discoball": {
+    "name": "Дискошар",
+    "aliases": [
+      "диско-шар"
+    ]
+  },
+  "discofloor.largetiles": {
+    "name": "Танцпол (большие плитки)",
+    "aliases": [
+      "танцпол"
+    ]
+  },
+  "discofloor": {
+    "name": "Танцпол",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "discord.trophy": {
+    "name": "Трофей Discord",
+    "aliases": [
+      "награда"
+    ]
+  },
+  "diverhatchet": {
+    "name": "Топорик водолаза",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "diverpickaxe": {
+    "name": "Кирка водолаза",
+    "aliases": [
+      "кирка"
+    ]
+  },
+  "divertorch": {
+    "name": "Фонарик водолаза",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "diving.fins": {
+    "name": "Ласты",
+    "aliases": [
+      "ласты"
+    ]
+  },
+  "diving.mask": {
+    "name": "Маска для дайвинга",
+    "aliases": [
+      "маска подводника"
+    ]
+  },
+  "diving.tank.double": {
+    "name": "Двойной кислородный баллон",
+    "aliases": [
+      "два баллона"
+    ]
+  },
+  "diving.tank": {
+    "name": "Кислородный баллон",
+    "aliases": [
+      "баллон"
+    ]
+  },
+  "diving.wetsuit": {
+    "name": "Гидрокостюм",
+    "aliases": [
+      "костюм дайвера"
+    ]
+  },
+  "documents": {
+    "name": "Документы",
+    "aliases": [
+      "бумаги"
+    ]
+  },
+  "dogtagneutral": {
+    "name": "Нейтральный армейский жетон",
+    "aliases": [
+      "жетон"
+    ]
+  },
+  "door.closer": {
+    "name": "Доводчик двери",
+    "aliases": [
+      "доводчик"
+    ]
+  },
+  "door.double.hinged.bardoors": {
+    "name": "Двойная барная дверь",
+    "aliases": [
+      "барная дверь"
+    ]
+  },
+  "door.double.hinged.metal.medieval.door.double.hinged.skin": {
+    "name": "Средневековая двойная металлическая дверь",
+    "aliases": [
+      "двойная железка"
+    ]
+  },
+  "door.double.hinged.metal": {
+    "name": "Двойная металлическая дверь",
+    "aliases": [
+      "двойная железка"
+    ]
+  },
+  "door.double.hinged.toptier": {
+    "name": "Двойная бронированная дверь",
+    "aliases": [
+      "двойная мвк"
+    ]
+  },
+  "door.double.hinged.wood": {
+    "name": "Двойная деревянная дверь",
+    "aliases": [
+      "двойная деревяшка"
+    ]
+  },
+  "door.hinged.boat.wood": {
+    "name": "Деревянная дверь лодки",
+    "aliases": [
+      "дверь лодки"
+    ]
+  },
+  "door.hinged.industrial.a": {
+    "name": "Индустриальная дверь А",
+    "aliases": [
+      "индустриалка"
+    ]
+  },
+  "door.hinged.metal.industrial.a.skin": {
+    "name": "Металлическая дверь Индустриальная А",
+    "aliases": [
+      "индустриальная железка"
+    ]
+  },
+  "door.hinged.metal.industrial.d.skin": {
+    "name": "Металлическая дверь Индустриальная D",
+    "aliases": []
+  },
+  "door.hinged.metal.medieval.skin": {
+    "name": "Металлическая дверь (Средневековье)",
+    "aliases": [
+      "рыцарская дверь"
+    ]
+  },
+  "door.hinged.metal": {
+    "name": "Металлическая дверь",
+    "aliases": [
+      "железка",
+      "железная дверь"
+    ]
+  },
+  "door.hinged.toptier": {
+    "name": "Бронированная дверь",
+    "aliases": [
+      "мвк дверь",
+      "бронька"
+    ]
+  },
+  "door.hinged.wood": {
+    "name": "Деревянная дверь",
+    "aliases": [
+      "деревяшка"
+    ]
+  },
+  "door.key": {
+    "name": "Ключ от двери",
+    "aliases": [
+      "ключ"
+    ]
+  },
+  "draculacape": {
+    "name": "Плащ Дракулы",
+    "aliases": [
+      "плащ"
+    ]
+  },
+  "draculamask": {
+    "name": "Маска Дракулы",
+    "aliases": [
+      "дракула"
+    ]
+  },
+  "dragondoorknocker": {
+    "name": "Дверной молоток 'Дракон'",
+    "aliases": [
+      "молоток на дверь"
+    ]
+  },
+  "drone": {
+    "name": "Дрон",
+    "aliases": [
+      "дрон",
+      "коптер"
+    ]
+  },
+  "dropbox": {
+    "name": "Ящик для пожертвований",
+    "aliases": [
+      "дропбокс",
+      "приемник"
+    ]
+  },
+  "drumkit": {
+    "name": "Барабанная установка",
+    "aliases": [
+      "барабаны"
+    ]
+  },
+  "ducttape": {
+    "name": "Изолента",
+    "aliases": [
+      "скотч"
+    ]
+  },
+  "easel": {
+    "name": "Мольберт",
+    "aliases": [
+      "мольберт"
+    ]
+  },
+  "easter.bronzeegg": {
+    "name": "Бронзовое яйцо",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "easter.goldegg": {
+    "name": "Золотое яйцо",
+    "aliases": [
+      "голд яйцо"
+    ]
+  },
+  "easter.paintedeggs": {
+    "name": "Раскрашенные яйца",
+    "aliases": [
+      "пасхалки"
+    ]
+  },
+  "easter.silveregg": {
+    "name": "Серебряное яйцо",
+    "aliases": [
+      "серебряное яйцо"
+    ]
+  },
+  "easterbasket": {
+    "name": "Пасхальная корзинка",
+    "aliases": [
+      "корзинка"
+    ]
+  },
+  "easterdoorwreath": {
+    "name": "Пасхальный венок на дверь",
+    "aliases": [
+      "венок"
+    ]
+  },
+  "egg": {
+    "name": "Яйцо",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "electric.andswitch": {
+    "name": "Переключатель И (AND)",
+    "aliases": [
+      "and свитч"
+    ]
+  },
+  "electric.audioalarm": {
+    "name": "Звуковая сигнализация",
+    "aliases": [
+      "сигналка"
+    ]
+  },
+  "electric.battery.rechargable.large": {
+    "name": "Большой аккумулятор",
+    "aliases": [
+      "большой аккум"
+    ]
+  },
+  "electric.battery.rechargable.medium": {
+    "name": "Средний аккумулятор",
+    "aliases": [
+      "средний аккум"
+    ]
+  },
+  "electric.battery.rechargable.small": {
+    "name": "Малый аккумулятор",
+    "aliases": [
+      "малый аккум"
+    ]
+  },
+  "electric.blocker": {
+    "name": "Блокиратор",
+    "aliases": [
+      "блокер"
+    ]
+  },
+  "electric.bulbstringlights": {
+    "name": "Гирлянда из лампочек",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "electric.button": {
+    "name": "Кнопка",
+    "aliases": [
+      "кнопка"
+    ]
+  },
+  "electric.cabletunnel": {
+    "name": "Туннель для кабеля",
+    "aliases": [
+      "проводка"
+    ]
+  },
+  "electric.chandelier": {
+    "name": "Люстра",
+    "aliases": [
+      "люстра"
+    ]
+  },
+  "electric.counter": {
+    "name": "Электрический счетчик",
+    "aliases": [
+      "счетчик"
+    ]
+  },
+  "electric.digitalclock": {
+    "name": "Цифровые часы",
+    "aliases": [
+      "часы"
+    ]
+  },
+  "electric.doorcontroller": {
+    "name": "Дверной контроллер",
+    "aliases": [
+      "контроллер двери"
+    ]
+  },
+  "electric.fairylights": {
+    "name": "Сказочная гирлянда",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "electric.flasherlight": {
+    "name": "Мигалка",
+    "aliases": [
+      "мигалка"
+    ]
+  },
+  "electric.fluorescentlight.ceiling": {
+    "name": "Потолочная люминесцентная лампа",
+    "aliases": [
+      "лампа дневного света"
+    ]
+  },
+  "electric.fluorescentlight": {
+    "name": "Люминесцентная лампа",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "electric.fuelgenerator.small": {
+    "name": "Малый топливный генератор",
+    "aliases": [
+      "генератор на топливе"
+    ]
+  },
+  "electric.furnace": {
+    "name": "Электрическая печь",
+    "aliases": [
+      "электропечь"
+    ]
+  },
+  "electric.generator.small": {
+    "name": "Малый генератор",
+    "aliases": [
+      "малый ген"
+    ]
+  },
+  "electric.hbhfsensor": {
+    "name": "Датчик сердцебиения",
+    "aliases": [
+      "хбхф датчик"
+    ]
+  },
+  "electric.heater": {
+    "name": "Обогреватель",
+    "aliases": [
+      "печка"
+    ]
+  },
+  "electric.igniter": {
+    "name": "Воспламенитель",
+    "aliases": [
+      "поджигатель"
+    ]
+  },
+  "electric.laserdetector": {
+    "name": "Лазерный детектор",
+    "aliases": [
+      "лазер"
+    ]
+  },
+  "electric.orswitch": {
+    "name": "Переключатель ИЛИ (OR)",
+    "aliases": [
+      "or свитч"
+    ]
+  },
+  "electric.pressurepad": {
+    "name": "Нажимная пластина",
+    "aliases": [
+      "плита"
+    ]
+  },
+  "electric.random.switch": {
+    "name": "Случайный переключатель",
+    "aliases": [
+      "рандом свитч"
+    ]
+  },
+  "electric.rf.broadcaster": {
+    "name": "РЧ Передатчик",
+    "aliases": [
+      "передатчик"
+    ]
+  },
+  "electric.rf.receiver": {
+    "name": "РЧ Приемник",
+    "aliases": [
+      "приемник"
+    ]
+  },
+  "electric.seismicsensor": {
+    "name": "Сейсмический датчик",
+    "aliases": [
+      "сейсмодатчик"
+    ]
+  },
+  "electric.simplelight": {
+    "name": "Простой светильник",
+    "aliases": [
+      "лампочка"
+    ]
+  },
+  "electric.sirenlight": {
+    "name": "Световая сирена",
+    "aliases": [
+      "сирена"
+    ]
+  },
+  "electric.solarpanel.large": {
+    "name": "Большая солнечная панель",
+    "aliases": [
+      "солнечная панель"
+    ]
+  },
+  "electric.splitter": {
+    "name": "Разветвитель",
+    "aliases": [
+      "сплиттер"
+    ]
+  },
+  "electric.spotlight": {
+    "name": "Прожектор",
+    "aliases": [
+      "софит"
+    ]
+  },
+  "electric.spotlight.tripod": {
+    "name": "Прожектор на треноге",
+    "aliases": [
+      "прожектор"
+    ]
+  },
+  "electric.sprinkler": {
+    "name": "Разбрызгиватель",
+    "aliases": [
+      "спринклер"
+    ]
+  },
+  "electric.switch": {
+    "name": "Переключатель",
+    "aliases": [
+      "выключатель",
+      "рубильник"
+    ]
+  },
+  "electric.tablelight": {
+    "name": "Настольная лампа",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "electric.teslacoil": {
+    "name": "Катушка Теслы",
+    "aliases": [
+      "тесла"
+    ]
+  },
+  "electric.timer": {
+    "name": "Таймер",
+    "aliases": [
+      "реле времени"
+    ]
+  },
+  "electric.wallcabinet": {
+    "name": "Настенный шкаф",
+    "aliases": [
+      "шкафчик"
+    ]
+  },
+  "electric.xorswitch": {
+    "name": "Переключатель Исключающее ИЛИ (XOR)",
+    "aliases": [
+      "xor свитч"
+    ]
+  },
+  "electrical.branch": {
+    "name": "Электрический разветвитель",
+    "aliases": [
+      "бранч",
+      "развилка"
+    ]
+  },
+  "electrical.combiner": {
+    "name": "Объединитель",
+    "aliases": [
+      "комбайнер"
+    ]
+  },
+  "electrical.memorycell": {
+    "name": "Ячейка памяти",
+    "aliases": [
+      "мемори селл"
+    ]
+  },
+  "elevator": {
+    "name": "Лифт",
+    "aliases": [
+      "лифт"
+    ]
+  },
+  "explosive.satchel": {
+    "name": "Бобовая граната",
+    "aliases": [
+      "сачель",
+      "сумка"
+    ]
+  },
+  "explosive.timed": {
+    "name": "Взрывчатка с таймером",
+    "aliases": [
+      "с4",
+      "сишка"
+    ]
+  },
+  "explosives": {
+    "name": "Взрывчатое вещество",
+    "aliases": [
+      "экспа",
+      "взрывчатка"
+    ]
+  },
+  "factorydoor": {
+    "name": "Заводская дверь",
+    "aliases": [
+      "заводская"
+    ]
+  },
+  "fat.animal": {
+    "name": "Животный жир",
+    "aliases": [
+      "жир"
+    ]
+  },
+  "fertilizer": {
+    "name": "Удобрение",
+    "aliases": [
+      "навоз"
+    ]
+  },
+  "fireplace.stone": {
+    "name": "Каменный камин",
+    "aliases": [
+      "камин"
+    ]
+  },
+  "firework.boomer.blue": {
+    "name": "Фейерверк Бумер (Синий)",
+    "aliases": [
+      "салют"
+    ]
+  },
+  "firework.boomer.champagne": {
+    "name": "Фейерверк Бумер (Шампанское)",
+    "aliases": [
+      "салют"
+    ]
+  },
+  "firework.boomer.green": {
+    "name": "Фейерверк Бумер (Зеленый)",
+    "aliases": [
+      "салют"
+    ]
+  },
+  "firework.boomer.orange": {
+    "name": "Фейерверк Бумер (Оранжевый)",
+    "aliases": [
+      "салют"
+    ]
+  },
+  "firework.boomer.pattern": {
+    "name": "Фейерверк Бумер (Узор)",
+    "aliases": [
+      "салют"
+    ]
+  },
+  "firework.boomer.red": {
+    "name": "Фейерверк Бумер (Красный)",
+    "aliases": [
+      "салют"
+    ]
+  },
+  "firework.boomer.violet": {
+    "name": "Фейерверк Бумер (Фиолетовый)",
+    "aliases": [
+      "салют"
+    ]
+  },
+  "firework.romancandle.blue": {
+    "name": "Римская свеча (Синяя)",
+    "aliases": [
+      "римка"
+    ]
+  },
+  "firework.romancandle.green": {
+    "name": "Римская свеча (Зеленая)",
+    "aliases": [
+      "римка"
+    ]
+  },
+  "firework.romancandle.red": {
+    "name": "Римская свеча (Красная)",
+    "aliases": [
+      "римка"
+    ]
+  },
+  "firework.romancandle.violet": {
+    "name": "Римская свеча (Фиолетовая)",
+    "aliases": [
+      "римка"
+    ]
+  },
+  "firework.volcano": {
+    "name": "Фейерверк Вулкан",
+    "aliases": [
+      "фонтан"
+    ]
+  },
+  "firework.volcano.red": {
+    "name": "Фейерверк Вулкан (Красный)",
+    "aliases": []
+  },
+  "firework.volcano.violet": {
+    "name": "Фейерверк Вулкан (Фиолетовый)",
+    "aliases": []
+  },
+  "fish.anchovy": {
+    "name": "Анчоус",
+    "aliases": [
+      "рыба"
+    ]
+  },
+  "fish.catfish": {
+    "name": "Сом",
+    "aliases": [
+      "сом"
+    ]
+  },
+  "fish.cooked": {
+    "name": "Жареная рыба",
+    "aliases": [
+      "приготовленная рыба"
+    ]
+  },
+  "fish.herring": {
+    "name": "Сельдь",
+    "aliases": [
+      "селедка"
+    ]
+  },
+  "fish.minnows": {
+    "name": "Гольян",
+    "aliases": [
+      "малек"
+    ]
+  },
+  "fish.orangeroughy": {
+    "name": "Атлантический большеголов",
+    "aliases": [
+      "рыба"
+    ]
+  },
+  "fish.raw": {
+    "name": "Сырая рыба",
+    "aliases": [
+      "рыба"
+    ]
+  },
+  "fish.salmon": {
+    "name": "Лосось",
+    "aliases": [
+      "красная рыба"
+    ]
+  },
+  "fish.sardine": {
+    "name": "Сардина",
+    "aliases": [
+      "сардина"
+    ]
+  },
+  "fish.smallshark": {
+    "name": "Маленькая акула",
+    "aliases": [
+      "акула"
+    ]
+  },
+  "fish.spoiled": {
+    "name": "Испорченная рыба",
+    "aliases": [
+      "гнилая рыба"
+    ]
+  },
+  "fish.troutsmall": {
+    "name": "Маленькая форель",
+    "aliases": [
+      "форель"
+    ]
+  },
+  "fish.yellowperch": {
+    "name": "Желтый окунь",
+    "aliases": [
+      "окунь"
+    ]
+  },
+  "fishing.tackle": {
+    "name": "Рыболовные снасти",
+    "aliases": [
+      "снасти"
+    ]
+  },
+  "fishingrod.handmade": {
+    "name": "Самодельная удочка",
+    "aliases": [
+      "удочка"
+    ]
+  },
+  "fishtrap.small": {
+    "name": "Малая ловушка для рыбы",
+    "aliases": [
+      "морда"
+    ]
+  },
+  "fishtrophy": {
+    "name": "Трофейная рыба",
+    "aliases": [
+      "чучело рыбы"
+    ]
+  },
+  "flamethrower": {
+    "name": "Огнемет",
+    "aliases": [
+      "огнемет"
+    ]
+  },
+  "flameturret": {
+    "name": "Огненная турель",
+    "aliases": [
+      "флейм турель"
+    ]
+  },
+  "flare": {
+    "name": "Фальшфейер",
+    "aliases": [
+      "флаер",
+      "сигналка"
+    ]
+  },
+  "flashlight.held": {
+    "name": "Ручной фонарик",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "floor.grill": {
+    "name": "Напольная решетка",
+    "aliases": [
+      "решетка"
+    ]
+  },
+  "floor.ladder.hatch": {
+    "name": "Люк с лестницей",
+    "aliases": [
+      "люк"
+    ]
+  },
+  "floor.ladder.hatch.toptier": {
+    "name": "Бронированный люк",
+    "aliases": [
+      "мвк люк"
+    ]
+  },
+  "floor.triangle.grill": {
+    "name": "Треугольная напольная решетка",
+    "aliases": [
+      "треугольная решетка"
+    ]
+  },
+  "floor.triangle.ladder.hatch": {
+    "name": "Треугольный люк с лестницей",
+    "aliases": [
+      "треугольный люк"
+    ]
+  },
+  "floor.triangle.ladder.hatch.toptier": {
+    "name": "Бронированный треугольный люк",
+    "aliases": [
+      "мвк треугольный люк"
+    ]
+  },
+  "fluid.combiner": {
+    "name": "Объединитель жидкости",
+    "aliases": [
+      "жидкостный комбайнер"
+    ]
+  },
+  "fluid.splitter": {
+    "name": "Разветвитель жидкости",
+    "aliases": [
+      "жидкостный сплиттер"
+    ]
+  },
+  "fluid.switch": {
+    "name": "Переключатель жидкости",
+    "aliases": [
+      "насос"
+    ]
+  },
+  "fogmachine": {
+    "name": "Дым-машина",
+    "aliases": [
+      "дымовуха"
+    ]
+  },
+  "frankensteinmask": {
+    "name": "Маска Франкенштейна",
+    "aliases": [
+      "франкенштейн"
+    ]
+  },
+  "frankensteins.monster.01.head": {
+    "name": "Голова монстра Франкенштейна 1",
+    "aliases": [
+      "голова"
+    ]
+  },
+  "frankensteins.monster.01.legs": {
+    "name": "Ноги монстра Франкенштейна 1",
+    "aliases": [
+      "ноги"
+    ]
+  },
+  "frankensteins.monster.01.torso": {
+    "name": "Туловище монстра Франкенштейна 1",
+    "aliases": [
+      "туловище"
+    ]
+  },
+  "frankensteins.monster.02.head": {
+    "name": "Голова монстра Франкенштейна 2",
+    "aliases": []
+  },
+  "frankensteins.monster.02.legs": {
+    "name": "Ноги монстра Франкенштейна 2",
+    "aliases": []
+  },
+  "frankensteins.monster.02.torso": {
+    "name": "Туловище монстра Франкенштейна 2",
+    "aliases": []
+  },
+  "frankensteins.monster.03.head": {
+    "name": "Голова монстра Франкенштейна 3",
+    "aliases": []
+  },
+  "frankensteins.monster.03.legs": {
+    "name": "Ноги монстра Франкенштейна 3",
+    "aliases": []
+  },
+  "frankensteins.monster.03.torso": {
+    "name": "Туловище монстра Франкенштейна 3",
+    "aliases": []
+  },
+  "frankensteintable": {
+    "name": "Стол Франкенштейна",
+    "aliases": [
+      "операционный стол"
+    ]
+  },
+  "fridge": {
+    "name": "Холодильник",
+    "aliases": [
+      "холодос"
+    ]
+  },
+  "frontiermirror.large": {
+    "name": "Большое зеркало Frontier",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "frontiermirror.medium": {
+    "name": "Среднее зеркало Frontier",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "frontiermirror.small": {
+    "name": "Маленькое зеркало Frontier",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "frontiermirror.standing": {
+    "name": "Напольное зеркало Frontier",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "frontier_hatchet": {
+    "name": "Топорик Frontier",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "fun.bass": {
+    "name": "Бас-гитара",
+    "aliases": [
+      "гитара"
+    ]
+  },
+  "fun.boomboxportable": {
+    "name": "Портативный бумбокс",
+    "aliases": [
+      "магнитола"
+    ]
+  },
+  "fun.casetterecorder": {
+    "name": "Кассетный магнитофон",
+    "aliases": [
+      "магнитофон"
+    ]
+  },
+  "fun.cowbell": {
+    "name": "Коровий колокольчик",
+    "aliases": [
+      "колокольчик"
+    ]
+  },
+  "fun.flute": {
+    "name": "Флейта",
+    "aliases": [
+      "дудочка"
+    ]
+  },
+  "fun.guitar": {
+    "name": "Гитара",
+    "aliases": [
+      "акустика"
+    ]
+  },
+  "fun.jerrycanguitar": {
+    "name": "Гитара из канистры",
+    "aliases": [
+      "электрогитара"
+    ]
+  },
+  "fun.tambourine": {
+    "name": "Тамбурин",
+    "aliases": [
+      "бубен"
+    ]
+  },
+  "fun.trumpet": {
+    "name": "Труба",
+    "aliases": [
+      "дудка"
+    ]
+  },
+  "fun.tuba": {
+    "name": "Туба",
+    "aliases": [
+      "туба"
+    ]
+  },
+  "furnace.large": {
+    "name": "Большая печь",
+    "aliases": [
+      "большая печка",
+      "лардж печь"
+    ]
+  },
+  "furnace.legacy.skin": {
+    "name": "Печь Legacy",
+    "aliases": [
+      "старая печь"
+    ]
+  },
+  "furnace": {
+    "name": "Печь",
+    "aliases": [
+      "печка"
+    ]
+  },
+  "fuse": {
+    "name": "Электрический предохранитель",
+    "aliases": [
+      "предик"
+    ]
+  },
+  "gates.external.high.adobe": {
+    "name": "Высокие глиняные ворота",
+    "aliases": [
+      "глиняные ворота"
+    ]
+  },
+  "gates.external.high.legacy": {
+    "name": "Высокие деревянные ворота (Legacy)",
+    "aliases": [
+      "старые ворота"
+    ]
+  },
+  "gates.external.high.stone.gates.external.high.adobe.sitem": {
+    "name": "Высокие каменные ворота (Глина)",
+    "aliases": [
+      "ворота"
+    ]
+  },
+  "gates.external.high.stone": {
+    "name": "Высокие каменные ворота",
+    "aliases": [
+      "каменные ворота"
+    ]
+  },
+  "gates.external.high.wood.gates.external.high.frontier.sitem": {
+    "name": "Высокие деревянные ворота (Frontier)",
+    "aliases": [
+      "деревянные ворота"
+    ]
+  },
+  "gates.external.high.wood": {
+    "name": "Высокие деревянные ворота",
+    "aliases": [
+      "деревянные ворота"
+    ]
+  },
+  "gears": {
+    "name": "Шестеренки",
+    "aliases": [
+      "шестерни"
+    ]
+  },
+  "geiger.counter": {
+    "name": "Счетчик Гейгера",
+    "aliases": [
+      "гейгер"
+    ]
+  },
+  "generator.water": {
+    "name": "Водяной генератор",
+    "aliases": [
+      "генератор воды"
+    ]
+  },
+  "generator.wind.scrap": {
+    "name": "Ветрогенератор",
+    "aliases": [
+      "ветряк"
+    ]
+  },
+  "ghostsheet": {
+    "name": "Простыня призрака",
+    "aliases": [
+      "призрак"
+    ]
+  },
+  "giantcandycanedecor": {
+    "name": "Огромная карамельная трость",
+    "aliases": [
+      "декор"
+    ]
+  },
+  "giantlollipops": {
+    "name": "Огромные леденцы",
+    "aliases": [
+      "леденцы"
+    ]
+  },
+  "gingerbreadsuit": {
+    "name": "Костюм пряничного человечка",
+    "aliases": [
+      "пряник"
+    ]
+  },
+  "gloweyes": {
+    "name": "Светящиеся глаза",
+    "aliases": [
+      "глаза"
+    ]
+  },
+  "glue": {
+    "name": "Клей",
+    "aliases": [
+      "клей"
+    ]
+  },
+  "goldframe.large": {
+    "name": "Большая золотая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "goldframe.medium": {
+    "name": "Средняя золотая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "goldframe.small": {
+    "name": "Маленькая золотая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "goldframe.standing": {
+    "name": "Напольная золотая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "goldframe.xl": {
+    "name": "Огромная золотая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "goldframe.xxl": {
+    "name": "Гигантская золотая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "goldmirror.large": {
+    "name": "Большое золотое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "goldmirror.medium": {
+    "name": "Среднее золотое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "goldmirror.small": {
+    "name": "Маленькое золотое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "goldmirror.standing": {
+    "name": "Напольное золотое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "granolabar": {
+    "name": "Батончик-мюсли",
+    "aliases": [
+      "батончик",
+      "мюсли"
+    ]
+  },
+  "gravestone": {
+    "name": "Надгробие",
+    "aliases": [
+      "могила"
+    ]
+  },
+  "grayidtag": {
+    "name": "Серый идентификационный бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "green.berry": {
+    "name": "Зеленая ягода",
+    "aliases": [
+      "ягода"
+    ]
+  },
+  "greenidtag": {
+    "name": "Зеленый идентификационный бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "grenade.beancan": {
+    "name": "Граната из бобовой банки",
+    "aliases": [
+      "бобовка"
+    ]
+  },
+  "grenade.bee": {
+    "name": "Гранаты с пчелами",
+    "aliases": [
+      "пчелы"
+    ]
+  },
+  "grenade.f1": {
+    "name": "Граната F1",
+    "aliases": [
+      "ф1",
+      "граната",
+      "лимонка"
+    ]
+  },
+  "grenade.flashbang": {
+    "name": "Светошумовая граната",
+    "aliases": [
+      "флешка"
+    ]
+  },
+  "grenade.molotov": {
+    "name": "Коктейль Молотова",
+    "aliases": [
+      "молотов",
+      "коктейль"
+    ]
+  },
+  "grenade.smoke": {
+    "name": "Дымовая граната",
+    "aliases": [
+      "дым",
+      "смок"
+    ]
+  },
+  "grub": {
+    "name": "Личинка",
+    "aliases": [
+      "гусеница"
+    ]
+  },
+  "gun.water": {
+    "name": "Водяной пистолет",
+    "aliases": [
+      "брызгалка"
+    ]
+  },
+  "gun.water.watergun.green": {
+    "name": "Зеленый водяной пистолет",
+    "aliases": [
+      "брызгалка"
+    ]
+  },
+  "gun.water.watergun.grey": {
+    "name": "Серый водяной пистолет",
+    "aliases": [
+      "брызгалка"
+    ]
+  },
+  "gun.water.watergun.orange": {
+    "name": "Оранжевый водяной пистолет",
+    "aliases": [
+      "брызгалка"
+    ]
+  },
+  "gun.water.watergun.yellow": {
+    "name": "Желтый водяной пистолет",
+    "aliases": [
+      "брызгалка"
+    ]
+  },
+  "gunpowder": {
+    "name": "Порох",
+    "aliases": [
+      "порох"
+    ]
+  },
+  "gunrack.horizontal": {
+    "name": "Горизонтальная стойка для оружия",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "gunrack.single.1.horizontal": {
+    "name": "Одинарная стойка 1",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "gunrack.single.2.horizontal": {
+    "name": "Одинарная стойка 2",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "gunrack.single.3.horizontal": {
+    "name": "Одинарная стойка 3",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "gunrack_stand": {
+    "name": "Стенд для оружия",
+    "aliases": [
+      "стенд"
+    ]
+  },
+  "gunrack_tall.horizontal": {
+    "name": "Высокая стойка для оружия",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "gunrack_wide.horizontal": {
+    "name": "Широкая стойка для оружия",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "guntrap": {
+    "name": "Ловушка с дробовиком",
+    "aliases": [
+      "дробовик ловушка",
+      "шотган трап"
+    ]
+  },
+  "hab.armor": {
+    "name": "Броня воздушного шара",
+    "aliases": [
+      "броня на шар"
+    ]
+  },
+  "hab": {
+    "name": "Воздушный шар",
+    "aliases": [
+      "шар",
+      "воздушный шар"
+    ]
+  },
+  "half.bamboo.shelves": {
+    "name": "Половинные бамбуковые полки",
+    "aliases": [
+      "полки"
+    ]
+  },
+  "halloween.candy": {
+    "name": "Хеллоуинские конфеты",
+    "aliases": [
+      "конфеты"
+    ]
+  },
+  "halloween.lootbag.large": {
+    "name": "Большой хеллоуинский мешок",
+    "aliases": [
+      "мешок"
+    ]
+  },
+  "halloween.lootbag.medium": {
+    "name": "Средний хеллоуинский мешок",
+    "aliases": [
+      "мешок"
+    ]
+  },
+  "halloween.lootbag.small": {
+    "name": "Маленький хеллоуинский мешок",
+    "aliases": [
+      "мешок"
+    ]
+  },
+  "halloween.mummysuit": {
+    "name": "Костюм мумии",
+    "aliases": [
+      "мумия"
+    ]
+  },
+  "halloween.surgeonsuit": {
+    "name": "Костюм хирурга",
+    "aliases": [
+      "хирург"
+    ]
+  },
+  "hammer": {
+    "name": "Киянка",
+    "aliases": [
+      "молоток",
+      "киянка"
+    ]
+  },
+  "hammer.salvaged": {
+    "name": "Самодельный молот",
+    "aliases": [
+      "молот"
+    ]
+  },
+  "handcuffs": {
+    "name": "Наручники",
+    "aliases": [
+      "наручники"
+    ]
+  },
+  "harvestingtea": {
+    "name": "Чай сборщика",
+    "aliases": [
+      "чай на фарм"
+    ]
+  },
+  "hat.beenie.black": {
+    "name": "Черная шапка-бини",
+    "aliases": [
+      "шапка"
+    ]
+  },
+  "hat.beenie.blue": {
+    "name": "Синяя шапка-бини",
+    "aliases": [
+      "шапка"
+    ]
+  },
+  "hat.beenie.green": {
+    "name": "Зеленая шапка-бини",
+    "aliases": [
+      "шапка"
+    ]
+  },
+  "hat.beenie": {
+    "name": "Шапка-бини",
+    "aliases": [
+      "шапка",
+      "бини"
+    ]
+  },
+  "hat.beenie.red": {
+    "name": "Красная шапка-бини",
+    "aliases": [
+      "шапка"
+    ]
+  },
+  "hat.beenie.skin.beenie.rastabeenie": {
+    "name": "Раста-шапка",
+    "aliases": [
+      "растаманка"
+    ]
+  },
+  "hat.beenie.skin.beenie.winterdeers": {
+    "name": "Зимняя шапка (Олени)",
+    "aliases": [
+      "зимняя шапка"
+    ]
+  },
+  "hat.boonie": {
+    "name": "Панама",
+    "aliases": [
+      "панама"
+    ]
+  },
+  "hat.boonie.skin.boonie.farmerhat": {
+    "name": "Фермерская панама",
+    "aliases": [
+      "шляпа фермера"
+    ]
+  },
+  "hat.bunnyhat": {
+    "name": "Шапка с кроличьими ушами",
+    "aliases": [
+      "заячья шапка"
+    ]
+  },
+  "hat.candle.birthday": {
+    "name": "Шляпа с тортом (день рождения)",
+    "aliases": [
+      "торт"
+    ]
+  },
+  "hat.candle.birthday.skin": {
+    "name": "Праздничная шляпа",
+    "aliases": [
+      "торт на голову"
+    ]
+  },
+  "hat.candle": {
+    "name": "Шляпа со свечой",
+    "aliases": [
+      "шахтерская каска со свечой"
+    ]
+  },
+  "hat.cap.blue": {
+    "name": "Синяя кепка",
+    "aliases": [
+      "кепка"
+    ]
+  },
+  "hat.cap.forestcamo": {
+    "name": "Лесная кепка",
+    "aliases": [
+      "кепка"
+    ]
+  },
+  "hat.cap.green": {
+    "name": "Зеленая кепка",
+    "aliases": [
+      "кепка"
+    ]
+  },
+  "hat.cap.grey": {
+    "name": "Серая кепка",
+    "aliases": [
+      "кепка"
+    ]
+  },
+  "hat.cap": {
+    "name": "Кепка",
+    "aliases": [
+      "кепка"
+    ]
+  },
+  "hat.cap.red": {
+    "name": "Красная кепка",
+    "aliases": [
+      "кепка"
+    ]
+  },
+  "hat.cap.skin.cap.friendlycap": {
+    "name": "Кепка Friendly",
+    "aliases": [
+      "френдли кепка"
+    ]
+  },
+  "hat.cap.skin.cap.rescuecap": {
+    "name": "Кепка спасателя",
+    "aliases": [
+      "спасатель"
+    ]
+  },
+  "hat.dragonmask": {
+    "name": "Маска дракона",
+    "aliases": [
+      "маска дракона"
+    ]
+  },
+  "hat.gas.mask": {
+    "name": "Противогаз",
+    "aliases": [
+      "газмаск"
+    ]
+  },
+  "hat.horsemask": {
+    "name": "Маска лошади",
+    "aliases": [
+      "лошадь"
+    ]
+  },
+  "hat.miner": {
+    "name": "Шахтерская каска",
+    "aliases": [
+      "каска с фонарем"
+    ]
+  },
+  "hat.oxmask": {
+    "name": "Маска быка",
+    "aliases": [
+      "маска быка"
+    ]
+  },
+  "hat.rabbitmask": {
+    "name": "Маска кролика",
+    "aliases": [
+      "заяц"
+    ]
+  },
+  "hat.ratmask": {
+    "name": "Маска крысы",
+    "aliases": [
+      "крыса"
+    ]
+  },
+  "hat.snakemask": {
+    "name": "Маска змеи",
+    "aliases": [
+      "змея"
+    ]
+  },
+  "hat.tigermask": {
+    "name": "Маска тигра",
+    "aliases": [
+      "тигр"
+    ]
+  },
+  "hat.wellipets": {
+    "name": "Шляпа-лягушка",
+    "aliases": [
+      "лягушка"
+    ]
+  },
+  "hat.wolf": {
+    "name": "Волчий головной убор",
+    "aliases": [
+      "волчья шапка",
+      "маска волка"
+    ]
+  },
+  "hatchet.diver_.skin": {
+    "name": "Топорик дайвера",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "hatchet.frontier_.skin": {
+    "name": "Топорик фронтира",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "hatchet.lumberjack_axe.skin": {
+    "name": "Топорик лесоруба",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "hatchet": {
+    "name": "Железный топор",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "hazmat.krieg": {
+    "name": "Антирадиационный костюм Krieg",
+    "aliases": [
+      "хазмат"
+    ]
+  },
+  "hazmat.plushy": {
+    "name": "Плюшевый Хазмат",
+    "aliases": [
+      "игрушка"
+    ]
+  },
+  "hazmatsuit.arcticsuit": {
+    "name": "Арктический костюм",
+    "aliases": [
+      "зимний костюм"
+    ]
+  },
+  "hazmatsuit.diver": {
+    "name": "Костюм водолаза",
+    "aliases": [
+      "водолаз"
+    ]
+  },
+  "hazmatsuit.diver.skin": {
+    "name": "Костюм водолаза (скин)",
+    "aliases": [
+      "водолаз"
+    ]
+  },
+  "hazmatsuit.frontier": {
+    "name": "Костюм фронтира",
+    "aliases": [
+      "хазмат"
+    ]
+  },
+  "hazmatsuit.hazmat.arctic.skin": {
+    "name": "Арктический хазмат",
+    "aliases": [
+      "зимний хазмат"
+    ]
+  },
+  "hazmatsuit.hazmat.frontier.skin": {
+    "name": "Фронтир хазмат",
+    "aliases": [
+      "хазмат"
+    ]
+  },
+  "hazmatsuit.hazmat.lumberjack.skin": {
+    "name": "Хазмат дровосека",
+    "aliases": [
+      "хазмат"
+    ]
+  },
+  "hazmatsuit.hazmat.nomad.skin": {
+    "name": "Костюм кочевника",
+    "aliases": [
+      "кочевник"
+    ]
+  },
+  "hazmatsuit.hazmat.pilot.skin": {
+    "name": "Костюм пилота",
+    "aliases": [
+      "пилот"
+    ]
+  },
+  "hazmatsuit.hazmat.spacesuit.skin": {
+    "name": "Скафандр",
+    "aliases": [
+      "космонавт"
+    ]
+  },
+  "hazmatsuit.kick.hazmat.skin": {
+    "name": "Хазмат Kick",
+    "aliases": [
+      "кик хазмат"
+    ]
+  },
+  "hazmatsuit.kick": {
+    "name": "Костюм Kick",
+    "aliases": [
+      "кик"
+    ]
+  },
+  "hazmatsuit.krieg.hazmat.skin": {
+    "name": "Хазмат Krieg",
+    "aliases": [
+      "криг"
+    ]
+  },
+  "hazmatsuit.lumberjack": {
+    "name": "Костюм лесоруба",
+    "aliases": [
+      "лесоруб"
+    ]
+  },
+  "hazmatsuit.nomadsuit": {
+    "name": "Костюм кочевника",
+    "aliases": [
+      "кочевник"
+    ]
+  },
+  "hazmatsuit.pilot": {
+    "name": "Костюм пилота",
+    "aliases": [
+      "пилот"
+    ]
+  },
+  "hazmatsuit": {
+    "name": "Антирадиационный костюм",
+    "aliases": [
+      "хазмат",
+      "радик",
+      "химза",
+      "хазик"
+    ]
+  },
+  "hazmatsuit.spacesuit": {
+    "name": "Скафандр",
+    "aliases": [
+      "космонавт"
+    ]
+  },
+  "hazmatsuittwitch": {
+    "name": "Хазмат Twitch",
+    "aliases": [
+      "твич хазмат"
+    ]
+  },
+  "hazmatsuit_scientist": {
+    "name": "Костюм ученого",
+    "aliases": [
+      "синий хазмат"
+    ]
+  },
+  "hazmatsuit_scientist_arctic": {
+    "name": "Арктический костюм ученого",
+    "aliases": [
+      "синий хазмат"
+    ]
+  },
+  "hazmatsuit_scientist_naval": {
+    "name": "Морской костюм ученого",
+    "aliases": [
+      "синий хазмат"
+    ]
+  },
+  "hazmatsuit_scientist_nvgm": {
+    "name": "Костюм ученого с ПНВ",
+    "aliases": [
+      "синий хазмат"
+    ]
+  },
+  "hazmatsuit_scientist_peacekeeper": {
+    "name": "Костюм миротворца",
+    "aliases": [
+      "синий хазмат"
+    ]
+  },
+  "hazmatyoutooz": {
+    "name": "Фигурка Youtooz Хазмат",
+    "aliases": [
+      "фигурка"
+    ]
+  },
+  "head.bag": {
+    "name": "Мешок на голову",
+    "aliases": [
+      "мешок"
+    ]
+  },
+  "healingtea.advanced": {
+    "name": "Продвинутый лечебный чай",
+    "aliases": [
+      "лечебный чай"
+    ]
+  },
+  "healingtea": {
+    "name": "Лечебный чай",
+    "aliases": [
+      "чай на хп"
+    ]
+  },
+  "healingtea.pure": {
+    "name": "Чистый лечебный чай",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "heartballoon2025": {
+    "name": "Шар-сердце",
+    "aliases": [
+      "шарик"
+    ]
+  },
+  "heavy.plate.helmet": {
+    "name": "Тяжелый шлем",
+    "aliases": [
+      "железное ведро",
+      "тяжелый шлем"
+    ]
+  },
+  "heavy.plate.jacket": {
+    "name": "Тяжелый нагрудник",
+    "aliases": [
+      "железный нагрудник",
+      "тяжелая броня"
+    ]
+  },
+  "heavy.plate.pants": {
+    "name": "Тяжелые поножи",
+    "aliases": [
+      "железные штаны"
+    ]
+  },
+  "heavy.scientist.plushie": {
+    "name": "Плюшевый тяжелый ученый",
+    "aliases": [
+      "игрушка"
+    ]
+  },
+  "heavyscientistyoutooz": {
+    "name": "Фигурка Тяжелого ученого",
+    "aliases": [
+      "фигурка"
+    ]
+  },
+  "hitchtroughcombo": {
+    "name": "Кормушка",
+    "aliases": [
+      "стойло"
+    ]
+  },
+  "hmlmg": {
+    "name": "Самодельный ручной пулемет",
+    "aliases": [
+      "хмлг",
+      "пулемет"
+    ]
+  },
+  "hobobarrel": {
+    "name": "Бочка-костер",
+    "aliases": [
+      "горящая бочка"
+    ]
+  },
+  "homingmissile.launcher": {
+    "name": "Самонаводящаяся ракетница",
+    "aliases": [
+      "стингер"
+    ]
+  },
+  "honey": {
+    "name": "Мед",
+    "aliases": [
+      "мед"
+    ]
+  },
+  "honeycomb": {
+    "name": "Соты",
+    "aliases": [
+      "соты"
+    ]
+  },
+  "hoodie.black": {
+    "name": "Черная толстовка",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie.blue": {
+    "name": "Синяя толстовка",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie.green": {
+    "name": "Зеленая толстовка",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie": {
+    "name": "Толстовка",
+    "aliases": [
+      "худи",
+      "кофта"
+    ]
+  },
+  "hoodie.skin.bchillz": {
+    "name": "Толстовка Bchillz!",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie.skin.bloody": {
+    "name": "Кровавая толстовка",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie.skin.cuda87": {
+    "name": "Толстовка Cuda87",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie.skin.rhinocrunch": {
+    "name": "Толстовка Rhinocrunch",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie.skin.safetycrew": {
+    "name": "Толстовка Safety Crew",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hoodie.skin.skeleton": {
+    "name": "Толстовка со скелетом",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "hopper": {
+    "name": "Воронка",
+    "aliases": [
+      "хоппер"
+    ]
+  },
+  "horse.armor.lny26": {
+    "name": "Броня для лошади (LNY26)",
+    "aliases": [
+      "броня"
+    ]
+  },
+  "horse.armor.roadsign.horse.armor.lny26.sitem": {
+    "name": "Броня из дорожных знаков",
+    "aliases": [
+      "броня"
+    ]
+  },
+  "horse.armor.roadsign": {
+    "name": "Броня для лошади из дорожных знаков",
+    "aliases": [
+      "броня на коня"
+    ]
+  },
+  "horse.armor.wood": {
+    "name": "Деревянная броня для лошади",
+    "aliases": [
+      "броня на коня"
+    ]
+  },
+  "horse.costume": {
+    "name": "Костюм лошади",
+    "aliases": [
+      "лошадь"
+    ]
+  },
+  "horse": {
+    "name": "Лошадь",
+    "aliases": [
+      "конь"
+    ]
+  },
+  "horse.saddle.double": {
+    "name": "Двойное седло",
+    "aliases": [
+      "седло на двоих"
+    ]
+  },
+  "horse.saddle": {
+    "name": "Седло",
+    "aliases": [
+      "седло"
+    ]
+  },
+  "horse.saddle.single": {
+    "name": "Одинарное седло",
+    "aliases": [
+      "седло"
+    ]
+  },
+  "horse.saddlebag": {
+    "name": "Седельная сумка",
+    "aliases": [
+      "сумка для лошади"
+    ]
+  },
+  "horse.shoes.advanced": {
+    "name": "Продвинутые подковы",
+    "aliases": [
+      "подковы"
+    ]
+  },
+  "horse.shoes.basic": {
+    "name": "Простые подковы",
+    "aliases": [
+      "подковы"
+    ]
+  },
+  "horsedung": {
+    "name": "Конский навоз",
+    "aliases": [
+      "говно",
+      "навоз"
+    ]
+  },
+  "horsemeat.burned": {
+    "name": "Сгоревшая конина",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "horsemeat.cooked": {
+    "name": "Жареная конина",
+    "aliases": [
+      "мясо коня"
+    ]
+  },
+  "horsemeat.raw": {
+    "name": "Сырая конина",
+    "aliases": [
+      "сырое мясо"
+    ]
+  },
+  "horsemeat.spoiled": {
+    "name": "Испорченная конина",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "hosetool": {
+    "name": "Шланг",
+    "aliases": [
+      "проводник воды"
+    ]
+  },
+  "hq.metal.ore": {
+    "name": "Руда МВК",
+    "aliases": [
+      "мвк руда",
+      "хайкволити"
+    ]
+  },
+  "humanmeat.burned": {
+    "name": "Сгоревшее человеческое мясо",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "humanmeat.cooked": {
+    "name": "Жареная человечина",
+    "aliases": [
+      "человечина"
+    ]
+  },
+  "humanmeat.raw": {
+    "name": "Сырая человечина",
+    "aliases": [
+      "мясо кепки"
+    ]
+  },
+  "humanmeat.spoiled": {
+    "name": "Испорченная человечина",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "huntingtrophylarge": {
+    "name": "Охотничий трофей (Большой)",
+    "aliases": [
+      "голова"
+    ]
+  },
+  "huntingtrophysmall": {
+    "name": "Охотничий трофей (Малый)",
+    "aliases": [
+      "трофей"
+    ]
+  },
+  "icepick.salvaged": {
+    "name": "Самодельный ледоруб",
+    "aliases": [
+      "ледоруб",
+      "ледик"
+    ]
+  },
+  "improvised.shield": {
+    "name": "Самодельный щит",
+    "aliases": [
+      "щит"
+    ]
+  },
+  "industrial.combiner": {
+    "name": "Промышленный объединитель",
+    "aliases": [
+      "комбайнер"
+    ]
+  },
+  "industrial.conveyor": {
+    "name": "Промышленный конвейер",
+    "aliases": [
+      "конвейер"
+    ]
+  },
+  "industrial.crafter": {
+    "name": "Промышленный автокрафтер",
+    "aliases": [
+      "крафтер"
+    ]
+  },
+  "industrial.splitter": {
+    "name": "Промышленный разветвитель",
+    "aliases": [
+      "сплиттер"
+    ]
+  },
+  "industrial.wall.light.blue": {
+    "name": "Настенный светильник (Синий)",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "industrial.wall.light.green": {
+    "name": "Настенный светильник (Зеленый)",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "industrial.wall.light.industrial.wall.lamp.blue.skin": {
+    "name": "Синий светильник",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "industrial.wall.light.industrial.wall.lamp.green.skin": {
+    "name": "Зеленый светильник",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "industrial.wall.light.industrial.wall.lamp.red.skin": {
+    "name": "Красный светильник",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "industrial.wall.light": {
+    "name": "Промышленный светильник",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "industrial.wall.light.red": {
+    "name": "Красный светильник",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "innertube.camo": {
+    "name": "Надувной круг (Камуфляж)",
+    "aliases": [
+      "круг"
+    ]
+  },
+  "innertube.donut": {
+    "name": "Надувной круг (Пончик)",
+    "aliases": [
+      "пончик"
+    ]
+  },
+  "innertube.horse": {
+    "name": "Надувной круг (Лошадь)",
+    "aliases": [
+      "круг"
+    ]
+  },
+  "innertube": {
+    "name": "Надувной круг",
+    "aliases": [
+      "круг"
+    ]
+  },
+  "innertube.tire": {
+    "name": "Надувной круг (Шина)",
+    "aliases": [
+      "покрышка"
+    ]
+  },
+  "innertube.unicorn": {
+    "name": "Надувной круг (Единорог)",
+    "aliases": [
+      "круг"
+    ]
+  },
+  "innertube.watermelon": {
+    "name": "Надувной круг (Арбуз)",
+    "aliases": [
+      "арбуз"
+    ]
+  },
+  "innertube.zebra": {
+    "name": "Надувной круг (Зебра)",
+    "aliases": [
+      "круг"
+    ]
+  },
+  "iotable": {
+    "name": "Стол с разъемами",
+    "aliases": [
+      "io стол"
+    ]
+  },
+  "jacket.blue": {
+    "name": "Синяя куртка",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jacket.desertcamo": {
+    "name": "Куртка (Пустынный камуфляж)",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jacket.green": {
+    "name": "Зеленая куртка",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jacket.hunter": {
+    "name": "Охотничья куртка",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jacket.multicam": {
+    "name": "Мультикам куртка",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jacket": {
+    "name": "Куртка",
+    "aliases": [
+      "курточка"
+    ]
+  },
+  "jacket.red": {
+    "name": "Красная куртка",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jacket.skin.provocateur": {
+    "name": "Куртка Provocateur",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jacket.snow.black": {
+    "name": "Черная зимняя куртка",
+    "aliases": [
+      "пуховик"
+    ]
+  },
+  "jacket.snow": {
+    "name": "Зимняя куртка",
+    "aliases": [
+      "зимка",
+      "пуховик"
+    ]
+  },
+  "jacket.snow.woodland": {
+    "name": "Лесная зимняя куртка",
+    "aliases": [
+      "зимка"
+    ]
+  },
+  "jacket.snowcamo": {
+    "name": "Зимний камуфляж",
+    "aliases": [
+      "белая куртка"
+    ]
+  },
+  "jacket.urbancamo": {
+    "name": "Городская камуфляжная куртка",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "jackhammer": {
+    "name": "Отбойный молоток",
+    "aliases": [
+      "бур",
+      "джекхаммер"
+    ]
+  },
+  "jackolantern.angry": {
+    "name": "Злой светильник Джека",
+    "aliases": [
+      "тыква"
+    ]
+  },
+  "jackolantern.happy": {
+    "name": "Счастливый светильник Джека",
+    "aliases": [
+      "тыква"
+    ]
+  },
+  "jar.pickle": {
+    "name": "Банка огурцов",
+    "aliases": [
+      "огурцы"
+    ]
+  },
+  "jumpsuit.suit.blue": {
+    "name": "Синий комбинезон",
+    "aliases": [
+      "комбез"
+    ]
+  },
+  "jumpsuit.suit": {
+    "name": "Комбинезон",
+    "aliases": [
+      "комбез"
+    ]
+  },
+  "jumpsuit.waterwellnpc": {
+    "name": "Комбинезон NPC у колонки",
+    "aliases": [
+      "комбез"
+    ]
+  },
+  "jungle.rock": {
+    "name": "Камень из джунглей",
+    "aliases": [
+      "камень"
+    ]
+  },
+  "kayak": {
+    "name": "Каяк",
+    "aliases": [
+      "лодка"
+    ]
+  },
+  "keycard_blue": {
+    "name": "Синяя карта доступа",
+    "aliases": [
+      "синяя карта",
+      "блюка"
+    ]
+  },
+  "keycard_green": {
+    "name": "Зеленая карта доступа",
+    "aliases": [
+      "зеленая карта",
+      "гринка"
+    ]
+  },
+  "keycard_red": {
+    "name": "Красная карта доступа",
+    "aliases": [
+      "красная карта",
+      "редка"
+    ]
+  },
+  "knife.bone.bone.knife.obsidian.skin": {
+    "name": "Обсидиановый нож",
+    "aliases": [
+      "костяной нож"
+    ]
+  },
+  "knife.bone.obsidian": {
+    "name": "Обсидиановый костяной нож",
+    "aliases": [
+      "нож"
+    ]
+  },
+  "knife.bone": {
+    "name": "Костяной нож",
+    "aliases": [
+      "костянка",
+      "нож"
+    ]
+  },
+  "knife.butcher": {
+    "name": "Тесак",
+    "aliases": [
+      "тесак"
+    ]
+  },
+  "knife.combat": {
+    "name": "Боевой нож",
+    "aliases": [
+      "ножик"
+    ]
+  },
+  "knife.combat.sunken.skin": {
+    "name": "Затонувший боевой нож",
+    "aliases": [
+      "нож"
+    ]
+  },
+  "knife.skinning": {
+    "name": "Разделочный нож",
+    "aliases": [
+      "нож для шкуры"
+    ]
+  },
+  "knightsarmour.helmet": {
+    "name": "Шлем рыцаря",
+    "aliases": [
+      "рыцарский шлем"
+    ]
+  },
+  "knightsarmour.skirt": {
+    "name": "Рыцарская юбка",
+    "aliases": [
+      "юбка рыцаря"
+    ]
+  },
+  "knighttorso.armour": {
+    "name": "Нагрудник рыцаря",
+    "aliases": [
+      "броня рыцаря"
+    ]
+  },
+  "krieg.chainsword": {
+    "name": "Цепной меч Крига",
+    "aliases": [
+      "меч"
+    ]
+  },
+  "krieg.shotgun": {
+    "name": "Дробовик Крига",
+    "aliases": [
+      "помповик"
+    ]
+  },
+  "krieg.storage.horizontal": {
+    "name": "Горизонтальный ящик Крига",
+    "aliases": [
+      "ящик"
+    ]
+  },
+  "krieg.storage.vertical": {
+    "name": "Вертикальный ящик Крига",
+    "aliases": [
+      "шкафчик"
+    ]
+  },
+  "kriegbackpack": {
+    "name": "Рюкзак Крига",
+    "aliases": [
+      "рюкзак"
+    ]
+  },
+  "ladder.wooden.boat": {
+    "name": "Веревочная лестница для лодки",
+    "aliases": [
+      "лестница"
+    ]
+  },
+  "ladder.wooden.wall": {
+    "name": "Штурмовая лестница",
+    "aliases": [
+      "лестница"
+    ]
+  },
+  "lantern": {
+    "name": "Фонарь",
+    "aliases": [
+      "лампа"
+    ]
+  },
+  "largebackpack.krieg.large.backpack.skin": {
+    "name": "Большой рюкзак Крига",
+    "aliases": [
+      "большой портфель"
+    ]
+  },
+  "largebackpack": {
+    "name": "Большой рюкзак",
+    "aliases": [
+      "портфель"
+    ]
+  },
+  "largecandles": {
+    "name": "Большие свечи",
+    "aliases": [
+      "свечи"
+    ]
+  },
+  "largemedkit": {
+    "name": "Большая аптечка",
+    "aliases": [
+      "аптечка",
+      "медпак"
+    ]
+  },
+  "laserlight": {
+    "name": "Лазерное освещение",
+    "aliases": [
+      "лазер"
+    ]
+  },
+  "latexballoon2025": {
+    "name": "Воздушный шарик",
+    "aliases": [
+      "шарик"
+    ]
+  },
+  "latexclumpballoon2025": {
+    "name": "Связка шаров",
+    "aliases": [
+      "шары"
+    ]
+  },
+  "lavenderidtag": {
+    "name": "Лавандовый бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "leather": {
+    "name": "Кожа",
+    "aliases": [
+      "шкурки"
+    ]
+  },
+  "legacy bow": {
+    "name": "Классический лук",
+    "aliases": [
+      "лук"
+    ]
+  },
+  "legacy.shelter.wood": {
+    "name": "Деревянное укрытие Legacy",
+    "aliases": [
+      "кибитка",
+      "шелтер"
+    ]
+  },
+  "legacyfurnace": {
+    "name": "Печка Legacy",
+    "aliases": [
+      "печь"
+    ]
+  },
+  "lightup.large": {
+    "name": "Большая подсветка",
+    "aliases": []
+  },
+  "lightup.xl": {
+    "name": "Сверхбольшая подсветка",
+    "aliases": []
+  },
+  "lightup.xxl": {
+    "name": "Гигантская подсветка",
+    "aliases": []
+  },
+  "lightupframe.medium": {
+    "name": "Светящаяся рамка",
+    "aliases": []
+  },
+  "lightupframe.small": {
+    "name": "Маленькая светящаяся рамка",
+    "aliases": []
+  },
+  "lightupframe.standing": {
+    "name": "Светящаяся рамка напольная",
+    "aliases": []
+  },
+  "lightupmirror.large": {
+    "name": "Большое светящееся зеркало",
+    "aliases": []
+  },
+  "lightupmirror.medium": {
+    "name": "Среднее светящееся зеркало",
+    "aliases": []
+  },
+  "lightupmirror.small": {
+    "name": "Малое светящееся зеркало",
+    "aliases": []
+  },
+  "lightupmirror.standing": {
+    "name": "Светящееся напольное зеркало",
+    "aliases": []
+  },
+  "lmg.m249": {
+    "name": "Пулемет M249",
+    "aliases": [
+      "пулик",
+      "м249"
+    ]
+  },
+  "lock.code.a.pilot": {
+    "name": "Кодовый замок (Пилот)",
+    "aliases": [
+      "кодолок"
+    ]
+  },
+  "lock.code.a.pilot.skin": {
+    "name": "Кодовый замок пилота (Скин)",
+    "aliases": []
+  },
+  "lock.code": {
+    "name": "Кодовый замок",
+    "aliases": [
+      "кодолок",
+      "замок с кодом"
+    ]
+  },
+  "lock.key": {
+    "name": "Ключевой замок",
+    "aliases": [
+      "кейс",
+      "обычный замок"
+    ]
+  },
+  "locker": {
+    "name": "Шкафчик",
+    "aliases": [
+      "локер",
+      "оружейный шкаф"
+    ]
+  },
+  "locomotive": {
+    "name": "Локомотив",
+    "aliases": [
+      "поезд",
+      "паровоз"
+    ]
+  },
+  "longsword": {
+    "name": "Длинный меч",
+    "aliases": [
+      "меч"
+    ]
+  },
+  "lowgradefuel": {
+    "name": "Топливо низкого качества",
+    "aliases": [
+      "тнк",
+      "топляк",
+      "жир"
+    ]
+  },
+  "lr300.item.lr330.space.skin": {
+    "name": "Штурмовая винтовка LR-300 (Space)",
+    "aliases": [
+      "лрка"
+    ]
+  },
+  "lumberjack hoodie": {
+    "name": "Толстовка дровосека",
+    "aliases": [
+      "худи"
+    ]
+  },
+  "lumberjack.hatchet": {
+    "name": "Топорик дровосека",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "lumberjack.pickaxe": {
+    "name": "Кирка дровосека",
+    "aliases": [
+      "кирка"
+    ]
+  },
+  "lunar.firecrackers": {
+    "name": "Петарды",
+    "aliases": [
+      "хлопушки"
+    ]
+  },
+  "mace.baseballbat": {
+    "name": "Бейсбольная бита",
+    "aliases": [
+      "бита"
+    ]
+  },
+  "mace.baseballbat.skin": {
+    "name": "Бейсбольная бита (Скин)",
+    "aliases": [
+      "бита"
+    ]
+  },
+  "mace": {
+    "name": "Булава",
+    "aliases": [
+      "палица"
+    ]
+  },
+  "machete": {
+    "name": "Мачете",
+    "aliases": [
+      "тесак"
+    ]
+  },
+  "mailbox": {
+    "name": "Почтовый ящик",
+    "aliases": [
+      "ящик"
+    ]
+  },
+  "mannequin": {
+    "name": "Манекен",
+    "aliases": [
+      "манекен"
+    ]
+  },
+  "map": {
+    "name": "Карта",
+    "aliases": [
+      "мапа"
+    ]
+  },
+  "mask.balaclava.camo.desert.skin": {
+    "name": "Пустынная балаклава",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.camo.forest.skin": {
+    "name": "Лесная балаклава",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.check.red.skin": {
+    "name": "Красная клетчатая балаклава",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava": {
+    "name": "Балаклава",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.balaclava.skin.balaclava.muricabalaclava": {
+    "name": "Балаклава Murica",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.skin.balaclava.nightmarebalaclava": {
+    "name": "Балаклава Nightmare",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.skin.balaclava.rorschachskull": {
+    "name": "Балаклава Rorschach",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.skin.balaclava.skinbalaclava": {
+    "name": "Телесная балаклава",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.skin.balaclava.therustknight": {
+    "name": "Балаклава рыцаря Rust",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.skin.balaclava.valentinebalaclava": {
+    "name": "Балаклава Valentine",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.skin.balaclava.zipperface": {
+    "name": "Балаклава Zipper",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.balaclava.stripe.yellow.skin": {
+    "name": "Желтая полосатая балаклава",
+    "aliases": [
+      "балаклава"
+    ]
+  },
+  "mask.bandana.black.skin": {
+    "name": "Черная бандана",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.blue.skin": {
+    "name": "Синяя бандана",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.camo.desert.skin": {
+    "name": "Пустынная бандана",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.camo.forest.skin": {
+    "name": "Лесная бандана",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.camo.snow.skin": {
+    "name": "Зимняя бандана",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.checkered.black.skin": {
+    "name": "Черная клетчатая бандана",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.green.skin": {
+    "name": "Зеленая бандана",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana": {
+    "name": "Бандана-маска",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.skin.bandana.creepyclownbandana": {
+    "name": "Бандана клоуна",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.skin.bandana.wizardbandana": {
+    "name": "Бандана волшебника",
+    "aliases": [
+      "бандана"
+    ]
+  },
+  "mask.bandana.skull.black.skin": {
+    "name": "Бандана с черепом (Черная)",
+    "aliases": [
+      "бандана с черепом"
+    ]
+  },
+  "mask.bandana.skull.red.skin": {
+    "name": "Бандана с черепом (Красная)",
+    "aliases": [
+      "бандана с черепом"
+    ]
+  },
+  "maxhealthtea.advanced": {
+    "name": "Продвинутый чай максимального здоровья",
+    "aliases": [
+      "чай на макс хп"
+    ]
+  },
+  "maxhealthtea": {
+    "name": "Чай максимального здоровья",
+    "aliases": [
+      "чай на макс хп"
+    ]
+  },
+  "maxhealthtea.pure": {
+    "name": "Чистый чай максимального здоровья",
+    "aliases": [
+      "лучший чай на макс хп"
+    ]
+  },
+  "meat.boar": {
+    "name": "Свинина",
+    "aliases": [
+      "мясо кабана"
+    ]
+  },
+  "meat.pork.burned": {
+    "name": "Сгоревшая свинина",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "meat.pork.cooked": {
+    "name": "Жареная свинина",
+    "aliases": [
+      "мясо"
+    ]
+  },
+  "medieval.box.wooden.large": {
+    "name": "Большой средневековый ящик",
+    "aliases": [
+      "большой ящик"
+    ]
+  },
+  "medieval.door.double.hinged.metal": {
+    "name": "Средневековая двойная металлическая дверь",
+    "aliases": [
+      "двойная дверь"
+    ]
+  },
+  "medieval.door.hinged.metal": {
+    "name": "Средневековая металлическая дверь",
+    "aliases": [
+      "металлическая дверь"
+    ]
+  },
+  "megaphone": {
+    "name": "Мегафон",
+    "aliases": [
+      "рупор"
+    ]
+  },
+  "metal.detector": {
+    "name": "Металлоискатель",
+    "aliases": [
+      "миноискатель"
+    ]
+  },
+  "metal.facemask.hockey": {
+    "name": "Хоккейная маска",
+    "aliases": [
+      "маска хоккеиста"
+    ]
+  },
+  "metal.facemask.hockey.skin": {
+    "name": "Хоккейная маска (Скин)",
+    "aliases": [
+      "маска"
+    ]
+  },
+  "metal.facemask.icemask": {
+    "name": "Ледяная маска",
+    "aliases": [
+      "маска"
+    ]
+  },
+  "metal.facemask.icemask.skin": {
+    "name": "Ледяная маска (Скин)",
+    "aliases": [
+      "маска"
+    ]
+  },
+  "metal.facemask": {
+    "name": "Металлическая маска",
+    "aliases": [
+      "мвк маска"
+    ]
+  },
+  "metal.fragments": {
+    "name": "Фрагменты металла",
+    "aliases": [
+      "железо",
+      "фраги"
+    ]
+  },
+  "metal.ore": {
+    "name": "Металлическая руда",
+    "aliases": [
+      "руда"
+    ]
+  },
+  "metal.plate.torso.icevest": {
+    "name": "Ледяной нагрудник",
+    "aliases": [
+      "нагрудник"
+    ]
+  },
+  "metal.plate.torso.icevest.skin": {
+    "name": "Ледяной нагрудник (Скин)",
+    "aliases": [
+      "нагрудник"
+    ]
+  },
+  "metal.plate.torso": {
+    "name": "Металлический нагрудник",
+    "aliases": [
+      "мвк нагрудник"
+    ]
+  },
+  "metal.refined": {
+    "name": "Металл высокого качества",
+    "aliases": [
+      "мвк"
+    ]
+  },
+  "metal.shield": {
+    "name": "Металлический щит",
+    "aliases": [
+      "щит"
+    ]
+  },
+  "metalblade": {
+    "name": "Металлическое лезвие",
+    "aliases": [
+      "лезвие"
+    ]
+  },
+  "metalpipe": {
+    "name": "Металлическая труба",
+    "aliases": [
+      "труба"
+    ]
+  },
+  "metalspring": {
+    "name": "Металлическая пружина",
+    "aliases": [
+      "пружина"
+    ]
+  },
+  "microphonestand": {
+    "name": "Стойка для микрофона",
+    "aliases": [
+      "микрофон"
+    ]
+  },
+  "military flamethrower": {
+    "name": "Военный огнемет",
+    "aliases": [
+      "огнемет"
+    ]
+  },
+  "minecart.planter": {
+    "name": "Вагонетка-грядка",
+    "aliases": [
+      "вагонетка"
+    ]
+  },
+  "mini fridge": {
+    "name": "Мини-холодильник",
+    "aliases": [
+      "холодос"
+    ]
+  },
+  "minicopter": {
+    "name": "Миникоптер",
+    "aliases": [
+      "коптер"
+    ]
+  },
+  "minicrossbow": {
+    "name": "Мини-арбалет",
+    "aliases": [
+      "арбик"
+    ]
+  },
+  "minigun": {
+    "name": "Миниган",
+    "aliases": [
+      "пулемет"
+    ]
+  },
+  "minihelicopter.repair": {
+    "name": "Ремонт миникоптера",
+    "aliases": [
+      "починка"
+    ]
+  },
+  "mining.pumpjack": {
+    "name": "Нефтяная вышка",
+    "aliases": [
+      "качалка",
+      "помпа"
+    ]
+  },
+  "mining.quarry": {
+    "name": "Горнорудный карьер",
+    "aliases": [
+      "карьер"
+    ]
+  },
+  "mintidtag": {
+    "name": "Мятный бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "mixedclumpballoon2025": {
+    "name": "Смешанные шарики 2025",
+    "aliases": [
+      "шарики"
+    ]
+  },
+  "mixingtable": {
+    "name": "Стол для смешивания",
+    "aliases": [
+      "хим стол"
+    ]
+  },
+  "mlrs": {
+    "name": "РСЗО",
+    "aliases": [
+      "млрс"
+    ]
+  },
+  "mobilephone": {
+    "name": "Мобильный телефон",
+    "aliases": [
+      "телефон"
+    ]
+  },
+  "modularcarlift": {
+    "name": "Подъемник для автомобилей",
+    "aliases": [
+      "подъемник"
+    ]
+  },
+  "motorbike": {
+    "name": "Мотоцикл",
+    "aliases": [
+      "мотик"
+    ]
+  },
+  "motorbike_sidecar": {
+    "name": "Мотоцикл с коляской",
+    "aliases": [
+      "коляска"
+    ]
+  },
+  "movembermoustache": {
+    "name": "Усы",
+    "aliases": [
+      "усы"
+    ]
+  },
+  "movembermoustachecard": {
+    "name": "Карточка: Усы",
+    "aliases": []
+  },
+  "mrspice.can": {
+    "name": "Банка специй",
+    "aliases": [
+      "специи"
+    ]
+  },
+  "multiplegrenadelauncher": {
+    "name": "Многозарядный гранатомет",
+    "aliases": [
+      "гранатомет"
+    ]
+  },
+  "mummymask": {
+    "name": "Маска мумии",
+    "aliases": [
+      "маска"
+    ]
+  },
+  "mushroom": {
+    "name": "Гриб",
+    "aliases": [
+      "гриб"
+    ]
+  },
+  "neonsigntr": {
+    "name": "Неоновая вывеска",
+    "aliases": [
+      "неон"
+    ]
+  },
+  "newyeargong": {
+    "name": "Новогодний гонг",
+    "aliases": [
+      "гонг"
+    ]
+  },
+  "nightvisiongoggles": {
+    "name": "Прибор ночного видения",
+    "aliases": [
+      "пнв"
+    ]
+  },
+  "note": {
+    "name": "Записка",
+    "aliases": [
+      "бумажка"
+    ]
+  },
+  "nucleus": {
+    "name": "Ядро",
+    "aliases": [
+      "ядро"
+    ]
+  },
+  "orangeidtag": {
+    "name": "Оранжевый бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "orchid": {
+    "name": "Орхидея",
+    "aliases": [
+      "цветок"
+    ]
+  },
+  "oretea.advanced": {
+    "name": "Продвинутый рудный чай",
+    "aliases": [
+      "чай на руду"
+    ]
+  },
+  "oretea": {
+    "name": "Рудный чай",
+    "aliases": [
+      "чай на руду"
+    ]
+  },
+  "oretea.pure": {
+    "name": "Чистый рудный чай",
+    "aliases": [
+      "топовый чай на руду"
+    ]
+  },
+  "oubreak_scientist": {
+    "name": "Ученый-вирусолог",
+    "aliases": [
+      "ученый"
+    ]
+  },
+  "outbreak.sprayer": {
+    "name": "Распылитель",
+    "aliases": [
+      "опрыскиватель"
+    ]
+  },
+  "paddle": {
+    "name": "Весло",
+    "aliases": [
+      "весло"
+    ]
+  },
+  "paddlingpool.hottub": {
+    "name": "Джакузи",
+    "aliases": [
+      "бассейн"
+    ]
+  },
+  "paddlingpool": {
+    "name": "Надувной бассейн",
+    "aliases": [
+      "бассейн"
+    ]
+  },
+  "paddlingpool.rainbow": {
+    "name": "Радужный бассейн",
+    "aliases": [
+      "бассейн"
+    ]
+  },
+  "paddlingpool.seascape": {
+    "name": "Морской бассейн",
+    "aliases": [
+      "бассейн"
+    ]
+  },
+  "paddlingpool.spawnpool": {
+    "name": "Бассейн возрождения",
+    "aliases": [
+      "бассейн"
+    ]
+  },
+  "paintabletarget.reactive": {
+    "name": "Мишень (можно рисовать)",
+    "aliases": [
+      "мишень"
+    ]
+  },
+  "paintballgun": {
+    "name": "Пейнтбольное ружье",
+    "aliases": [
+      "пейнтболка"
+    ]
+  },
+  "paintballoveralls.suit": {
+    "name": "Пейнтбольный комбинезон",
+    "aliases": [
+      "комбез"
+    ]
+  },
+  "pants.forestcamo": {
+    "name": "Штаны (Лесной камуфляж)",
+    "aliases": [
+      "штаны"
+    ]
+  },
+  "pants.jeans": {
+    "name": "Джинсы",
+    "aliases": [
+      "штаны"
+    ]
+  },
+  "pants": {
+    "name": "Штаны",
+    "aliases": [
+      "брюки"
+    ]
+  },
+  "pants.shorts": {
+    "name": "Шорты",
+    "aliases": [
+      "шорты"
+    ]
+  },
+  "pants.skin.bluetrackv.2": {
+    "name": "Спортивные штаны (Синие)",
+    "aliases": [
+      "спортивки"
+    ]
+  },
+  "pants.skin.oldprisoner": {
+    "name": "Штаны заключенного",
+    "aliases": [
+      "штаны"
+    ]
+  },
+  "pants.skin.punkrock": {
+    "name": "Штаны панк-рока",
+    "aliases": [
+      "штаны"
+    ]
+  },
+  "pants.snowcamo": {
+    "name": "Штаны (Зимний камуфляж)",
+    "aliases": [
+      "белые штаны"
+    ]
+  },
+  "pants.urbancamo": {
+    "name": "Штаны (Городской камуфляж)",
+    "aliases": [
+      "штаны"
+    ]
+  },
+  "paper": {
+    "name": "Бумага",
+    "aliases": [
+      "лист"
+    ]
+  },
+  "parachute": {
+    "name": "Парашют",
+    "aliases": [
+      "парашют"
+    ]
+  },
+  "partyhat": {
+    "name": "Праздничный колпак",
+    "aliases": [
+      "шляпа"
+    ]
+  },
+  "photo": {
+    "name": "Фотография",
+    "aliases": [
+      "фотка"
+    ]
+  },
+  "photoframe.landscape": {
+    "name": "Фоторамка (пейзаж)",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "photoframe.large": {
+    "name": "Большая фоторамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "photoframe.portrait": {
+    "name": "Фоторамка (портрет)",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "piano": {
+    "name": "Пианино",
+    "aliases": [
+      "фортепиано"
+    ]
+  },
+  "pickaxe.diver_.skin": {
+    "name": "Кирка водолаза",
+    "aliases": [
+      "кирка"
+    ]
+  },
+  "pickaxe.lumberjack_pick.skin": {
+    "name": "Кирка лесоруба",
+    "aliases": [
+      "кирка"
+    ]
+  },
+  "pickaxe": {
+    "name": "Кирка",
+    "aliases": [
+      "ледоруб",
+      "кирка"
+    ]
+  },
+  "pie.apple": {
+    "name": "Яблочный пирог",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.bear": {
+    "name": "Пирог из медвежатины",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.bigcat": {
+    "name": "Пирог из крупной кошки",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.chicken": {
+    "name": "Куриный пирог",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.crocodile": {
+    "name": "Пирог из крокодила",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.fish": {
+    "name": "Рыбный пирог",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.hunters": {
+    "name": "Охотничий пирог",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.pork": {
+    "name": "Пирог из свинины",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.pumpkin": {
+    "name": "Тыквенный пирог",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pie.survivors": {
+    "name": "Пирог выжившего",
+    "aliases": [
+      "пирог"
+    ]
+  },
+  "pilot.hazmat.box.wooden": {
+    "name": "Деревянный ящик пилота",
+    "aliases": [
+      "ящик"
+    ]
+  },
+  "pinata": {
+    "name": "Пиньята",
+    "aliases": [
+      "пиньята"
+    ]
+  },
+  "pinkidtag": {
+    "name": "Розовый бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "pipetool": {
+    "name": "Инструмент для труб",
+    "aliases": [
+      "трубопроводчик"
+    ]
+  },
+  "pistol.eoka": {
+    "name": "Самодельный пистолет",
+    "aliases": [
+      "чирка",
+      "одноразка",
+      "еока"
+    ]
+  },
+  "pistol.m92": {
+    "name": "Пистолет M92",
+    "aliases": [
+      "беретта",
+      "м92"
+    ]
+  },
+  "pistol.nailgun": {
+    "name": "Гвоздемет",
+    "aliases": [
+      "нейлган"
+    ]
+  },
+  "pistol.prototype17": {
+    "name": "Пистолет Prototype 17",
+    "aliases": [
+      "прототип",
+      "глок"
+    ]
+  },
+  "pistol.python": {
+    "name": "Револьвер Питон",
+    "aliases": [
+      "питон"
+    ]
+  },
+  "pistol.revolver": {
+    "name": "Револьвер",
+    "aliases": [
+      "ревик"
+    ]
+  },
+  "pistol.revolver.skin.revolver.revolveroutback": {
+    "name": "Револьвер Outback",
+    "aliases": [
+      "ревик"
+    ]
+  },
+  "pistol.semiauto.a.m15": {
+    "name": "Полуавтоматический пистолет (M15)",
+    "aliases": [
+      "сап",
+      "пестик"
+    ]
+  },
+  "pistol.semiauto.pistol_semiauto.a.m15.skin": {
+    "name": "Полуавтоматический пистолет M15",
+    "aliases": [
+      "сап"
+    ]
+  },
+  "pistol.semiauto": {
+    "name": "Полуавтоматический пистолет",
+    "aliases": [
+      "сап",
+      "пестик"
+    ]
+  },
+  "pistol.semiauto.skin.semiautopistol.contaminationpistol": {
+    "name": "Пистолет Contamination",
+    "aliases": [
+      "сап"
+    ]
+  },
+  "pistol.semiauto.skin.semiautopistol.halloweenbat": {
+    "name": "Пистолет Halloween Bat",
+    "aliases": [
+      "сап"
+    ]
+  },
+  "pistol.semiauto.skin.semiautopistol.reapernotepistol": {
+    "name": "Пистолет Reaper Note",
+    "aliases": [
+      "сап"
+    ]
+  },
+  "pistol.semiauto.skin.semiautopistol.redshine": {
+    "name": "Пистолет Red Shine",
+    "aliases": [
+      "сап"
+    ]
+  },
+  "pistol.water": {
+    "name": "Водяной пистолет",
+    "aliases": [
+      "брызгалка"
+    ]
+  },
+  "piston1": {
+    "name": "Поршень 1-го уровня",
+    "aliases": [
+      "поршень"
+    ]
+  },
+  "piston2": {
+    "name": "Поршень 2-го уровня",
+    "aliases": [
+      "поршень средний"
+    ]
+  },
+  "piston3": {
+    "name": "Поршень 3-го уровня",
+    "aliases": [
+      "топовый поршень"
+    ]
+  },
+  "pitchfork": {
+    "name": "Вилы",
+    "aliases": [
+      "вилы"
+    ]
+  },
+  "plank": {
+    "name": "Доска",
+    "aliases": [
+      "доска"
+    ]
+  },
+  "planter.large": {
+    "name": "Большая грядка",
+    "aliases": [
+      "грядка большая"
+    ]
+  },
+  "planter.large.RailRoadPlanter.sitem": {
+    "name": "Большая железнодорожная грядка",
+    "aliases": [
+      "грядка"
+    ]
+  },
+  "planter.small": {
+    "name": "Маленькая грядка",
+    "aliases": [
+      "грядка малая"
+    ]
+  },
+  "planter.triangle": {
+    "name": "Треугольная грядка",
+    "aliases": [
+      "треугольная грядка"
+    ]
+  },
+  "planter.triangle.Triangle_Railroad_Planter.sitem": {
+    "name": "Треугольная железнодорожная грядка",
+    "aliases": [
+      "грядка"
+    ]
+  },
+  "plantfiber": {
+    "name": "Растительное волокно",
+    "aliases": [
+      "волокно"
+    ]
+  },
+  "plantpot.single": {
+    "name": "Цветочный горшок",
+    "aliases": [
+      "горшок"
+    ]
+  },
+  "pookie.bear": {
+    "name": "Медвежонок Пуки",
+    "aliases": [
+      "пуки",
+      "мишка"
+    ]
+  },
+  "porkmeat.spoiled": {
+    "name": "Испорченная свинина",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "potato": {
+    "name": "Картофель",
+    "aliases": [
+      "картошка"
+    ]
+  },
+  "powered.water.purifier": {
+    "name": "Электрический опреснитель",
+    "aliases": [
+      "опреснитель воды"
+    ]
+  },
+  "prisonerhood": {
+    "name": "Капюшон заключенного",
+    "aliases": [
+      "капюшон"
+    ]
+  },
+  "propanetank": {
+    "name": "Пустой баллон из-под пропана",
+    "aliases": [
+      "баллон",
+      "пропан"
+    ]
+  },
+  "ptboat": {
+    "name": "Патрульный катер",
+    "aliases": [
+      "катер"
+    ]
+  },
+  "ptz.cctv.camera": {
+    "name": "Поворотная камера",
+    "aliases": [
+      "камера ptz"
+    ]
+  },
+  "pumpkin": {
+    "name": "Тыква",
+    "aliases": [
+      "тыква"
+    ]
+  },
+  "pumpkinbasket": {
+    "name": "Тыква-корзинка",
+    "aliases": [
+      "ведерко"
+    ]
+  },
+  "purecoolingtea": {
+    "name": "Чистый охлаждающий чай",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "purecraftingtea_quality": {
+    "name": "Чистый чай крафта",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "pureharvestingtea": {
+    "name": "Чистый чай сборщика",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "purewarmingtea": {
+    "name": "Чистый согревающий чай",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "purpleidtag": {
+    "name": "Фиолетовый бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "radiationremovetea.advanced": {
+    "name": "Продвинутый чай от радиации",
+    "aliases": [
+      "чай от рады"
+    ]
+  },
+  "radiationremovetea": {
+    "name": "Чай от радиации",
+    "aliases": [
+      "чай от рады"
+    ]
+  },
+  "radiationremovetea.pure": {
+    "name": "Чистый чай от радиации",
+    "aliases": [
+      "топ чай от рады"
+    ]
+  },
+  "radiationresisttea.advanced": {
+    "name": "Продвинутый чай сопротивления радиации",
+    "aliases": [
+      "чай защита"
+    ]
+  },
+  "radiationresisttea": {
+    "name": "Чай сопротивления радиации",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "radiationresisttea.pure": {
+    "name": "Чистый чай сопротивления радиации",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "rail.road.planter": {
+    "name": "Железнодорожная грядка",
+    "aliases": [
+      "грядка"
+    ]
+  },
+  "red.berry": {
+    "name": "Красная ягода",
+    "aliases": [
+      "ягода"
+    ]
+  },
+  "reddogtags": {
+    "name": "Красные армейские жетоны",
+    "aliases": [
+      "жетоны"
+    ]
+  },
+  "redidtag": {
+    "name": "Красный бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "reinforced.wooden.shield": {
+    "name": "Укрепленный деревянный щит",
+    "aliases": [
+      "щит"
+    ]
+  },
+  "research.table": {
+    "name": "Стол для изучений",
+    "aliases": [
+      "ресерч",
+      "изучалка"
+    ]
+  },
+  "revolver.hc": {
+    "name": "Самодельный револьвер",
+    "aliases": [
+      "ревик"
+    ]
+  },
+  "rf.detonator": {
+    "name": "РЧ Детонатор",
+    "aliases": [
+      "детонатор"
+    ]
+  },
+  "rf_pager": {
+    "name": "РЧ Пейджер",
+    "aliases": [
+      "пейджер"
+    ]
+  },
+  "rhib": {
+    "name": "Надувная лодка",
+    "aliases": [
+      "корыто",
+      "лодка"
+    ]
+  },
+  "rifle.ak.ak47ice.skin": {
+    "name": "АК-47 Лед",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.ak47u_diver.skin": {
+    "name": "АК-47 Водолаз",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.ak47u_jungle.item.skin": {
+    "name": "АК-47 Джунгли",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.ak47u_med.item.skin": {
+    "name": "АК-47 Медик",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.diver": {
+    "name": "АК-47 Водолаз",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.ice": {
+    "name": "АК-47 Лед",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.jungle": {
+    "name": "АК-47 Джунгли",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.med": {
+    "name": "АК-47 Медик",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak": {
+    "name": "Штурмовая винтовка",
+    "aliases": [
+      "калаш",
+      "ак47",
+      "автомат"
+    ]
+  },
+  "rifle.ak.skin.ak47.digitalcamoak47": {
+    "name": "АК-47 Цифровой камуфляж",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.skin.ak47.militarycamoak47": {
+    "name": "АК-47 Военный камуфляж",
+    "aliases": [
+      "калаш"
+    ]
+  },
+  "rifle.ak.skin.ak47.temperedak47": {
+    "name": "АК-47 Закаленный",
+    "aliases": [
+      "калаш закаленный"
+    ]
+  },
+  "rifle.bolt": {
+    "name": "Болтовая винтовка",
+    "aliases": [
+      "болт",
+      "болтовка"
+    ]
+  },
+  "rifle.bolt.skin.boltrifle.dreamcatcher": {
+    "name": "Болтовка Dreamcatcher",
+    "aliases": [
+      "болт"
+    ]
+  },
+  "rifle.bolt.skin.boltrifle.ghostboltrifle": {
+    "name": "Болтовка Ghost",
+    "aliases": [
+      "болт"
+    ]
+  },
+  "rifle.bolt.skin.boltrifle.tundraboltrifle": {
+    "name": "Болтовка Tundra",
+    "aliases": [
+      "болт"
+    ]
+  },
+  "rifle.l96": {
+    "name": "Винтовка L96",
+    "aliases": [
+      "слон",
+      "л96"
+    ]
+  },
+  "rifle.lr300": {
+    "name": "Штурмовая винтовка LR-300",
+    "aliases": [
+      "элэрка",
+      "lr-300"
+    ]
+  },
+  "rifle.lr300.space": {
+    "name": "Винтовка LR-300 Космос",
+    "aliases": [
+      "элэрка"
+    ]
+  },
+  "rifle.m39": {
+    "name": "Винтовка M39",
+    "aliases": [
+      "эмка",
+      "m39"
+    ]
+  },
+  "rifle.semiauto": {
+    "name": "Полуавтоматическая винтовка",
+    "aliases": [
+      "бердаш",
+      "сарка"
+    ]
+  },
+  "rifle.sks": {
+    "name": "СКС",
+    "aliases": [
+      "скс"
+    ]
+  },
+  "riflebody": {
+    "name": "Корпус винтовки",
+    "aliases": [
+      "корпус рифлы"
+    ]
+  },
+  "riot.helmet": {
+    "name": "Противоударный шлем",
+    "aliases": [
+      "шлем спецназа"
+    ]
+  },
+  "roadsign.gloves": {
+    "name": "Перчатки из дорожных знаков",
+    "aliases": [
+      "перчатки знаков"
+    ]
+  },
+  "roadsign.jacket": {
+    "name": "Нагрудник из дорожных знаков",
+    "aliases": [
+      "нагрудник знаков",
+      "знаки"
+    ]
+  },
+  "roadsign.jacket.vest.knightarmour.skin": {
+    "name": "Жилет рыцаря",
+    "aliases": [
+      "рыцарка"
+    ]
+  },
+  "roadsign.kilt.pants.knightarmour.skin": {
+    "name": "Юбка рыцаря",
+    "aliases": [
+      "рыцарка"
+    ]
+  },
+  "roadsign.kilt": {
+    "name": "Килт из дорожных знаков",
+    "aliases": [
+      "юбка из знаков",
+      "знаки"
+    ]
+  },
+  "roadsigns": {
+    "name": "Дорожный знак",
+    "aliases": [
+      "знаки"
+    ]
+  },
+  "rock.a.jungle.skin": {
+    "name": "Камень джунглей",
+    "aliases": [
+      "камень"
+    ]
+  },
+  "rock": {
+    "name": "Камень",
+    "aliases": [
+      "булыжник"
+    ]
+  },
+  "rock.skull.skin": {
+    "name": "Камень-череп",
+    "aliases": [
+      "камень"
+    ]
+  },
+  "rocket.launcher.dragon": {
+    "name": "Гранатомет Дракон",
+    "aliases": [
+      "дракон"
+    ]
+  },
+  "rocket.launcher": {
+    "name": "Ракетница",
+    "aliases": [
+      "ракетница",
+      "рпг"
+    ]
+  },
+  "rocket.launcher.rocket_launcher_dragon.skin": {
+    "name": "Ракетница Дракон",
+    "aliases": [
+      "ракетница"
+    ]
+  },
+  "rocket.launcher.rocket_launcher_rpg7.skin": {
+    "name": "РПГ-7",
+    "aliases": [
+      "рпг"
+    ]
+  },
+  "rocket.launcher.rpg7": {
+    "name": "РПГ-7",
+    "aliases": [
+      "рпг"
+    ]
+  },
+  "rockingchair.2.skin": {
+    "name": "Кресло-качалка 2",
+    "aliases": [
+      "кресло"
+    ]
+  },
+  "rockingchair.3.skin": {
+    "name": "Кресло-качалка 3",
+    "aliases": [
+      "кресло"
+    ]
+  },
+  "rockingchair": {
+    "name": "Кресло-качалка",
+    "aliases": [
+      "кресло"
+    ]
+  },
+  "rockingchair.rockingchair2": {
+    "name": "Кресло-качалка 2",
+    "aliases": [
+      "кресло"
+    ]
+  },
+  "rockingchair.rockingchair3": {
+    "name": "Кресло-качалка 3",
+    "aliases": [
+      "кресло"
+    ]
+  },
+  "rope": {
+    "name": "Веревка",
+    "aliases": [
+      "шнурок"
+    ]
+  },
+  "rose": {
+    "name": "Роза",
+    "aliases": [
+      "цветок"
+    ]
+  },
+  "rowboat": {
+    "name": "Лодка",
+    "aliases": [
+      "корыто"
+    ]
+  },
+  "rug.bear": {
+    "name": "Медвежья шкура",
+    "aliases": [
+      "ковер медведя"
+    ]
+  },
+  "rug": {
+    "name": "Ковер",
+    "aliases": [
+      "коврик"
+    ]
+  },
+  "rustige_egg_a": {
+    "name": "Яйцо Rustige A",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "rustige_egg_b": {
+    "name": "Яйцо Rustige B",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "rustige_egg_c": {
+    "name": "Яйцо Rustige C",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "rustige_egg_d": {
+    "name": "Яйцо Rustige D",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "rustige_egg_e": {
+    "name": "Яйцо Rustige E",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "rustige_egg_f": {
+    "name": "Яйцо Rustige F",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "rustige_egg_g": {
+    "name": "Яйцо Rustige G",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "rustige_egg_h": {
+    "name": "Яйцо Rustige H",
+    "aliases": [
+      "яйцо"
+    ]
+  },
+  "sail": {
+    "name": "Парус",
+    "aliases": [
+      "парус"
+    ]
+  },
+  "salvaged.bamboo.shelves": {
+    "name": "Самодельные бамбуковые полки",
+    "aliases": [
+      "полки"
+    ]
+  },
+  "salvaged.cleaver": {
+    "name": "Самодельный тесак",
+    "aliases": [
+      "тесак"
+    ]
+  },
+  "salvaged.sword": {
+    "name": "Самодельный меч",
+    "aliases": [
+      "меч",
+      "сальваг меч"
+    ]
+  },
+  "samsite": {
+    "name": "Зенитная установка",
+    "aliases": [
+      "пво",
+      "зенитка"
+    ]
+  },
+  "santabeard": {
+    "name": "Борода Санты",
+    "aliases": [
+      "борода"
+    ]
+  },
+  "santahat": {
+    "name": "Шапка Санты",
+    "aliases": [
+      "шапка"
+    ]
+  },
+  "scarecrow": {
+    "name": "Пугало",
+    "aliases": [
+      "пугало"
+    ]
+  },
+  "scarecrow.suit": {
+    "name": "Костюм пугала",
+    "aliases": [
+      "костюм"
+    ]
+  },
+  "scarecrowhead": {
+    "name": "Голова пугала",
+    "aliases": [
+      "тыква на голову"
+    ]
+  },
+  "scientist.plushie": {
+    "name": "Плюшевый ученый",
+    "aliases": [
+      "игрушка"
+    ]
+  },
+  "scientistsuit_heavy": {
+    "name": "Тяжелый костюм ученого",
+    "aliases": [
+      "тяжелый хазмат"
+    ]
+  },
+  "scrap": {
+    "name": "Металлолом",
+    "aliases": [
+      "скрап",
+      "лом"
+    ]
+  },
+  "scrapframe.large": {
+    "name": "Большая металлическая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "scrapframe.medium": {
+    "name": "Средняя металлическая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "scrapframe.small": {
+    "name": "Маленькая металлическая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "scrapframe.standing": {
+    "name": "Напольная металлическая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "scrapframe.xl": {
+    "name": "Огромная металлическая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "scrapframe.xxl": {
+    "name": "Гигантская металлическая рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "scrapmirror.large": {
+    "name": "Большое металлическое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "scrapmirror.medium": {
+    "name": "Среднее металлическое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "scrapmirror.small": {
+    "name": "Маленькое металлическое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "scrapmirror.standing": {
+    "name": "Напольное металлическое зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "scraptea.advanced": {
+    "name": "Продвинутый чай на металлолом",
+    "aliases": [
+      "чай на скрап"
+    ]
+  },
+  "scraptea": {
+    "name": "Чай на металлолом",
+    "aliases": [
+      "чай на скрап"
+    ]
+  },
+  "scraptea.pure": {
+    "name": "Чистый чай на металлолом",
+    "aliases": [
+      "чай на скрап"
+    ]
+  },
+  "scraptransportheli": {
+    "name": "Транспортный вертолет",
+    "aliases": [
+      "корова",
+      "большой коптер"
+    ]
+  },
+  "sculpture.ice": {
+    "name": "Ледяная скульптура",
+    "aliases": [
+      "скульптура"
+    ]
+  },
+  "searchlight": {
+    "name": "Прожектор",
+    "aliases": [
+      "поисковый прожектор"
+    ]
+  },
+  "secretlabchair": {
+    "name": "Кресло Secretlab",
+    "aliases": [
+      "кресло"
+    ]
+  },
+  "sedan": {
+    "name": "Седан",
+    "aliases": [
+      "машина"
+    ]
+  },
+  "seed.black.berry": {
+    "name": "Семена черной ягоды",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.blue.berry": {
+    "name": "Семена синей ягоды",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.corn": {
+    "name": "Семена кукурузы",
+    "aliases": [
+      "зерна кукурузы"
+    ]
+  },
+  "seed.green.berry": {
+    "name": "Семена зеленой ягоды",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.hemp": {
+    "name": "Семена конопли",
+    "aliases": [
+      "семечко ткани"
+    ]
+  },
+  "seed.orchid": {
+    "name": "Семена орхидеи",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.potato": {
+    "name": "Семена картофеля",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.pumpkin": {
+    "name": "Семена тыквы",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.red.berry": {
+    "name": "Семена красной ягоды",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.rose": {
+    "name": "Семена розы",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.sunflower": {
+    "name": "Семена подсолнуха",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.wheat": {
+    "name": "Семена пшеницы",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.white.berry": {
+    "name": "Семена белой ягоды",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "seed.yellow.berry": {
+    "name": "Семена желтой ягоды",
+    "aliases": [
+      "семечко"
+    ]
+  },
+  "semibody": {
+    "name": "Корпус полуавтомата",
+    "aliases": [
+      "корпус пп"
+    ]
+  },
+  "sewingkit": {
+    "name": "Набор для шитья",
+    "aliases": [
+      "швейка"
+    ]
+  },
+  "sheetmetal": {
+    "name": "Листовой металл",
+    "aliases": [
+      "лист металла"
+    ]
+  },
+  "shelves": {
+    "name": "Полки",
+    "aliases": [
+      "полки"
+    ]
+  },
+  "shelves.salvaged_bamboo_.skin": {
+    "name": "Самодельные бамбуковые полки",
+    "aliases": [
+      "полки"
+    ]
+  },
+  "shirt.collared": {
+    "name": "Рубашка с воротником",
+    "aliases": [
+      "рубашка"
+    ]
+  },
+  "shirt.tanktop": {
+    "name": "Майка",
+    "aliases": [
+      "майка"
+    ]
+  },
+  "shoes.boots.black": {
+    "name": "Черные ботинки",
+    "aliases": [
+      "обувь"
+    ]
+  },
+  "shoes.boots": {
+    "name": "Ботинки",
+    "aliases": [
+      "ботинки",
+      "обувь"
+    ]
+  },
+  "shoes.boots.skin.boots.armyboots": {
+    "name": "Армейские ботинки",
+    "aliases": [
+      "берцы"
+    ]
+  },
+  "shoes.boots.skin.boots.bloodyboots": {
+    "name": "Кровавые ботинки",
+    "aliases": [
+      "ботинки"
+    ]
+  },
+  "shoes.boots.skin.boots.punkboots": {
+    "name": "Ботинки панка",
+    "aliases": [
+      "ботинки"
+    ]
+  },
+  "shoes.boots.skin.boots.scavengedsneakers": {
+    "name": "Кроссовки мусорщика",
+    "aliases": [
+      "кроссовки"
+    ]
+  },
+  "shoes.boots.tan": {
+    "name": "Коричневые ботинки",
+    "aliases": [
+      "ботинки"
+    ]
+  },
+  "shotgun.double.blunderbuss.skin": {
+    "name": "Мушкетон",
+    "aliases": [
+      "мушкет"
+    ]
+  },
+  "shotgun.double": {
+    "name": "Двустволка",
+    "aliases": [
+      "двустволка",
+      "дуло"
+    ]
+  },
+  "shotgun.m4": {
+    "name": "Дробовик M4",
+    "aliases": [
+      "м4",
+      "дробаш"
+    ]
+  },
+  "shotgun.pump.krieg.shotgun.skin": {
+    "name": "Дробовик Крига",
+    "aliases": [
+      "дробаш"
+    ]
+  },
+  "shotgun.pump": {
+    "name": "Помповый дробовик",
+    "aliases": [
+      "помпа",
+      "дробаш"
+    ]
+  },
+  "shotgun.pump.skin.pumpshotgun.theswampmaster": {
+    "name": "Дробовик Swamp Master",
+    "aliases": [
+      "помпа"
+    ]
+  },
+  "shotgun.pump.skin.pumpshotgunchieftain": {
+    "name": "Дробовик Chieftain",
+    "aliases": [
+      "помпа"
+    ]
+  },
+  "shotgun.spas12": {
+    "name": "Дробовик SPAS-12",
+    "aliases": [
+      "спас",
+      "дробаш"
+    ]
+  },
+  "shotgun.waterpipe": {
+    "name": "Самодельный дробовик",
+    "aliases": [
+      "пайпа",
+      "труба"
+    ]
+  },
+  "shotgun.waterpipe.skin.pipeshotgun.thepeacepipe": {
+    "name": "Труба Мира",
+    "aliases": [
+      "пайпа"
+    ]
+  },
+  "shovel": {
+    "name": "Лопата",
+    "aliases": [
+      "лопата"
+    ]
+  },
+  "shutter.metal.embrasure.a": {
+    "name": "Металлическая бойница (вертикальная)",
+    "aliases": [
+      "бойница"
+    ]
+  },
+  "shutter.metal.embrasure.b": {
+    "name": "Металлическая бойница (горизонтальная)",
+    "aliases": [
+      "бойница"
+    ]
+  },
+  "shutter.wood.a": {
+    "name": "Деревянные ставни",
+    "aliases": [
+      "ставни"
+    ]
+  },
+  "sickle": {
+    "name": "Серп",
+    "aliases": [
+      "серп"
+    ]
+  },
+  "siegetower": {
+    "name": "Осадная башня",
+    "aliases": [
+      "башня"
+    ]
+  },
+  "sign.artistcanvas.l": {
+    "name": "Холст художника (Большой)",
+    "aliases": [
+      "холст"
+    ]
+  },
+  "sign.artistcanvas.m": {
+    "name": "Холст художника (Средний)",
+    "aliases": [
+      "холст"
+    ]
+  },
+  "sign.artistcanvas.s": {
+    "name": "Холст художника (Малый)",
+    "aliases": [
+      "холст"
+    ]
+  },
+  "sign.artistcanvas.xl": {
+    "name": "Холст художника (Очень большой)",
+    "aliases": [
+      "холст"
+    ]
+  },
+  "sign.artistcanvas.xs": {
+    "name": "Холст художника (Очень малый)",
+    "aliases": [
+      "холст"
+    ]
+  },
+  "sign.artistcanvas.xxl": {
+    "name": "Холст художника (Огромный)",
+    "aliases": [
+      "холст"
+    ]
+  },
+  "sign.hanging.banner.large": {
+    "name": "Большой подвесной баннер",
+    "aliases": [
+      "баннер"
+    ]
+  },
+  "sign.hanging.ornate": {
+    "name": "Резная подвесная вывеска",
+    "aliases": [
+      "вывеска"
+    ]
+  },
+  "sign.hanging": {
+    "name": "Подвесная вывеска",
+    "aliases": [
+      "вывеска"
+    ]
+  },
+  "sign.neon.125x125": {
+    "name": "Неоновая вывеска (Малая)",
+    "aliases": [
+      "неон"
+    ]
+  },
+  "sign.neon.125x215.animated": {
+    "name": "Анимированная неоновая вывеска (Средняя)",
+    "aliases": [
+      "неон"
+    ]
+  },
+  "sign.neon.125x215": {
+    "name": "Неоновая вывеска (Средняя)",
+    "aliases": [
+      "неон"
+    ]
+  },
+  "sign.neon.xl.animated": {
+    "name": "Анимированная неоновая вывеска (Большая)",
+    "aliases": [
+      "неон"
+    ]
+  },
+  "sign.neon.xl": {
+    "name": "Неоновая вывеска (Большая)",
+    "aliases": [
+      "неон"
+    ]
+  },
+  "sign.pictureframe.landscape": {
+    "name": "Фоторамка (Пейзаж)",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "sign.pictureframe.portrait": {
+    "name": "Фоторамка (Портрет)",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "sign.pictureframe.tall": {
+    "name": "Высокая фоторамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "sign.pictureframe.xl": {
+    "name": "Очень большая фоторамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "sign.pictureframe.xxl": {
+    "name": "Огромная фоторамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "sign.pole.banner.large": {
+    "name": "Большой баннер на шесте",
+    "aliases": [
+      "флаг"
+    ]
+  },
+  "sign.post.double": {
+    "name": "Двойной указатель",
+    "aliases": [
+      "знак"
+    ]
+  },
+  "sign.post.single": {
+    "name": "Одинарный указатель",
+    "aliases": [
+      "знак"
+    ]
+  },
+  "sign.post.town": {
+    "name": "Городской указатель",
+    "aliases": [
+      "знак"
+    ]
+  },
+  "sign.post.town.roof": {
+    "name": "Указатель с крышей",
+    "aliases": [
+      "знак"
+    ]
+  },
+  "sign.wooden.huge": {
+    "name": "Огромная деревянная табличка",
+    "aliases": [
+      "табличка"
+    ]
+  },
+  "sign.wooden.large": {
+    "name": "Большая деревянная табличка",
+    "aliases": [
+      "табличка"
+    ]
+  },
+  "sign.wooden.medium": {
+    "name": "Средняя деревянная табличка",
+    "aliases": [
+      "табличка"
+    ]
+  },
+  "sign.wooden.small": {
+    "name": "Маленькая деревянная табличка",
+    "aliases": [
+      "табличка"
+    ]
+  },
+  "silly.horse.mask": {
+    "name": "Смешная маска лошади",
+    "aliases": [
+      "маска лошади"
+    ]
+  },
+  "single.shallow.wall.shelves": {
+    "name": "Узкие настенные полки",
+    "aliases": [
+      "полки"
+    ]
+  },
+  "skidoo": {
+    "name": "Снегоход",
+    "aliases": [
+      "снегоход"
+    ]
+  },
+  "skull.human": {
+    "name": "Человеческий череп",
+    "aliases": [
+      "череп"
+    ]
+  },
+  "skull": {
+    "name": "Череп",
+    "aliases": [
+      "череп"
+    ]
+  },
+  "skull.trophy.jar": {
+    "name": "Трофей: Череп в банке",
+    "aliases": [
+      "череп в банке"
+    ]
+  },
+  "skull.trophy.jar2": {
+    "name": "Трофей: Череп в банке 2",
+    "aliases": [
+      "череп в банке"
+    ]
+  },
+  "skull.trophy": {
+    "name": "Трофей: Череп",
+    "aliases": [
+      "трофей череп"
+    ]
+  },
+  "skull.trophy.skulltrophy.jar.skin": {
+    "name": "Трофей: Череп в банке",
+    "aliases": [
+      "череп"
+    ]
+  },
+  "skull.trophy.skulltrophy.jar2.skin": {
+    "name": "Трофей: Череп в банке 2",
+    "aliases": [
+      "череп"
+    ]
+  },
+  "skull.trophy.skulltrophy.table.skin": {
+    "name": "Настольный трофей череп",
+    "aliases": [
+      "череп"
+    ]
+  },
+  "skull.trophy.table": {
+    "name": "Настольный череп",
+    "aliases": [
+      "череп"
+    ]
+  },
+  "skull.wolf": {
+    "name": "Череп волка",
+    "aliases": [
+      "череп волка"
+    ]
+  },
+  "skulldoorknocker": {
+    "name": "Дверной молоток (Череп)",
+    "aliases": [
+      "колотушка"
+    ]
+  },
+  "skullspikes.candles": {
+    "name": "Колья с черепами (со свечами)",
+    "aliases": [
+      "колья"
+    ]
+  },
+  "skullspikes.candles.skin": {
+    "name": "Колья с черепами (скин)",
+    "aliases": [
+      "колья"
+    ]
+  },
+  "skullspikes": {
+    "name": "Колья с черепами",
+    "aliases": [
+      "колья"
+    ]
+  },
+  "skullspikes.pumpkin": {
+    "name": "Колья с тыквой",
+    "aliases": [
+      "колья"
+    ]
+  },
+  "skullspikes.pumpkin.skin": {
+    "name": "Колья с тыквой (скин)",
+    "aliases": [
+      "колья"
+    ]
+  },
+  "skull_fire_pit": {
+    "name": "Огненная яма с черепом",
+    "aliases": [
+      "костер череп"
+    ]
+  },
+  "skylantern.green.skin": {
+    "name": "Зеленый небесный фонарик",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern.orange.skin": {
+    "name": "Оранжевый небесный фонарик",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern": {
+    "name": "Небесный фонарик",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern.purple.skin": {
+    "name": "Фиолетовый небесный фонарик",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern.red.skin": {
+    "name": "Красный небесный фонарик",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern.skylantern.green": {
+    "name": "Небесный фонарик (Зеленый)",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern.skylantern.orange": {
+    "name": "Небесный фонарик (Оранжевый)",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern.skylantern.purple": {
+    "name": "Небесный фонарик (Фиолетовый)",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "skylantern.skylantern.red": {
+    "name": "Небесный фонарик (Красный)",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "sled": {
+    "name": "Сани",
+    "aliases": [
+      "санки"
+    ]
+  },
+  "sled.xmas": {
+    "name": "Новогодние сани",
+    "aliases": [
+      "санки"
+    ]
+  },
+  "sled._xmas": {
+    "name": "Новогодние сани",
+    "aliases": [
+      "санки"
+    ]
+  },
+  "sleepingbag": {
+    "name": "Спальный мешок",
+    "aliases": [
+      "спалка",
+      "мешок"
+    ]
+  },
+  "sleepingbag.skin.astonchristmas": {
+    "name": "Спальный мешок Aston",
+    "aliases": [
+      "спалка"
+    ]
+  },
+  "sleepingbag.skin.blueplaid": {
+    "name": "Синий клетчатый спальник",
+    "aliases": [
+      "спалка"
+    ]
+  },
+  "sleepingbag.skin.christmasbag": {
+    "name": "Новогодний спальник",
+    "aliases": [
+      "спалка"
+    ]
+  },
+  "sleepingbag.skin.horrorbag": {
+    "name": "Спальник ужасов",
+    "aliases": [
+      "спалка"
+    ]
+  },
+  "sleepingbag.skin.tigercrown": {
+    "name": "Спальник Тигр с короной",
+    "aliases": [
+      "спалка"
+    ]
+  },
+  "sleepingbag.skin.woodcamo": {
+    "name": "Спальник с лесным камуфляжем",
+    "aliases": [
+      "спалка"
+    ]
+  },
+  "small.oil.refinery": {
+    "name": "Малая нефтеперерабатывающая установка",
+    "aliases": [
+      "переработка",
+      "печка для нефти"
+    ]
+  },
+  "smallbackpack": {
+    "name": "Маленький рюкзак",
+    "aliases": [
+      "рюкзак",
+      "портфель"
+    ]
+  },
+  "smallcandles": {
+    "name": "Маленькие свечи",
+    "aliases": [
+      "свечки"
+    ]
+  },
+  "smallengine": {
+    "name": "Малый двигатель",
+    "aliases": [
+      "малый движок"
+    ]
+  },
+  "smallwaterbottle": {
+    "name": "Маленькая бутылка воды",
+    "aliases": [
+      "бутылка"
+    ]
+  },
+  "small_ramp": {
+    "name": "Маленькая рампа",
+    "aliases": [
+      "рампа"
+    ]
+  },
+  "smart.alarm": {
+    "name": "Умная сигнализация",
+    "aliases": [
+      "смарт сигналка"
+    ]
+  },
+  "smart.switch": {
+    "name": "Умный переключатель",
+    "aliases": [
+      "смарт свитч"
+    ]
+  },
+  "smg.2": {
+    "name": "Самодельный пистолет-пулемет",
+    "aliases": [
+      "кастомка",
+      "смг"
+    ]
+  },
+  "smg.mp5": {
+    "name": "МП5",
+    "aliases": [
+      "мп5",
+      "mp5"
+    ]
+  },
+  "smg.thompson": {
+    "name": "Томпсон",
+    "aliases": [
+      "томик",
+      "томми"
+    ]
+  },
+  "smgbody": {
+    "name": "Корпус пистолета-пулемета",
+    "aliases": [
+      "корпус пп"
+    ]
+  },
+  "snakemeat.cooked": {
+    "name": "Жареное мясо змеи",
+    "aliases": [
+      "мясо змеи"
+    ]
+  },
+  "snakemeat": {
+    "name": "Сырое мясо змеи",
+    "aliases": [
+      "сырое мясо"
+    ]
+  },
+  "snakemeat.spoiled": {
+    "name": "Испорченное мясо змеи",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "snowball": {
+    "name": "Снежок",
+    "aliases": [
+      "снежок"
+    ]
+  },
+  "snowballgun": {
+    "name": "Снежкомет",
+    "aliases": [
+      "пушка для снежков"
+    ]
+  },
+  "snowmachine": {
+    "name": "Снежная пушка",
+    "aliases": [
+      "снег машина"
+    ]
+  },
+  "snowman": {
+    "name": "Снеговик",
+    "aliases": [
+      "снеговик"
+    ]
+  },
+  "snowmobile": {
+    "name": "Снегоход",
+    "aliases": [
+      "снегоход"
+    ]
+  },
+  "snowmobile.tomaha.skin": {
+    "name": "Снегоход Томагавк",
+    "aliases": [
+      "снегоход"
+    ]
+  },
+  "snowmobiletomaha": {
+    "name": "Снегоход Томагавк",
+    "aliases": [
+      "снегоход"
+    ]
+  },
+  "sofa.pattern": {
+    "name": "Диван с узором",
+    "aliases": [
+      "диван"
+    ]
+  },
+  "sofa": {
+    "name": "Диван",
+    "aliases": [
+      "диван"
+    ]
+  },
+  "soundlight": {
+    "name": "Светомузыка",
+    "aliases": [
+      "свет"
+    ]
+  },
+  "sparkplug1": {
+    "name": "Свеча зажигания 1-го уровня",
+    "aliases": [
+      "свеча"
+    ]
+  },
+  "sparkplug2": {
+    "name": "Свеча зажигания 2-го уровня",
+    "aliases": [
+      "средняя свеча"
+    ]
+  },
+  "sparkplug3": {
+    "name": "Свеча зажигания 3-го уровня",
+    "aliases": [
+      "топовая свеча"
+    ]
+  },
+  "spear.cny": {
+    "name": "Копье CNY",
+    "aliases": [
+      "копье"
+    ]
+  },
+  "spear.stone": {
+    "name": "Каменное копье",
+    "aliases": [
+      "каменное копье",
+      "каменка"
+    ]
+  },
+  "spear.wooden.cny_spear": {
+    "name": "Деревянное копье CNY",
+    "aliases": [
+      "деревянное копье"
+    ]
+  },
+  "spear.wooden": {
+    "name": "Деревянное копье",
+    "aliases": [
+      "деревяшка",
+      "копье"
+    ]
+  },
+  "speargun": {
+    "name": "Подводное ружье",
+    "aliases": [
+      "гарпун"
+    ]
+  },
+  "speargun.spear": {
+    "name": "Гарпун",
+    "aliases": [
+      "копье для ружья"
+    ]
+  },
+  "speechbubbleballoon2025": {
+    "name": "Шар с диалоговым облаком",
+    "aliases": [
+      "шарик"
+    ]
+  },
+  "spiderweb": {
+    "name": "Паутина",
+    "aliases": [
+      "паутина"
+    ]
+  },
+  "spikes.floor": {
+    "name": "Напольные шипы",
+    "aliases": [
+      "шипы",
+      "колья"
+    ]
+  },
+  "spikes.trap": {
+    "name": "Деревянные шипы",
+    "aliases": [
+      "шипы",
+      "колья"
+    ]
+  },
+  "spinner.wheel": {
+    "name": "Колесо фортуны",
+    "aliases": [
+      "рулетка"
+    ]
+  },
+  "spoiled.produce": {
+    "name": "Испорченные продукты",
+    "aliases": [
+      "гниль",
+      "мусор"
+    ]
+  },
+  "spookyspeaker": {
+    "name": "Жуткий динамик",
+    "aliases": [
+      "колонка"
+    ]
+  },
+  "spraycan": {
+    "name": "Баллончик с краской",
+    "aliases": [
+      "спрей"
+    ]
+  },
+  "spraycandecal": {
+    "name": "Декаль из баллончика",
+    "aliases": [
+      "рисунок"
+    ]
+  },
+  "spraycandecal.spray.decal.artistDLC_rosette_1st": {
+    "name": "Рисунок: Розетка 1 место",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.artistDLC_rosette_2nd": {
+    "name": "Рисунок: Розетка 2 место",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.artistDLC_rosette_3rd": {
+    "name": "Рисунок: Розетка 3 место",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.artistDLC_rosette_last": {
+    "name": "Рисунок: Розетка последнее место",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.beancan": {
+    "name": "Рисунок: Бобовка",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.candlehat": {
+    "name": "Рисунок: Шапка со свечой",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.facepunch": {
+    "name": "Рисунок: Facepunch",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.frogboot": {
+    "name": "Рисунок: Жабьи сапоги",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.hazmat": {
+    "name": "Рисунок: Хазмат",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.jungledlc_skull": {
+    "name": "Рисунок: Череп джунглей",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.jungledlc_tiger": {
+    "name": "Рисунок: Тигр джунглей",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.rock": {
+    "name": "Рисунок: Камень",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.target": {
+    "name": "Рисунок: Мишень",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "spraycandecal.spray.decal.whip": {
+    "name": "Рисунок: Хлыст",
+    "aliases": [
+      "декаль"
+    ]
+  },
+  "starballoon2025": {
+    "name": "Шар-звезда 2025",
+    "aliases": [
+      "шарик"
+    ]
+  },
+  "stash.small": {
+    "name": "Малый тайник",
+    "aliases": [
+      "стэш",
+      "нычка"
+    ]
+  },
+  "steeringwheel.boat": {
+    "name": "Штурвал лодки",
+    "aliases": [
+      "штурвал"
+    ]
+  },
+  "sticks": {
+    "name": "Палки",
+    "aliases": [
+      "ветки"
+    ]
+  },
+  "stocking.large": {
+    "name": "Большой рождественский носок",
+    "aliases": [
+      "носок"
+    ]
+  },
+  "stocking.small": {
+    "name": "Маленький рождественский носок",
+    "aliases": [
+      "носок"
+    ]
+  },
+  "stone.pickaxe.concrete_pickaxe.skin": {
+    "name": "Бетонная кирка",
+    "aliases": [
+      "кирка"
+    ]
+  },
+  "stone.pickaxe": {
+    "name": "Каменная кирка",
+    "aliases": [
+      "каменка",
+      "кирка"
+    ]
+  },
+  "stonehatchet.concrete_hatchet.skin": {
+    "name": "Бетонный топорик",
+    "aliases": [
+      "топор"
+    ]
+  },
+  "stonehatchet": {
+    "name": "Каменный топор",
+    "aliases": [
+      "каменка",
+      "топор"
+    ]
+  },
+  "stones": {
+    "name": "Камни",
+    "aliases": [
+      "камни",
+      "булыжники",
+      "камень"
+    ]
+  },
+  "storage.monitor": {
+    "name": "Монитор хранилища",
+    "aliases": [
+      "монитор"
+    ]
+  },
+  "storageadaptor": {
+    "name": "Адаптер хранилища",
+    "aliases": [
+      "адаптер"
+    ]
+  },
+  "storage_barrel_a": {
+    "name": "Бочка для хранения А",
+    "aliases": [
+      "бочка"
+    ]
+  },
+  "storage_barrel_b": {
+    "name": "Бочка для хранения В",
+    "aliases": [
+      "бочка"
+    ]
+  },
+  "storage_barrel_c": {
+    "name": "Бочка для хранения С",
+    "aliases": [
+      "бочка"
+    ]
+  },
+  "strobelight": {
+    "name": "Стробоскоп",
+    "aliases": [
+      "свет"
+    ]
+  },
+  "submarine.torpedo.straight": {
+    "name": "Прямая торпеда",
+    "aliases": [
+      "торпеда"
+    ]
+  },
+  "submarineduo": {
+    "name": "Двухместная подводная лодка",
+    "aliases": [
+      "субмарина"
+    ]
+  },
+  "submarinesolo": {
+    "name": "Одноместная подводная лодка",
+    "aliases": [
+      "субмарина"
+    ]
+  },
+  "sulfur.ore": {
+    "name": "Серная руда",
+    "aliases": [
+      "сера",
+      "сульфур"
+    ]
+  },
+  "sulfur": {
+    "name": "Сера",
+    "aliases": [
+      "сульфур"
+    ]
+  },
+  "sunflower": {
+    "name": "Подсолнух",
+    "aliases": [
+      "подсолнух"
+    ]
+  },
+  "sunglasses.01.chalk": {
+    "name": "Солнцезащитные очки (мел)",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses.01.tortoise": {
+    "name": "Солнцезащитные очки (черепаховые)",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses.02.black": {
+    "name": "Черные очки",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses.02.camo": {
+    "name": "Камуфляжные очки",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses.02.red": {
+    "name": "Красные очки",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses.03.black": {
+    "name": "Черные очки 3",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses.03.chrome": {
+    "name": "Хромированные очки",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses.03.gold": {
+    "name": "Золотые очки",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses": {
+    "name": "Солнцезащитные очки",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses02black": {
+    "name": "Черные очки 02",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses02camo": {
+    "name": "Камуфляжные очки 02",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses02red": {
+    "name": "Красные очки 02",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses03black": {
+    "name": "Черные очки 03",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses03chrome": {
+    "name": "Хромированные очки 03",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunglasses03gold": {
+    "name": "Золотые очки 03",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "sunken.knife": {
+    "name": "Затонувший нож",
+    "aliases": [
+      "нож"
+    ]
+  },
+  "supertea": {
+    "name": "Супер чай",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "supply.signal": {
+    "name": "Сигнальная шашка",
+    "aliases": [
+      "суплай",
+      "сигнал",
+      "сопля",
+      "сигнальная шашка"
+    ]
+  },
+  "surveycharge": {
+    "name": "Геологический заряд",
+    "aliases": [
+      "заряд",
+      "сюрвей"
+    ]
+  },
+  "syringe.medical": {
+    "name": "Медицинский шприц",
+    "aliases": [
+      "шприц",
+      "хилка"
+    ]
+  },
+  "t1_smg": {
+    "name": "Самодельный пистолет-пулемет (Тир 1)",
+    "aliases": [
+      "смг"
+    ]
+  },
+  "table": {
+    "name": "Стол",
+    "aliases": [
+      "стол"
+    ]
+  },
+  "tactical.gloves": {
+    "name": "Тактические перчатки",
+    "aliases": [
+      "перчи"
+    ]
+  },
+  "target.reactive.paintable_reactive_target.skin": {
+    "name": "Мишень (можно рисовать)",
+    "aliases": [
+      "мишень"
+    ]
+  },
+  "target.reactive": {
+    "name": "Реактивная мишень",
+    "aliases": [
+      "мишень"
+    ]
+  },
+  "targeting.computer": {
+    "name": "Компьютер наведения",
+    "aliases": [
+      "комп"
+    ]
+  },
+  "tarp": {
+    "name": "Брезент",
+    "aliases": [
+      "брезент"
+    ]
+  },
+  "techparts": {
+    "name": "Микросхема",
+    "aliases": [
+      "мусор"
+    ]
+  },
+  "telephone": {
+    "name": "Телефон",
+    "aliases": [
+      "телефон"
+    ]
+  },
+  "tincan.alarm": {
+    "name": "Сигнализация из банок",
+    "aliases": [
+      "банки"
+    ]
+  },
+  "tool.binoculars": {
+    "name": "Бинокль",
+    "aliases": [
+      "бинокль"
+    ]
+  },
+  "tool.camera": {
+    "name": "Камера",
+    "aliases": [
+      "фотик",
+      "камера"
+    ]
+  },
+  "tool.instant_camera": {
+    "name": "Полароид",
+    "aliases": [
+      "фотик",
+      "камера"
+    ]
+  },
+  "toolgun": {
+    "name": "Тулган",
+    "aliases": [
+      "тулган"
+    ]
+  },
+  "torch.diver.skin": {
+    "name": "Фонарик дайвера",
+    "aliases": [
+      "фонарик"
+    ]
+  },
+  "torch": {
+    "name": "Факел",
+    "aliases": [
+      "факел",
+      "торч"
+    ]
+  },
+  "torch.skull.skin": {
+    "name": "Факел-череп",
+    "aliases": [
+      "факел череп"
+    ]
+  },
+  "torch.torch.skull": {
+    "name": "Факел из черепа",
+    "aliases": [
+      "факел"
+    ]
+  },
+  "torchholder": {
+    "name": "Держатель для факела",
+    "aliases": [
+      "держатель"
+    ]
+  },
+  "trap.bear": {
+    "name": "Медвежий капкан",
+    "aliases": [
+      "капкан"
+    ]
+  },
+  "trap.landmine": {
+    "name": "Мина",
+    "aliases": [
+      "мина"
+    ]
+  },
+  "triangle.rail.road.planter": {
+    "name": "Треугольная железнодорожная грядка",
+    "aliases": [
+      "грядка"
+    ]
+  },
+  "trike": {
+    "name": "Трайк",
+    "aliases": [
+      "трайк",
+      "трицикл"
+    ]
+  },
+  "trophy": {
+    "name": "Трофей",
+    "aliases": [
+      "награда"
+    ]
+  },
+  "trophy2023": {
+    "name": "Трофей 2023",
+    "aliases": [
+      "кубок"
+    ]
+  },
+  "tshirt.black": {
+    "name": "Черная футболка",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.blue": {
+    "name": "Синяя футболка",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.flag.germany": {
+    "name": "Футболка Германия",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.flag.russia": {
+    "name": "Футболка Россия",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.forestcamo": {
+    "name": "Футболка (Лесной камуфляж)",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.gmod": {
+    "name": "Футболка Gmod",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.long.black": {
+    "name": "Черная футболка с длинным рукавом",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.grey": {
+    "name": "Серая футболка с длинным рукавом",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.orange": {
+    "name": "Оранжевая футболка с длинным рукавом",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long": {
+    "name": "Футболка с длинным рукавом",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.shirtgreen": {
+    "name": "Зеленая футболка с длинным рукавом",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.skin.longtshirt.azteclongt-shirt": {
+    "name": "Ацтекский лонгслив",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.skin.longtshirt.creepyjack": {
+    "name": "Лонгслив Creepy Jack",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.skin.longtshirt.frankensteinssweater": {
+    "name": "Свитер Франкенштейна",
+    "aliases": [
+      "свитер"
+    ]
+  },
+  "tshirt.long.skin.longtshirt.merryreindeer": {
+    "name": "Лонгслив Счастливый олень",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.skin.longtshirt.nightmaresweater": {
+    "name": "Свитер кошмаров",
+    "aliases": [
+      "свитер"
+    ]
+  },
+  "tshirt.long.skin.longtshirt.signpainter'slongtshirt": {
+    "name": "Лонгслив Sign Painter",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt.long.skin.longtshirt.varsityjacket": {
+    "name": "Университетская куртка",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "tshirt.long.yellow": {
+    "name": "Желтая футболка с длинным рукавом",
+    "aliases": [
+      "лонгслив"
+    ]
+  },
+  "tshirt": {
+    "name": "Футболка",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.red": {
+    "name": "Красная футболка",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.argylescavenger": {
+    "name": "Футболка Argyle Scavenger",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.baseball": {
+    "name": "Бейсбольная футболка",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.blackskull&bones": {
+    "name": "Черная футболка Череп и кости",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.hackervalleyveteran": {
+    "name": "Футболка Hacker Valley",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.missingtexturesfull": {
+    "name": "Футболка Нет текстур",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.murderer": {
+    "name": "Футболка Murderer",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.serwinter": {
+    "name": "Футболка Ser Winter",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.smilet-shirt": {
+    "name": "Футболка Smile",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.targetpractice": {
+    "name": "Футболка Мишень",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tshirt.skin.vyshyvanka": {
+    "name": "Вышиванка",
+    "aliases": [
+      "вышиванка",
+      "футболка"
+    ]
+  },
+  "tshirt.urbancamo": {
+    "name": "Футболка (Городской камуфляж)",
+    "aliases": [
+      "футболка"
+    ]
+  },
+  "tugboat": {
+    "name": "Буксир",
+    "aliases": [
+      "корабль"
+    ]
+  },
+  "tunalight": {
+    "name": "Лампа из банки тунца",
+    "aliases": [
+      "лампа банка"
+    ]
+  },
+  "twitch.headset.hat.cap_headset.twitch": {
+    "name": "Гарнитура Twitch",
+    "aliases": [
+      "наушники"
+    ]
+  },
+  "twitch.headset": {
+    "name": "Гарнитура Twitch",
+    "aliases": [
+      "наушники"
+    ]
+  },
+  "twitchrivals2023desk": {
+    "name": "Стол Twitch Rivals 2023",
+    "aliases": [
+      "стол"
+    ]
+  },
+  "twitchrivals2025sofa": {
+    "name": "Диван Twitch Rivals 2025",
+    "aliases": [
+      "диван"
+    ]
+  },
+  "twitchrivalsflag": {
+    "name": "Флаг Twitch Rivals",
+    "aliases": [
+      "флаг"
+    ]
+  },
+  "twitchsunglasses": {
+    "name": "Очки Twitch",
+    "aliases": [
+      "очки"
+    ]
+  },
+  "valve1": {
+    "name": "Клапан 1-го уровня",
+    "aliases": [
+      "деталь двигателя"
+    ]
+  },
+  "valve2": {
+    "name": "Клапан 2-го уровня",
+    "aliases": [
+      "клапан средний"
+    ]
+  },
+  "valve3": {
+    "name": "Клапан 3-го уровня",
+    "aliases": [
+      "топовый клапан"
+    ]
+  },
+  "vampire.stake": {
+    "name": "Осиновый кол",
+    "aliases": [
+      "кол"
+    ]
+  },
+  "vehicle.1mod.cockpit.armored": {
+    "name": "Бронированная кабина (1 модуль)",
+    "aliases": [
+      "кабина",
+      "броня"
+    ]
+  },
+  "vehicle.1mod.cockpit": {
+    "name": "Кабина (1 модуль)",
+    "aliases": [
+      "кабина"
+    ]
+  },
+  "vehicle.1mod.cockpit.with.engine": {
+    "name": "Кабина с двигателем",
+    "aliases": [
+      "кабина с движком"
+    ]
+  },
+  "vehicle.1mod.engine": {
+    "name": "Модуль двигателя (1 слот)",
+    "aliases": [
+      "движок"
+    ]
+  },
+  "vehicle.1mod.flatbed": {
+    "name": "Платформа (1 модуль)",
+    "aliases": [
+      "платформа"
+    ]
+  },
+  "vehicle.1mod.passengers.armored": {
+    "name": "Бронированный модуль для пассажиров",
+    "aliases": [
+      "броня для людей"
+    ]
+  },
+  "vehicle.1mod.rear.seats": {
+    "name": "Задние сиденья",
+    "aliases": [
+      "сидушки"
+    ]
+  },
+  "vehicle.1mod.storage": {
+    "name": "Грузовой модуль",
+    "aliases": [
+      "багажник"
+    ]
+  },
+  "vehicle.1mod.taxi": {
+    "name": "Модуль такси",
+    "aliases": [
+      "такси"
+    ]
+  },
+  "vehicle.2mod.camper": {
+    "name": "Кемпер",
+    "aliases": [
+      "домик на колесах",
+      "кемпер"
+    ]
+  },
+  "vehicle.2mod.flatbed": {
+    "name": "Платформа (2 модуля)",
+    "aliases": [
+      "большая платформа"
+    ]
+  },
+  "vehicle.2mod.fuel.tank": {
+    "name": "Топливный бак",
+    "aliases": [
+      "бак",
+      "цистерна"
+    ]
+  },
+  "vehicle.2mod.passengers": {
+    "name": "Модуль для пассажиров (2 модуля)",
+    "aliases": [
+      "салон"
+    ]
+  },
+  "vehicle.car_radio": {
+    "name": "Автомагнитола",
+    "aliases": [
+      "магнитола"
+    ]
+  },
+  "vehicle.chassis.2mod": {
+    "name": "Шасси 2-модульного автомобиля",
+    "aliases": [
+      "шасси 2"
+    ]
+  },
+  "vehicle.chassis.3mod": {
+    "name": "Шасси 3-модульного автомобиля",
+    "aliases": [
+      "шасси 3"
+    ]
+  },
+  "vehicle.chassis.4mod": {
+    "name": "Шасси 4-модульного автомобиля",
+    "aliases": [
+      "шасси 4"
+    ]
+  },
+  "vending.machine": {
+    "name": "Торговый автомат",
+    "aliases": [
+      "вендинг"
+    ]
+  },
+  "venom.snake": {
+    "name": "Ядовитая змея",
+    "aliases": [
+      "змея"
+    ]
+  },
+  "wagon": {
+    "name": "Фургон",
+    "aliases": [
+      "повозка"
+    ]
+  },
+  "walkietalkie": {
+    "name": "Рация",
+    "aliases": [
+      "рация"
+    ]
+  },
+  "wall.external.high.adobe": {
+    "name": "Высокая глиняная стена",
+    "aliases": [
+      "глиняная стенка"
+    ]
+  },
+  "wall.external.high.frontier.sitem": {
+    "name": "Высокая деревянная стена Frontier",
+    "aliases": [
+      "деревянная стенка"
+    ]
+  },
+  "wall.external.high.ice": {
+    "name": "Высокая ледяная стена",
+    "aliases": [
+      "ледяная стенка"
+    ]
+  },
+  "wall.external.high.legacy": {
+    "name": "Высокая деревянная стена Legacy",
+    "aliases": [
+      "деревянная стенка"
+    ]
+  },
+  "wall.external.high": {
+    "name": "Высокая внешняя стена",
+    "aliases": [
+      "стенка"
+    ]
+  },
+  "wall.external.high.stone": {
+    "name": "Высокая каменная стена",
+    "aliases": [
+      "каменная стенка"
+    ]
+  },
+  "wall.external.high.stone.wall.external.high.adobe.sitem": {
+    "name": "Высокая каменная стена (Глина)",
+    "aliases": [
+      "каменка"
+    ]
+  },
+  "wall.frame.cell.gate": {
+    "name": "Тюремная дверь",
+    "aliases": [
+      "тюремная решетка"
+    ]
+  },
+  "wall.frame.cell": {
+    "name": "Тюремная решетка",
+    "aliases": [
+      "решетка",
+      "тюрьма"
+    ]
+  },
+  "wall.frame.fence.gate": {
+    "name": "Сетчатая дверь",
+    "aliases": [
+      "калитка"
+    ]
+  },
+  "wall.frame.fence": {
+    "name": "Сетчатый забор",
+    "aliases": [
+      "сетка"
+    ]
+  },
+  "wall.frame.garagedoor": {
+    "name": "Гаражная дверь",
+    "aliases": [
+      "гаражка"
+    ]
+  },
+  "wall.frame.lunar2025_a.lunar_near_year_2025_wall_divider_B.skin": {
+    "name": "Ширма лунного Нового года 2025 B",
+    "aliases": [
+      "ширма"
+    ]
+  },
+  "wall.frame.lunar2025_a.lunar_near_year_2025_wall_divider_C.skin": {
+    "name": "Ширма лунного Нового года 2025 C",
+    "aliases": [
+      "ширма"
+    ]
+  },
+  "wall.frame.lunar2025_a": {
+    "name": "Ширма лунного Нового года 2025 A",
+    "aliases": [
+      "ширма"
+    ]
+  },
+  "wall.frame.lunar2025_b": {
+    "name": "Ширма лунного Нового года 2025 B",
+    "aliases": [
+      "ширма"
+    ]
+  },
+  "wall.frame.lunar2025_c": {
+    "name": "Ширма лунного Нового года 2025 C",
+    "aliases": [
+      "ширма"
+    ]
+  },
+  "wall.frame.netting": {
+    "name": "Сетка для лазания",
+    "aliases": [
+      "сетка веревочная"
+    ]
+  },
+  "wall.frame.shopfront.metal": {
+    "name": "Металлическая витрина",
+    "aliases": [
+      "железная витрина",
+      "шопфронт"
+    ]
+  },
+  "wall.frame.shopfront": {
+    "name": "Деревянная витрина",
+    "aliases": [
+      "витрина"
+    ]
+  },
+  "wall.graveyard.fence": {
+    "name": "Кладбищенская ограда",
+    "aliases": [
+      "ограда"
+    ]
+  },
+  "wall.ice.wall": {
+    "name": "Ледяная стена",
+    "aliases": [
+      "стенка"
+    ]
+  },
+  "wall.window.bars.metal": {
+    "name": "Металлические оконные решетки",
+    "aliases": [
+      "железная решетка"
+    ]
+  },
+  "wall.window.bars.toptier": {
+    "name": "Бронированные оконные решетки",
+    "aliases": [
+      "мвк решетка"
+    ]
+  },
+  "wall.window.bars.wood": {
+    "name": "Деревянные оконные решетки",
+    "aliases": [
+      "деревянная решетка"
+    ]
+  },
+  "wall.window.glass.reinforced": {
+    "name": "Армированное окно",
+    "aliases": [
+      "бронированное стекло",
+      "стекло"
+    ]
+  },
+  "wall.window.glass.reinforced.window.paintable.skin": {
+    "name": "Армированное окно (Окрашиваемое)",
+    "aliases": [
+      "стекло"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.goldstars.hexagon.a.skin": {
+    "name": "Обои: Золотые звезды",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.metalsheet.a.skin": {
+    "name": "Обои: Металлический лист A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.metalsheet.b.skin": {
+    "name": "Обои: Металлический лист B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.metalsheet.c.skin": {
+    "name": "Обои: Металлический лист C",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.parquet.dark.skin": {
+    "name": "Обои: Темный паркет",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.parquet.painted.a.blue.skin": {
+    "name": "Обои: Синий паркет",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.parquet.painted.a.green.skin": {
+    "name": "Обои: Зеленый паркет",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.parquet.painted.a.pink.skin": {
+    "name": "Обои: Розовый паркет",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.parquet.painted.a.yellow.skin": {
+    "name": "Обои: Желтый паркет",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.parquet.painted.d.skin": {
+    "name": "Обои: Окрашенный паркет D",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.plaster.rough.blue.skin": {
+    "name": "Обои: Синяя штукатурка",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.plaster.rough.green.skin": {
+    "name": "Обои: Зеленая штукатурка",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.plaster.swirls.skin": {
+    "name": "Обои: Штукатурка с завитками",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.plaster.waves.skin": {
+    "name": "Обои: Штукатурка волнами",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.plasterboard.a.skin": {
+    "name": "Обои: Гипсокартон A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.subway.a.pattern.skin": {
+    "name": "Обои: Метро A с узором",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.subway.a.skin": {
+    "name": "Обои: Метро A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.subway.a.yellow.skin": {
+    "name": "Обои: Метро A желтые",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.subway.b.pattern.skin": {
+    "name": "Обои: Метро B с узором",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.subway.b.skin": {
+    "name": "Обои: Метро B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.wood.cobwebs.skin": {
+    "name": "Обои: Дерево с паутиной",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.woodbeams.a.skin": {
+    "name": "Обои: Деревянные балки",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling.ceilingpaper.xmas.plaster.moulded.skin": {
+    "name": "Обои: Новогодняя штукатурка",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.ceiling": {
+    "name": "Обои для потолка",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.asbestos.a.skin": {
+    "name": "Линолеум Асбест A",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.asbestos.b.skin": {
+    "name": "Линолеум Асбест B",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.asbestos.c.skin": {
+    "name": "Линолеум Асбест C",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.asbestos.d.skin": {
+    "name": "Линолеум Асбест D",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.asbestos.vintage.c.skin": {
+    "name": "Линолеум Винтаж C",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.asbestos.vintage.d.skin": {
+    "name": "Линолеум Винтаж D",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.carpet.a.skin": {
+    "name": "Ковролин A",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.carpet.b.skin": {
+    "name": "Ковролин B",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.carpet.plain.b.skin": {
+    "name": "Ковролин (простой) B",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.carpet.shaggy.a.skin": {
+    "name": "Ворсистый ковролин A",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.grass.easter.skin": {
+    "name": "Пол Трава (Пасха)",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.marble.a.skin": {
+    "name": "Мраморный пол A",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.marble.b.skin": {
+    "name": "Мраморный пол B",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.metal.treadplate.a.skin": {
+    "name": "Пол из рифленого металла",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.parquet.a.skin": {
+    "name": "Паркет A",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.parquet.b.skin": {
+    "name": "Паркет B",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.parquet.c.skin": {
+    "name": "Паркет C",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.parquet.d.skin": {
+    "name": "Паркет D",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.parquet.painted.a.skin": {
+    "name": "Окрашенный паркет A",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.parquet.painted.b.skin": {
+    "name": "Окрашенный паркет B",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.parquet.painted.c.skin": {
+    "name": "Окрашенный паркет C",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.tatami.skin": {
+    "name": "Татами",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.tree.roots.skin": {
+    "name": "Пол с корнями деревьев",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring.floorpaper.Xmas.tiles.A.skin": {
+    "name": "Новогодняя плитка A",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.flooring": {
+    "name": "Напольное покрытие",
+    "aliases": [
+      "пол"
+    ]
+  },
+  "wallpaper.tool": {
+    "name": "Инструмент для обоев",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall": {
+    "name": "Обои",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.2025.twitch.rivals.black.skin": {
+    "name": "Обои Twitch Rivals Черные",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.2025.twitch.rivals.purple.skin": {
+    "name": "Обои Twitch Rivals Фиолетовые",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.assorted.giftwrap.skin": {
+    "name": "Обои Подарочная упаковка",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.bluediamond.skin": {
+    "name": "Обои Голубые бриллианты",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.clouds.skin": {
+    "name": "Обои Облака",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.easter.eggs.skin": {
+    "name": "Обои Пасхальные яйца",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.geometrica.skin": {
+    "name": "Геометрические обои A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.geometricb.skin": {
+    "name": "Геометрические обои B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.green.skin": {
+    "name": "Зеленые обои",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.halloween.bats.skin": {
+    "name": "Обои Летучие мыши",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.JungleDLC_Jungle_animals.skin": {
+    "name": "Обои Джунгли (Животные)",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.JungleDLC_Jungle_leaves.skin": {
+    "name": "Обои Джунгли (Листья)",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.JungleDLC_Jungle_sigil.skin": {
+    "name": "Обои Джунгли (Символы)",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.LNY25_bamboo.skin": {
+    "name": "Обои Бамбук (LNY25)",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.LNY25_cherry_blossoms.skin": {
+    "name": "Обои Сакура (LNY25)",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.LNY25_chinese_lanterns.skin": {
+    "name": "Обои Китайские фонарики (LNY25)",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.LNY25_diamonds.skin": {
+    "name": "Обои Ромбы (LNY25)",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.LNY25_panel_A.skin": {
+    "name": "Панель LNY25 A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.LNY25_panel_B.skin": {
+    "name": "Панель LNY25 B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.LNY25_panel_C.skin": {
+    "name": "Панель LNY25 C",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.muertos.A.skin": {
+    "name": "Обои Muertos A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.polkadotsa.skin": {
+    "name": "Обои Горошек A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.polkadotsb.skin": {
+    "name": "Обои Горошек B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.polkadotsc.skin": {
+    "name": "Обои Горошек C",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.rattan.wicker.skin": {
+    "name": "Обои Ротанг",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.red.skin": {
+    "name": "Красные обои",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.retroa.skin": {
+    "name": "Ретро обои A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.retrob.skin": {
+    "name": "Ретро обои B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.retroc.skin": {
+    "name": "Ретро обои C",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.royala.skin": {
+    "name": "Королевские обои A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.royalb.skin": {
+    "name": "Королевские обои B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.royalc.skin": {
+    "name": "Королевские обои C",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.subway.skin": {
+    "name": "Обои Метро",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.subwayb.skin": {
+    "name": "Обои Метро B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.tiles.hexagon.a.skin": {
+    "name": "Обои Шестиугольная плитка A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.venetianplastera.skin": {
+    "name": "Обои Венецианская штукатурка A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.venetianplasterb.skin": {
+    "name": "Обои Венецианская штукатурка B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.venetianplasterc.skin": {
+    "name": "Обои Венецианская штукатурка C",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.wainscottinga.skin": {
+    "name": "Обои с деревянной панелью A",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.wainscottingb.skin": {
+    "name": "Обои с деревянной панелью B",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.wainscottingc.skin": {
+    "name": "Обои с деревянной панелью C",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.yellow.skin": {
+    "name": "Желтые обои",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wallpaper.wall.wallpaper.yellowstripe.skin": {
+    "name": "Обои Желтая полоса",
+    "aliases": [
+      "обои"
+    ]
+  },
+  "wantedposter.2.skin": {
+    "name": "Плакат Разыскивается 2",
+    "aliases": [
+      "плакат"
+    ]
+  },
+  "wantedposter.3.skin": {
+    "name": "Плакат Разыскивается 3",
+    "aliases": [
+      "плакат"
+    ]
+  },
+  "wantedposter.4.skin": {
+    "name": "Плакат Разыскивается 4",
+    "aliases": [
+      "плакат"
+    ]
+  },
+  "wantedposter": {
+    "name": "Плакат Разыскивается",
+    "aliases": [
+      "плакат"
+    ]
+  },
+  "wantedposter.wantedposter2": {
+    "name": "Плакат Разыскивается 2",
+    "aliases": [
+      "плакат"
+    ]
+  },
+  "wantedposter.wantedposter3": {
+    "name": "Плакат Разыскивается 3",
+    "aliases": [
+      "плакат"
+    ]
+  },
+  "wantedposter.wantedposter4": {
+    "name": "Плакат Разыскивается 4",
+    "aliases": [
+      "плакат"
+    ]
+  },
+  "warmingtea": {
+    "name": "Согревающий чай",
+    "aliases": [
+      "чай"
+    ]
+  },
+  "watchtower.wood": {
+    "name": "Деревянная смотровая вышка",
+    "aliases": [
+      "вышка"
+    ]
+  },
+  "water.barrel": {
+    "name": "Бочка для воды",
+    "aliases": [
+      "бочка для воды",
+      "водосборник"
+    ]
+  },
+  "water.catcher.large": {
+    "name": "Большой водосборник",
+    "aliases": [
+      "большой водосборник"
+    ]
+  },
+  "water.catcher.small": {
+    "name": "Малый водосборник",
+    "aliases": [
+      "малый водосборник"
+    ]
+  },
+  "water": {
+    "name": "Вода",
+    "aliases": [
+      "вода"
+    ]
+  },
+  "water.purifier": {
+    "name": "Опреснитель воды",
+    "aliases": [
+      "опреснитель",
+      "очиститель"
+    ]
+  },
+  "water.radioactive": {
+    "name": "Радиоактивная вода",
+    "aliases": [
+      "грязная вода"
+    ]
+  },
+  "water.salt": {
+    "name": "Соленая вода",
+    "aliases": [
+      "морская вода"
+    ]
+  },
+  "waterjug": {
+    "name": "Канистра для воды",
+    "aliases": [
+      "канистра",
+      "баклажка"
+    ]
+  },
+  "waterpump": {
+    "name": "Водяной насос",
+    "aliases": [
+      "насос"
+    ]
+  },
+  "weapon.mod.8x.scope": {
+    "name": "Прицел 8x",
+    "aliases": [
+      "8х",
+      "оптика 8х"
+    ]
+  },
+  "weapon.mod.burstmodule": {
+    "name": "Модуль очереди",
+    "aliases": [
+      "модуль берста",
+      "берст модуль"
+    ]
+  },
+  "weapon.mod.extendedmags": {
+    "name": "Увеличенный магазин",
+    "aliases": [
+      "увеличенный магазин",
+      "расширенный маг"
+    ]
+  },
+  "weapon.mod.flashlight": {
+    "name": "Фонарик на оружие",
+    "aliases": [
+      "фонарик на оружие"
+    ]
+  },
+  "weapon.mod.gascompressionovedrive": {
+    "name": "Модуль газового сжатия",
+    "aliases": [
+      "модуль"
+    ]
+  },
+  "weapon.mod.holosight": {
+    "name": "Голографический прицел",
+    "aliases": [
+      "голограф",
+      "голо",
+      "коллиматор"
+    ]
+  },
+  "weapon.mod.lasersight": {
+    "name": "Лазерный прицел",
+    "aliases": [
+      "лазер"
+    ]
+  },
+  "weapon.mod.muzzleboost": {
+    "name": "Дульный ускоритель",
+    "aliases": [
+      "буст",
+      "дульник на скорость"
+    ]
+  },
+  "weapon.mod.muzzlebrake": {
+    "name": "Дульный тормоз",
+    "aliases": [
+      "брейк",
+      "дульник на отдачу"
+    ]
+  },
+  "weapon.mod.oilfiltersilencer": {
+    "name": "Глушитель из масляного фильтра",
+    "aliases": [
+      "фильтр"
+    ]
+  },
+  "weapon.mod.silencer": {
+    "name": "Глушитель",
+    "aliases": [
+      "глушитель",
+      "глушак"
+    ]
+  },
+  "weapon.mod.simplesight": {
+    "name": "Самодельный прицел",
+    "aliases": [
+      "симпла",
+      "самодельный прицел"
+    ]
+  },
+  "weapon.mod.small.scope": {
+    "name": "Прицел 4x",
+    "aliases": [
+      "4х",
+      "малый прицел"
+    ]
+  },
+  "weapon.mod.sodacansilencer": {
+    "name": "Глушитель из банки газировки",
+    "aliases": [
+      "банка глушитель"
+    ]
+  },
+  "weapon.mod.targetingattachment": {
+    "name": "Модуль целеуказания",
+    "aliases": [
+      "целеуказатель"
+    ]
+  },
+  "weaponrack.doublelight": {
+    "name": "Оружейная стойка (Двойной свет)",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "weaponrack.light": {
+    "name": "Оружейная стойка со светом",
+    "aliases": [
+      "стойка"
+    ]
+  },
+  "wheat": {
+    "name": "Пшеница",
+    "aliases": [
+      "пшеница"
+    ]
+  },
+  "white.berry": {
+    "name": "Белая ягода",
+    "aliases": [
+      "ягода"
+    ]
+  },
+  "whiteidtag": {
+    "name": "Белый бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  },
+  "wicker.barrel": {
+    "name": "Плетеная бочка",
+    "aliases": [
+      "бочка"
+    ]
+  },
+  "window.paintable": {
+    "name": "Окно (Окрашиваемое)",
+    "aliases": [
+      "окно"
+    ]
+  },
+  "wiretool": {
+    "name": "Инструмент для проводов",
+    "aliases": [
+      "проводник",
+      "инструмент для электрики"
+    ]
+  },
+  "wolfmeat.burned": {
+    "name": "Сгоревшая волчатина",
+    "aliases": [
+      "уголь"
+    ]
+  },
+  "wolfmeat.cooked": {
+    "name": "Жареная волчатина",
+    "aliases": [
+      "мясо волка"
+    ]
+  },
+  "wolfmeat.raw": {
+    "name": "Сырая волчатина",
+    "aliases": [
+      "сырое мясо"
+    ]
+  },
+  "wolfmeat.spoiled": {
+    "name": "Испорченная волчатина",
+    "aliases": [
+      "гнилье"
+    ]
+  },
+  "wood.armor.helmet.cocoknight.head.skin": {
+    "name": "Шлем коко-рыцаря",
+    "aliases": [
+      "деревянный шлем"
+    ]
+  },
+  "wood.armor.helmet": {
+    "name": "Деревянный шлем",
+    "aliases": [
+      "деревянный шлем",
+      "деревяшка",
+      "шитки",
+      "деревяные шитки"
+    ]
+  },
+  "wood.armor.jacket.cocoknight.jacket.skin": {
+    "name": "Куртка коко-рыцаря",
+    "aliases": [
+      "куртка"
+    ]
+  },
+  "wood.armor.jacket": {
+    "name": "Деревянный нагрудник",
+    "aliases": [
+      "деревянный нагрудник",
+      "деревяшка",
+      "шитки",
+      "деревяные шитки"
+    ]
+  },
+  "wood.armor.pants.cocoknight.pants.skin": {
+    "name": "Штаны коко-рыцаря",
+    "aliases": [
+      "деревянные штаны"
+    ]
+  },
+  "wood.armor.pants": {
+    "name": "Деревянные поножи",
+    "aliases": [
+      "деревянные штаны",
+      "шитки",
+      "деревяные шитки"
+    ]
+  },
+  "wood": {
+    "name": "Дерево",
+    "aliases": [
+      "дерево",
+      "дрова"
+    ]
+  },
+  "woodarmor.gloves.cocoknight.gloves.skin": {
+    "name": "Перчатки коко-рыцаря",
+    "aliases": [
+      "перчатки"
+    ]
+  },
+  "woodarmor.gloves": {
+    "name": "Деревянные перчатки",
+    "aliases": [
+      "перчатки"
+    ]
+  },
+  "woodcross": {
+    "name": "Деревянный крест",
+    "aliases": [
+      "крест"
+    ]
+  },
+  "wooden.shield": {
+    "name": "Деревянный щит",
+    "aliases": [
+      "щит"
+    ]
+  },
+  "woodframe.large": {
+    "name": "Большая деревянная рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "woodframe.medium": {
+    "name": "Средняя деревянная рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "woodframe.small": {
+    "name": "Маленькая деревянная рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "woodframe.standing": {
+    "name": "Напольная деревянная рамка",
+    "aliases": [
+      "рамка"
+    ]
+  },
+  "woodmirror.large": {
+    "name": "Большое деревянное зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "woodmirror.medium": {
+    "name": "Среднее деревянное зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "woodmirror.small": {
+    "name": "Маленькое деревянное зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "woodmirror.standing": {
+    "name": "Напольное деревянное зеркало",
+    "aliases": [
+      "зеркало"
+    ]
+  },
+  "woodtea.advanced": {
+    "name": "Продвинутый чай на дерево",
+    "aliases": [
+      "чай на дерево"
+    ]
+  },
+  "woodtea": {
+    "name": "Чай на дерево",
+    "aliases": [
+      "чай на дерево"
+    ]
+  },
+  "woodtea.pure": {
+    "name": "Чистый чай на дерево",
+    "aliases": [
+      "топ чай на дерево"
+    ]
+  },
+  "workbench1": {
+    "name": "Верстак 1-го уровня",
+    "aliases": [
+      "первый верстак",
+      "верстак 1"
+    ]
+  },
+  "workbench2": {
+    "name": "Верстак 2-го уровня",
+    "aliases": [
+      "второй верстак",
+      "верстак 2"
+    ]
+  },
+  "workbench3": {
+    "name": "Верстак 3-го уровня",
+    "aliases": [
+      "третий верстак",
+      "верстак 3"
+    ]
+  },
+  "workcart": {
+    "name": "Дрезина",
+    "aliases": [
+      "вагонетка",
+      "поезд"
+    ]
+  },
+  "worm": {
+    "name": "Червяк",
+    "aliases": [
+      "червяк"
+    ]
+  },
+  "wrappedgift": {
+    "name": "Упакованный подарок",
+    "aliases": [
+      "подарок"
+    ]
+  },
+  "wrappingpaper": {
+    "name": "Упаковочная бумага",
+    "aliases": [
+      "обертка"
+    ]
+  },
+  "xmas.advent": {
+    "name": "Новогодний календарь",
+    "aliases": [
+      "календарь"
+    ]
+  },
+  "xmas.decoration.baubels": {
+    "name": "Елочные шары",
+    "aliases": [
+      "игрушки"
+    ]
+  },
+  "xmas.decoration.candycanes": {
+    "name": "Украшение: Леденцы",
+    "aliases": [
+      "украшение"
+    ]
+  },
+  "xmas.decoration.gingerbreadmen": {
+    "name": "Украшение: Пряничные человечки",
+    "aliases": [
+      "украшение"
+    ]
+  },
+  "xmas.decoration.lights": {
+    "name": "Елочная гирлянда",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "xmas.decoration.pinecone": {
+    "name": "Украшение: Шишки",
+    "aliases": [
+      "украшение"
+    ]
+  },
+  "xmas.decoration.star": {
+    "name": "Новогодняя звезда",
+    "aliases": [
+      "звезда на елку"
+    ]
+  },
+  "xmas.decoration.tinsel": {
+    "name": "Мишура",
+    "aliases": [
+      "дождик"
+    ]
+  },
+  "xmas.door.garland": {
+    "name": "Новогодняя гирлянда на дверь",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "xmas.double.door.garland": {
+    "name": "Новогодняя гирлянда на двойную дверь",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "xmas.lightstring.advanced": {
+    "name": "Продвинутая гирлянда",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "xmas.lightstring": {
+    "name": "Новогодняя гирлянда",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "xmas.present.large": {
+    "name": "Большой подарок",
+    "aliases": [
+      "подарок"
+    ]
+  },
+  "xmas.present.medium": {
+    "name": "Средний подарок",
+    "aliases": [
+      "подарок"
+    ]
+  },
+  "xmas.present.small": {
+    "name": "Маленький подарок",
+    "aliases": [
+      "подарок"
+    ]
+  },
+  "xmas.tree": {
+    "name": "Новогодняя елка",
+    "aliases": [
+      "елка"
+    ]
+  },
+  "xmas.window.garland": {
+    "name": "Новогодняя гирлянда на окно",
+    "aliases": [
+      "гирлянда"
+    ]
+  },
+  "xmasdoorwreath": {
+    "name": "Новогодний венок",
+    "aliases": [
+      "венок"
+    ]
+  },
+  "xylophone": {
+    "name": "Ксилофон",
+    "aliases": [
+      "ксилофон"
+    ]
+  },
+  "yellow.berry": {
+    "name": "Желтая ягода",
+    "aliases": [
+      "ягода"
+    ]
+  },
+  "yellowidtag": {
+    "name": "Желтый бейдж",
+    "aliases": [
+      "бейдж"
+    ]
+  }
+}

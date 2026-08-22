@@ -1,0 +1,74 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply bg-[#F8F9FA] text-slate-900 font-sans antialiased transition-colors duration-300;
+  }
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+}
+
+@keyframes startup-sequence {
+  0% {
+    clip-path: inset(-100px 100% -100px -100px);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  30% {
+    clip-path: inset(-100px -100px -100px -100px);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  55% {
+    clip-path: inset(-100px -100px -100px -100px);
+    opacity: 0.3;
+    filter: brightness(0.8);
+  }
+  75% {
+    clip-path: inset(-100px -100px -100px -100px);
+    opacity: 1;
+    filter: brightness(1.3);
+  }
+  100% {
+    clip-path: inset(-100px -100px -100px -100px);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes glow-sequence {
+  0%, 55%, 100% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 1;
+  }
+}
+
+.animate-startup {
+  animation: startup-sequence 4s ease-in-out forwards;
+}
+
+.animate-glow {
+  animation: glow-sequence 4s ease-in-out forwards;
+}
+
+@keyframes splash-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+.animate-splash-fade-out {
+  animation: splash-fade-out 0.5s ease-out forwards;
+}
+
+@keyframes main-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-main-fade-in {
+  animation: main-fade-in 0.5s ease-in forwards;
+}
