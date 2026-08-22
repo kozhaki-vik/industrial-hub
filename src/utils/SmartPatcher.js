@@ -72,9 +72,10 @@ export async function checkUpdates(addLog = () => {}) {
   let serverData = null;
 
   try {
-    const ghApiUrl = channel === 'test' 
-      ? "https://api.github.com/repos/kozhaki-vik/industrial-hub/releases"
-      : "https://api.github.com/repos/kozhaki-vik/industrial-hub/releases/latest";
+    const repo = 'kozhaki-vik/industrial-hub-releases';
+    const ghApiUrl = channel === 'main' 
+      ? `https://api.github.com/repos/${repo}/releases/latest`
+      : `https://api.github.com/repos/${repo}/releases`;
 
     const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
     if (ghRes.ok) {

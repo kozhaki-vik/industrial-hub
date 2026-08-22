@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -147,7 +147,7 @@ namespace IndustrialHubLauncher
             string exeUrl = null;
             try
             {
-                HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/kozhaki-vik/industrial-hub/releases/latest");
+                HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases/latest");
                 ghReq.Timeout = 5000;
                 ghReq.UserAgent = "IndustrialHub-Launcher";
                 using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
