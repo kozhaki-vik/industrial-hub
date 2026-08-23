@@ -722,8 +722,12 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
   });
 
   ipcMain.handle('app:relaunch', () => {
-    app.relaunch();
-    app.exit(0);
+    const options = {};
+    if (process.env.PORTABLE_EXECUTABLE_FILE) {
+      options.execPath = process.env.PORTABLE_EXECUTABLE_FILE;
+    }
+    app.relaunch(options);
+    app.quit();
   });
 
   ipcMain.handle('shell:openExternal', (event, url) => {

@@ -96,6 +96,17 @@ export const factoryReset = () => {
   // Or just clear everything to be safe:
   localStorage.clear();
 
+  // Reset in-memory config so any pending saves write defaults
+  currentConfig = {
+    theme: 'dark',
+    language: 'ru',
+    rustPath: '',
+    templates: [],
+    telemetry: {},
+    setupCompleted: false,
+    visitedTabs: []
+  };
+
   try {
     if (fs) {
       const configPath = getConfigPath();
@@ -107,11 +118,13 @@ export const factoryReset = () => {
     console.error('Error deleting config for factory reset:', e);
   }
   
-  if (window.electronAPI?.app?.relaunch) {
-    window.electronAPI.app.relaunch();
-  } else {
-    window.location.reload();
-  }
+  setTimeout(() => {
+    if (window.electronAPI?.app?.relaunch) {
+      window.electronAPI.app.relaunch();
+    } else {
+      window.location.reload();
+    }
+  }, 500);
 };
 
 export const addVisitedTab = (path) => {
