@@ -115,12 +115,12 @@ export default function Graphics() {
           ))}
         </div>
         <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-xl shrink-0">
-          <p className="text-sm text-slate-500">Заметили ошибку в настройках или хотите предложить свои?</p>
+          <p className="text-sm text-slate-500">{t('graphics_suggest_error_text', 'Заметили ошибку в настройках или хотите предложить свои?')}</p>
           <button 
             onClick={() => setIsTicketModalOpen(true)}
             className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 font-medium hover:bg-white dark:hover:bg-slate-800 transition-colors shadow-sm"
           >
-            Предложить правку
+            {t('graphics_suggest_edit_btn', 'Предложить правку')}
           </button>
         </div>
         </>
