@@ -16,6 +16,7 @@ export function GammaProvider({ children }) {
   const [isNightVision, setIsNightVision] = useState(false);
   const [displays, setDisplays] = useState([]);
   const [selectedDisplay, setSelectedDisplay] = useState(getConfigKey('selectedGammaDisplay') || '');
+  const [nightVisionLevel, setNightVisionLevel] = useState(getConfigKey('gammaLevel') || 200);
 
   // Initialization: fetch monitors
   useEffect(() => {
@@ -40,7 +41,7 @@ export function GammaProvider({ children }) {
     let isActive = true;
     const toggleGamma = () => {
       setIsNightVision(prev => {
-        if (!prev) setDisplayGamma(250, selectedDisplay);
+        if (!prev) setDisplayGamma(nightVisionLevel, selectedDisplay);
         else resetDisplayGamma(selectedDisplay);
         return !prev;
       });
@@ -63,7 +64,7 @@ export function GammaProvider({ children }) {
       isActive = false;
       unregisterGlobalHook();
     };
-  }, [gammaBind, selectedDisplay]);
+  }, [gammaBind, selectedDisplay, nightVisionLevel]);
 
   const handleSetGammaBind = (bind) => {
     setGammaBind(bind);
@@ -73,11 +74,19 @@ export function GammaProvider({ children }) {
     setSelectedDisplay(disp);
     setConfigKey('selectedGammaDisplay', disp);
     resetDisplayGamma(selectedDisplay); // Reset old monitor just in case
-    if (isNightVision) setDisplayGamma(250, disp);
+    if (isNightVision) setDisplayGamma(nightVisionLevel, disp);
+  };
+
+  const handleSetNightVisionLevel = (level) => {
+    setNightVisionLevel(level);
+    setConfigKey('gammaLevel', level);
+    if (isNightVision) {
+      setDisplayGamma(level, selectedDisplay);
+    }
   };
 
   const enableGamma = () => {
-    setDisplayGamma(250, selectedDisplay);
+    setDisplayGamma(nightVisionLevel, selectedDisplay);
     setIsNightVision(true);
   };
 
@@ -94,7 +103,9 @@ export function GammaProvider({ children }) {
     disableGamma,
     displays,
     selectedDisplay,
-    setSelectedDisplay: handleSetSelectedDisplay
+    setSelectedDisplay: handleSetSelectedDisplay,
+    nightVisionLevel,
+    setNightVisionLevel: handleSetNightVisionLevel
   };
 
   return (

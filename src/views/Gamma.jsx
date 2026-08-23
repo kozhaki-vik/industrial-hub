@@ -13,7 +13,8 @@ export default function Gamma() {
   const {
     gammaBind, setGammaBind,
     enableGamma, disableGamma,
-    displays, selectedDisplay, setSelectedDisplay
+    displays, selectedDisplay, setSelectedDisplay,
+    nightVisionLevel, setNightVisionLevel
   } = useGamma();
   const [showSuggestion, setShowSuggestion] = React.useState(!getConfigKey('gammaSuggestDismissed'));
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
@@ -128,11 +129,27 @@ export default function Gamma() {
             <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-1">{t('gamma_day_title')}</h3>
             <p className="text-xs text-slate-500">{t('gamma_day_desc')}</p>
           </div>
-          <div className="flex-1 bg-orange-50 dark:bg-orange-900/10 p-6 rounded-2xl border border-orange-200 dark:border-orange-800 text-center cursor-pointer hover:border-orange-500 transition-colors"
+          <div className="flex-1 bg-orange-50 dark:bg-orange-900/10 p-6 rounded-2xl border border-orange-200 dark:border-orange-800 text-center cursor-pointer hover:border-orange-500 transition-colors flex flex-col justify-between"
                onClick={enableGamma}>
-            <Moon className="w-8 h-8 text-orange-500 mx-auto mb-3" />
-            <h3 className="font-bold text-orange-700 dark:text-orange-200 mb-1">{t('gamma_night_title')}</h3>
-            <p className="text-xs text-orange-500/70">{t('gamma_night_desc')}</p>
+            <div>
+              <Moon className="w-8 h-8 text-orange-500 mx-auto mb-3" />
+              <h3 className="font-bold text-orange-700 dark:text-orange-200 mb-1">{t('gamma_night_title')}</h3>
+              <p className="text-xs text-orange-500/70 mb-4">{t('gamma_night_desc')}</p>
+            </div>
+            
+            <div className="w-full px-4 mt-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-1 text-xs text-orange-600 dark:text-orange-400 font-medium">
+                <span>{t('gamma_brightness_level', 'Яркость')}: {Math.round(((nightVisionLevel - 128) / (255 - 128)) * 100)}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="130" 
+                max="255" 
+                value={nightVisionLevel}
+                onChange={(e) => setNightVisionLevel(Number(e.target.value))}
+                className="w-full accent-orange-500"
+              />
+            </div>
           </div>
         </div>
 
