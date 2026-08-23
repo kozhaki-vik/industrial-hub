@@ -42,7 +42,7 @@ export default function SupportTicketModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in">
       <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Contact Support</h3>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">{t('support_title', 'Contact Support')}</h3>
           <button 
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
@@ -55,14 +55,14 @@ export default function SupportTicketModal({ isOpen, onClose }) {
           {status !== 'online' ? (
             <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <p className="text-sm font-medium">You must be connected to the server to send a support ticket.</p>
+              <p className="text-sm font-medium">{t('support_offline', 'You must be connected to the server to send a support ticket.')}</p>
             </div>
           ) : success ? (
             <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-6 rounded-xl flex flex-col items-center justify-center gap-3 text-center h-48">
               <CheckCircle className="w-10 h-10" />
               <div>
-                <p className="font-bold text-lg">Ticket Submitted</p>
-                <p className="text-sm mt-1 opacity-80">Our team will look into it shortly.</p>
+                <p className="font-bold text-lg">{t('support_success_title', 'Ticket Submitted')}</p>
+                <p className="text-sm mt-1 opacity-80">{t('support_success_desc', 'Our team will look into it shortly.')}</p>
               </div>
             </div>
           ) : (
@@ -76,12 +76,12 @@ export default function SupportTicketModal({ isOpen, onClose }) {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Describe your problem
+                  {t('support_desc', 'Describe your problem')}
                 </label>
                 <textarea 
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="How can we help?"
+                  placeholder={t('support_placeholder', 'How can we help?')}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 resize-none h-32 text-slate-900 dark:text-slate-100"
                   required
                 />
@@ -97,7 +97,7 @@ export default function SupportTicketModal({ isOpen, onClose }) {
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Send Ticket
+                    {t('support_send', 'Send Ticket')}
                   </>
                 )}
               </button>
