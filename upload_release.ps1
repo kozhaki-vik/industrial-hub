@@ -5,6 +5,8 @@ param (
     [string]$Token = "[REDACTED_GITHUB_TOKEN]"
 )
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 $repo = "kozhaki-vik/industrial-hub-releases"
 $tagName = "v$Version"
 $releaseName = "Industrial Hub $tagName"
@@ -40,10 +42,16 @@ $uploadHeaders = @{
     "Accept" = "application/vnd.github.v3+json"
 }
 
-Invoke-RestMethod -Uri $uploadUrl -Method Post -Headers $uploadHeaders -InFile $FilePath -ContentType "application/octet-stream"
+try {
+    Invoke-RestMethod -Uri $uploadUrl -Method Post -Headers $uploadHeaders -InFile $FilePath -ContentType "application/octet-stream" -ErrorAction Stop
 
-Write-Host "Publishing release..."
-$publishBody = @{ draft = $false } | ConvertTo-Json
-Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/$releaseId" -Method Patch -Headers $headers -Body $publishBody -ContentType "application/json"
+    Write-Host "Publishing release..."
+    $publishBody = @{ draft = $false } | ConvertTo-Json
+    Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/$releaseId" -Method Patch -Headers $headers -Body $publishBody -ContentType "application/json"
 
-Write-Host "Upload complete!"
+    Write-Host "Upload complete!"
+} catch {
+    Write-Host "Upload failed: $_"
+    Write-Host "Keeping release as DRAFT so it doesn't trigger the webhook."
+    exit 1
+}

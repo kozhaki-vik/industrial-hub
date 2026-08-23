@@ -89,16 +89,19 @@ export const getConfigKey = (key) => {
 loadConfig();
 
 export const factoryReset = () => {
-  if (!isElectron) {
-    localStorage.removeItem('industrial-hub-config');
-    window.location.reload();
-    return;
-  }
+  // Always clear local storage keys used by the app
+  localStorage.removeItem('industrial-hub-config');
+  localStorage.removeItem('industrial-hub-theme');
+  localStorage.removeItem('industrial-hub-lang');
+  // Or just clear everything to be safe:
+  localStorage.clear();
 
   try {
-    const configPath = getConfigPath();
-    if (fs.existsSync(configPath)) {
-      fs.unlinkSync(configPath);
+    if (fs) {
+      const configPath = getConfigPath();
+      if (fs.existsSync(configPath)) {
+        fs.unlinkSync(configPath);
+      }
     }
   } catch (e) {
     console.error('Error deleting config for factory reset:', e);
@@ -106,7 +109,6 @@ export const factoryReset = () => {
   
   if (window.electronAPI?.app?.relaunch) {
     window.electronAPI.app.relaunch();
-    window.close();
   } else {
     window.location.reload();
   }
