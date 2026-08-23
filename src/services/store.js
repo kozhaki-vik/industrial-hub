@@ -89,10 +89,6 @@ export const getConfigKey = (key) => {
 loadConfig();
 
 export const factoryReset = () => {
-  // Preserve update channel so testers don't get downgraded
-  const currentChannel = localStorage.getItem('industrial-hub-config') ? 
-    (JSON.parse(localStorage.getItem('industrial-hub-config')).updateChannel || 'main') : 'main';
-
   // Always clear local storage keys used by the app
   localStorage.removeItem('industrial-hub-config');
   localStorage.removeItem('industrial-hub-theme');
@@ -100,22 +96,16 @@ export const factoryReset = () => {
   // Or just clear everything to be safe:
   localStorage.clear();
 
-  // Restore update channel in a fresh config
-  const freshConfig = {
+  // Reset in-memory config so any pending saves write defaults
+  currentConfig = {
     theme: 'dark',
     language: 'ru',
     rustPath: '',
     templates: [],
     telemetry: {},
     setupCompleted: false,
-    visitedTabs: [],
-    updateChannel: currentChannel
+    visitedTabs: []
   };
-  
-  localStorage.setItem('industrial-hub-config', JSON.stringify(freshConfig));
-
-  // Reset in-memory config so any pending saves write defaults
-  currentConfig = { ...freshConfig };
 
   try {
     if (fs) {
