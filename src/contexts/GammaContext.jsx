@@ -16,7 +16,10 @@ export function GammaProvider({ children }) {
   const [isNightVision, setIsNightVision] = useState(false);
   const [displays, setDisplays] = useState([]);
   const [selectedDisplay, setSelectedDisplay] = useState(getConfigKey('selectedGammaDisplay') || '');
-  const [nightVisionLevel, setNightVisionLevel] = useState(getConfigKey('gammaLevel') || 200);
+  
+  let savedLevel = getConfigKey('gammaLevel');
+  if (savedLevel === undefined || savedLevel > 100) savedLevel = 75; // Migration from old 130-255 scale
+  const [nightVisionLevel, setNightVisionLevel] = useState(savedLevel);
 
   // Initialization: fetch monitors
   useEffect(() => {

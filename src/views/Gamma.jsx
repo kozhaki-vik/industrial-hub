@@ -139,12 +139,12 @@ export default function Gamma() {
             
             <div className="w-full px-4 mt-auto" onClick={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-1 text-xs text-orange-600 dark:text-orange-400 font-medium">
-                <span>{t('gamma_brightness_level', 'Яркость')}: {Math.round(((nightVisionLevel - 128) / (255 - 128)) * 100)}%</span>
+                <span>{t('gamma_brightness_level', 'Яркость')}: {nightVisionLevel}%</span>
               </div>
               <input 
                 type="range" 
-                min="130" 
-                max="255" 
+                min="0" 
+                max="100" 
                 value={nightVisionLevel}
                 onChange={(e) => setNightVisionLevel(Number(e.target.value))}
                 className="w-full accent-orange-500"

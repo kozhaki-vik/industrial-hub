@@ -61,15 +61,28 @@ public class GammaController {
         public UInt16[] Blue;
     }
 
-    public static void SetGamma(int gamma, string deviceName) {
+    public static void SetGamma(int level, string deviceName) {
         RAMP ramp = new RAMP();
         ramp.Red = new UInt16[256];
         ramp.Green = new UInt16[256];
         ramp.Blue = new UInt16[256];
         
+        // level goes from 0 to 100, mapping to a true gamma curve from 1.00 to 2.80
+        // (Just like NVIDIA Control Panel)
+        double gamma = 1.0;
+        if (level >= 0 && level <= 100) {
+            gamma = 1.0 + (level / 100.0) * 1.8;
+        } else if (level == 128) { // For old reset calls or defaults
+            gamma = 1.0;
+        }
+        
         for (int i = 0; i < 256; i++) {
-            int val = i * 257 * gamma / 128;
+            double v = i / 255.0;
+            // Gamma decoding curve: v^(1/gamma). This brightens the midtones!
+            double corrected = Math.Pow(v, 1.0 / gamma);
+            int val = (int)(corrected * 65535.0);
             if (val > 65535) val = 65535;
+            if (val < 0) val = 0;
             ramp.Red[i] = ramp.Green[i] = ramp.Blue[i] = (UInt16)val;
         }
         

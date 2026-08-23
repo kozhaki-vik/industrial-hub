@@ -9,5 +9,5 @@ export const setDisplayGamma = (brightnessLevel, deviceName = "\\\\.\\DISPLAY1")
 };
 
 export const resetDisplayGamma = (deviceName = "\\\\.\\DISPLAY1") => {
-  setDisplayGamma(128, deviceName);
+  setDisplayGamma(0, deviceName);
 };
