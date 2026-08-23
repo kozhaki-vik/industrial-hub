@@ -15,6 +15,16 @@ const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow = null;
 
+function getRealAppPath() {
+  if (app.isPackaged) {
+    if (process.env.PORTABLE_EXECUTABLE_DIR) {
+      return process.env.PORTABLE_EXECUTABLE_DIR;
+    }
+    return path.dirname(process.execPath);
+  }
+  return process.cwd();
+}
+
 // --- Single Instance Lock ---
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -23,7 +33,7 @@ if (!gotTheLock) {
   app.quit();
 } else {
   // We are the primary instance.
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
+  app.on('second-instance', () => {
     // User requested to close the old instance and start the new one.
     app.relaunch();
     app.exit(0);
@@ -159,7 +169,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    show: false, // Don't show until ready
+    show: true, // Show instantly
+    backgroundColor: '#0f172a', // Match slate-950
     autoHideMenuBar: true, // Remove the top menu (File, Edit, View, Window)
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -169,8 +180,8 @@ function createWindow() {
   });
   mainWindow.setMenu(null); // Completely removes the top menu
 
+  // Since show is true, we don't strictly need this, but we can keep center() logic
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
     mainWindow.center();
     mainWindow.setAlwaysOnTop(true);
     mainWindow.focus();
@@ -210,8 +221,8 @@ function sendCrashReport(errorStack) {
     const req = https.request(options, () => {});
     req.on('error', () => {});
     req.write(postData);
-    req.end();
-  } catch (e) {}
+  } catch {
+  }
 }
 
 process.on('uncaughtException', (err) => {
@@ -250,7 +261,7 @@ app.whenReady().then(async () => {
               clearInterval(check);
               resolve(false);
             }
-          } catch (e) {
+          } catch {
             clearInterval(check);
             resolve(true); // Process is gone
           }
@@ -273,26 +284,49 @@ app.whenReady().then(async () => {
 
   // Cleanup old app-* folders
   try {
-    const appPath = path.dirname(app.getPath('exe'));
+    const appPath = getRealAppPath();
     const clientDir = path.resolve(appPath, '..');
     const currentFolder = path.basename(appPath);
     if (currentFolder.startsWith('app-')) {
-      const folders = fs.readdirSync(clientDir);
-      for (const folder of folders) {
-        if (folder.startsWith('app-') && folder !== currentFolder) {
-          const fullPath = path.join(clientDir, folder);
-          try {
+      const folders = fs.readdirSync(clientDir).filter(f => f.startsWith('app-'));
+      
+      const parseVer = (str) => {
+         const m = str.match(/app-(\d+)\.(\d+)\.(\d+)/);
+         if (!m) return 0;
+         return parseInt(m[1])*1000000 + parseInt(m[2])*1000 + parseInt(m[3]);
+      };
+      folders.sort((a, b) => parseVer(b) - parseVer(a));
+
+      const versionsDir = path.join(clientDir, 'Версии');
+      
+      for (let i = 3; i < folders.length; i++) {
+        if (!fs.existsSync(versionsDir)) {
+          fs.mkdirSync(versionsDir, { recursive: true });
+        }
+        const folder = folders[i];
+        const fullPath = path.join(clientDir, folder);
+        const destPath = path.join(versionsDir, folder);
+        try {
+          if (!fs.existsSync(destPath)) {
+            fs.renameSync(fullPath, destPath);
+            console.log('Moved old version folder to Версии:', folder);
+          } else {
             fs.rmSync(fullPath, { recursive: true, force: true });
-            console.log('Cleaned old version folder:', folder);
-          } catch (e) {
-            console.error('Failed to clean old folder:', folder, e);
           }
+        } catch (e) {
+          console.error('Failed to move old folder:', folder, e);
         }
       }
     }
   } catch (e) {
     console.error('Cleanup error:', e);
   }
+
+  ipcMain.handle('shell:openFolder', async (event, folderPath) => {
+    if (folderPath) {
+      await shell.openPath(folderPath);
+    }
+  });
 
   ipcMain.handle('autoDetectRustPath', () => {
     try {
@@ -428,7 +462,11 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('diagnostics:getAppPath', () => {
-    return path.dirname(app.getPath('exe'));
+    return getRealAppPath();
+  });
+
+  ipcMain.handle('diagnostics:getAppDataPath', () => {
+    return app.getPath('userData');
   });
 
   ipcMain.handle('diagnostics:getAppVersionInfo', () => {
@@ -441,9 +479,6 @@ app.whenReady().then(async () => {
         if (uData && uData.lastUpdated) {
           lastUpdated = uData.lastUpdated;
         }
-        if (uData && uData.version) {
-          version = uData.version;
-        }
       }
     } catch (e) {
       console.error(e);
@@ -452,8 +487,8 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('diagnostics:checkAppIntegrity', () => {
-    const appPath = process.cwd();
-    const isPackaged = app.isPackaged || !fs.existsSync(path.join(appPath, 'src'));
+    const appPath = getRealAppPath();
+    const isPackaged = app.isPackaged || !fs.existsSync(path.join(process.cwd(), 'src'));
 
     let checks = [
           { name: 'package.json (Config)', relative: 'package.json', checkPath: path.join(appPath, 'package.json') },
@@ -468,19 +503,10 @@ app.whenReady().then(async () => {
           { name: 'tailwind.config.js (Tailwind)', relative: 'tailwind.config.js', checkPath: path.join(appPath, 'tailwind.config.js') }
         ];
     if (isPackaged) {
-      const resourcesPath = path.join(appPath, 'resources');
       checks = [
-          { name: 'package.json (Config)', relative: 'package.json', checkPath: fs.existsSync(path.join(appPath, 'package.json')) ? path.join(appPath, 'package.json') : path.join(resourcesPath, 'app.asar') },
-          { name: 'app.asar (Core Bundle)', relative: 'resources/app.asar', checkPath: path.join(resourcesPath, 'app.asar') },
-          { name: 'dist/assets (Compiled Assets)', relative: 'dist/assets', checkPath: fs.existsSync(path.join(appPath, 'dist', 'assets')) ? path.join(appPath, 'dist', 'assets') : path.join(resourcesPath, 'app.asar') },
           { name: 'Executable (Binary)', relative: path.basename(process.execPath), checkPath: process.execPath },
-          { name: 'chrome_100_percent.pak (UI Assets)', relative: 'chrome_100_percent.pak', checkPath: path.join(appPath, 'chrome_100_percent.pak') },
-          { name: 'chrome_200_percent.pak (UI Assets HiDPI)', relative: 'chrome_200_percent.pak', checkPath: path.join(appPath, 'chrome_200_percent.pak') },
-          { name: 'd3dcompiler_47.dll (Direct3D Compiler)', relative: 'd3dcompiler_47.dll', checkPath: path.join(appPath, 'd3dcompiler_47.dll') },
-          { name: 'ffmpeg.dll (Media Engine)', relative: 'ffmpeg.dll', checkPath: path.join(appPath, 'ffmpeg.dll') },
-          { name: 'icudtl.dat (Unicode Data)', relative: 'icudtl.dat', checkPath: path.join(appPath, 'icudtl.dat') },
-          { name: 'libEGL.dll (EGL Library)', relative: 'libEGL.dll', checkPath: path.join(appPath, 'libEGL.dll') }
-        ];
+          { name: 'App Data Directory', relative: 'industrial-hub', checkPath: app.getPath('userData') }
+      ];
     } else {
       checks = [
         { name: 'package.json (Config)', relative: 'package.json', checkPath: path.join(appPath, 'package.json') },
@@ -704,9 +730,13 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     require('electron').shell.openExternal(url);
   });
 
+  ipcMain.handle('shell:openPath', (event, filePath) => {
+    require('electron').shell.openPath(filePath);
+  });
+
   ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion) => {
-    const appPath = path.dirname(app.getPath('exe'));
-    const tempExePath = path.join(os.tmpdir(), ih_update_.exe);
+    const appPath = getRealAppPath();
+    const tempExePath = path.join(os.tmpdir(), `ih_update_${newVersion}.exe`);
 
     const downloadWithRedirects = (targetUrl, destPath, onProgress, maxRedirects = 5) => {
       return new Promise((resolve, reject) => {
@@ -726,13 +756,13 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
           if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
             let redirectUrl = res.headers.location;
             if (redirectUrl.startsWith('/')) {
-              redirectUrl = ${parsed.protocol}//;
+              redirectUrl = `${parsed.protocol}//${parsed.host}${redirectUrl}`;
             }
             return downloadWithRedirects(redirectUrl, destPath, onProgress, maxRedirects - 1).then(resolve).catch(reject);
           }
 
           if (res.statusCode !== 200) {
-            return reject(new Error(HTTP ));
+            return reject(new Error(`HTTP Error: ${res.statusCode}`));
           }
 
           const totalBytes = parseInt(res.headers['content-length'] || '0', 10);
@@ -785,11 +815,11 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
       });
 
       if (newVersion === app.getVersion()) {
-        throw new Error(Скачанный файл имеет ту же версию (), что и запущена.);
+        throw new Error(`Скачанный файл имеет ту же версию (${newVersion}), что и запущена.`);
       }
 
       const clientDir = path.resolve(appPath, '..');
-      const newAppDir = path.join(clientDir, pp-);
+      const newAppDir = path.join(clientDir, `app-${newVersion}`);
       const exeName = 'Industrial Hub.exe';
       const targetExePath = path.join(newAppDir, exeName);
       const shortcutPath = path.join(process.env.USERPROFILE || '', 'Desktop', 'Industrial Hub.lnk');
@@ -802,7 +832,8 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
       fs.copyFileSync(tempExePath, targetExePath);
       try {
         fs.unlinkSync(tempExePath);
-      } catch (e) {}
+      } catch {
+      }
 
       try {
         const lastUpdateFile = path.join(app.getPath('userData'), 'last_update.json');
@@ -812,15 +843,15 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
       }
 
       try {
-        const psShortcut = $wshell = New-Object -ComObject WScript.Shell;  = .CreateShortcut(''); .TargetPath = ''; .WorkingDirectory = ''; .Save();
-        child_process.execSync(powershell -NoProfile -Command "");
+        const psShortcut = `$wshell = New-Object -ComObject WScript.Shell; $s = $wshell.CreateShortcut('${shortcutPath}'); $s.TargetPath = '${targetExePath}'; $s.WorkingDirectory = '${newAppDir}'; $s.Save()`;
+        child_process.execSync(`powershell -NoProfile -Command "${psShortcut}"`);
       } catch (e) {
         console.error("Failed to update shortcut:", e);
       }
 
       const child = child_process.spawn(targetExePath, [
-        --cleanup-pid=,
-        --cleanup-dir=
+        `--cleanup-pid=${process.pid}`,
+        `--cleanup-dir=${appPath}`
       ], {
         detached: true,
         stdio: 'ignore',
@@ -839,7 +870,7 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
   });
 
   ipcMain.handle('network:apply-updates', async (event, files, baseUrl) => {
-    const appPath = process.cwd();
+    const appPath = getRealAppPath();
     let successCount = 0;
     let requiresRestart = false;
     

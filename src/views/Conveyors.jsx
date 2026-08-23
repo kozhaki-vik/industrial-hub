@@ -9,8 +9,6 @@ import SupportTicketModal from '../components/SupportTicketModal';
 import { itemsDB } from '../data/itemsDB';
 import { defaultConveyors, defaultCategories } from '../data/defaultConveyors';
 
-const electron = window.electronAPI ? window.electronAPI : null;
-
 function getSystemCategories(t) {
   return [
     { id: 'all', label: t('convCatAll') || 'All' },

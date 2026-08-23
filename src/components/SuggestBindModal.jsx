@@ -4,7 +4,6 @@ import { X, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useNetwork } from '../contexts/NetworkContext';
 
 export default function SuggestBindModal({ isOpen, onClose }) {
-  const { t } = useTranslation();
   const { createTicket, status } = useNetwork();
   
   const [bindCommand, setBindCommand] = useState('');

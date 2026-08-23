@@ -1,48 +1,4 @@
 const electron = window.electronAPI ? window.electronAPI : null;
-// The public key provided by the server
-const SERVER_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1ugeOQUlzsh6D3vctZUj
-L7m9f/M7rN6cOBfuFhcrO3BYfHeOHUQ/9XCu9JZV3q4Ipn2BXJLeViCe1BKnVGNe
-Y+pkRsxwBhw67niGh/P72/hZDBENaYfkDuNQCseEoaaEfIz/A30JYKegBTQBiZ+f
-q/nCJF/VnWztwyjbC9zeS33pK3Sj3Ek7y0PVvzMouK2mnGGn/A86Ikc87KqNHNEH
-Fp9zwoYTAHCHgl1xsRL27AmN3AIxf8MJIlLM8HYr3yGz0nkRHYuniQtXuFeoCZsQ
-TMF7EMBe2fe2uFf4aCh21GXg2yj9Qj+NazQXXLyvNbXUUjShJV380p1bcNvOU9O1
-YQIDAQAB
------END PUBLIC KEY-----`;
-
-function str2ab(str) {
-  const buf = new ArrayBuffer(str.length);
-  const bufView = new Uint8Array(buf);
-  for (let i = 0, strLen = str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
-  }
-  return buf;
-}
-
-function importPublicKey(pem) {
-  // fetch the part of the PEM string between header and footer
-  const pemHeader = "-----BEGIN PUBLIC KEY-----";
-  const pemFooter = "-----END PUBLIC KEY-----";
-  const pemContents = pem.substring(
-    pem.indexOf(pemHeader) + pemHeader.length,
-    pem.indexOf(pemFooter)
-  ).replace(/\s/g, '');
-  
-  // base64 decode the string to get the binary data
-  const binaryDerString = window.atob(pemContents);
-  const binaryDer = str2ab(binaryDerString);
-
-  return window.crypto.subtle.importKey(
-    "spki",
-    binaryDer,
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      hash: "SHA-256",
-    },
-    true,
-    ["verify"]
-  );
-}
 
 import { getConfigKey } from '../services/store';
 
@@ -74,8 +30,8 @@ export async function checkUpdates(addLog = () => {}) {
   try {
     const repo = 'kozhaki-vik/industrial-hub-releases';
     const ghApiUrl = channel === 'main' 
-      ? `https://api.github.com/repos/${repo}/releases/latest`
-      : `https://api.github.com/repos/${repo}/releases`;
+      ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
+      : `https://api.github.com/repos/${repo}/releases?t=${Date.now()}`;
 
     const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
     if (ghRes.ok) {

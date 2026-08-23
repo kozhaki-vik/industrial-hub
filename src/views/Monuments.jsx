@@ -4,8 +4,6 @@ import { ArrowLeft, Search, AlertCircle, Map as MapIcon, Shield, PlayCircle, Cam
 import { useNavigate } from 'react-router-dom';
 import SupportTicketModal from '../components/SupportTicketModal';
 
-const electron = window.electronAPI ? window.electronAPI : null;
-
 import { getMonumentsData } from '../data/monumentsData';
 
 export default function Monuments() {

@@ -3,10 +3,20 @@ import { LayoutDashboard, Map, Zap, Monitor, MonitorPlay, Keyboard } from 'lucid
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
+import { getConfigKey } from '../services/store';
 
 export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const visitedTabs = getConfigKey('visitedTabs') || [];
+  
+  // Sequence: Gamma -> Conveyors (Templates) -> Graphics -> Binds
+  const glowTarget = !visitedTabs.includes('/gamma') ? '/gamma' 
+    : !visitedTabs.includes('/conveyors') ? '/conveyors'
+    : !visitedTabs.includes('/graphics') ? '/graphics'
+    : !visitedTabs.includes('/binds') ? '/binds'
+    : null;
 
   return (
     <div className="mb-8">
@@ -20,6 +30,7 @@ export default function Dashboard() {
           description={t('conveyors_desc')}
           icon={LayoutDashboard}
           onClick={() => navigate('/conveyors')}
+          isGlowing={glowTarget === '/conveyors'}
         />
         <Card 
           title={t('monuments_title')}
@@ -42,18 +53,21 @@ export default function Dashboard() {
           description={t('gamma_desc')}
           icon={Monitor}
           onClick={() => navigate('/gamma')}
+          isGlowing={glowTarget === '/gamma'}
         />
         <Card 
           title={t('binds_title')}
           description={t('binds_desc')}
           icon={Keyboard}
           onClick={() => navigate('/binds')}
+          isGlowing={glowTarget === '/binds'}
         />
         <Card 
           title={t('graphics_title')}
           description={t('graphics_desc')}
           icon={MonitorPlay}
           onClick={() => navigate('/graphics')}
+          isGlowing={glowTarget === '/graphics'}
         />
       </div>
     </div>

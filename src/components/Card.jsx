@@ -2,11 +2,11 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-export default function Card({ title, description, icon: Icon, value, onClick }) {
+export default function Card({ title, description, icon: Icon, value, onClick, isGlowing }) {
   const { t } = useTranslation();
 
   return (
-    <div onClick={onClick} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-orange-300 dark:hover:border-orange-500 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-black/50 cursor-pointer group">
+    <div onClick={onClick} className={`bg-white dark:bg-slate-900 rounded-2xl border ${isGlowing ? 'border-blue-400 dark:border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)] animate-[pulse_2s_ease-in-out_infinite]' : 'border-slate-200 dark:border-slate-800'} p-6 transition-all duration-300 hover:-translate-y-1 hover:border-orange-300 dark:hover:border-orange-500 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-black/50 cursor-pointer group`}>
       <div className="flex items-start justify-between mb-4">
         <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center transition-all duration-300 group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10 group-hover:text-orange-600 dark:group-hover:text-orange-500 text-slate-400">
           <Icon className="w-5 h-5" />

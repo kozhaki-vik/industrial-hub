@@ -6,11 +6,11 @@ const path = window.require ? window.require('path') : null;
 // Fallback to localStorage if running purely in browser (development without Electron)
 const isElectron = !!fs;
 
-const getAppDataPath = () => {
+export const getAppDataPath = () => {
   if (!isElectron) return null;
   // Use APPDATA on Windows, or fallback to home dir
   const appData = window.process.env.APPDATA || (window.process.platform === 'darwin' ? window.process.env.HOME + '/Library/Preferences' : window.process.env.HOME + '/.local/share');
-  return path.join(appData, 'IndustrialHub');
+  return path.join(appData, 'industrial-hub');
 };
 
 const getConfigPath = () => {
@@ -30,7 +30,9 @@ let currentConfig = {
   language: 'ru',
   rustPath: '',
   templates: [],
-  telemetry: {}
+  telemetry: {},
+  setupCompleted: false,
+  visitedTabs: []
 };
 
 // Load config synchronously
@@ -85,3 +87,34 @@ export const getConfigKey = (key) => {
 
 // Initial load
 loadConfig();
+
+export const factoryReset = () => {
+  if (!isElectron) {
+    localStorage.removeItem('industrial-hub-config');
+    window.location.reload();
+    return;
+  }
+
+  try {
+    const configPath = getConfigPath();
+    if (fs.existsSync(configPath)) {
+      fs.unlinkSync(configPath);
+    }
+  } catch (e) {
+    console.error('Error deleting config for factory reset:', e);
+  }
+  
+  if (window.electronAPI?.app?.relaunch) {
+    window.electronAPI.app.relaunch();
+    window.close();
+  } else {
+    window.location.reload();
+  }
+};
+
+export const addVisitedTab = (path) => {
+  const visited = getConfigKey('visitedTabs') || [];
+  if (!visited.includes(path)) {
+    setConfigKey('visitedTabs', [...visited, path]);
+  }
+};

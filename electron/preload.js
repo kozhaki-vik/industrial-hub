@@ -2,11 +2,15 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   autoDetectRustPath: () => ipcRenderer.invoke('autoDetectRustPath'),
+  shell: {
+    openPath: (path) => ipcRenderer.invoke('shell:openFolder', path)
+  },
   browseForRustPath: () => ipcRenderer.invoke('browseForRustPath'),
   diagnostics: {
     pingUrl: (url) => ipcRenderer.invoke('diagnostics:pingUrl', url),
     getHardwareInfo: () => ipcRenderer.invoke('diagnostics:getHardwareInfo'),
     getAppPath: () => ipcRenderer.invoke('diagnostics:getAppPath'),
+    getAppDataPath: () => ipcRenderer.invoke('diagnostics:getAppDataPath'),
     getAppVersionInfo: () => ipcRenderer.invoke('diagnostics:getAppVersionInfo'),
     checkAppIntegrity: () => ipcRenderer.invoke('diagnostics:checkAppIntegrity'),
     checkRustIntegrity: (rustPath) => ipcRenderer.invoke('diagnostics:checkRustIntegrity', rustPath)
@@ -39,7 +43,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   shell: {
-    openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
+    openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
+    openPath: (path) => ipcRenderer.invoke('shell:openPath', path)
   }
 });
 

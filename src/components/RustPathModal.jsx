@@ -20,6 +20,7 @@ export default function RustPathModal({ isOpen, onClose }) {
         handleAutoDetect();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleAutoDetect = async () => {
@@ -34,7 +35,7 @@ export default function RustPathModal({ isOpen, onClose }) {
       } else {
         setStatusMsg({ type: 'error', text: t('rust_modal_not_found') || 'Папка Rust не найдена автоматически. Укажите путь вручную.' });
       }
-    } catch (e) {
+    } catch {
       setStatusMsg({ type: 'error', text: t('rust_modal_error') || 'Ошибка при поиске папки Rust.' });
     } finally {
       setIsDetecting(false);

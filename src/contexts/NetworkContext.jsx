@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { checkUpdates } from '../utils/SmartPatcher';
 import { useNotification } from './NotificationContext';
@@ -22,7 +23,7 @@ export const NetworkProvider = ({ children }) => {
 
   const addLog = (msg) => {
     console.log("[UpdateLog]", msg);
-    setUpdateLogs(prev => [...prev, `${new Date().toISOString().substring(11, 19)}: ${msg}`]);
+    setUpdateLogs(prev => [...prev, `${new Date().toLocaleTimeString('ru-RU')}: ${msg}`]);
   };
   
   const wsRef = useRef(null);
@@ -67,29 +68,31 @@ export const NetworkProvider = ({ children }) => {
     if (!electron) return;
     try {
       addLog("Starting manual triggerUpdateCheck...");
-      // First manually fetch version.json to get serverVersion
-      const endpoints = [
-        "https://industrial-hub.industrial-hub.duckdns.org",
-        "https://industrial-hub.duckdns.org", 
-        "http://industrial-hub.duckdns.org:8080"
-      ];
-      for (const url of endpoints) {
-        try {
-          addLog(`Fetching version from ${url}...`);
-          const cb = `?t=${Date.now()}`;
-          let vRes = await fetch(`${url}/updates/version.json${cb}`, { cache: 'no-store' });
-          if (!vRes.ok) vRes = await fetch(`${url}/version.json${cb}`, { cache: 'no-store' });
-          if (vRes.ok) {
-            const vData = await vRes.json();
-            if (vData && vData.version) {
-              setServerVersion(vData.version);
-              addLog(`Got serverVersion ${vData.version} from ${url}`);
-              break;
-            }
+      // Fetch version from GitHub Releases API
+      try {
+        const { getConfigKey } = await import('../services/store');
+        const channel = getConfigKey('updateChannel') || 'main';
+        const repo = 'kozhaki-vik/industrial-hub-releases';
+        const ghApiUrl = channel === 'main' 
+          ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
+          : `https://api.github.com/repos/${repo}/releases?t=${Date.now()}`;
+          
+        addLog(`Fetching version from GitHub API: ${ghApiUrl}`);
+        const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
+        if (ghRes.ok) {
+          const data = await ghRes.json();
+          const release = Array.isArray(data) ? data[0] : data;
+          if (release && release.tag_name) {
+            let tagVersion = release.tag_name;
+            if (tagVersion.startsWith('v')) tagVersion = tagVersion.substring(1);
+            setServerVersion(tagVersion);
+            addLog(`Got serverVersion ${tagVersion} from GitHub`);
           }
-        } catch (e) {
-          addLog(`Failed fetch ${url}: ${e.message}`);
+        } else {
+          addLog(`Failed fetch GitHub API: ${ghRes.status}`);
         }
+      } catch (e) {
+        addLog(`Failed fetch GitHub API: ${e.message}`);
       }
       
       addLog("Calling checkUpdates()...");
@@ -148,8 +151,7 @@ export const NetworkProvider = ({ children }) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'auth_success') {
-          console.log('Connected to Industrial Hub Server, serverVersion =', data.serverVersion);
-          setServerVersion(data.serverVersion);
+          console.log('Connected to Industrial Hub Server');
           addLog("WS auth_success received, triggering check...");
           triggerUpdateCheck();
         } else if (data.type === 'online_count') {
@@ -179,7 +181,8 @@ export const NetworkProvider = ({ children }) => {
       setStatus('offline');
       // onClose will handle reconnect
     };
-  }, [hwid, triggerUpdateCheck]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerUpdateCheck]);
 
   const scheduleReconnect = () => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
@@ -216,7 +219,8 @@ export const NetworkProvider = ({ children }) => {
         wsRef.current.close();
       }
     };
-  }, [connect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sendTelemetry = useCallback((data) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -240,7 +244,7 @@ export const NetworkProvider = ({ children }) => {
             wsRef.current.removeEventListener('message', ticketHandler);
             reject(new Error(data.message));
           }
-        } catch (err) {}
+        } catch {}
       };
 
       wsRef.current.addEventListener('message', ticketHandler);

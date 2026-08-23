@@ -41,7 +41,8 @@ export const initAnalytics = () => {
         if (!cleanName) return;
 
         // Extract context (Route + closest container heading)
-        let context = window.location.pathname === '/' ? '/dashboard' : window.location.pathname;
+        let context = window.location.hash ? window.location.hash.replace(/^#/, '') : '/dashboard';
+        if (context === '/') context = '/dashboard';
         const container = btn.closest('[role="dialog"], .rounded-2xl, .rounded-xl, .bg-white');
         if (container) {
           const heading = container.querySelector('h1, h2, h3');

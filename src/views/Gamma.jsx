@@ -7,8 +7,6 @@ import FullKeyboard from '../components/FullKeyboard';
 import { useGamma } from '../contexts/GammaContext';
 import SupportTicketModal from '../components/SupportTicketModal';
 
-const electron = window.electronAPI ? window.electronAPI : null;
-
 export default function Gamma() {
   const { t } = useTranslation();
   const navigate = useNavigate();

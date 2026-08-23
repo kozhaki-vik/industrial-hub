@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Terminal, Bug, Heart, MessageSquare, Send, Gamepad2, RefreshCw } from 'lucide-react';
+import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, RefreshCw } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
 import { useNavigate } from 'react-router-dom';
@@ -11,12 +11,6 @@ import kozhakiAvatar from '../assets/team/kozhaki.jpg';
 import kaktusAvatar from '../assets/team/kaktus.png';
 import pc6Avatar from '../assets/team/pc6.jpg';
 import sponsorAvatar from '../assets/team/sponsor.jpg';
-
-const SteamIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path d="M12.004 0C5.378 0 0 5.378 0 12c0 5.05 3.12 9.345 7.555 11.16l3.414-4.88c-.463-.223-.9-.49-1.295-.8l-4.482 1.28a6.035 6.035 0 01-.044-.694c0-3.322 2.695-6.017 6.017-6.017 2.63 0 4.887 1.685 5.675 4.02l4.478-1.277c-.013-.23-.026-.464-.026-.704 0-5.522-4.477-10-10-10-2.438 0-4.664.88-6.4 2.34l3.157 4.51c.905-.51 1.964-.813 3.094-.813 3.535 0 6.4 2.866 6.4 6.4s-2.865 6.4-6.4 6.4c-1.35 0-2.602-.42-3.634-1.135l-3.38 4.834C18.636 24 24 18.623 24 12c0-6.622-5.378-12-11.996-12zM17.42 12a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-  </svg>
-);
 
 const UaFlag = ({ className }) => (
   <svg viewBox="0 0 24 16" className={`rounded-sm overflow-hidden ${className}`} xmlns="http://www.w3.org/2000/svg">
@@ -223,27 +217,6 @@ export default function Settings() {
 
           <div className="border-t border-slate-100 dark:border-slate-800"></div>
 
-          {/* Developer Mode */}
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Code2 className="w-5 h-5 text-indigo-500" />
-                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('developer_title', 'Режим разработчика')}</h3>
-                </div>
-                <p className="text-sm text-slate-500">{t('developer_desc', 'Доступ к инструментам диагностики и отладки')}</p>
-              </div>
-              <button 
-                onClick={() => navigate('/developer')}
-                className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
-              >
-                {t('developer_open', 'Открыть')}
-              </button>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 dark:border-slate-800"></div>
-
           {/* Update Channel */}
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -275,6 +248,27 @@ export default function Settings() {
               </label>
             </div>
             <p className="text-xs text-slate-500 mt-2">{t('settings_update_test_desc', 'Для перехода на тестовую версию требуется ПИН-код.')}</p>
+          </div>
+
+          <div className="border-t border-slate-100 dark:border-slate-800"></div>
+
+          {/* Developer Mode */}
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Code2 className="w-5 h-5 text-indigo-500" />
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('developer_title', 'Режим разработчика')}</h3>
+                </div>
+                <p className="text-sm text-slate-500">{t('developer_desc', 'Доступ к инструментам диагностики и отладки')}</p>
+              </div>
+              <button 
+                onClick={() => navigate('/developer')}
+                className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+              >
+                {t('developer_open', 'Открыть')}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -371,7 +365,6 @@ export default function Settings() {
                   </div>
                   <div className="z-10">
                     <h4 className="text-base font-bold text-slate-700 dark:text-slate-300 group-hover:text-orange-500 transition-colors">{t('settings_sponsor_btn')}</h4>
-                    <p className="text-sm text-slate-500 mt-1">{t('settings_sponsor_socials')}</p>
                   </div>
                 </div>
               </button>
@@ -384,9 +377,12 @@ export default function Settings() {
       {sponsorStep && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-main-fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('settings_support_project')}</h3>
-              <button onClick={() => setSponsorStep(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('settings_support_project')}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-[90%]">{t('settings_sponsor_desc')}</p>
+              </div>
+              <button onClick={() => setSponsorStep(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors mt-1">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -532,6 +528,7 @@ export default function Settings() {
                 )}
               </form>
             )}
+          </div>
         </div>
       )}
 

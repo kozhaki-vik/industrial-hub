@@ -8,6 +8,7 @@ export default function SplashScreen({ onComplete }) {
   const [updateStatus, setUpdateStatus] = useState(null);
   const [progressData, setProgressData] = useState(null);
   const [downloadSpeed, setDownloadSpeed] = useState(0); // bytes per second
+  // eslint-disable-next-line no-unused-vars
   const [lastTick, setLastTick] = useState({ bytes: 0, time: 0 });
 
   useEffect(() => {

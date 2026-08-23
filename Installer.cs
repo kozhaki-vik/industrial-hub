@@ -9,11 +9,11 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Linq;
 
-[assembly: AssemblyTitle("Industrial Hub Launcher")]
+[assembly: AssemblyTitle("Industrial Hub Installer")]
 [assembly: AssemblyDescription("Industrial Hub - Ultimate Rust helper application.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Industrial Systems Studio")]
-[assembly: AssemblyProduct("Industrial Hub Launcher")]
+[assembly: AssemblyProduct("Industrial Hub Installer")]
 [assembly: AssemblyCopyright("Copyright © Kozhaki 2026. All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -41,11 +41,11 @@ namespace IndustrialHubLauncher
                 return;
             }
 
-            Application.Run(new LauncherForm());
+            Application.Run(new InstallerForm());
         }
     }
 
-    public class LauncherForm : Form
+    public class InstallerForm : Form
     {
         private ProgressBar progressBar;
         private Label statusLabel;
@@ -54,9 +54,9 @@ namespace IndustrialHubLauncher
         private string exeFilePath;
         private string serverVersion = "unknown";
 
-        public LauncherForm()
+        public InstallerForm()
         {
-            this.Text = "Industrial Hub Launcher";
+            this.Text = "Industrial Hub Installer";
             this.Size = new Size(420, 160);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -83,7 +83,7 @@ namespace IndustrialHubLauncher
             appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "IndustrialHubClient");
             installPath = Path.Combine(appDataPath, "client");
 
-            this.Load += LauncherForm_Load;
+            this.Load += InstallerForm_Load;
         }
 
         private void KillExistingAppProcesses()
@@ -108,7 +108,7 @@ namespace IndustrialHubLauncher
             catch { }
         }
 
-        private void LauncherForm_Load(object sender, EventArgs e)
+        private void InstallerForm_Load(object sender, EventArgs e)
         {
             KillExistingAppProcesses();
 

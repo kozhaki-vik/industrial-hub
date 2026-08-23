@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity } from '../services/diagnostics';
+import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath } from '../services/diagnostics';
 import { getButtonStats } from '../services/analytics';
-import { getConfigKey } from '../services/store';
+import { getConfigKey, factoryReset } from '../services/store';
 import SplashScreen from '../components/SplashScreen';
 
 import { useNetwork } from '../contexts/NetworkContext';
@@ -15,13 +15,14 @@ export default function Developer() {
   const { serverVersion, updateProgress, triggerUpdateCheck, updateLogs } = useNetwork();
 
   const [hwInfo, setHwInfo] = useState(null);
-  const [pings, setPings] = useState({ server: null, github: null, discord: null, internet1: null, internet2: null });
+  const [pings, setPings] = useState({ server: null, ws: null, github: null, discord: null, internet1: null, internet2: null });
   const [integrity, setIntegrity] = useState(null);
   const [rustIntegrity, setRustIntegrity] = useState(null);
   const [stats, setStats] = useState({});
   const [firstLaunch, setFirstLaunch] = useState('');
   const [rustPath, setRustPath] = useState('');
   const [appPath, setAppPath] = useState('');
+  const [appDataPath, setAppDataPath] = useState('');
   const [appVersionInfo, setAppVersionInfo] = useState({ version: '1.0.0', lastUpdated: '' });
   
   const [isTestingSplash, setIsTestingSplash] = useState(false);
@@ -51,16 +52,41 @@ export default function Developer() {
     setFirstLaunch(getConfigKey('firstLaunchDate') || 'Unknown');
     setRustPath(getConfigKey('rustPath') || 'Not Set');
     getAppPath().then(setAppPath);
+    getAppDataPath().then(setAppDataPath);
     getAppVersionInfo().then(setAppVersionInfo);
     setStats(getButtonStats());
   }, []);
 
+  const pingWebSocket = (url) => {
+    return new Promise((resolve) => {
+      const start = Date.now();
+      const ws = new WebSocket(url);
+      const timeout = setTimeout(() => {
+        ws.close();
+        resolve({ status: 'error', msg: 'Timeout' });
+      }, 3000);
+      ws.onopen = () => {
+        clearTimeout(timeout);
+        ws.close();
+        resolve({ status: 'ok', time: Date.now() - start, msg: 'Connected' });
+      };
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        resolve({ status: 'error', msg: 'Failed' });
+      };
+    });
+  };
+
   const runPings = async () => {
-    setPings({ server: { status: 'loading' }, github: { status: 'loading' }, discord: { status: 'loading' }, internet1: { status: 'loading' }, internet2: { status: 'loading' } });
+    setPings({ server: { status: 'loading' }, ws: { status: 'loading' }, github: { status: 'loading' }, discord: { status: 'loading' }, internet1: { status: 'loading' }, internet2: { status: 'loading' } });
     
     // Ping our HTTPS domain server
     const resServer = await pingUrl('https://industrial-hub.duckdns.org');
     setPings(p => ({ ...p, server: resServer }));
+
+    // Ping WS Server
+    const resWs = await pingWebSocket('wss://industrial-hub.duckdns.org');
+    setPings(p => ({ ...p, ws: resWs }));
     
     const resGithub = await pingUrl('https://api.github.com');
     setPings(p => ({ ...p, github: resGithub }));
@@ -84,14 +110,6 @@ export default function Developer() {
     ]);
     setIntegrity(resApp);
     setRustIntegrity(resRust);
-  };
-
-  const renderPingResult = (res) => {
-    if (!res) return <span className="text-slate-400 dark:text-slate-500">—</span>;
-    if (res.status === 'loading') return <span className="text-slate-400 dark:text-slate-500 animate-pulse">Checking...</span>;
-    if (res.status === 'ok') return <span className="text-emerald-500 font-bold">{res.time}ms <span className="text-xs opacity-70">({res.msg})</span></span>;
-    if (res.status === 'warning') return <span className="text-amber-500 font-bold">{res.time}ms <span className="text-xs opacity-70">({res.msg})</span></span>;
-    return <span className="text-red-500 font-bold">Failed <span className="text-xs opacity-70">({res.msg})</span></span>;
   };
 
   const formatUptime = (seconds) => {
@@ -131,6 +149,7 @@ export default function Developer() {
           </button>
           <div className="space-y-3">
             <PingResult label="Industrial Hub Server" res={pings.server} />
+            <PingResult label="Industrial Hub WebSockets" res={pings.ws} />
             <PingResult label={t('dev_ping_update')} res={pings.github} />
             <PingResult label={t('dev_ping_support')} res={pings.discord} />
             <PingResult label={t('dev_ping_internet')} res={pings.internet1} />
@@ -167,9 +186,25 @@ export default function Developer() {
             <HardDrive className="w-5 h-5 text-orange-500" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{t('dev_path_title')}</h3>
           </div>
-          <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-4 break-all">
-            <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_path_rust')}</span> {rustPath}</p>
-            <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_path_app')}</span> {appPath}</p>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 mb-4 break-all">
+            <div className="flex items-start gap-2">
+              <button onClick={() => window.electronAPI?.shell?.openPath(rustPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title="Открыть папку">
+                <FolderOpen className="w-4 h-4 mt-0.5" />
+              </button>
+              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_path_rust')} </span> {rustPath}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <button onClick={() => window.electronAPI?.shell?.openPath(appPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title="Открыть папку">
+                <FolderOpen className="w-4 h-4 mt-0.5" />
+              </button>
+              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_path_app')} </span> {appPath}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <button onClick={() => window.electronAPI?.shell?.openPath(appDataPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title="Открыть папку">
+                <FolderOpen className="w-4 h-4 mt-0.5" />
+              </button>
+              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">Данные приложения (Настройки, Аналитика): </span> {appDataPath}</p>
+            </div>
           </div>
           <button onClick={runIntegrity} className="mb-4 w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors">
             {t('dev_path_check_btn2')}
@@ -291,6 +326,9 @@ export default function Developer() {
             <button onClick={() => setShouldCrash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors hover:bg-red-200 dark:hover:bg-red-900/40">
               <AlertTriangle className="w-4 h-4" /> {t('dev_trigger_error')}
             </button>
+            <button onClick={() => { if(window.confirm('Сбросить данные до заводских настроек? Программа будет перезапущена.')) factoryReset(); }} className="flex items-center justify-center gap-2 w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/30">
+              <RefreshCw className="w-4 h-4" /> Сбросить настройки (Factory Reset)
+            </button>
           </div>
 
           {updateLogs && updateLogs.length > 0 && (
@@ -318,7 +356,7 @@ export default function Developer() {
                 <tbody>
                   {sortedStats.map(([name, count]) => (
                     <tr key={name} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0">
-                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300 truncate max-w-[200px]" title={name}>{name}</td>
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300 break-all" title={name}>{name}</td>
                       <td className="px-4 py-2 text-right font-medium text-slate-900 dark:text-slate-100">{count}</td>
                     </tr>
                   ))}
@@ -355,3 +393,4 @@ const PingResult = ({ label, res }) => {
     </div>
   );
 };
+

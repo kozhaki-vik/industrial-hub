@@ -19,6 +19,13 @@ export const getAppPath = async () => {
   return 'Unknown';
 };
 
+export const getAppDataPath = async () => {
+  if (window.electronAPI?.diagnostics?.getAppDataPath) {
+    return await window.electronAPI.diagnostics.getAppDataPath();
+  }
+  return 'Unknown';
+};
+
 export const getAppVersionInfo = async () => {
   if (window.electronAPI?.diagnostics?.getAppVersionInfo) {
     return await window.electronAPI.diagnostics.getAppVersionInfo();
