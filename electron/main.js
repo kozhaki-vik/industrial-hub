@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import child_process from 'child_process';
@@ -39,62 +39,8 @@ if (!gotTheLock) {
     app.exit(0);
   });
 }
+
 // --- Gamma Logic ---
-const getGammaScript = () => `
-Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-public class GammaController {
-    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-    public static extern IntPtr CreateDC(string lpszDriver, string lpszDevice, string lpszOutput, IntPtr lpInitData);
-    
-    [DllImport("gdi32.dll")]
-    public static extern bool SetDeviceGammaRamp(IntPtr hdc, ref RAMP lpRamp);
-    
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    public struct RAMP {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-        public UInt16[] Red;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-        public UInt16[] Green;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-        public UInt16[] Blue;
-    }
-
-    public static void SetGamma(int level, string deviceName) {
-        RAMP ramp = new RAMP();
-        ramp.Red = new UInt16[256];
-        ramp.Green = new UInt16[256];
-        ramp.Blue = new UInt16[256];
-        
-        // level goes from 0 to 100, mapping to a true gamma curve from 1.00 to 2.80
-        // (Just like NVIDIA Control Panel)
-        double gamma = 1.0;
-        if (level >= 0 && level <= 100) {
-            gamma = 1.0 + (level / 100.0) * 1.8;
-        } else if (level == 128) { // For old reset calls or defaults
-            gamma = 1.0;
-        }
-        
-        for (int i = 0; i < 256; i++) {
-            double v = i / 255.0;
-            // Gamma decoding curve: v^(1/gamma). This brightens the midtones!
-            double corrected = Math.Pow(v, 1.0 / gamma);
-            int val = (int)(corrected * 65535.0);
-            if (val > 65535) val = 65535;
-            if (val < 0) val = 0;
-            ramp.Red[i] = ramp.Green[i] = ramp.Blue[i] = (UInt16)val;
-        }
-        
-        IntPtr dc = CreateDC(deviceName, null, null, IntPtr.Zero);
-        if (dc != IntPtr.Zero) {
-            SetDeviceGammaRamp(dc, ref ramp);
-        }
-    }
-}
-"@
-`;
-
 let psGammaProcess = null;
 const initGammaProcess = () => {
   if (psGammaProcess) return psGammaProcess;
@@ -109,70 +55,17 @@ const initGammaProcess = () => {
     psGammaProcess = null;
   });
   
-  const script = getGammaScript();
-  psGammaProcess.stdin.write(script + "\n");
+  const dllPath = app.isPackaged 
+    ? path.join(process.resourcesPath, 'resources', 'GammaController.dll')
+    : path.join(__dirname, '..', 'resources', 'GammaController.dll');
+    
+  const script = `Add-Type -Path "${dllPath}"\n`;
+  psGammaProcess.stdin.write(script);
   return psGammaProcess;
 };
 setTimeout(() => initGammaProcess(), 1000);
 
-// --- Hook Logic ---
-let currentHookProcess = null;
-const hookScriptTemplate = (vkCode) => `
-Add-Type -ReferencedAssemblies System.Windows.Forms -TypeDefinition @"
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-
-public class KeyboardHook {
-    private const int WH_KEYBOARD_LL = 13;
-    private const int WM_KEYDOWN = 0x0100;
-    private const int WM_SYSKEYDOWN = 0x0104;
-    private static LowLevelKeyboardProc _proc = HookCallback;
-    private static IntPtr _hookID = IntPtr.Zero;
-    private static int _targetKeyCode = ${vkCode};
-
-    public static void Start() {
-        _hookID = SetHook(_proc);
-        Application.Run();
-    }
-
-    private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-
-    private static IntPtr SetHook(LowLevelKeyboardProc proc) {
-        using (Process curProcess = Process.GetCurrentProcess())
-        using (ProcessModule curModule = curProcess.MainModule) {
-            return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
-        }
-    }
-
-    private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) {
-        if (nCode >= 0 && (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)) {
-            int vkCode = Marshal.ReadInt32(lParam);
-            if (vkCode == _targetKeyCode) {
-                Console.WriteLine("HOTKEY_PRESSED");
-            }
-        }
-        return CallNextHookEx(_hookID, nCode, wParam, lParam);
-    }
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool UnhookWindowsHookEx(IntPtr hhk);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr GetModuleHandle(string lpModuleName);
-}
-"@
-
-[KeyboardHook]::Start()
-`;
+let currentAccelerator = null;
 
 
 // Disable hardware acceleration to fix GPU crashes on some Windows systems
@@ -709,39 +602,36 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     }
   });
 
-  ipcMain.handle('gamma:registerHook', (event, vkCode) => {
+  ipcMain.handle('gamma:registerHook', (event, accelerator) => {
     if (process.platform !== 'win32') return false;
     
-    if (currentHookProcess) {
-      currentHookProcess.kill();
-      currentHookProcess = null;
+    if (currentAccelerator) {
+      globalShortcut.unregister(currentAccelerator);
+      currentAccelerator = null;
     }
     
-    if (!vkCode) return false;
+    if (!accelerator) return false;
     
-    const script = hookScriptTemplate(vkCode);
-    
-    currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-Command', '-']);
-    currentHookProcess.stdin.write(script + '\n');
-    
-    currentHookProcess.stdout.on('data', (data) => {
-      const output = data.toString().trim();
-      if (output === 'HOTKEY_PRESSED' && mainWindow) {
-        mainWindow.webContents.send('gamma:hotkey_pressed');
+    try {
+      const success = globalShortcut.register(accelerator, () => {
+        if (mainWindow) {
+          mainWindow.webContents.send('gamma:hotkey_pressed');
+        }
+      });
+      if (success) {
+        currentAccelerator = accelerator;
       }
-    });
-    
-    currentHookProcess.on('error', (err) => {
-      console.error('Keyboard hook error:', err);
-    });
-    
-    return true;
+      return success;
+    } catch (e) {
+      console.error('Keyboard hook error:', e);
+      return false;
+    }
   });
 
   ipcMain.handle('gamma:unregisterHook', () => {
-    if (currentHookProcess) {
-      currentHookProcess.kill();
-      currentHookProcess = null;
+    if (currentAccelerator) {
+      globalShortcut.unregister(currentAccelerator);
+      currentAccelerator = null;
     }
     return true;
   });

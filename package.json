@@ -1,7 +1,7 @@
 {
     "name": "industrial-hub",
     "private": true,
-    "version": "2.5.3",
+    "version": "2.5.4",
     "author": "Kozhaki",
     "description": "Industrial Hub - Ultimate Rust Assistant",
     "type": "module",
@@ -50,6 +50,9 @@
             "dist/**/*",
             "electron/**/*",
             "package.json"
+        ],
+        "extraResources": [
+            "resources/**/*.dll"
         ],
         "win": {
             "target": "portable",
