@@ -40,27 +40,69 @@ if (!gotTheLock) {
   });
 }
 
+function getNativeDllPath() {
+  const possiblePaths = [
+    path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll'),
+    path.join(process.resourcesPath, 'IndustrialHubNative.dll'),
+    path.join(getRealAppPath(), 'resources', 'IndustrialHubNative.dll'),
+    path.join(__dirname, '..', 'resources', 'IndustrialHubNative.dll'),
+    path.join(process.cwd(), 'resources', 'IndustrialHubNative.dll')
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll');
+}
+
 // --- Gamma & Hook Native Logic ---
 let psGammaProcess = null;
 const initGammaProcess = () => {
-  if (psGammaProcess) return psGammaProcess;
+  if (psGammaProcess && !psGammaProcess.killed && psGammaProcess.stdin && psGammaProcess.stdin.writable) {
+    return psGammaProcess;
+  }
 
-  psGammaProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-Command', '-']);
-  
-  psGammaProcess.on('error', (err) => {
-    console.error('Powershell Gamma Process Error:', err);
-  });
-  
-  psGammaProcess.on('exit', () => {
-    psGammaProcess = null;
-  });
-  
-  const dllPath = app.isPackaged 
-    ? path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll')
-    : path.join(__dirname, '..', 'resources', 'IndustrialHubNative.dll');
+  try {
+    psGammaProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', '-'], {
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
     
-  const script = `Add-Type -Path "${dllPath}"\n`;
-  psGammaProcess.stdin.write(script);
+    psGammaProcess.on('error', (err) => {
+      console.error('Powershell Gamma Process Error:', err);
+      psGammaProcess = null;
+    });
+
+    if (psGammaProcess.stdin) {
+      psGammaProcess.stdin.on('error', (err) => {
+        console.error('Powershell Gamma stdin Error:', err);
+        psGammaProcess = null;
+      });
+    }
+
+    if (psGammaProcess.stderr) {
+      psGammaProcess.stderr.on('data', (data) => {
+        console.error('Powershell Gamma stderr:', data.toString());
+      });
+    }
+    
+    psGammaProcess.on('exit', () => {
+      psGammaProcess = null;
+    });
+    
+    const dllPath = getNativeDllPath();
+    const script = `Add-Type -Path "${dllPath}"\n`;
+    if (psGammaProcess.stdin && psGammaProcess.stdin.writable) {
+      psGammaProcess.stdin.write(script, (err) => {
+        if (err) {
+          console.error('Error initializing gamma DLL in powershell:', err);
+          psGammaProcess = null;
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Failed to spawn Gamma process:', err);
+    psGammaProcess = null;
+  }
+
   return psGammaProcess;
 };
 setTimeout(() => initGammaProcess(), 1000);
@@ -593,12 +635,18 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     if (!deviceName) deviceName = "\\\\.\\DISPLAY1";
     try {
       const ps = initGammaProcess();
-      if (ps && ps.stdin) {
-        ps.stdin.write(`[GammaController]::SaveGamma("${deviceName}")\n`);
-        ps.stdin.write(`[GammaController]::SetGamma(${brightnessLevel}, "${deviceName}")\n`);
+      if (ps && ps.stdin && ps.stdin.writable) {
+        const cmd = `[GammaController]::SaveGamma('${deviceName}'); [GammaController]::SetGamma(${brightnessLevel}, '${deviceName}')\n`;
+        ps.stdin.write(cmd, (err) => {
+          if (err) {
+            console.error('Error writing to gamma stdin:', err);
+            psGammaProcess = null;
+          }
+        });
       }
     } catch (err) {
       console.error('Exception setting gamma:', err);
+      psGammaProcess = null;
     }
   });
 
@@ -606,41 +654,70 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     if (process.platform !== 'win32') return false;
     
     if (currentHookProcess) {
-      currentHookProcess.kill();
+      try {
+        currentHookProcess.kill();
+      } catch {}
       currentHookProcess = null;
     }
     
     if (!vkCode) return false;
     
     try {
-      currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-Command', '-']);
-      const dllPath = app.isPackaged 
-        ? path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll')
-        : path.join(__dirname, '..', 'resources', 'IndustrialHubNative.dll');
-        
-      currentHookProcess.stdin.write(`Add-Type -Path "${dllPath}"\n`);
-      currentHookProcess.stdin.write(`[KeyboardHook]::Start(${vkCode})\n`);
+      currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', '-'], {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+
+      if (currentHookProcess.stdin) {
+        currentHookProcess.stdin.on('error', (err) => {
+          console.error('Hook process stdin error:', err);
+          currentHookProcess = null;
+        });
+      }
+      
+      const dllPath = getNativeDllPath();
+      
+      if (currentHookProcess.stdin && currentHookProcess.stdin.writable) {
+        currentHookProcess.stdin.write(`Add-Type -Path "${dllPath}"\n[KeyboardHook]::Start(${vkCode})\n`, (err) => {
+          if (err) {
+            console.error('Error writing to hook process:', err);
+            currentHookProcess = null;
+          }
+        });
+      }
       
       currentHookProcess.stdout.on('data', (data) => {
         const output = data.toString().trim();
-        if (output === 'HOTKEY_PRESSED' && mainWindow) {
+        if (output.includes('HOTKEY_PRESSED') && mainWindow) {
           mainWindow.webContents.send('gamma:hotkey_pressed');
         }
+      });
+
+      currentHookProcess.stderr.on('data', (data) => {
+        console.error('Hook process stderr:', data.toString());
       });
       
       currentHookProcess.on('error', (err) => {
         console.error('Keyboard hook error:', err);
+        currentHookProcess = null;
       });
+
+      currentHookProcess.on('exit', () => {
+        currentHookProcess = null;
+      });
+
       return true;
     } catch (e) {
       console.error('Keyboard hook error:', e);
+      currentHookProcess = null;
       return false;
     }
   });
 
   ipcMain.handle('gamma:unregisterHook', () => {
     if (currentHookProcess) {
-      currentHookProcess.kill();
+      try {
+        currentHookProcess.kill();
+      } catch {}
       currentHookProcess = null;
     }
     return true;
