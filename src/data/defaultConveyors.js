@@ -63,7 +63,7 @@ export const defaultConveyors = [
     ],
     "isFavorite": false,
     "sortOrder": 0,
-    "copyCount": 4
+    "copyCount": 0
   },
   {
     "id": "1780496609952",
@@ -140,7 +140,7 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 1,
-    "copyCount": 5
+    "copyCount": 0
   },
   {
     "id": "1780496609954",

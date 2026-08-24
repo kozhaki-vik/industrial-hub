@@ -657,9 +657,10 @@ Add-Type -AssemblyName System.Windows.Forms
 $screens = [System.Windows.Forms.Screen]::AllScreens
 $screens | Select-Object DeviceName | ConvertTo-Json -Compress
 `;
-      const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
-      child_process.exec(`powershell -NoProfile -EncodedCommand ${encodedCommand}`, (err, stdout) => {
-        if (err) return resolve([]);
+      const ps = child_process.spawn('powershell', ['-NoProfile', '-Command', '-']);
+      let stdout = '';
+      ps.stdout.on('data', d => stdout += d.toString());
+      ps.on('close', () => {
         try {
           const text = stdout.trim();
           if (!text) return resolve([]);
@@ -671,11 +672,14 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
           resolve([]);
         }
       });
+      ps.stdin.write(script + '\n');
+      ps.stdin.end();
     });
   });
 
-  ipcMain.handle('gamma:setDisplayGamma', (event, brightnessLevel, deviceName = "\\\\.\\DISPLAY1") => {
+  ipcMain.handle('gamma:setDisplayGamma', (event, brightnessLevel, deviceName) => {
     if (process.platform !== 'win32') return;
+    if (!deviceName) deviceName = "\\\\.\\DISPLAY1";
     try {
       const ps = initGammaProcess();
       if (ps && ps.stdin) {
@@ -697,9 +701,9 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     if (!vkCode) return false;
     
     const script = hookScriptTemplate(vkCode);
-    const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
     
-    currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-EncodedCommand', encodedCommand]);
+    currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-Command', '-']);
+    currentHookProcess.stdin.write(script + '\n');
     
     currentHookProcess.stdout.on('data', (data) => {
       const output = data.toString().trim();
