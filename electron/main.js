@@ -40,24 +40,24 @@ if (!gotTheLock) {
   });
 }
 
-// --- Gamma Logic ---
+// --- Gamma & Hook Native Logic ---
 let psGammaProcess = null;
 const initGammaProcess = () => {
   if (psGammaProcess) return psGammaProcess;
-  if (process.platform !== 'win32') return null;
+
+  psGammaProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-Command', '-']);
   
-  psGammaProcess = child_process.spawn('powershell', ['-NoProfile', '-Command', '-']);
   psGammaProcess.on('error', (err) => {
-    console.error('Persistent PowerShell error:', err);
-    psGammaProcess = null;
+    console.error('Powershell Gamma Process Error:', err);
   });
+  
   psGammaProcess.on('exit', () => {
     psGammaProcess = null;
   });
   
   const dllPath = app.isPackaged 
-    ? path.join(process.resourcesPath, 'resources', 'GammaController.dll')
-    : path.join(__dirname, '..', 'resources', 'GammaController.dll');
+    ? path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll')
+    : path.join(__dirname, '..', 'resources', 'IndustrialHubNative.dll');
     
   const script = `Add-Type -Path "${dllPath}"\n`;
   psGammaProcess.stdin.write(script);
@@ -65,8 +65,7 @@ const initGammaProcess = () => {
 };
 setTimeout(() => initGammaProcess(), 1000);
 
-let currentAccelerator = null;
-
+let currentHookProcess = null;
 
 // Disable hardware acceleration to fix GPU crashes on some Windows systems
 app.disableHardwareAcceleration();
@@ -595,6 +594,7 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     try {
       const ps = initGammaProcess();
       if (ps && ps.stdin) {
+        ps.stdin.write(`[GammaController]::SaveGamma("${deviceName}")\n`);
         ps.stdin.write(`[GammaController]::SetGamma(${brightnessLevel}, "${deviceName}")\n`);
       }
     } catch (err) {
@@ -602,26 +602,36 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     }
   });
 
-  ipcMain.handle('gamma:registerHook', (event, accelerator) => {
+  ipcMain.handle('gamma:registerHook', (event, vkCode) => {
     if (process.platform !== 'win32') return false;
     
-    if (currentAccelerator) {
-      globalShortcut.unregister(currentAccelerator);
-      currentAccelerator = null;
+    if (currentHookProcess) {
+      currentHookProcess.kill();
+      currentHookProcess = null;
     }
     
-    if (!accelerator) return false;
+    if (!vkCode) return false;
     
     try {
-      const success = globalShortcut.register(accelerator, () => {
-        if (mainWindow) {
+      currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-Command', '-']);
+      const dllPath = app.isPackaged 
+        ? path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll')
+        : path.join(__dirname, '..', 'resources', 'IndustrialHubNative.dll');
+        
+      currentHookProcess.stdin.write(`Add-Type -Path "${dllPath}"\n`);
+      currentHookProcess.stdin.write(`[KeyboardHook]::Start(${vkCode})\n`);
+      
+      currentHookProcess.stdout.on('data', (data) => {
+        const output = data.toString().trim();
+        if (output === 'HOTKEY_PRESSED' && mainWindow) {
           mainWindow.webContents.send('gamma:hotkey_pressed');
         }
       });
-      if (success) {
-        currentAccelerator = accelerator;
-      }
-      return success;
+      
+      currentHookProcess.on('error', (err) => {
+        console.error('Keyboard hook error:', err);
+      });
+      return true;
     } catch (e) {
       console.error('Keyboard hook error:', e);
       return false;
@@ -629,9 +639,9 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
   });
 
   ipcMain.handle('gamma:unregisterHook', () => {
-    if (currentAccelerator) {
-      globalShortcut.unregister(currentAccelerator);
-      currentAccelerator = null;
+    if (currentHookProcess) {
+      currentHookProcess.kill();
+      currentHookProcess = null;
     }
     return true;
   });

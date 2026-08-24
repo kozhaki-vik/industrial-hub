@@ -1,0 +1,11 @@
+Add-Type -ReferencedAssemblies System.Windows.Forms -TypeDefinition "
+using System;
+using System.Windows.Forms;
+public class Test {
+    public static void Start() {
+        Console.WriteLine("STARTED");
+        Application.Run();
+    }
+}
+"
+[Test]::Start()
