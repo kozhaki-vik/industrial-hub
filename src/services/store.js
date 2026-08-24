@@ -78,6 +78,22 @@ export const saveConfig = (newConfig) => {
 
 // Helper for specific keys
 export const setConfigKey = (key, value) => {
+  if (key === 'rustPath' && typeof value === 'string') {
+    let sanitized = value.trim();
+    const lower = sanitized.toLowerCase();
+    if (lower.endsWith('\\cfg') || lower.endsWith('/cfg')) {
+      sanitized = sanitized.slice(0, -4);
+    } else if (lower.endsWith('\\cfg\\client.cfg') || lower.endsWith('/cfg/client.cfg')) {
+      sanitized = sanitized.slice(0, -15);
+    } else if (lower.endsWith('\\cfg\\keys.cfg') || lower.endsWith('/cfg/keys.cfg')) {
+      sanitized = sanitized.slice(0, -13);
+    } else if (lower.endsWith('\\client.cfg') || lower.endsWith('/client.cfg')) {
+      sanitized = sanitized.slice(0, -11);
+    } else if (lower.endsWith('\\keys.cfg') || lower.endsWith('/keys.cfg')) {
+      sanitized = sanitized.slice(0, -9);
+    }
+    return saveConfig({ [key]: sanitized });
+  }
   return saveConfig({ [key]: value });
 };
 

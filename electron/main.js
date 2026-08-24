@@ -559,10 +559,16 @@ app.whenReady().then(async () => {
       ];
     
     const results = checks.map(item => {
-      const checkPath = path.join(rustPath, item.relative);
+      let checkPath = path.join(rustPath, item.relative);
       let exists = false;
       let type = 'missing';
       try {
+        if (!fs.existsSync(checkPath)) {
+          const altPath = path.join(rustPath, item.name);
+          if (fs.existsSync(altPath)) {
+            checkPath = altPath;
+          }
+        }
         if (fs.existsSync(checkPath)) {
           exists = true;
           const stat = fs.statSync(checkPath);
@@ -580,9 +586,16 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('config:readConfig', (event, rustPath, filename) => {
     if (!rustPath) return null;
-    const cfgPath = path.join(rustPath, 'cfg', filename);
+    let cfgPath = path.join(rustPath, 'cfg', filename);
     try {
-      if (!fs.existsSync(cfgPath)) return '';
+      if (!fs.existsSync(cfgPath)) {
+        const altPath = path.join(rustPath, filename);
+        if (fs.existsSync(altPath)) {
+          cfgPath = altPath;
+        } else {
+          return '';
+        }
+      }
       return fs.readFileSync(cfgPath, 'utf8');
     } catch (err) {
       console.error(`Failed to read config ${filename}:`, err);
@@ -592,10 +605,16 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
     if (!rustPath) return false;
-    const cfgDir = path.join(rustPath, 'cfg');
+    let cfgDir = path.join(rustPath, 'cfg');
+    // If rustPath already points to cfg folder, don't append another cfg
+    if (path.basename(rustPath).toLowerCase() === 'cfg') {
+      cfgDir = rustPath;
+    }
+    
     if (!fs.existsSync(cfgDir)) {
       fs.mkdirSync(cfgDir, { recursive: true });
     }
+    
     const cfgPath = path.join(cfgDir, filename);
     try {
       fs.writeFileSync(cfgPath, content, 'utf8');
