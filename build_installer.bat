@@ -10,7 +10,7 @@ if not exist %CSC_PATH% (
     exit /b 1
 )
 
-%CSC_PATH% /target:winexe /out:Installer.exe /win32icon:icon_opt.ico /win32manifest:app.manifest /optimize /reference:System.IO.Compression.FileSystem.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll Installer.cs
+%CSC_PATH% /target:winexe /out:Installer.exe /win32icon:icon_opt.ico /win32manifest:app.manifest /optimize /reference:System.IO.Compression.FileSystem.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll Installer.cs
 
 if %errorlevel% neq 0 (
     echo Build failed!

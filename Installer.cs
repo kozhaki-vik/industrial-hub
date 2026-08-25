@@ -65,7 +65,11 @@ namespace IndustrialHubLauncher
             this.BackColor = Color.White;
 
             try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
-            try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | (SecurityProtocolType)768 | SecurityProtocolType.Tls; } catch { }
+            try { 
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)12288 | (SecurityProtocolType)3072 | (SecurityProtocolType)768 | SecurityProtocolType.Tls; 
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+                ServicePointManager.Expect100Continue = false;
+            } catch { }
 
             statusLabel = new Label();
             statusLabel.Text = "Запуск...";
@@ -115,11 +119,20 @@ namespace IndustrialHubLauncher
             if (!Directory.Exists(installPath))
                 Directory.CreateDirectory(installPath);
 
-            // Find existing installation
+            // Find existing installation (sort by newest version)
             string latestExe = null;
             if (Directory.Exists(installPath))
             {
-                var dirs = Directory.GetDirectories(installPath, "app-*");
+                var dirs = Directory.GetDirectories(installPath, "app-*")
+                    .OrderByDescending(d => {
+                        string name = Path.GetFileName(d);
+                        Version v;
+                        if (name.StartsWith("app-") && Version.TryParse(name.Substring(4), out v))
+                            return v;
+                        return new Version(0, 0, 0);
+                    })
+                    .ToList();
+
                 foreach (var d in dirs)
                 {
                     string candidate = Path.Combine(d, "Industrial Hub.exe");
@@ -142,50 +155,156 @@ namespace IndustrialHubLauncher
             }
         }
 
+        private void ParseJsonRelease(string json, ref string version, ref string downloadUrl)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+
+            int tagIdx = json.IndexOf("\"tag_name\":");
+            if (tagIdx != -1)
+            {
+                int q1 = json.IndexOf('\"', tagIdx + 11);
+                int q2 = json.IndexOf('\"', q1 + 1);
+                if (q1 != -1 && q2 != -1)
+                {
+                    string rawVer = json.Substring(q1 + 1, q2 - q1 - 1).Trim();
+                    if (rawVer.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                        rawVer = rawVer.Substring(1);
+                    version = rawVer;
+                }
+            }
+
+            int urlIdx = json.IndexOf("\"browser_download_url\":");
+            while (urlIdx != -1)
+            {
+                int u1 = json.IndexOf('\"', urlIdx + 23);
+                int u2 = json.IndexOf('\"', u1 + 1);
+                if (u1 != -1 && u2 != -1)
+                {
+                    string possibleUrl = json.Substring(u1 + 1, u2 - u1 - 1).Trim();
+                    if (possibleUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        downloadUrl = possibleUrl;
+                        break;
+                    }
+                }
+                urlIdx = json.IndexOf("\"browser_download_url\":", u2);
+            }
+        }
+
         private void FetchLatestFromGitHub(object state)
         {
             string exeUrl = null;
+            string foundVersion = null;
+
+            // Strategy 1: GitHub API /releases (gets newest release, including pre-releases)
             try
             {
-                HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases/latest");
-                ghReq.Timeout = 5000;
-                ghReq.UserAgent = "IndustrialHub-Launcher";
+                string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases?t=" + Environment.TickCount;
+                HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
+                ghReq.Timeout = 10000;
+                ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
+                ghReq.Accept = "application/vnd.github.v3+json";
+                
                 using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
                 using (StreamReader reader = new StreamReader(ghResp.GetResponseStream()))
                 {
                     string json = reader.ReadToEnd();
-                    int tagIdx = json.IndexOf("\"tag_name\":");
-                    if (tagIdx != -1)
-                    {
-                        int q1 = json.IndexOf('\"', tagIdx + 11);
-                        int q2 = json.IndexOf('\"', q1 + 1);
-                        if (q1 != -1 && q2 != -1)
-                        {
-                            serverVersion = json.Substring(q1 + 1, q2 - q1 - 1).Trim();
-                            if (serverVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase))
-                                serverVersion = serverVersion.Substring(1);
-                        }
-                    }
-                    
-                    int urlIdx = json.IndexOf("\"browser_download_url\":");
-                    while (urlIdx != -1)
-                    {
-                        int u1 = json.IndexOf('\"', urlIdx + 23);
-                        int u2 = json.IndexOf('\"', u1 + 1);
-                        if (u1 != -1 && u2 != -1)
-                        {
-                            string possibleUrl = json.Substring(u1 + 1, u2 - u1 - 1).Trim();
-                            if (possibleUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                            {
-                                exeUrl = possibleUrl;
-                                break;
-                            }
-                        }
-                        urlIdx = json.IndexOf("\"browser_download_url\":", u2);
-                    }
+                    ParseJsonRelease(json, ref foundVersion, ref exeUrl);
                 }
             }
             catch { }
+
+            // Strategy 2: GitHub API /releases/latest (stable fallback)
+            if (string.IsNullOrEmpty(exeUrl))
+            {
+                try
+                {
+                    string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases/latest?t=" + Environment.TickCount;
+                    HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
+                    ghReq.Timeout = 10000;
+                    ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
+                    ghReq.Accept = "application/vnd.github.v3+json";
+
+                    using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
+                    using (StreamReader reader = new StreamReader(ghResp.GetResponseStream()))
+                    {
+                        string json = reader.ReadToEnd();
+                        ParseJsonRelease(json, ref foundVersion, ref exeUrl);
+                    }
+                }
+                catch { }
+            }
+
+            // Strategy 3: GitHub Atom Feed (NO API RATE LIMIT, works if API is blocked or 403 rate-limited)
+            if (string.IsNullOrEmpty(exeUrl))
+            {
+                try
+                {
+                    string atomUrl = "https://github.com/kozhaki-vik/industrial-hub-releases/releases.atom";
+                    HttpWebRequest atomReq = (HttpWebRequest)WebRequest.Create(atomUrl);
+                    atomReq.Timeout = 10000;
+                    atomReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
+
+                    using (HttpWebResponse atomResp = (HttpWebResponse)atomReq.GetResponse())
+                    using (StreamReader reader = new StreamReader(atomResp.GetResponseStream()))
+                    {
+                        string atomXml = reader.ReadToEnd();
+                        int tagIdx = atomXml.IndexOf("/releases/tag/v");
+                        if (tagIdx != -1)
+                        {
+                            int start = tagIdx + 15;
+                            int end = atomXml.IndexOf('\"', start);
+                            if (end != -1)
+                            {
+                                foundVersion = atomXml.Substring(start, end - start).Trim();
+                                if (!string.IsNullOrEmpty(foundVersion))
+                                {
+                                    exeUrl = string.Format("https://github.com/kozhaki-vik/industrial-hub-releases/releases/download/v{0}/Industrial.Hub.{0}.exe", foundVersion);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // Strategy 4: Server fallback
+            if (string.IsNullOrEmpty(exeUrl))
+            {
+                try
+                {
+                    string serverUrl = "https://industrial-hub.duckdns.org/version.json?t=" + Environment.TickCount;
+                    HttpWebRequest srvReq = (HttpWebRequest)WebRequest.Create(serverUrl);
+                    srvReq.Timeout = 8000;
+                    srvReq.UserAgent = "IndustrialHub-Installer";
+
+                    using (HttpWebResponse srvResp = (HttpWebResponse)srvReq.GetResponse())
+                    using (StreamReader reader = new StreamReader(srvResp.GetResponseStream()))
+                    {
+                        string srvJson = reader.ReadToEnd();
+                        int vIdx = srvJson.IndexOf("\"version\":");
+                        if (vIdx != -1)
+                        {
+                            int q1 = srvJson.IndexOf('\"', vIdx + 10);
+                            int q2 = srvJson.IndexOf('\"', q1 + 1);
+                            if (q1 != -1 && q2 != -1)
+                            {
+                                foundVersion = srvJson.Substring(q1 + 1, q2 - q1 - 1).Trim().Replace("v", "");
+                                if (!string.IsNullOrEmpty(foundVersion))
+                                {
+                                    exeUrl = string.Format("https://github.com/kozhaki-vik/industrial-hub-releases/releases/download/v{0}/Industrial.Hub.{0}.exe", foundVersion);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            if (!string.IsNullOrEmpty(foundVersion))
+            {
+                serverVersion = foundVersion;
+            }
 
             if (!string.IsNullOrEmpty(exeUrl))
             {
@@ -194,7 +313,7 @@ namespace IndustrialHubLauncher
             else
             {
                 this.Invoke((MethodInvoker)delegate {
-                    MessageBox.Show("Не удалось получить ссылку на актуальную версию.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Не удалось получить ссылку на актуальную версию.\nПожалуйста, проверьте подключение к интернету или попробуйте позже.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Application.Exit();
                 });
             }
@@ -211,18 +330,22 @@ namespace IndustrialHubLauncher
             exeFilePath = Path.Combine(newAppDir, "Industrial Hub.exe");
 
             WebClient client = new WebClient();
-            client.Headers.Add("User-Agent", "Mozilla/5.0");
+            client.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer");
             client.DownloadProgressChanged += (s, e) =>
             {
-                progressBar.Value = e.ProgressPercentage;
-                statusLabel.Text = string.Format("Загрузка v{0}... {1}% ({2} MB / {3} MB)",
-                    serverVersion, e.ProgressPercentage, (e.BytesReceived / 1024.0 / 1024.0).ToString("0.00"), (e.TotalBytesToReceive / 1024.0 / 1024.0).ToString("0.00"));
+                try
+                {
+                    progressBar.Value = Math.Min(100, Math.Max(0, e.ProgressPercentage));
+                    statusLabel.Text = string.Format("Загрузка v{0}... {1}% ({2:0.00} MB / {3:0.00} MB)",
+                        serverVersion, e.ProgressPercentage, (e.BytesReceived / 1024.0 / 1024.0), (e.TotalBytesToReceive / 1024.0 / 1024.0));
+                }
+                catch { }
             };
             client.DownloadFileCompleted += (s, e) =>
             {
                 if (e.Error != null)
                 {
-                    MessageBox.Show("Ошибка загрузки: " + e.Error.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Ошибка загрузки: " + e.Error.Message + "\nСсылка: " + url, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Application.Exit();
                 }
                 else
