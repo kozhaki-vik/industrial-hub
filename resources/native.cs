@@ -206,3 +206,28 @@ public class KeyboardHook {
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     private static extern IntPtr GetModuleHandle(string lpModuleName);
 }
+
+public class Program {
+    public static void Main(string[] args) {
+        if (args.Length == 0) return;
+        string command = args[0];
+        
+        try {
+            if (command == "gamma" && args.Length >= 3) {
+                int level = int.Parse(args[1]);
+                string device = args[2] == "default" ? null : args[2];
+                bool res = GammaController.SetGamma(level, device);
+                Console.WriteLine(res ? "OK" : "ERROR");
+            } else if (command == "reset" && args.Length >= 2) {
+                string device = args[1] == "default" ? null : args[1];
+                bool res = GammaController.SetGamma(128, device); // 128 means day/reset
+                Console.WriteLine(res ? "OK" : "ERROR");
+            } else if (command == "hook" && args.Length >= 2) {
+                int vkCode = int.Parse(args[1]);
+                KeyboardHook.Start(vkCode);
+            }
+        } catch (Exception ex) {
+            Console.WriteLine("EXCEPTION: " + ex.Message);
+        }
+    }
+}

@@ -40,72 +40,21 @@ if (!gotTheLock) {
   });
 }
 
-function getNativeDllPath() {
+function getNativeHelperPath() {
   const possiblePaths = [
-    path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll'),
-    path.join(process.resourcesPath, 'IndustrialHubNative.dll'),
-    path.join(getRealAppPath(), 'resources', 'IndustrialHubNative.dll'),
-    path.join(__dirname, '..', 'resources', 'IndustrialHubNative.dll'),
-    path.join(process.cwd(), 'resources', 'IndustrialHubNative.dll')
+    path.join(process.resourcesPath, 'resources', 'NativeHelper.exe'),
+    path.join(process.resourcesPath, 'NativeHelper.exe'),
+    path.join(getRealAppPath(), 'resources', 'NativeHelper.exe'),
+    path.join(__dirname, '..', 'resources', 'NativeHelper.exe'),
+    path.join(process.cwd(), 'resources', 'NativeHelper.exe')
   ];
   for (const p of possiblePaths) {
     if (fs.existsSync(p)) return p;
   }
-  return path.join(process.resourcesPath, 'resources', 'IndustrialHubNative.dll');
+  return path.join(process.resourcesPath, 'resources', 'NativeHelper.exe');
 }
 
 // --- Gamma & Hook Native Logic ---
-let psGammaProcess = null;
-const initGammaProcess = () => {
-  if (psGammaProcess && !psGammaProcess.killed && psGammaProcess.stdin && psGammaProcess.stdin.writable) {
-    return psGammaProcess;
-  }
-
-  try {
-    psGammaProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', '-'], {
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-    
-    psGammaProcess.on('error', (err) => {
-      console.error('Powershell Gamma Process Error:', err);
-      psGammaProcess = null;
-    });
-
-    if (psGammaProcess.stdin) {
-      psGammaProcess.stdin.on('error', (err) => {
-        console.error('Powershell Gamma stdin Error:', err);
-        psGammaProcess = null;
-      });
-    }
-
-    if (psGammaProcess.stderr) {
-      psGammaProcess.stderr.on('data', (data) => {
-        console.error('Powershell Gamma stderr:', data.toString());
-      });
-    }
-    
-    psGammaProcess.on('exit', () => {
-      psGammaProcess = null;
-    });
-    
-    const dllPath = getNativeDllPath();
-    const script = `Add-Type -Path "${dllPath}"\n`;
-    if (psGammaProcess.stdin && psGammaProcess.stdin.writable) {
-      psGammaProcess.stdin.write(script, (err) => {
-        if (err) {
-          console.error('Error initializing gamma DLL in powershell:', err);
-          psGammaProcess = null;
-        }
-      });
-    }
-  } catch (err) {
-    console.error('Failed to spawn Gamma process:', err);
-    psGammaProcess = null;
-  }
-
-  return psGammaProcess;
-};
-setTimeout(() => initGammaProcess(), 1000);
 
 let currentHookProcess = null;
 
@@ -682,15 +631,8 @@ app.whenReady().then(async () => {
   ipcMain.handle('gamma:getDisplays', () => {
     return new Promise((resolve) => {
       if (process.platform !== 'win32') return resolve([]);
-      const script = `
-Add-Type -AssemblyName System.Windows.Forms
-$screens = [System.Windows.Forms.Screen]::AllScreens
-$screens | Select-Object DeviceName | ConvertTo-Json -Compress
-`;
-      const ps = child_process.spawn('powershell', ['-NoProfile', '-Command', '-']);
-      let stdout = '';
-      ps.stdout.on('data', d => stdout += d.toString());
-      ps.on('close', () => {
+      const helperPath = getNativeHelperPath();
+      child_process.execFile(helperPath, ['displays'], (error, stdout) => {
         try {
           const text = stdout.trim();
           if (!text) return resolve([]);
@@ -702,8 +644,6 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
           resolve([]);
         }
       });
-      ps.stdin.write(script + '\n');
-      ps.stdin.end();
     });
   });
 
@@ -711,19 +651,12 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     if (process.platform !== 'win32') return;
     if (!deviceName) deviceName = "\\\\.\\DISPLAY1";
     try {
-      const ps = initGammaProcess();
-      if (ps && ps.stdin && ps.stdin.writable) {
-        const cmd = `[GammaController]::SaveGamma('${deviceName}'); [GammaController]::SetGamma(${brightnessLevel}, '${deviceName}')\n`;
-        ps.stdin.write(cmd, (err) => {
-          if (err) {
-            console.error('Error writing to gamma stdin:', err);
-            psGammaProcess = null;
-          }
-        });
-      }
+      const helperPath = getNativeHelperPath();
+      child_process.execFile(helperPath, ['gamma', brightnessLevel.toString(), deviceName], (err) => {
+        if (err) console.error('Error setting gamma via helper:', err);
+      });
     } catch (err) {
       console.error('Exception setting gamma:', err);
-      psGammaProcess = null;
     }
   });
 
@@ -740,28 +673,11 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     if (!vkCode) return false;
     
     try {
-      currentHookProcess = child_process.spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', '-'], {
-        stdio: ['pipe', 'pipe', 'pipe']
+      const helperPath = getNativeHelperPath();
+      currentHookProcess = child_process.spawn(helperPath, ['hook', vkCode.toString()], {
+        stdio: ['ignore', 'pipe', 'pipe']
       });
 
-      if (currentHookProcess.stdin) {
-        currentHookProcess.stdin.on('error', (err) => {
-          console.error('Hook process stdin error:', err);
-          currentHookProcess = null;
-        });
-      }
-      
-      const dllPath = getNativeDllPath();
-      
-      if (currentHookProcess.stdin && currentHookProcess.stdin.writable) {
-        currentHookProcess.stdin.write(`Add-Type -Path "${dllPath}"\n[KeyboardHook]::Start(${vkCode})\n`, (err) => {
-          if (err) {
-            console.error('Error writing to hook process:', err);
-            currentHookProcess = null;
-          }
-        });
-      }
-      
       currentHookProcess.stdout.on('data', (data) => {
         const output = data.toString().trim();
         if (output.includes('HOTKEY_PRESSED') && mainWindow) {
@@ -937,8 +853,11 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
       }
 
       try {
-        const psShortcut = `$wshell = New-Object -ComObject WScript.Shell; $s = $wshell.CreateShortcut('${shortcutPath}'); $s.TargetPath = '${targetExePath}'; $s.WorkingDirectory = '${newAppDir}'; $s.Save()`;
-        child_process.execSync(`powershell -NoProfile -Command "${psShortcut}"`);
+        shell.writeShortcutLink(shortcutPath, 'create', {
+          target: targetExePath,
+          cwd: newAppDir,
+          description: 'Industrial Hub'
+        });
       } catch (e) {
         console.error("Failed to update shortcut:", e);
       }
