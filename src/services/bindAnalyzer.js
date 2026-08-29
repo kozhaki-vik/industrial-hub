@@ -62,6 +62,38 @@ export const bindSignatures = [
     icon: 'trash',
     color: 'slate',
     match: (cmd) => cmd.includes('clear') && !cmd.includes('combatlog')
+  },
+  {
+    id: 'change_hands',
+    name: 'Смена рук',
+    command: '~graphics.vm_horizontal_flip 1;graphics.vm_horizontal_flip 0',
+    icon: 'refresh-ccw',
+    color: 'teal',
+    match: (cmd) => cmd.includes('vm_horizontal_flip')
+  },
+  {
+    id: 'hide_hud',
+    name: 'Скрытие интерфейса (HUD)',
+    command: '~graphics.hud 1;graphics.hud 0',
+    icon: 'monitor-off',
+    color: 'stone',
+    match: (cmd) => cmd.includes('graphics.hud')
+  },
+  {
+    id: 'auto_swim',
+    name: 'Авто-плавание',
+    command: 'forward;sprint;jump',
+    icon: 'waves',
+    color: 'cyan',
+    match: (cmd) => cmd.includes('jump') && cmd.includes('forward') && cmd.includes('sprint')
+  },
+  {
+    id: 'crouch_toggle',
+    name: 'Постоянный присед',
+    command: '~duck 1;duck 0',
+    icon: 'arrow-down',
+    color: 'amber',
+    match: (cmd) => cmd.includes('duck 1;duck 0') || cmd.includes('~duck')
   }
 ];
 
