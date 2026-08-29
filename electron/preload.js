@@ -7,7 +7,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   browseForRustPath: () => ipcRenderer.invoke('browseForRustPath'),
   app: {
-    relaunch: () => ipcRenderer.invoke('app:relaunch')
+    relaunch: () => ipcRenderer.invoke('app:relaunch'),
+    reportError: (err) => ipcRenderer.invoke('app:reportError', err)
   },
   diagnostics: {
     pingUrl: (url) => ipcRenderer.invoke('diagnostics:pingUrl', url),

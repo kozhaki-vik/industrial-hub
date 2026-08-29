@@ -963,6 +963,10 @@ $screens | Select-Object DeviceName | ConvertTo-Json -Compress
     }
   });
 
+  ipcMain.handle('app:reportError', (event, errorDetails) => {
+    sendCrashReport(errorDetails);
+  });
+
   ipcMain.handle('network:apply-updates', async (event, files, baseUrl) => {
     const appPath = getRealAppPath();
     let successCount = 0;

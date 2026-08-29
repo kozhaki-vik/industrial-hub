@@ -13,6 +13,9 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (window.electronAPI && window.electronAPI.app && window.electronAPI.app.reportError) {
+      window.electronAPI.app.reportError(`ErrorBoundary Crash: ${error.stack || error.message}\n\nComponent Stack:\n${errorInfo.componentStack}`).catch(() => {});
+    }
   }
 
   render() {

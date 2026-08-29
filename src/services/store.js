@@ -52,6 +52,7 @@ export const loadConfig = () => {
       currentConfig = { ...currentConfig, ...JSON.parse(data) };
     } catch (e) {
       console.error('Error reading config:', e);
+      if (window.electronAPI?.app?.reportError) window.electronAPI.app.reportError(`Store read config error: ${e.message}`);
     }
   }
   return currentConfig;
@@ -72,6 +73,7 @@ export const saveConfig = (newConfig) => {
     return true;
   } catch (e) {
     console.error('Error writing config:', e);
+    if (window.electronAPI?.app?.reportError) window.electronAPI.app.reportError(`Store write config error: ${e.message}`);
     return false;
   }
 };
@@ -132,6 +134,7 @@ export const factoryReset = () => {
     }
   } catch (e) {
     console.error('Error deleting config for factory reset:', e);
+    if (window.electronAPI?.app?.reportError) window.electronAPI.app.reportError(`Factory reset error: ${e.message}`);
   }
   
   setTimeout(() => {
