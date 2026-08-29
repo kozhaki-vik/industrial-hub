@@ -112,8 +112,29 @@ namespace IndustrialHubLauncher
             catch { }
         }
 
+        private void EnforceMainUpdateChannel()
+        {
+            try
+            {
+                string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "industrial-hub");
+                string configPath = Path.Combine(configDir, "config.json");
+                if (File.Exists(configPath))
+                {
+                    string content = File.ReadAllText(configPath);
+                    if (content.Contains("\"updateChannel\": \"test\"") || content.Contains("\"updateChannel\":\"test\""))
+                    {
+                        content = content.Replace("\"updateChannel\": \"test\"", "\"updateChannel\": \"main\"");
+                        content = content.Replace("\"updateChannel\":\"test\"", "\"updateChannel\":\"main\"");
+                        File.WriteAllText(configPath, content);
+                    }
+                }
+            }
+            catch { }
+        }
+
         private void InstallerForm_Load(object sender, EventArgs e)
         {
+            EnforceMainUpdateChannel();
             KillExistingAppProcesses();
 
             if (!Directory.Exists(installPath))
