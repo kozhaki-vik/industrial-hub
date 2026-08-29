@@ -49,13 +49,24 @@ export default function Electricity() {
           </button>
         </div>
         
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden p-5 sm:p-8">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
           
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <div className="flex-1 bg-orange-50 dark:bg-orange-900/10 p-5 rounded-2xl border border-orange-200 dark:border-orange-800/50">
-              <h3 className="text-sm font-semibold text-orange-700 dark:text-orange-500 mb-1 flex items-center gap-2"><Zap className="w-4 h-4"/> {t('elec_consumption')}</h3>
-              <p className="text-2xl font-bold text-orange-900 dark:text-orange-400">{selectedScheme.power}</p>
+          {selectedScheme.image && (
+            <div className="w-full h-64 sm:h-80 md:h-96 relative border-b border-slate-100 dark:border-slate-800">
+              <img 
+                src={selectedScheme.image} 
+                alt={selectedScheme.title}
+                className="w-full h-full object-cover"
+              />
             </div>
+          )}
+
+          <div className="p-5 sm:p-8">
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="flex-1 bg-orange-50 dark:bg-orange-900/10 p-5 rounded-2xl border border-orange-200 dark:border-orange-800/50">
+                <h3 className="text-sm font-semibold text-orange-700 dark:text-orange-500 mb-1 flex items-center gap-2"><Zap className="w-4 h-4"/> {t('elec_consumption')}</h3>
+                <p className="text-2xl font-bold text-orange-900 dark:text-orange-400">{selectedScheme.power}</p>
+              </div>
             <div className="flex-1 bg-emerald-50 dark:bg-emerald-900/10 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800/50">
               <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-500 mb-1 flex items-center gap-2"><Battery className="w-4 h-4"/> {t('elec_battery_reserve')}</h3>
               <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-400">{selectedScheme.reserve}</p>
@@ -98,6 +109,7 @@ export default function Electricity() {
               {t('elec_propose_btn')}
             </button>
           </div>
+          </div>
         </div>
       </div>
       <SupportTicketModal 
@@ -126,15 +138,21 @@ export default function Electricity() {
             onClick={() => setSelectedScheme(item)}
             className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 cursor-pointer hover:shadow-lg hover:border-blue-500 transition-all group flex flex-col transform hover:-translate-y-1"
           >
-            <div className="h-40 w-full bg-slate-100 dark:bg-slate-950 flex flex-col items-center justify-center p-6 border-b border-slate-100 dark:border-slate-800 relative">
-              <Cpu className="w-16 h-16 text-blue-500/20 group-hover:text-blue-500/40 transition-colors mb-2" />
-              <div className="flex items-center gap-2 mt-auto">
-                <span className="bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> {item.power}
-                </span>
-                <span className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
-                  <Battery className="w-3 h-3" /> {item.reserve}
-                </span>
+            <div className="h-48 w-full bg-slate-100 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+              <img 
+                src={item.image} 
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                <div className="flex items-center gap-2">
+                  <span className="bg-blue-500/80 backdrop-blur text-white px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+                    <Zap className="w-3 h-3" /> {item.power}
+                  </span>
+                  <span className="bg-emerald-500/80 backdrop-blur text-white px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+                    <Battery className="w-3 h-3" /> {item.reserve}
+                  </span>
+                </div>
               </div>
             </div>
             <div className="p-5 flex flex-col flex-1">
