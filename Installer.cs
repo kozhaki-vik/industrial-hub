@@ -119,40 +119,8 @@ namespace IndustrialHubLauncher
             if (!Directory.Exists(installPath))
                 Directory.CreateDirectory(installPath);
 
-            // Find existing installation (sort by newest version)
-            string latestExe = null;
-            if (Directory.Exists(installPath))
-            {
-                var dirs = Directory.GetDirectories(installPath, "app-*")
-                    .OrderByDescending(d => {
-                        string name = Path.GetFileName(d);
-                        Version v;
-                        if (name.StartsWith("app-") && Version.TryParse(name.Substring(4), out v))
-                            return v;
-                        return new Version(0, 0, 0);
-                    })
-                    .ToList();
-
-                foreach (var d in dirs)
-                {
-                    string candidate = Path.Combine(d, "Industrial Hub.exe");
-                    if (File.Exists(candidate))
-                    {
-                        latestExe = candidate;
-                        break;
-                    }
-                }
-            }
-
-            if (latestExe != null)
-            {
-                LaunchApp(latestExe);
-            }
-            else
-            {
-                statusLabel.Text = "Поиск актуальной версии...";
-                System.Threading.ThreadPool.QueueUserWorkItem(FetchLatestFromGitHub);
-            }
+            statusLabel.Text = "Поиск актуальной версии...";
+            System.Threading.ThreadPool.QueueUserWorkItem(FetchLatestFromGitHub);
         }
 
         private void ParseJsonRelease(string json, ref string version, ref string downloadUrl)
@@ -196,25 +164,7 @@ namespace IndustrialHubLauncher
             string exeUrl = null;
             string foundVersion = null;
 
-            // Strategy 1: GitHub API /releases (gets newest release, including pre-releases)
-            try
-            {
-                string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases?t=" + Environment.TickCount;
-                HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
-                ghReq.Timeout = 10000;
-                ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
-                ghReq.Accept = "application/vnd.github.v3+json";
-                
-                using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
-                using (StreamReader reader = new StreamReader(ghResp.GetResponseStream()))
-                {
-                    string json = reader.ReadToEnd();
-                    ParseJsonRelease(json, ref foundVersion, ref exeUrl);
-                }
-            }
-            catch { }
-
-            // Strategy 2: GitHub API /releases/latest (stable fallback)
+            // Strategy 1: GitHub API /releases/latest (stable only)
             if (string.IsNullOrEmpty(exeUrl))
             {
                 try
@@ -235,40 +185,7 @@ namespace IndustrialHubLauncher
                 catch { }
             }
 
-            // Strategy 3: GitHub Atom Feed (NO API RATE LIMIT, works if API is blocked or 403 rate-limited)
-            if (string.IsNullOrEmpty(exeUrl))
-            {
-                try
-                {
-                    string atomUrl = "https://github.com/kozhaki-vik/industrial-hub-releases/releases.atom";
-                    HttpWebRequest atomReq = (HttpWebRequest)WebRequest.Create(atomUrl);
-                    atomReq.Timeout = 10000;
-                    atomReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
-
-                    using (HttpWebResponse atomResp = (HttpWebResponse)atomReq.GetResponse())
-                    using (StreamReader reader = new StreamReader(atomResp.GetResponseStream()))
-                    {
-                        string atomXml = reader.ReadToEnd();
-                        int tagIdx = atomXml.IndexOf("/releases/tag/v");
-                        if (tagIdx != -1)
-                        {
-                            int start = tagIdx + 15;
-                            int end = atomXml.IndexOf('\"', start);
-                            if (end != -1)
-                            {
-                                foundVersion = atomXml.Substring(start, end - start).Trim();
-                                if (!string.IsNullOrEmpty(foundVersion))
-                                {
-                                    exeUrl = string.Format("https://github.com/kozhaki-vik/industrial-hub-releases/releases/download/v{0}/Industrial.Hub.{0}.exe", foundVersion);
-                                }
-                            }
-                        }
-                    }
-                }
-                catch { }
-            }
-
-            // Strategy 4: Server fallback
+            // Strategy 2: Server fallback
             if (string.IsNullOrEmpty(exeUrl))
             {
                 try

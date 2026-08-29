@@ -143,16 +143,85 @@ function createWindow() {
   }
 }
 
+const CRASH_QUEUE_FILE = path.join(app.getPath('userData'), 'crash_queue.json');
+
+function saveToCrashQueue(crashData) {
+  try {
+    let queue = [];
+    if (fs.existsSync(CRASH_QUEUE_FILE)) {
+      const data = fs.readFileSync(CRASH_QUEUE_FILE, 'utf8');
+      queue = JSON.parse(data);
+    }
+    queue.push({ ...crashData, timestamp: Date.now() });
+    fs.writeFileSync(CRASH_QUEUE_FILE, JSON.stringify(queue), 'utf8');
+  } catch (e) {
+    console.error('Failed to save crash to queue:', e);
+  }
+}
+
+function flushCrashQueue() {
+  try {
+    if (!fs.existsSync(CRASH_QUEUE_FILE)) return;
+    
+    const data = fs.readFileSync(CRASH_QUEUE_FILE, 'utf8');
+    let queue = JSON.parse(data);
+    
+    if (!Array.isArray(queue) || queue.length === 0) return;
+    
+    const sendNext = () => {
+      if (queue.length === 0) {
+        if (fs.existsSync(CRASH_QUEUE_FILE)) fs.unlinkSync(CRASH_QUEUE_FILE);
+        return;
+      }
+      
+      const crashData = queue[0];
+      const postData = JSON.stringify({
+        hwid: crashData.hwid,
+        version: crashData.version,
+        errorStack: crashData.errorStack
+      });
+      
+      const options = {
+        hostname: 'industrial-hub.duckdns.org',
+        port: 443,
+        path: '/api/crash',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      };
+
+      const req = https.request(options, (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          queue.shift();
+          fs.writeFileSync(CRASH_QUEUE_FILE, JSON.stringify(queue), 'utf8');
+          sendNext();
+        }
+      });
+      req.on('error', () => {});
+      req.write(postData);
+      req.end();
+    };
+    
+    sendNext();
+  } catch (e) {
+    console.error('Failed to flush crash queue:', e);
+  }
+}
+
 function sendCrashReport(errorStack) {
   try {
     const hwid = crypto.createHash('sha256').update(os.hostname() + '_' + os.userInfo().username).digest('hex');
     const version = app.getVersion();
     
-    const postData = JSON.stringify({
+    const crashData = {
       hwid,
       version,
       errorStack
-    });
+    };
+    
+    const postData = JSON.stringify(crashData);
 
     const options = {
       hostname: 'industrial-hub.duckdns.org',
@@ -165,9 +234,14 @@ function sendCrashReport(errorStack) {
       }
     };
 
-    const req = https.request(options, () => {});
-    req.on('error', () => {});
+    const req = https.request(options, (res) => {
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        saveToCrashQueue(crashData);
+      }
+    });
+    req.on('error', () => saveToCrashQueue(crashData));
     req.write(postData);
+    req.end();
   } catch {
   }
 }
@@ -187,6 +261,9 @@ app.on('render-process-gone', (event, webContents, details) => {
 });
 
 app.whenReady().then(async () => {
+  flushCrashQueue();
+  setInterval(flushCrashQueue, 60000);
+
   // Handle auto-update cleanup args from the new process
   let cleanupPid = null;
   let cleanupDir = null;
