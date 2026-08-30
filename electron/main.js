@@ -221,6 +221,26 @@ app.whenReady().then(async () => {
     if (arg.startsWith('--cleanup-dir=')) cleanupDir = arg.split('=')[1];
   }
 
+  // --- Installer / Repair Mode Detection ---
+  try {
+    const appPath = getRealAppPath();
+    const currentFolder = path.basename(appPath);
+    // If running manually outside of the standard app-X.Y.Z auto-update folder
+    if (app.isPackaged && !currentFolder.startsWith('app-') && !cleanupDir) {
+      const configPath = path.join(app.getPath('appData'), 'industrial-hub', 'config.json');
+      if (fs.existsSync(configPath)) {
+        const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        if (configData.updateChannel !== 'main') {
+          console.log('Installer mode detected (running outside app-X.Y.Z folder). Forcing updateChannel to main.');
+          configData.updateChannel = 'main';
+          fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to enforce main channel in installer mode:', e);
+  }
+
   if (cleanupPid && cleanupDir) {
     console.log(`Waiting for old process ${cleanupPid} to exit...`);
     const waitForPid = (pid, maxRetries = 20) => {
