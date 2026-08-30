@@ -4,7 +4,14 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   ru: {
     translation: {
-      "feedback_btn": "Идея / Баг",
+      "feedback_btn": "Отправить баг/идею",
+      "feedback_title": "Обратная связь",
+      "feedback_bug": "Баг",
+      "feedback_idea": "Идея",
+      "feedback_other": "Другое",
+      "feedback_placeholder": "Опишите подробно...",
+      "feedback_send": "Отправить",
+      "feedback_success": "Спасибо за ваш отзыв!",
       "error_boundary_title": "Что-то пошло не так",
       "error_boundary_desc": "Произошла непредвиденная ошибка. Приложение смогло перехватить её, чтобы вы могли безопасно вернуться в главное меню.",
       "error_boundary_btn": "Вернуться в главное меню",
@@ -596,7 +603,14 @@ const resources = {
   },
   en: {
     translation: {
-      "feedback_btn": "Idea / Bug",
+      "feedback_btn": "Send Bug/Idea",
+      "feedback_title": "Feedback",
+      "feedback_bug": "Bug",
+      "feedback_idea": "Idea",
+      "feedback_other": "Other",
+      "feedback_placeholder": "Describe in detail...",
+      "feedback_send": "Send",
+      "feedback_success": "Thank you for your feedback!",
       "error_boundary_title": "Something went wrong",
       "error_boundary_desc": "An unexpected error occurred. The application caught it so you can safely return to the main menu.",
       "error_boundary_btn": "Return to main menu",
@@ -1186,7 +1200,14 @@ const resources = {
   },
   ua: {
     translation: {
-      "feedback_btn": "Ідея / Баг",
+      "feedback_btn": "Відправити баг/ідею",
+      "feedback_title": "Зворотній зв'язок",
+      "feedback_bug": "Баг",
+      "feedback_idea": "Ідея",
+      "feedback_other": "Інше",
+      "feedback_placeholder": "Опишіть детально...",
+      "feedback_send": "Відправити",
+      "feedback_success": "Дякуємо за ваш відгук!",
       "error_boundary_title": "Щось пішло не так",
       "error_boundary_desc": "Сталася непередбачена помилка. Додаток перехопив її, щоб ви могли безпечно повернутися до головного меню.",
       "error_boundary_btn": "Повернутися до головного меню",
@@ -1789,5 +1810,7 @@ i18n
   });
 
 export default i18n;
+
+
 
 
