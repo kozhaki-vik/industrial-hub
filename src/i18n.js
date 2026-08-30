@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   ru: {
     translation: {
+      "feedback_btn": "Идея / Баг",
       "error_boundary_title": "Что-то пошло не так",
       "error_boundary_desc": "Произошла непредвиденная ошибка. Приложение смогло перехватить её, чтобы вы могли безопасно вернуться в главное меню.",
       "error_boundary_btn": "Вернуться в главное меню",
@@ -595,6 +596,7 @@ const resources = {
   },
   en: {
     translation: {
+      "feedback_btn": "Idea / Bug",
       "error_boundary_title": "Something went wrong",
       "error_boundary_desc": "An unexpected error occurred. The application caught it so you can safely return to the main menu.",
       "error_boundary_btn": "Return to main menu",
@@ -1184,6 +1186,7 @@ const resources = {
   },
   ua: {
     translation: {
+      "feedback_btn": "Ідея / Баг",
       "error_boundary_title": "Щось пішло не так",
       "error_boundary_desc": "Сталася непередбачена помилка. Додаток перехопив її, щоб ви могли безпечно повернутися до головного меню.",
       "error_boundary_btn": "Повернутися до головного меню",
@@ -1786,3 +1789,5 @@ i18n
   });
 
 export default i18n;
+
+

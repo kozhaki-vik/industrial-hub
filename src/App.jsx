@@ -22,6 +22,7 @@ import { GammaProvider } from './contexts/GammaContext';
 import { initAnalytics } from './services/analytics';
 import ErrorBoundary from './components/ErrorBoundary';
 import SetupWizard from './components/SetupWizard';
+import FeedbackButton from './components/FeedbackButton';
 
 import { NetworkProvider, useNetwork } from './contexts/NetworkContext';
 
@@ -107,11 +108,12 @@ function App() {
                       <Route path="/developer" element={<Developer />} />
                       <Route path="/gamma" element={<Gamma />} />
                     </Routes>
-                  </main>
-                </div>
-                <RustPathModal isOpen={showRustModal} onClose={() => setShowRustModal(false)} />
-                <ToastContainer />
-              </HashRouter>
+                    </main>
+                  </div>
+                  <FeedbackButton />
+                  <RustPathModal isOpen={showRustModal} onClose={() => setShowRustModal(false)} />
+                  <ToastContainer />
+                </HashRouter>
               </ErrorBoundary>
             </GammaProvider>
           </NetworkProvider>
