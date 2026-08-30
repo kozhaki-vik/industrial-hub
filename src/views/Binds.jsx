@@ -221,6 +221,16 @@ export default function Binds() {
     if (activeTab === 'catalog') {
       return (
         <div className="mb-6">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl gap-4">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Хотите добавить свой бинд в каталог?</p>
+            <button 
+              onClick={() => setIsSuggestModalOpen(true)}
+              className="px-5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-sm font-bold transition-all shadow-sm w-full sm:w-auto"
+            >
+              Предложить свой бинд
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {bindSignatures.map((item, i) => (
               <div key={i} className="flex flex-col bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 transition-colors group">
@@ -243,15 +253,6 @@ export default function Binds() {
                 </button>
               </div>
             ))}
-          </div>
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-xl shrink-0">
-            <p className="text-sm text-slate-500">Хотите добавить свой бинд в каталог?</p>
-            <button 
-              onClick={() => setIsSuggestModalOpen(true)}
-              className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 font-medium hover:bg-white dark:hover:bg-slate-800 transition-colors shadow-sm"
-            >
-              Предложить свой бинд
-            </button>
           </div>
         </div>
       );
