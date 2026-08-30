@@ -90,6 +90,23 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  // --- Installer Mode ---
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (process.argv.includes('--force-main-channel')) {
+      console.log("Installer mode detected via argument. Forcing updateChannel to main.");
+      mainWindow.webContents.executeJavaScript(`
+        try {
+          let cfg = JSON.parse(localStorage.getItem('industrial-hub-config') || '{}');
+          if (cfg.updateChannel !== 'main') {
+            cfg.updateChannel = 'main';
+            localStorage.setItem('industrial-hub-config', JSON.stringify(cfg));
+            console.log("Channel forcefully set to main by installer");
+          }
+        } catch(e) {}
+      `);
+    }
+  });
 }
 
 const CRASH_QUEUE_FILE = path.join(app.getPath('userData'), 'crash_queue.json');

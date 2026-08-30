@@ -290,7 +290,6 @@ namespace IndustrialHubLauncher
                 {
                     client.Dispose();
                     CreateShortcut(exeFilePath);
-                    PatchConfigToMain();
                     LaunchApp(exeFilePath);
                 }
             };
@@ -300,25 +299,6 @@ namespace IndustrialHubLauncher
                 MessageBox.Show("Ошибка сети: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Application.Exit();
             }
-        }
-
-        private void PatchConfigToMain()
-        {
-            try
-            {
-                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string configPath = Path.Combine(appData, "industrial-hub", "config.json");
-                if (File.Exists(configPath))
-                {
-                    string json = File.ReadAllText(configPath);
-                    if (json.Contains("\"updateChannel\""))
-                    {
-                        json = System.Text.RegularExpressions.Regex.Replace(json, "\"updateChannel\"\\s*:\\s*\"[^\"]*\"", "\"updateChannel\": \"main\"");
-                        File.WriteAllText(configPath, json);
-                    }
-                }
-            }
-            catch { }
         }
 
         private void CreateShortcut(string targetPath)
@@ -346,6 +326,7 @@ namespace IndustrialHubLauncher
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = path,
+                    Arguments = "--force-main-channel",
                     WorkingDirectory = Path.GetDirectoryName(path),
                     UseShellExecute = true
                 });
