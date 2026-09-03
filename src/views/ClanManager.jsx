@@ -112,6 +112,15 @@ export default function ClanManager() {
   
   const saveConfig = (e) => {
     e.preventDefault();
+    
+    const roleIds = [config.leaderRoleId, config.mainRosterRoleId, config.farmerRoleId, config.builderRoleId];
+    for (const id of roleIds) {
+      if (id && id.length > 0 && id.length < 17) {
+        alert(t('clan_id_too_short') || 'ID роли должен содержать минимум 17 цифр.');
+        return;
+      }
+    }
+
     setSaveStatus('saving');
     ws.send(JSON.stringify({ 
       type: 'clan', 
@@ -258,22 +267,50 @@ export default function ClanManager() {
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{t('clan_roles_desc')}</p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_leader')}</label>
-                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.leaderRoleId || ''} onChange={e => setConfig({...config, leaderRoleId: e.target.value})} placeholder="000000000000000000" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_main')}</label>
-                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.mainRosterRoleId || ''} onChange={e => setConfig({...config, mainRosterRoleId: e.target.value})} placeholder="000000000000000000" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_farmer')}</label>
-                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.farmerRoleId || ''} onChange={e => setConfig({...config, farmerRoleId: e.target.value})} placeholder="000000000000000000" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_builder')}</label>
-                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.builderRoleId || ''} onChange={e => setConfig({...config, builderRoleId: e.target.value})} placeholder="000000000000000000" />
-                  </div>
+                  {(() => {
+                    let roleNames = {};
+                    try {
+                      roleNames = config.roleNamesJson ? JSON.parse(config.roleNamesJson) : {};
+                    } catch(e) {}
+                    
+                    const updateRoleName = (key, val) => {
+                      const newNames = { ...roleNames, [key]: val };
+                      setConfig({ ...config, roleNamesJson: JSON.stringify(newNames) });
+                    };
+                    
+                    const handleIdChange = (key, val) => {
+                      setConfig({ ...config, [key]: val.replace(/\D/g, '').slice(0, 20) });
+                    };
+                    
+                    const roles = [
+                      { key: 'leader', dbKey: 'leaderRoleId', defaultName: t('clan_role_leader') },
+                      { key: 'main', dbKey: 'mainRosterRoleId', defaultName: t('clan_role_main') },
+                      { key: 'farmer', dbKey: 'farmerRoleId', defaultName: t('clan_role_farmer') },
+                      { key: 'builder', dbKey: 'builderRoleId', defaultName: t('clan_role_builder') },
+                    ];
+                    
+                    return roles.map(r => (
+                      <div key={r.key} className="bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500/20 transition-shadow">
+                        <div className="flex gap-2 mb-2 items-center">
+                          <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          <input
+                            type="text"
+                            className="w-full bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none border-b border-dashed border-slate-300 dark:border-slate-600 focus:border-blue-500 transition-colors px-1 pb-0.5"
+                            value={roleNames[r.key] !== undefined ? roleNames[r.key] : r.defaultName}
+                            onChange={e => updateRoleName(r.key, e.target.value)}
+                            placeholder={r.defaultName}
+                          />
+                        </div>
+                        <input 
+                          type="text" 
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/80 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono text-center" 
+                          value={config[r.dbKey] || ''} 
+                          onChange={e => handleIdChange(r.dbKey, e.target.value)} 
+                          placeholder="ID (только цифры)" 
+                        />
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
 
