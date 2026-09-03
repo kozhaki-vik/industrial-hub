@@ -258,7 +258,7 @@ export const NetworkProvider = ({ children }) => {
   }, []);
 
   return (
-    <NetworkContext.Provider value={{ status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, sendTelemetry, createTicket }}>
+    <NetworkContext.Provider value={{ ws: wsRef.current, status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, sendTelemetry, createTicket }}>
       {children}
     </NetworkContext.Provider>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNetwork } from '../contexts/NetworkContext';
 
 export default function ClanManager() {
-  const { ws } = useNetwork();
+  const { ws, status: wsStatus } = useNetwork();
   const [status, setStatus] = useState('checking'); // checking, unlinked, linked
   const [guildId, setGuildId] = useState(null);
   const [linkCode, setLinkCode] = useState('');
@@ -17,8 +17,8 @@ export default function ClanManager() {
   };
 
   useEffect(() => {
-    if (!ws) {
-      addLog('No WebSocket connection available');
+    if (!ws || wsStatus !== 'online') {
+      addLog('Waiting for active WebSocket connection...');
       return;
     }
     
@@ -67,7 +67,7 @@ export default function ClanManager() {
     ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
     
     return () => ws.removeEventListener('message', handleMessage);
-  }, [ws]);
+  }, [ws, wsStatus]);
 
   const handleLink = (e) => {
     e.preventDefault();
