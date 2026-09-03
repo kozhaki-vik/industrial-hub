@@ -18,6 +18,7 @@ import Graphics from './views/Graphics';
 import Servers from './views/Servers';
 import Binds from './views/Binds';
 import Developer from './views/Developer';
+import ClanManager from './views/ClanManager';
 import { GammaProvider } from './contexts/GammaContext';
 import { initAnalytics } from './services/analytics';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -107,6 +108,7 @@ function App() {
                       <Route path="/binds" element={<Binds />} />
                       <Route path="/developer" element={<Developer />} />
                       <Route path="/gamma" element={<Gamma />} />
+                      <Route path="/clan" element={<ClanManager />} />
                     </Routes>
                     </main>
                   </div>
