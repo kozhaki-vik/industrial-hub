@@ -7,16 +7,30 @@ export default function ClanManager() {
   const [guildId, setGuildId] = useState(null);
   const [linkCode, setLinkCode] = useState('');
   const [error, setError] = useState('');
+  const [logs, setLogs] = useState(['Initializing Clan Manager...']);
   
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
 
+  const addLog = (msg) => {
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+  };
+
   useEffect(() => {
-    if (!ws) return;
+    if (!ws) {
+      addLog('No WebSocket connection available');
+      return;
+    }
+    
+    addLog('Sending initial get_status request');
     
     const handleMessage = (e) => {
       try {
         const data = JSON.parse(e.data);
+        if (data.type && data.type.startsWith('clan_')) {
+          addLog(`Received: ${JSON.stringify(data)}`);
+        }
+        
         if (data.type === 'clan_status_res') {
           setStatus(data.linked ? 'linked' : 'unlinked');
           if (data.linked) {
@@ -59,17 +73,20 @@ export default function ClanManager() {
     e.preventDefault();
     if (!linkCode.trim()) return;
     setError('');
+    addLog(`Sending link code request: ${linkCode}`);
     ws.send(JSON.stringify({ type: 'clan', action: 'link', code: linkCode }));
   };
 
   const handleUnlink = () => {
     if (confirm('Are you sure you want to unlink your Clan Manager?')) {
+      addLog('Sending unlink request');
       ws.send(JSON.stringify({ type: 'clan', action: 'unlink' }));
     }
   };
 
   const fetchConfig = () => {
     setLoadingConfig(true);
+    addLog('Fetching config via proxy');
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
@@ -80,6 +97,7 @@ export default function ClanManager() {
   
   const saveConfig = (e) => {
     e.preventDefault();
+    addLog('Saving config via proxy');
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
@@ -88,8 +106,22 @@ export default function ClanManager() {
     }));
   };
 
+  const DebugLogs = () => (
+    <div className="mt-8 bg-black/90 text-green-400 p-4 rounded text-xs font-mono max-h-64 overflow-y-auto">
+      <div className="mb-2 font-bold text-white border-b border-gray-700 pb-1">Debug Logs</div>
+      {logs.map((log, i) => (
+        <div key={i}>{log}</div>
+      ))}
+    </div>
+  );
+
   if (status === 'checking') {
-    return <div className="p-8 text-center text-slate-500">Connecting to server...</div>;
+    return (
+      <div className="p-8 max-w-2xl mx-auto">
+        <div className="text-center text-slate-500 mb-8">Connecting to server...</div>
+        <DebugLogs />
+      </div>
+    );
   }
 
   if (status === 'unlinked') {

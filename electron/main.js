@@ -826,12 +826,14 @@ app.whenReady().then(async () => {
       });
 
       await downloadWithRedirects(exeUrl, tempExePath, (downloadedBytes, totalBytes) => {
-        event.sender.send('update-progress', {
-          status: 'downloading',
-          downloadedBytes,
-          totalBytes,
-          currentFile: 'app.exe'
-        });
+        if (!event.sender.isDestroyed()) {
+          event.sender.send('update-progress', {
+            status: 'downloading',
+            downloadedBytes,
+            totalBytes,
+            currentFile: 'app.exe'
+          });
+        }
       });
 
       event.sender.send('update-progress', {
