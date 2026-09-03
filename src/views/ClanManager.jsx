@@ -14,6 +14,7 @@ export default function ClanManager() {
   
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // null, 'saving', 'success', 'error'
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -57,10 +58,13 @@ export default function ClanManager() {
           if (data.error) setError(data.error);
           else setConfig(data.data.config);
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'update_config') {
-          if (data.error) setError(data.error);
-          else {
-            alert('Settings saved successfully!');
+          if (data.error) {
+            setError(data.error);
+            setSaveStatus('error');
+          } else {
+            setSaveStatus('success');
             setConfig(data.data.config);
+            setTimeout(() => setSaveStatus(null), 3000);
           }
         }
       } catch (err) {}
@@ -108,11 +112,17 @@ export default function ClanManager() {
   
   const saveConfig = (e) => {
     e.preventDefault();
-    ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: Date.now().toString(), payload: {
-      action: 'save_config',
-      config
-    }}));
-    addLog('Saved config');
+    setSaveStatus('saving');
+    ws.send(JSON.stringify({ 
+      type: 'clan', 
+      action: 'proxy', 
+      reqId: 'update_config', 
+      payload: {
+        action: 'update_config',
+        updates: config
+      }
+    }));
+    addLog('Saving config...');
   };
 
   const DebugLogs = () => (
@@ -268,8 +278,24 @@ export default function ClanManager() {
               </div>
 
               <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-xl w-full transition-colors shadow-sm focus:ring-4 focus:ring-blue-500/20">
-                  {t('clan_save_btn')}
+                <button 
+                  type="submit" 
+                  disabled={saveStatus === 'saving'}
+                  className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
+                    saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
+                    saveStatus === 'error' ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
+                    'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
+                  } ${saveStatus === 'saving' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {saveStatus === 'saving' ? (
+                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> {t('clan_saving') || 'Синхронизация...'}</>
+                  ) : saveStatus === 'success' ? (
+                    <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> {t('clan_saved_success') || 'Успешно'}</>
+                  ) : saveStatus === 'error' ? (
+                    <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> {t('clan_saved_error') || 'Ошибка'}</>
+                  ) : (
+                    t('clan_save_btn')
+                  )}
                 </button>
               </div>
             </form>
