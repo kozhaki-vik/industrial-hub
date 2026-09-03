@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNetwork } from '../contexts/NetworkContext';
+import { useTranslation } from 'react-i18next';
 
 export default function ClanManager() {
+  const { t } = useTranslation();
   const { ws, status: wsStatus } = useNetwork();
   const [status, setStatus] = useState('checking'); // checking, unlinked, linked
   const [guildId, setGuildId] = useState(null);
