@@ -120,7 +120,7 @@ export const NetworkProvider = ({ children }) => {
     wsRef.current = ws;
 
     ws.onopen = async () => {
-      setStatus('online');
+      // Don't set status to online yet, wait for auth_success
       reconnectAttempts.current = 0;
       const currentHwid = await getHwid();
       
@@ -152,6 +152,7 @@ export const NetworkProvider = ({ children }) => {
         const data = JSON.parse(event.data);
         if (data.type === 'auth_success') {
           console.log('Connected to Industrial Hub Server');
+          setStatus('online'); // Set online only after auth is complete
           addLog("WS auth_success received, triggering check...");
           triggerUpdateCheck();
         } else if (data.type === 'online_count') {
