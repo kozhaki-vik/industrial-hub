@@ -18,7 +18,7 @@ export default function ClanManager() {
 
   useEffect(() => {
     if (!ws || wsStatus !== 'online') {
-      addLog('Waiting for active WebSocket connection...');
+      addLog(t('clan_waiting'));
       return;
     }
     
@@ -97,28 +97,34 @@ export default function ClanManager() {
   
   const saveConfig = (e) => {
     e.preventDefault();
-    addLog('Saving config via proxy');
-    ws.send(JSON.stringify({
-      type: 'clan',
-      action: 'proxy',
-      reqId: 'update_config',
-      payload: { action: 'update_config', updates: config }
-    }));
+    ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: Date.now().toString(), payload: {
+      action: 'save_config',
+      config
+    }}));
+    addLog('Saved config');
   };
 
   const DebugLogs = () => (
-    <div className="mt-8 bg-black/90 text-green-400 p-4 rounded text-xs font-mono max-h-64 overflow-y-auto">
-      <div className="mb-2 font-bold text-white border-b border-gray-700 pb-1">Debug Logs</div>
-      {logs.map((log, i) => (
-        <div key={i}>{log}</div>
-      ))}
+    <div className="mt-8 bg-slate-900 text-green-400 p-4 rounded-xl shadow-inner text-xs font-mono max-h-64 overflow-y-auto border border-slate-800">
+      <div className="mb-2 font-bold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
+        <span>Debug Logs</span>
+        <span className="text-[10px] text-slate-500 font-normal">Auto-scrolling</span>
+      </div>
+      <div className="space-y-1">
+        {logs.map((log, i) => (
+          <div key={i} className="opacity-90">{log}</div>
+        ))}
+      </div>
     </div>
   );
 
   if (status === 'checking') {
     return (
-      <div className="p-8 max-w-2xl mx-auto">
-        <div className="text-center text-slate-500 mb-8">Connecting to server...</div>
+      <div className="p-4 md:p-8 max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+          <div className="text-slate-600 dark:text-slate-400 font-medium">{t('clan_connecting')}</div>
+        </div>
         <DebugLogs />
       </div>
     );
@@ -126,116 +132,154 @@ export default function ClanManager() {
 
   if (status === 'unlinked') {
     return (
-      <div className="p-8 max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-4 text-slate-800 dark:text-white">Clan Manager Setup</h2>
-        <p className="mb-4 text-slate-600 dark:text-slate-300">
-          To manage your clan, you need to link this app to your Discord server.
-        </p>
-        <ol className="list-decimal pl-5 mb-6 text-slate-600 dark:text-slate-300 space-y-2">
-          <li>Invite the Industrial Hub Bot to your Discord Server.</li>
-          <li>Type <code>/hub_link</code> in any channel on your server.</li>
-          <li>Enter the 6-digit code below.</li>
-        </ol>
-        
-        <form onSubmit={handleLink} className="space-y-4">
-          <div>
-            <input 
-              type="text" 
-              placeholder="Enter 6-digit code" 
-              className="w-full px-4 py-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest"
-              value={linkCode}
-              onChange={(e) => setLinkCode(e.target.value)}
-              maxLength={6}
-            />
+      <div className="p-4 md:p-8 max-w-xl mx-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
+            {t('clan_setup_title')}
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+            {t('clan_setup_desc')}
+          </p>
+          
+          <div className="space-y-6 mb-8">
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">1</div>
+              <div className="text-slate-700 dark:text-slate-300 pt-1">{t('clan_setup_step1')}</div>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">2</div>
+              <div className="text-slate-700 dark:text-slate-300 pt-1">
+                {t('clan_setup_step2').split('/hub_link').map((part, i, arr) => 
+                  <React.Fragment key={i}>
+                    {part}
+                    {i < arr.length - 1 && <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-blue-600 dark:text-blue-400 font-mono text-sm mx-1">/hub_link</code>}
+                  </React.Fragment>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">3</div>
+              <div className="text-slate-700 dark:text-slate-300 pt-1">{t('clan_setup_step3')}</div>
+            </div>
           </div>
-          {error && <div className="text-red-500 text-sm">{error}</div>}
-          <button type="submit" className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition">
-            Link Server
-          </button>
-        </form>
+          
+          <form onSubmit={handleLink} className="space-y-4">
+            <div>
+              <input 
+                type="text" 
+                placeholder={t('clan_setup_placeholder')} 
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-center text-2xl tracking-[0.5em] font-mono shadow-inner transition-all placeholder:text-slate-300 placeholder:tracking-normal placeholder:font-sans placeholder:text-base dark:placeholder:text-slate-600"
+                value={linkCode}
+                onChange={(e) => setLinkCode(e.target.value)}
+                maxLength={6}
+              />
+            </div>
+            {error && <div className="text-red-500 text-sm font-medium text-center">{error}</div>}
+            <button type="submit" className="w-full bg-blue-600 text-white font-medium py-3 rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 transition-all shadow-sm">
+              {t('clan_setup_btn')}
+            </button>
+          </form>
+        </div>
+        <DebugLogs />
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Clan Manager</h2>
-        <button onClick={handleUnlink} className="text-red-500 hover:text-red-600 text-sm font-medium">Unlink Server</button>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('clan_manager_title')}</h2>
+        </div>
+        <button onClick={handleUnlink} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          {t('clan_unlink_btn')}
+        </button>
       </div>
       
       {loadingConfig ? (
-        <div className="text-slate-500">Loading clan settings...</div>
+        <div className="text-slate-500 font-medium">{t('clan_loading')}</div>
       ) : config ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6">
-            <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">General Settings</h3>
-            <form onSubmit={saveConfig} className="space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8">
+            <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
+              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              {t('clan_general_settings')}
+            </h3>
+            <form onSubmit={saveConfig} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Clan Name (Optional)</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('clan_name_label')}</label>
                 <input 
                   type="text" 
-                  className="w-full px-3 py-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                   value={config.name || ''}
                   onChange={e => setConfig({...config, name: e.target.value})}
-                  placeholder="My Rust Clan"
+                  placeholder={t('clan_name_placeholder')}
                 />
               </div>
               
-              <div className="flex items-center">
+              <div className="flex items-center p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30">
                 <input 
                   type="checkbox" 
                   id="recruitmentOpen"
-                  className="mr-2"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3"
                   checked={config.recruitmentOpen}
                   onChange={e => setConfig({...config, recruitmentOpen: e.target.checked})}
                 />
-                <label htmlFor="recruitmentOpen" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Recruitment Open
+                <label htmlFor="recruitmentOpen" className="text-sm font-medium text-slate-700 dark:text-slate-300 select-none cursor-pointer">
+                  {t('clan_recruitment_open')}
                 </label>
               </div>
               
-              <h4 className="font-semibold text-slate-800 dark:text-white pt-4 border-t border-slate-200 dark:border-slate-700">Role IDs Configuration</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Enable Developer Mode in Discord to copy role IDs.</p>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Leader Role ID</label>
-                  <input type="text" className="w-full px-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={config.leaderRoleId || ''} onChange={e => setConfig({...config, leaderRoleId: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Main Roster Role ID</label>
-                  <input type="text" className="w-full px-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={config.mainRosterRoleId || ''} onChange={e => setConfig({...config, mainRosterRoleId: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Farmer Role ID</label>
-                  <input type="text" className="w-full px-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={config.farmerRoleId || ''} onChange={e => setConfig({...config, farmerRoleId: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Builder Role ID</label>
-                  <input type="text" className="w-full px-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={config.builderRoleId || ''} onChange={e => setConfig({...config, builderRoleId: e.target.value})} />
+              <div className="pt-2">
+                <h4 className="font-semibold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-2 flex justify-between items-center">
+                  {t('clan_roles_config')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{t('clan_roles_desc')}</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_leader')}</label>
+                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.leaderRoleId || ''} onChange={e => setConfig({...config, leaderRoleId: e.target.value})} placeholder="000000000000000000" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_main')}</label>
+                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.mainRosterRoleId || ''} onChange={e => setConfig({...config, mainRosterRoleId: e.target.value})} placeholder="000000000000000000" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_farmer')}</label>
+                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.farmerRoleId || ''} onChange={e => setConfig({...config, farmerRoleId: e.target.value})} placeholder="000000000000000000" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">{t('clan_role_builder')}</label>
+                    <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/50 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono" value={config.builderRoleId || ''} onChange={e => setConfig({...config, builderRoleId: e.target.value})} placeholder="000000000000000000" />
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded w-full transition">
-                  Save Changes
+              <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
+                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-xl w-full transition-colors shadow-sm focus:ring-4 focus:ring-blue-500/20">
+                  {t('clan_save_btn')}
                 </button>
               </div>
             </form>
           </div>
           
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6">
-            <h3 className="text-xl font-semibold mb-4 text-slate-800 dark:text-white">Clan Statistics</h3>
-            <div className="flex items-center justify-center h-48 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
-                Coming soon: Overview of voice activity, member stats, and tickets.
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8 flex flex-col">
+            <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
+              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              {t('clan_stats_title')}
+            </h3>
+            <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30 p-8 text-center min-h-[200px]">
+              <p className="text-slate-500 dark:text-slate-400 font-medium">
+                {t('clan_stats_coming_soon')}
               </p>
             </div>
           </div>
         </div>
       ) : (
-        <div className="text-red-500">Failed to load configuration.</div>
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl font-medium border border-red-100 dark:border-red-900/50">
+          {t('clan_failed')}
+        </div>
       )}
     </div>
   );
