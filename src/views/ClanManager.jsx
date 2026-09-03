@@ -10,6 +10,7 @@ export default function ClanManager() {
   const [linkCode, setLinkCode] = useState('');
   const [error, setError] = useState('');
   const [logs, setLogs] = useState(['Initializing Clan Manager...']);
+  const [lastLinkAttempt, setLastLinkAttempt] = useState(0);
   
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -74,6 +75,14 @@ export default function ClanManager() {
   const handleLink = (e) => {
     e.preventDefault();
     if (!linkCode.trim()) return;
+    
+    const now = Date.now();
+    if (now - lastLinkAttempt < 5000) {
+      setError(t('clan_antispam_wait') || 'Please wait 5 seconds before trying again.');
+      return;
+    }
+    setLastLinkAttempt(now);
+    
     setError('');
     addLog(`Sending link code request: ${linkCode}`);
     ws.send(JSON.stringify({ type: 'clan', action: 'link', code: linkCode }));
