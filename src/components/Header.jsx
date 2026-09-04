@@ -43,12 +43,6 @@ export default function Header() {
           >
             <Settings className="w-4 h-4" /> {t('nav_settings')}
           </NavLink>
-          <NavLink 
-            to="/clan" 
-            className={({ isActive }) => `text-sm font-medium flex items-center gap-2 transition-all duration-300 ${isActive ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'}`}
-          >
-            <Users className="w-4 h-4" /> Clan Manager
-          </NavLink>
         </nav>
 
         {/* Online Status */}
