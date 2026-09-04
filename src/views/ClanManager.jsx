@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useTranslation } from 'react-i18next';
+import SetupWizard from '../components/SetupWizard';
+import RoleSelect from '../components/RoleSelect';
+import ChannelSelect from '../components/ChannelSelect';
 
 export default function ClanManager() {
   const { t } = useTranslation();
@@ -20,6 +23,7 @@ export default function ClanManager() {
   const [statsData, setStatsData] = useState(null);
   const [discordInfo, setDiscordInfo] = useState(null);
   const [activeVotes, setActiveVotes] = useState(null);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -77,8 +81,16 @@ export default function ClanManager() {
             setSaveStatus(`error: ${data.error || data.data.error}`);
           } else {
             setSaveStatus('success');
-            setConfig(data.data.config);
             if (data.data.discordInfo) setDiscordInfo(data.data.discordInfo);
+            if (data.data.config) setConfig(data.data.config);
+            setTimeout(() => setSaveStatus(null), 3000);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'sync_permissions') {
+          if (data.error || (data.data && data.data.error)) {
+            setError(data.error || data.data.error);
+            setSaveStatus(`error: ${data.error || data.data.error}`);
+          } else {
+            setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 3000);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_roster') {
@@ -146,6 +158,42 @@ export default function ClanManager() {
       reqId: 'get_config', 
       payload: { action: 'get_config' } 
     }));
+  };
+
+  const startAutoSetup = (options) => {
+    setShowSetupWizard(false);
+    setSaveStatus('saving');
+    addLog('Запрос автоматической настройки сервера...');
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'auto_setup',
+      payload: {
+        action: 'auto_setup',
+        currentConfig: config,
+        setupOptions: options
+      }
+    }));
+  };
+
+  const syncPermissions = () => {
+    setSaveStatus('saving');
+    let channelsConfig = {};
+    try { if (config.channelsConfigJson) channelsConfig = JSON.parse(config.channelsConfigJson); } catch (e) {}
+    
+    // permissions structure stored in channelsConfig.permissions
+    const permissions = channelsConfig.permissions || {};
+    
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'sync_permissions',
+      payload: {
+        action: 'sync_permissions',
+        permissions
+      }
+    }));
+    addLog('Синхронизация прав доступа с Discord...');
   };
   
   const saveConfig = (e) => {
@@ -260,6 +308,7 @@ export default function ClanManager() {
     { id: 'general', label: 'Основное' },
     { id: 'roles', label: 'Роли' },
     { id: 'channels', label: 'Каналы' },
+    { id: 'permissions', label: 'Права Доступа' },
     { id: 'recruitment', label: 'Наборы' },
     { id: 'votes', label: 'Голосования' },
     { id: 'ads', label: 'Реклама' },
@@ -301,9 +350,15 @@ export default function ClanManager() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('clan_manager_title')}</h2>
         </div>
-        <button onClick={handleUnlink} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          {t('clan_unlink_btn')}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowSetupWizard(true)} className="text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            Мастер настройки
+          </button>
+          <button onClick={handleUnlink} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            {t('clan_unlink_btn')}
+          </button>
+        </div>
       </div>
       
       {loadingConfig ? (
@@ -429,13 +484,12 @@ export default function ClanManager() {
                             onChange={e => updateRoleName(r.key, e.target.value)}
                             placeholder={r.defaultName}
                           />
-                          <label className="text-xs font-medium text-slate-500 mt-2">ID роли (в Discord)</label>
-                          <input 
-                            type="text" 
-                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none focus:border-blue-500 transition-colors font-mono" 
-                            value={config[r.dbKey] || ''} 
-                            onChange={e => handleIdChange(r.dbKey, e.target.value)} 
-                            placeholder="Например: 1109033285741002752" 
+                          <RoleSelect
+                            label="Роль в Discord"
+                            description=""
+                            value={config[r.dbKey] || ''}
+                            onChange={val => handleIdChange(r.dbKey, val)}
+                            discordRoles={discordInfo?.roles || []}
                           />
                         </div>
                       </div>
@@ -451,7 +505,7 @@ export default function ClanManager() {
               <form onSubmit={saveConfig} className="space-y-6 max-w-4xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
-                  Настройки каналов (ID)
+                  Настройки каналов
                 </h3>
                 
                 {(() => {
@@ -463,32 +517,33 @@ export default function ClanManager() {
                   } catch(e) {}
                   
                   const updateCConfig = (key, val) => {
-                    const newConfig = { ...cConfig, [key]: val.replace(/\D/g, '').slice(0, 20) };
+                    const newConfig = { ...cConfig, [key]: val };
                     setConfig({ ...config, channelsConfigJson: JSON.stringify(newConfig) });
                   };
                   
-                  const channels = [
-                    { key: 'logs', label: 'Канал для логов', desc: 'Сюда бот будет отправлять логи действий, предупреждений, входов/выходов.' },
-                    { key: 'ticketsCategory', label: 'Категория тикетов', desc: 'ID категории, в которой будут создаваться приватные каналы тикетов.' },
-                    { key: 'applications', label: 'Канал для одобренных заявок', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.' },
-                    { key: 'leaderboard', label: 'Канал для Лидерборда', desc: 'Канал, где будет публиковаться и обновляться статистика (топ по часам и т.д.).' },
+                  const channelsList = [
+                    { key: 'ticketsCategory', label: 'Категория для тикетов', desc: 'Здесь бот будет создавать приватные каналы тикетов заявок.', typeFilter: 4 },
+                    { key: 'logs', label: 'Канал логов', desc: 'Сюда бот будет отправлять логи действий, выходов, ошибок.', typeFilter: [0, 2] },
+                    { key: 'applications', label: 'Одобренные заявки', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.', typeFilter: [0, 2] },
+                    { key: 'leaderboard', label: 'Статистика (Leaderboard)', desc: 'Канал, где публикуется статистика по вайпам и топам.', typeFilter: [0, 2] },
+                    { key: 'news', label: 'Новости клана', desc: 'Канал для публикации объявлений и новостей бота.', typeFilter: [0, 2] },
+                    { key: 'votes', label: 'Голосования', desc: 'Канал для создания голосований. Может быть тем же, что и новости.', typeFilter: [0, 2] },
+                    { key: 'ads', label: 'Реклама и альянсы', desc: 'Сюда бот отправляет информацию об оплаченной рекламе.', typeFilter: [0, 2] },
+                    { key: 'roster', label: 'Состав клана (Roster)', desc: 'Здесь выводится динамический список всех участников.', typeFilter: [0, 2] }
                   ];
 
                   return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {channels.map(c => (
+                      {channelsList.map(c => (
                          <div key={c.key} className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500/20 transition-shadow">
-                           <div className="flex flex-col gap-2">
-                             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{c.label}</label>
-                             <p className="text-[10px] text-slate-500 leading-tight mb-1 h-6">{c.desc}</p>
-                             <input 
-                               type="text" 
-                               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none focus:border-blue-500 transition-colors font-mono" 
-                               value={cConfig[c.key] || ''} 
-                               onChange={e => updateCConfig(c.key, e.target.value)} 
-                               placeholder="ID Канала/Категории" 
-                             />
-                           </div>
+                           <ChannelSelect
+                             label={c.label}
+                             description={c.desc}
+                             value={cConfig[c.key] || ''}
+                             onChange={val => updateCConfig(c.key, val)}
+                             discordChannels={discordInfo?.channels || []}
+                             typeFilter={c.typeFilter}
+                           />
                          </div>
                       ))}
                     </div>
@@ -497,6 +552,145 @@ export default function ClanManager() {
                 
                 <SaveButton />
               </form>
+            )}
+
+            {activeTab === 'permissions' && (
+              <div className="space-y-6 max-w-6xl">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                      Права Доступа (Матрица ролей и каналов)
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-3xl">
+                      Выберите каналы, к которым каждая роль должна иметь доступ.
+                      <br/>
+                      <span className="text-blue-500 font-medium">💡 Совет:</span> Сначала настройте каналы для низших ролей. Более высокие роли автоматически унаследуют эти доступы, и вам останется только добавить им их уникальные административные каналы.
+                    </p>
+                  </div>
+                  <button onClick={syncPermissions} disabled={saveStatus === 'saving'} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm font-medium transition-colors disabled:opacity-50 flex items-center shrink-0">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Синхронизировать с Discord
+                  </button>
+                </div>
+
+                {(() => {
+                  let cConfig = {};
+                  try {
+                    if (config.channelsConfigJson) cConfig = JSON.parse(config.channelsConfigJson);
+                  } catch(e) {}
+                  
+                  let permissions = cConfig.permissions || {};
+                  
+                  const channelKeys = ['logs', 'applications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
+                  const roleKeys = ['trial', 'main', 'caller', 'deputyLeader', 'leader'];
+                  const sideRoles = ['farmer', 'electrician', 'builder', 'pilot', 'vip'];
+                  const allRoles = [...roleKeys, ...sideRoles];
+                  
+                  // Helper mapping to actual discord role IDs
+                  const roleIdMap = {};
+                  allRoles.forEach(r => roleIdMap[r] = config[r + 'RoleId']);
+                  
+                  const togglePermission = (roleKey, channelKey) => {
+                    const roleId = roleIdMap[roleKey];
+                    if (!roleId) return; // role not configured
+                    const channelId = cConfig[channelKey];
+                    if (!channelId) return;
+
+                    const newPermissions = { ...permissions };
+                    const currentSet = new Set(newPermissions[roleId] || []);
+                    const isGranting = !currentSet.has(channelId);
+
+                    if (isGranting) {
+                      currentSet.add(channelId);
+                      
+                      // Auto-inherit for higher roles
+                      const roleIndex = roleKeys.indexOf(roleKey);
+                      if (roleIndex !== -1) {
+                        for (let i = roleIndex + 1; i < roleKeys.length; i++) {
+                          const higherRoleId = roleIdMap[roleKeys[i]];
+                          if (higherRoleId) {
+                            if (!newPermissions[higherRoleId]) newPermissions[higherRoleId] = [];
+                            const hSet = new Set(newPermissions[higherRoleId]);
+                            hSet.add(channelId);
+                            newPermissions[higherRoleId] = Array.from(hSet);
+                          }
+                        }
+                      }
+                    } else {
+                      currentSet.delete(channelId);
+                    }
+                    
+                    newPermissions[roleId] = Array.from(currentSet);
+                    
+                    const newConfig = { ...cConfig, permissions: newPermissions };
+                    setConfig({ ...config, channelsConfigJson: JSON.stringify(newConfig) });
+                  };
+
+                  return (
+                    <div className="overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                          <tr>
+                            <th className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Роль</th>
+                            {channelKeys.map(cKey => (
+                              <th key={cKey} className="px-2 py-3 text-center font-medium text-slate-600 dark:text-slate-400 capitalize">
+                                <div className="writing-mode-vertical sm:writing-mode-horizontal truncate max-w-[80px]" title={cKey}>
+                                  {cKey}
+                                </div>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {allRoles.map((rKey, idx) => {
+                            const rId = roleIdMap[rKey];
+                            const isConfigured = !!rId;
+                            
+                            // Find name from roleNamesJson
+                            let rName = rKey;
+                            try {
+                              if (config.roleNamesJson) {
+                                const names = JSON.parse(config.roleNamesJson);
+                                if (names[rKey]) rName = names[rKey];
+                              }
+                            } catch(e) {}
+                            
+                            return (
+                              <tr key={rKey} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 ${idx === roleKeys.length ? 'border-t-2 border-slate-200 dark:border-slate-700' : ''}`}>
+                                <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center">
+                                  {!isConfigured && <span className="w-2 h-2 rounded-full bg-red-400 mr-2" title="Роль не привязана к Discord"></span>}
+                                  {isConfigured && <span className="w-2 h-2 rounded-full bg-green-400 mr-2"></span>}
+                                  {rName}
+                                </td>
+                                {channelKeys.map(cKey => {
+                                  const cId = cConfig[cKey];
+                                  const isAllowed = isConfigured && cId && permissions[rId]?.includes(cId);
+                                  return (
+                                    <td key={cKey} className="px-2 py-3 text-center">
+                                      <input 
+                                        type="checkbox"
+                                        disabled={!isConfigured || !cId}
+                                        checked={isAllowed}
+                                        onChange={() => togglePermission(rKey, cKey)}
+                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                      />
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+                
+                <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <SaveButton />
+                </div>
+              </div>
             )}
 
             {activeTab === 'recruitment' && (
@@ -866,6 +1060,13 @@ export default function ClanManager() {
         <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl font-medium border border-red-100 dark:border-red-900/50">
           {t('clan_failed')}
         </div>
+      )}
+      
+      {showSetupWizard && (
+        <SetupWizard 
+          onClose={() => setShowSetupWizard(false)}
+          onConfirm={startAutoSetup}
+        />
       )}
     </div>
   );
