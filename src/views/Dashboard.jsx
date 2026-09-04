@@ -39,15 +39,16 @@ export default function Dashboard() {
           onClick={() => navigate('/monuments')}
         />
         <Card 
-          title={t('electricity_title')}
-          description={t('electricity_desc')}
-          icon={Zap}
-          onClick={() => navigate('/electricity')}
+          title="Clan Manager"
+          description={t('clan_desc')}
+          icon={Users}
+          onClick={() => navigate('/clan')}
+          isGlowing={glowTarget === '/clan'}
         />
       </div>
 
       {/* Row 2: 3 cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <Card 
           title={t('gamma_title')}
           description={t('gamma_desc')}
@@ -74,11 +75,10 @@ export default function Dashboard() {
       {/* Row 3: Addons */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card 
-          title="Clan Manager"
-          description={t('clan_desc')}
-          icon={Users}
-          onClick={() => navigate('/clan')}
-          isGlowing={glowTarget === '/clan'}
+          title={t('electricity_title')}
+          description={t('electricity_desc')}
+          icon={Zap}
+          onClick={() => navigate('/electricity')}
         />
       </div>
     </div>
