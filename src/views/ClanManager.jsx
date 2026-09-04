@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 export default function ClanManager() {
   const { t } = useTranslation();
   const { ws, status: wsStatus } = useNetwork();
-  const [status, setStatus] = useState('checking'); // checking, unlinked, linked
+  const [status, setStatus] = useState('checking');
   const [guildId, setGuildId] = useState(null);
   const [linkCode, setLinkCode] = useState('');
   const [error, setError] = useState('');
@@ -14,8 +14,8 @@ export default function ClanManager() {
   
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null); // null, 'saving', 'success', 'error'
-  const [activeTab, setActiveTab] = useState('roles');
+  const [saveStatus, setSaveStatus] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -94,7 +94,7 @@ export default function ClanManager() {
   };
 
   const handleUnlink = () => {
-    if (confirm('Are you sure you want to unlink your Clan Manager?')) {
+    if (window.confirm('Are you sure you want to unlink your Clan Manager?')) {
       addLog('Sending unlink request');
       ws.send(JSON.stringify({ type: 'clan', action: 'unlink' }));
     }
@@ -114,14 +114,6 @@ export default function ClanManager() {
   const saveConfig = (e) => {
     e.preventDefault();
     
-    const roleIds = [config.leaderRoleId, config.mainRosterRoleId, config.farmerRoleId, config.builderRoleId];
-    for (const id of roleIds) {
-      if (id && id.length > 0 && id.length < 17) {
-        alert(t('clan_id_too_short') || 'ID роли должен содержать минимум 17 цифр.');
-        return;
-      }
-    }
-
     setSaveStatus('saving');
     ws.send(JSON.stringify({ 
       type: 'clan', 
@@ -217,6 +209,7 @@ export default function ClanManager() {
   }
 
   const tabs = [
+    { id: 'general', label: 'Основное' },
     { id: 'roles', label: 'Роли' },
     { id: 'channels', label: 'Каналы' },
     { id: 'recruitment', label: 'Наборы' },
@@ -225,6 +218,30 @@ export default function ClanManager() {
     { id: 'roster', label: 'Состав' },
     { id: 'stats', label: 'Статистика' },
   ];
+
+  const SaveButton = () => (
+    <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
+      <button 
+        type="submit" 
+        disabled={saveStatus === 'saving'}
+        className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
+          saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
+          saveStatus === 'error' ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
+          'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
+        } ${saveStatus === 'saving' ? 'opacity-70 cursor-not-allowed' : ''}`}
+      >
+        {saveStatus === 'saving' ? (
+          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> Сохранение...</>
+        ) : saveStatus === 'success' ? (
+          <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Успешно</>
+        ) : saveStatus === 'error' ? (
+          <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> Ошибка</>
+        ) : (
+          "Сохранить настройки"
+        )}
+      </button>
+    </div>
+  );
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto h-[calc(100vh-100px)] overflow-y-auto">
@@ -263,21 +280,33 @@ export default function ClanManager() {
 
           {/* Tab Content */}
           <div className="p-6 md:p-8">
-            {activeTab === 'roles' ? (
+            
+            {activeTab === 'general' && (
               <form onSubmit={saveConfig} className="space-y-6 max-w-2xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                  {t('clan_general_settings')}
+                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  Основные настройки
                 </h3>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('clan_name_label')}</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Название клана</label>
                   <input 
                     type="text" 
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                     value={config.name || ''}
                     onChange={e => setConfig({...config, name: e.target.value})}
-                    placeholder={t('clan_name_placeholder')}
+                    placeholder="Например: GODS"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Основная ссылка на Discord</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                    value={config.discordLink || ''}
+                    onChange={e => setConfig({...config, discordLink: e.target.value})}
+                    placeholder="https://discord.gg/..."
                   />
                 </div>
                 
@@ -290,90 +319,138 @@ export default function ClanManager() {
                     onChange={e => setConfig({...config, recruitmentOpen: e.target.checked})}
                   />
                   <label htmlFor="recruitmentOpen" className="text-sm font-medium text-slate-700 dark:text-slate-300 select-none cursor-pointer">
-                    {t('clan_recruitment_open')}
+                    Набор в клан открыт (Позволяет создавать тикеты заявок)
                   </label>
                 </div>
                 
-                <div className="pt-2">
-                  <h4 className="font-semibold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-2 flex justify-between items-center">
-                    {t('clan_roles_config')}
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{t('clan_roles_desc')}</p>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(() => {
-                      let roleNames = {};
-                      try {
-                        roleNames = config.roleNamesJson ? JSON.parse(config.roleNamesJson) : {};
-                      } catch(e) {}
-                      
-                      const updateRoleName = (key, val) => {
-                        const newNames = { ...roleNames, [key]: val };
-                        setConfig({ ...config, roleNamesJson: JSON.stringify(newNames) });
-                      };
-                      
-                      const handleIdChange = (key, val) => {
-                        setConfig({ ...config, [key]: val.replace(/\D/g, '').slice(0, 20) });
-                      };
-                      
-                      const roles = [
-                        { key: 'leader', dbKey: 'leaderRoleId', defaultName: t('clan_role_leader') },
-                        { key: 'main', dbKey: 'mainRosterRoleId', defaultName: t('clan_role_main') },
-                        { key: 'farmer', dbKey: 'farmerRoleId', defaultName: t('clan_role_farmer') },
-                        { key: 'builder', dbKey: 'builderRoleId', defaultName: t('clan_role_builder') },
-                      ];
-                      
-                      return roles.map(r => (
-                        <div key={r.key} className="bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500/20 transition-shadow">
-                          <div className="flex gap-2 mb-2 items-center">
-                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            <input
-                              type="text"
-                              className="w-full bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none border-b border-dashed border-slate-300 dark:border-slate-600 focus:border-blue-500 transition-colors px-1 pb-0.5"
-                              value={roleNames[r.key] !== undefined ? roleNames[r.key] : r.defaultName}
-                              onChange={e => updateRoleName(r.key, e.target.value)}
-                              placeholder={r.defaultName}
-                            />
-                          </div>
+                <SaveButton />
+              </form>
+            )}
+
+            {activeTab === 'roles' && (
+              <form onSubmit={saveConfig} className="space-y-6 max-w-4xl">
+                <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                  Настройки ролей
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                  Вы можете переименовать роли для отображения в панелях и привязать их к реальным ID ролей в Discord.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(() => {
+                    let roleNames = {};
+                    try {
+                      roleNames = config.roleNamesJson ? JSON.parse(config.roleNamesJson) : {};
+                    } catch(e) {}
+                    
+                    const updateRoleName = (key, val) => {
+                      const newNames = { ...roleNames, [key]: val };
+                      setConfig({ ...config, roleNamesJson: JSON.stringify(newNames) });
+                    };
+                    
+                    const handleIdChange = (key, val) => {
+                      setConfig({ ...config, [key]: val.replace(/\D/g, '').slice(0, 20) });
+                    };
+                    
+                    const roles = [
+                      { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Лидер' },
+                      { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Зам. Лидера' },
+                      { key: 'caller', dbKey: 'callerRoleId', defaultName: 'Коллер' },
+                      { key: 'main', dbKey: 'mainRosterRoleId', defaultName: 'Main Состав' },
+                      { key: 'trial', dbKey: 'trialRoleId', defaultName: 'Испытательный' },
+                      { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Фармер' },
+                      { key: 'electrician', dbKey: 'electricianRoleId', defaultName: 'Электрик' },
+                      { key: 'builder', dbKey: 'builderRoleId', defaultName: 'Билдер' },
+                      { key: 'pilot', dbKey: 'pilotRoleId', defaultName: 'Пилот' },
+                      { key: 'vip', dbKey: 'vipRoleId', defaultName: 'VIP' },
+                    ];
+                    
+                    return roles.map(r => (
+                      <div key={r.key} className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500/20 transition-shadow">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-xs font-medium text-slate-500">Название роли (в боте)</label>
+                          <input
+                            type="text"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-colors"
+                            value={roleNames[r.key] !== undefined ? roleNames[r.key] : r.defaultName}
+                            onChange={e => updateRoleName(r.key, e.target.value)}
+                            placeholder={r.defaultName}
+                          />
+                          <label className="text-xs font-medium text-slate-500 mt-2">ID роли (в Discord)</label>
                           <input 
                             type="text" 
-                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800/80 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow font-mono text-center" 
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none focus:border-blue-500 transition-colors font-mono" 
                             value={config[r.dbKey] || ''} 
                             onChange={e => handleIdChange(r.dbKey, e.target.value)} 
-                            placeholder="ID (только цифры)" 
+                            placeholder="Например: 1109033285741002752" 
                           />
                         </div>
-                      ));
-                    })()}
-                  </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
-
-                <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
-                  <button 
-                    type="submit" 
-                    disabled={saveStatus === 'saving'}
-                    className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
-                      saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
-                      saveStatus === 'error' ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
-                      'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
-                    } ${saveStatus === 'saving' ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {saveStatus === 'saving' ? (
-                      <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> {t('clan_saving') || 'Синхронизация...'}</>
-                    ) : saveStatus === 'success' ? (
-                      <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> {t('clan_saved_success') || 'Успешно'}</>
-                    ) : saveStatus === 'error' ? (
-                      <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> {t('clan_saved_error') || 'Ошибка'}</>
-                    ) : (
-                      t('clan_save_btn')
-                    )}
-                  </button>
-                </div>
+                
+                <SaveButton />
               </form>
-            ) : activeTab === 'recruitment' ? (
+            )}
+
+            {activeTab === 'channels' && (
+              <form onSubmit={saveConfig} className="space-y-6 max-w-4xl">
+                <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                  Настройки каналов (ID)
+                </h3>
+                
+                {(() => {
+                  let cConfig = {};
+                  try {
+                    if (config.channelsConfigJson) {
+                      cConfig = JSON.parse(config.channelsConfigJson);
+                    }
+                  } catch(e) {}
+                  
+                  const updateCConfig = (key, val) => {
+                    const newConfig = { ...cConfig, [key]: val.replace(/\D/g, '').slice(0, 20) };
+                    setConfig({ ...config, channelsConfigJson: JSON.stringify(newConfig) });
+                  };
+                  
+                  const channels = [
+                    { key: 'logs', label: 'Канал для логов', desc: 'Сюда бот будет отправлять логи действий, предупреждений, входов/выходов.' },
+                    { key: 'ticketsCategory', label: 'Категория тикетов', desc: 'ID категории, в которой будут создаваться приватные каналы тикетов.' },
+                    { key: 'applications', label: 'Канал для одобренных заявок', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.' },
+                    { key: 'leaderboard', label: 'Канал для Лидерборда', desc: 'Канал, где будет публиковаться и обновляться статистика (топ по часам и т.д.).' },
+                  ];
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {channels.map(c => (
+                         <div key={c.key} className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500/20 transition-shadow">
+                           <div className="flex flex-col gap-2">
+                             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{c.label}</label>
+                             <p className="text-[10px] text-slate-500 leading-tight mb-1 h-6">{c.desc}</p>
+                             <input 
+                               type="text" 
+                               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-900 dark:border-slate-700 dark:text-white outline-none focus:border-blue-500 transition-colors font-mono" 
+                               value={cConfig[c.key] || ''} 
+                               onChange={e => updateCConfig(c.key, e.target.value)} 
+                               placeholder="ID Канала/Категории" 
+                             />
+                           </div>
+                         </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+                
+                <SaveButton />
+              </form>
+            )}
+
+            {activeTab === 'recruitment' && (
               <form onSubmit={saveConfig} className="space-y-6 max-w-2xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                   Настройки набора в клан
                 </h3>
                 
@@ -398,7 +475,7 @@ export default function ClanManager() {
                   return (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Discord сервер</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Discord сервер (для набора)</label>
                         <input 
                           type="text" 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
@@ -420,7 +497,7 @@ export default function ClanManager() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения</label>
                         <input 
                           type="text" 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
@@ -431,45 +508,26 @@ export default function ClanManager() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст с требованиями</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст с требованиями (Markdown поддерживается)</label>
                         <textarea 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[200px]"
                           value={rConfig.text}
                           onChange={e => updateRConfig('text', e.target.value)}
                           placeholder="Опишите требования..."
                         ></textarea>
-                        <p className="text-xs text-slate-500 mt-2">Этот текст будет отображен в Discord боте при вызове панели набора.</p>
                       </div>
                     </>
                   );
                 })()}
                 
-                <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
-                  <button 
-                    type="submit" 
-                    disabled={saveStatus === 'saving'}
-                    className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
-                      saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
-                      saveStatus === 'error' ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
-                      'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
-                    } ${saveStatus === 'saving' ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {saveStatus === 'saving' ? (
-                      <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> Сохранение...</>
-                    ) : saveStatus === 'success' ? (
-                      <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Успешно</>
-                    ) : saveStatus === 'error' ? (
-                      <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> Ошибка</>
-                    ) : (
-                      "Сохранить настройки"
-                    )}
-                  </button>
-                </div>
+                <SaveButton />
               </form>
-            ) : activeTab === 'votes' ? (
+            )}
+
+            {activeTab === 'votes' && (
               <form onSubmit={saveConfig} className="space-y-6 max-w-4xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                   Шаблоны серверов для голосований
                 </h3>
                 
@@ -545,24 +603,111 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
-                  <button type="submit" disabled={saveStatus === 'saving'} className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' : saveStatus === 'error' ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' : 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'} ${saveStatus === 'saving' ? 'opacity-70 cursor-not-allowed' : ''}`}>
-                    {saveStatus === 'saving' ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> Сохранение...</> : saveStatus === 'success' ? <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg> Успешно</> : saveStatus === 'error' ? <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg> Ошибка</> : "Сохранить настройки"}
-                  </button>
-                </div>
+                <SaveButton />
               </form>
-            ) : (
+            )}
+
+            {activeTab === 'ads' && (
+              <form onSubmit={saveConfig} className="space-y-6 max-w-2xl">
+                <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                  Настройки панели рекламы
+                </h3>
+                
+                {(() => {
+                  let aConfig = {
+                    title: 'Покупка рекламы',
+                    text: 'Здесь вы можете приобрести рекламу или обсудить партнерство.',
+                    banner: 'https://i.imgur.com/example.png',
+                    priceLink: 'https://telegra.ph/price',
+                  };
+                  try {
+                    if (config.adConfigJson) {
+                      aConfig = { ...aConfig, ...JSON.parse(config.adConfigJson) };
+                    }
+                  } catch(e) {}
+                  
+                  const updateAConfig = (key, val) => {
+                    const newConfig = { ...aConfig, [key]: val };
+                    setConfig({ ...config, adConfigJson: JSON.stringify(newConfig) });
+                  };
+                  
+                  return (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                          value={aConfig.title}
+                          onChange={e => updateAConfig('title', e.target.value)}
+                          placeholder="Покупка рекламы"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст</label>
+                        <textarea 
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px]"
+                          value={aConfig.text}
+                          onChange={e => updateAConfig('text', e.target.value)}
+                          placeholder="Информация о рекламе..."
+                        ></textarea>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Прайс-лист (Telegraph / Сайт)</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                          value={aConfig.priceLink}
+                          onChange={e => updateAConfig('priceLink', e.target.value)}
+                          placeholder="https://telegra.ph/..."
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на баннер (Изображение)</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                          value={aConfig.banner}
+                          onChange={e => updateAConfig('banner', e.target.value)}
+                          placeholder="https://i.imgur.com/..."
+                        />
+                      </div>
+                    </>
+                  );
+                })()}
+                
+                <SaveButton />
+              </form>
+            )}
+
+            {activeTab === 'roster' && (
               <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
                 <svg className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                <h3 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">В разработке</h3>
+                <h3 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">Состав клана</h3>
                 <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Раздел "{tabs.find(t => t.id === activeTab)?.label}" находится в стадии активной разработки. 
-                  Следите за обновлениями!
+                  Раздел состава находится в стадии активной разработки. В будущем здесь будет отображаться список всех подтвержденных участников.
                 </p>
               </div>
             )}
+
+            {activeTab === 'stats' && (
+              <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
+                <svg className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <h3 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">Статистика</h3>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                  Статистика голосований, времени в войсе и сообщений будет доступна в следующем обновлении.
+                </p>
+              </div>
+            )}
+            
           </div>
         </div>
       ) : (
