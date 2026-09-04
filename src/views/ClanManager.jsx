@@ -18,6 +18,8 @@ export default function ClanManager() {
   const [activeTab, setActiveTab] = useState('general');
   const [rosterData, setRosterData] = useState(null);
   const [statsData, setStatsData] = useState(null);
+  const [discordInfo, setDiscordInfo] = useState(null);
+  const [activeVotes, setActiveVotes] = useState(null);
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -63,10 +65,20 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'update_config') {
           if (data.error) {
             setError(data.error);
-            setSaveStatus('error');
+            setSaveStatus(`error: ${data.error}`);
           } else {
             setSaveStatus('success');
             setConfig(data.data.config);
+            setTimeout(() => setSaveStatus(null), 3000);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'auto_setup') {
+          if (data.error || (data.data && data.data.error)) {
+            setError(data.error || data.data.error);
+            setSaveStatus(`error: ${data.error || data.data.error}`);
+          } else {
+            setSaveStatus('success');
+            setConfig(data.data.config);
+            if (data.data.discordInfo) setDiscordInfo(data.data.discordInfo);
             setTimeout(() => setSaveStatus(null), 3000);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_roster') {
@@ -76,6 +88,21 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_stats') {
           if (!data.error && data.data && data.data.success) {
             setStatsData(data.data.stats);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_discord_info') {
+          if (!data.error && data.data && data.data.success) {
+            setDiscordInfo({ roles: data.data.roles, channels: data.data.channels });
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_active_votes') {
+          if (!data.error && data.data && data.data.success) {
+            setActiveVotes(data.data.votes);
+          }
+        } else if (data.type === 'clan_proxy_res' && (data.reqId === 'create_vote' || data.reqId === 'close_vote')) {
+          if (!data.error && data.data && data.data.success) {
+            addLog(`Vote action success`);
+            ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_active_votes', payload: { action: 'get_active_votes' } }));
+          } else {
+            setError(data.error || (data.data && data.data.error));
           }
         }
       } catch (err) {}
@@ -240,29 +267,33 @@ export default function ClanManager() {
     { id: 'stats', label: 'Статистика' },
   ];
 
-  const SaveButton = () => (
-    <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
-      <button 
-        type="submit" 
-        disabled={saveStatus === 'saving'}
-        className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
-          saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
-          saveStatus === 'error' ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
-          'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
-        } ${saveStatus === 'saving' ? 'opacity-70 cursor-not-allowed' : ''}`}
-      >
-        {saveStatus === 'saving' ? (
-          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> Сохранение...</>
-        ) : saveStatus === 'success' ? (
-          <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Успешно</>
-        ) : saveStatus === 'error' ? (
-          <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> Ошибка</>
-        ) : (
-          "Сохранить настройки"
-        )}
-      </button>
-    </div>
-  );
+  const SaveButton = () => {
+    const isError = saveStatus && saveStatus.startsWith('error');
+    const isLoading = saveStatus === 'saving' || saveStatus === 'loading';
+    return (
+      <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
+        <button 
+          type="submit" 
+          disabled={isLoading}
+          className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
+            saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
+            isError ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
+            'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
+          } ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+        >
+          {isLoading ? (
+            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> {saveStatus === 'loading' ? 'Обработка...' : 'Сохранение...'}</>
+          ) : saveStatus === 'success' ? (
+            <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Успешно</>
+          ) : isError ? (
+            <><svg className="w-5 h-5 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> <span className="truncate">{saveStatus.replace('error:', 'Ошибка:')}</span></>
+          ) : (
+            "Сохранить настройки"
+          )}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto h-[calc(100vh-100px)] overflow-y-auto">
