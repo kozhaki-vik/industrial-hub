@@ -16,6 +16,8 @@ export default function ClanManager() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
+  const [rosterData, setRosterData] = useState(null);
+  const [statsData, setStatsData] = useState(null);
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -66,6 +68,14 @@ export default function ClanManager() {
             setSaveStatus('success');
             setConfig(data.data.config);
             setTimeout(() => setSaveStatus(null), 3000);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_roster') {
+          if (!data.error && data.data && data.data.success) {
+            setRosterData(data.data);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_stats') {
+          if (!data.error && data.data && data.data.success) {
+            setStatsData(data.data.stats);
           }
         }
       } catch (err) {}
@@ -126,6 +136,17 @@ export default function ClanManager() {
     }));
     addLog('Saving config...');
   };
+
+  useEffect(() => {
+    if (!ws || wsStatus !== 'online') return;
+    if (activeTab === 'roster' && !rosterData) {
+      addLog('Fetching roster via proxy');
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_roster', payload: { action: 'get_roster' } }));
+    } else if (activeTab === 'stats' && !statsData) {
+      addLog('Fetching stats via proxy');
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+    }
+  }, [activeTab, ws, wsStatus, rosterData, statsData]);
 
   const DebugLogs = () => (
     <div className="mt-8 bg-slate-900 text-green-400 p-4 rounded-xl shadow-inner text-xs font-mono max-h-64 overflow-y-auto border border-slate-800">
@@ -685,26 +706,126 @@ export default function ClanManager() {
             )}
 
             {activeTab === 'roster' && (
-              <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
-                <svg className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <h3 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">Состав клана</h3>
-                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Раздел состава находится в стадии активной разработки. В будущем здесь будет отображаться список всех подтвержденных участников.
-                </p>
+              <div className="space-y-6 max-w-4xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Состав клана
+                  </h3>
+                  <button onClick={() => setRosterData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Обновить
+                  </button>
+                </div>
+                
+                {!rosterData ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {rosterData.roster.length === 0 ? (
+                      <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
+                        Участники не найдены. Убедитесь, что роли настроены правильно.
+                      </div>
+                    ) : (
+                      rosterData.roster.map(member => {
+                        let roleNamesMap = {};
+                        try {
+                          if (rosterData.roleNamesJson) roleNamesMap = JSON.parse(rosterData.roleNamesJson);
+                        } catch(e) {}
+                        
+                        return (
+                          <div key={member.userId} className="flex items-center p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <img src={member.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-12 h-12 rounded-full mr-4 shadow-sm" />
+                            <div className="flex-1 overflow-hidden">
+                              <div className="font-medium text-slate-900 dark:text-white truncate">{member.displayName}</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{member.username}</div>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {member.roles.map(rId => {
+                                  // Find internal role key matching this ID
+                                  const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'vipRoleId'].find(k => config[k] === rId);
+                                  if (roleKey) {
+                                    const shortKey = roleKey.replace('RoleId', ''); // e.g. leader
+                                    const roleName = roleNamesMap[shortKey] || shortKey;
+                                    return <span key={rId} className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md">{roleName}</span>
+                                  }
+                                  return null;
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'stats' && (
-              <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
-                <svg className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <h3 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-2">Статистика</h3>
-                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Статистика голосований, времени в войсе и сообщений будет доступна в следующем обновлении.
-                </p>
+              <div className="space-y-6 max-w-5xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Статистика участников
+                  </h3>
+                  <button onClick={() => setStatsData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Обновить
+                  </button>
+                </div>
+                
+                {!statsData ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-slate-500 dark:text-slate-400">
+                      <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-800/50 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                          <th scope="col" className="px-6 py-3">Участник</th>
+                          <th scope="col" className="px-6 py-3 text-center">Время в Voice</th>
+                          <th scope="col" className="px-6 py-3 text-center">Сообщения</th>
+                          <th scope="col" className="px-6 py-3 text-center">Вайпы</th>
+                          <th scope="col" className="px-6 py-3 text-center">Голосования</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {statsData.length === 0 ? (
+                          <tr>
+                            <td colSpan="5" className="px-6 py-8 text-center">Нет данных для отображения.</td>
+                          </tr>
+                        ) : (
+                          statsData.sort((a, b) => b.voiceTime - a.voiceTime).map(stat => (
+                            <tr key={stat.userId} className="bg-white border-b dark:bg-slate-900/50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                              <th scope="row" className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap dark:text-white flex items-center">
+                                <img src={stat.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-8 h-8 rounded-full mr-3" />
+                                <div>
+                                  <div className={!stat.isMember ? "text-slate-400 line-through" : ""}>{stat.displayName}</div>
+                                  <div className="text-[10px] text-slate-500">@{stat.username}</div>
+                                </div>
+                              </th>
+                              <td className="px-6 py-4 text-center font-mono">
+                                {Math.floor(stat.voiceTime / 3600)}ч {Math.floor((stat.voiceTime % 3600) / 60)}м
+                              </td>
+                              <td className="px-6 py-4 text-center font-mono">
+                                {stat.messageCount}
+                              </td>
+                              <td className="px-6 py-4 text-center font-mono">
+                                {stat.wipesPlayed}
+                              </td>
+                              <td className="px-6 py-4 text-center font-mono">
+                                {stat.votesCast}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
             
