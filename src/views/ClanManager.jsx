@@ -6,7 +6,8 @@ import RoleSelect from '../components/RoleSelect';
 import ChannelSelect from '../components/ChannelSelect';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
-  Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check
+  Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
+  RotateCcw, AlertTriangle
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -64,6 +65,12 @@ export default function ClanManager() {
   const [loadingVoice, setLoadingVoice] = useState(false);
   const [voiceActionLoading, setVoiceActionLoading] = useState(false);
   const [creatingRoleKey, setCreatingRoleKey] = useState(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetSections, setResetSections] = useState([
+    'roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'general'
+  ]);
+  const [isResetting, setIsResetting] = useState(false);
+  const [syncModalData, setSyncModalData] = useState(null);
   const hasPromptedRef = useRef(false);
 
   const addLog = (msg) => {
@@ -230,6 +237,19 @@ export default function ClanManager() {
             }
             setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 2500);
+          } else {
+            setError(data.error || (data.data && data.data.error));
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'factory_reset') {
+          setIsResetting(false);
+          setShowResetModal(false);
+          if (!data.error && data.data && data.data.success) {
+            if (data.data.config) {
+              setConfig(data.data.config);
+            }
+            fetchDiscordInfo();
+            setSaveStatus('success');
+            setTimeout(() => setSaveStatus(null), 3000);
           } else {
             setError(data.error || (data.data && data.data.error));
           }
@@ -576,6 +596,173 @@ export default function ClanManager() {
     autoSaveConfig(updatedConfig);
   };
 
+  const handleDeleteStandardRole = (roleKey, dbKey) => {
+    if (!config) return;
+    if (!window.confirm(t('clan_role_delete_std_confirm') || 'Удалить эту стандартную роль из конфигурации? Привязка к Discord роли будет снята.')) return;
+
+    let deletedRoles = [];
+    try {
+      if (config.deletedRolesJson) {
+        deletedRoles = typeof config.deletedRolesJson === 'string' ? JSON.parse(config.deletedRolesJson) : config.deletedRolesJson;
+      }
+    } catch (e) {}
+
+    if (!deletedRoles.includes(roleKey)) {
+      deletedRoles.push(roleKey);
+    }
+
+    const updatedConfig = {
+      ...config,
+      deletedRolesJson: JSON.stringify(deletedRoles),
+      [dbKey]: ''
+    };
+    autoSaveConfig(updatedConfig);
+  };
+
+  const handleRestoreStandardRoles = () => {
+    if (!config) return;
+    const updatedConfig = {
+      ...config,
+      deletedRolesJson: '[]'
+    };
+    autoSaveConfig(updatedConfig);
+  };
+
+  const handleSwitchBotLanguage = async (targetLang) => {
+    if (!config || (config.language || 'ru') === targetLang) return;
+    if (!ws || wsStatus !== 'online') return;
+
+    let currentRoleNames = {};
+    try {
+      if (config.roleNamesJson) currentRoleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
+    } catch (e) {}
+
+    const newRoleNames = { ...currentRoleNames };
+    standardRoles.forEach(r => {
+      newRoleNames[r.key] = targetLang === 'en' ? r.defaultEn : r.defaultRu;
+    });
+
+    const boundRolesToRename = standardRoles.filter(r => {
+      const boundId = config[r.dbKey];
+      return boundId && boundId.trim().length > 0;
+    });
+
+    const updatedConfig = {
+      ...config,
+      language: targetLang,
+      roleNamesJson: JSON.stringify(newRoleNames)
+    };
+
+    if (boundRolesToRename.length === 0) {
+      autoSaveConfig(updatedConfig);
+      return;
+    }
+
+    setSyncModalData({
+      isOpen: true,
+      currentStep: 0,
+      totalSteps: boundRolesToRename.length,
+      currentRoleName: '',
+      isFailed: false,
+      errorText: '',
+      failedRoleName: ''
+    });
+
+    let anyFailed = false;
+
+    for (let i = 0; i < boundRolesToRename.length; i++) {
+      const roleItem = boundRolesToRename[i];
+      const targetRoleName = targetLang === 'en' ? roleItem.defaultEn : roleItem.defaultRu;
+
+      setSyncModalData(prev => ({
+        ...prev,
+        currentStep: i + 1,
+        currentRoleName: targetRoleName
+      }));
+
+      const result = await new Promise((resolve) => {
+        const reqId = `sync_role_${Date.now()}_${i}`;
+        const timeout = setTimeout(() => {
+          cleanup();
+          resolve({ success: false, error: 'Timeout waiting for Discord response' });
+        }, 15000);
+
+        const onMsg = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'clan_proxy_res' && msg.reqId === reqId) {
+              cleanup();
+              resolve(msg.data || msg);
+            }
+          } catch (e) {}
+        };
+
+        const cleanup = () => {
+          clearTimeout(timeout);
+          ws.removeEventListener('message', onMsg);
+        };
+
+        ws.addEventListener('message', onMsg);
+        ws.send(JSON.stringify({
+          type: 'clan',
+          action: 'proxy',
+          reqId,
+          payload: {
+            action: 'sync_single_role_verified',
+            roleId: config[roleItem.dbKey],
+            newName: targetRoleName,
+            roleKey: roleItem.key
+          }
+        }));
+      });
+
+      if (!result.success) {
+        anyFailed = true;
+        const errDesc = result.error || 'Failed to rename role';
+        if (window.electronAPI?.app?.reportError) {
+          window.electronAPI.app.reportError(`[RoleSync Error] Failed to rename role "${targetRoleName}" (${config[roleItem.dbKey]}): ${errDesc}`);
+        }
+        setSyncModalData(prev => ({
+          ...prev,
+          isFailed: true,
+          failedRoleName: targetRoleName,
+          errorText: errDesc
+        }));
+        break;
+      } else {
+        if (result.roles) {
+          setDiscordInfo(prev => ({ roles: result.roles, channels: prev?.channels || [] }));
+        }
+      }
+    }
+
+    autoSaveConfig(updatedConfig);
+    fetchDiscordInfo();
+
+    if (!anyFailed) {
+      setTimeout(() => {
+        setSyncModalData(null);
+      }, 1200);
+    }
+  };
+
+  const handleExecuteFactoryReset = () => {
+    if (!resetSections || resetSections.length === 0) return;
+    if (!window.confirm(t('clan_reset_confirm_prompt') || 'Вы уверены, что хотите сбросить выбранные разделы к заводским настройкам?')) return;
+
+    setIsResetting(true);
+    addLog(`Запуск выборочного сброса к заводским настройкам: ${resetSections.join(', ')}`);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'factory_reset',
+      payload: {
+        action: 'factory_reset',
+        sections: resetSections
+      }
+    }));
+  };
+
   const fetchDynamicVoice = () => {
     setLoadingVoice(true);
     addLog('Fetching dynamic voice config via proxy');
@@ -787,6 +974,13 @@ export default function ClanManager() {
             <span>{t('clan_wizard_btn')}</span>
           </button>
           <button 
+            onClick={() => setShowResetModal(true)} 
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-300 dark:hover:border-amber-700 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4 text-amber-500 shrink-0" />
+            <span>{t('clan_reset_btn') || 'Сброс настроек'}</span>
+          </button>
+          <button 
             onClick={handleUnlink} 
             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-700 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
           >
@@ -896,6 +1090,50 @@ export default function ClanManager() {
                   />
                 </div>
                 
+                {/* Bot Language Card */}
+                <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        {t('clan_general_bot_lang_title') || 'Язык Discord бота'}
+                      </span>
+                    </div>
+                    <span className="text-xs uppercase font-mono px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold">
+                      {(config.language || 'ru').toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {t('clan_general_bot_lang_desc') || 'Переключает язык сообщений, кнопок и тикетов бота в Discord, а также последовательно синхронизирует и верифицирует названия ролей на сервере.'}
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchBotLanguage('ru')}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border ${
+                        (config.language || 'ru') === 'ru'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20'
+                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span>🇷🇺 Русский (RU)</span>
+                      {(config.language || 'ru') === 'ru' && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchBotLanguage('en')}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border ${
+                        config.language === 'en'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20'
+                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span>🇬🇧 English (EN)</span>
+                      {config.language === 'en' && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex items-center p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30">
                   <input 
                     type="checkbox" 
@@ -907,6 +1145,26 @@ export default function ClanManager() {
                   <label htmlFor="recruitmentOpen" className="text-sm font-medium text-slate-700 dark:text-slate-300 select-none cursor-pointer">
                     Набор в клан открыт (Позволяет создавать тикеты заявок)
                   </label>
+                </div>
+
+                {/* Factory Reset Section */}
+                <div className="p-4 border border-amber-200 dark:border-amber-800/60 rounded-xl bg-amber-50/40 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                      <RotateCcw className="w-4 h-4 text-amber-500" />
+                      {t('clan_reset_btn') || 'Сброс настроек бота'}
+                    </h4>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                      {t('clan_reset_general_card_desc') || 'Выборочно вернуть роли, каналы, права или весь бот к исходному заводскому состоянию.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetModal(true)}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0 cursor-pointer"
+                  >
+                    {t('clan_reset_btn') || 'Сбросить...'}
+                  </button>
                 </div>
                 
                 <SaveButton />
@@ -924,6 +1182,13 @@ export default function ClanManager() {
                 if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
               } catch (e) {}
 
+              let deletedRoles = [];
+              try {
+                if (config.deletedRolesJson) deletedRoles = typeof config.deletedRolesJson === 'string' ? JSON.parse(config.deletedRolesJson) : config.deletedRolesJson;
+              } catch (e) {}
+
+              const visibleStandardRoles = standardRoles.filter(r => !deletedRoles.includes(r.key));
+
               return (
                 <div className="space-y-6 max-w-5xl">
                   {/* Roles Header */}
@@ -939,27 +1204,18 @@ export default function ClanManager() {
                     </div>
 
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      {/* Language templates filler */}
-                      <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                      {/* Restore Standard Roles Button if any deleted */}
+                      {deletedRoles.length > 0 && (
                         <button
                           type="button"
-                          onClick={() => handleApplyTemplateLang('ru')}
-                          className="px-2.5 py-1 text-xs font-semibold rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer flex items-center gap-1.5"
-                          title={t('clan_roles_default_ru') || 'Заполнить названия ролей на русском'}
+                          onClick={handleRestoreStandardRoles}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                          title={t('clan_roles_restore_std') || 'Восстановить удаленные стандартные роли'}
                         >
-                          <Globe className="w-3.5 h-3.5 text-blue-500" />
-                          <span>RU</span>
+                          <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
+                          <span>{t('clan_roles_restore_std') || `Восстановить роли (${deletedRoles.length})`}</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleApplyTemplateLang('en')}
-                          className="px-2.5 py-1 text-xs font-semibold rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer flex items-center gap-1.5"
-                          title={t('clan_roles_default_en') || 'Заполнить названия ролей на английском'}
-                        >
-                          <Globe className="w-3.5 h-3.5 text-slate-400" />
-                          <span>EN</span>
-                        </button>
-                      </div>
+                      )}
 
                       {/* Add Custom Role */}
                       <button
@@ -976,7 +1232,7 @@ export default function ClanManager() {
                   {/* Status Banner */}
                   <div className="flex items-center justify-between text-xs px-1">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">
-                      Всего ролей: {standardRoles.length + customRoles.length}
+                      Всего ролей: {visibleStandardRoles.length + customRoles.length}
                     </span>
                     <div className="flex items-center gap-2">
                       {saveStatus === 'saving' ? (
@@ -996,38 +1252,63 @@ export default function ClanManager() {
                   {/* Standard Roles Section */}
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
-                      Стандартные роли
+                      Стандартные роли ({visibleStandardRoles.length})
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {standardRoles.map(r => {
-                        const currentName = roleNames[r.key] !== undefined ? roleNames[r.key] : r.defaultRu;
-                        const boundRoleId = config[r.dbKey] || '';
-                        const isCreatingThis = creatingRoleKey === r.key;
+                    {visibleStandardRoles.length === 0 ? (
+                      <div className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center bg-slate-50/50 dark:bg-slate-950/20">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+                          Все стандартные роли были скрыты или удалены
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleRestoreStandardRoles}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>{t('clan_roles_restore_std') || 'Восстановить роли'}</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {visibleStandardRoles.map(r => {
+                          const currentName = roleNames[r.key] !== undefined ? roleNames[r.key] : r.defaultRu;
+                          const boundRoleId = config[r.dbKey] || '';
+                          const isCreatingThis = creatingRoleKey === r.key;
 
-                        return (
-                          <div 
-                            key={r.key} 
-                            className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 hover:border-blue-400/40 dark:hover:border-blue-500/40 transition-all shadow-sm flex flex-col justify-between gap-3"
-                          >
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                                    {r.key}
-                                  </span>
+                          return (
+                            <div 
+                              key={r.key} 
+                              className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 hover:border-blue-400/40 dark:hover:border-blue-500/40 transition-all shadow-sm flex flex-col justify-between gap-3"
+                            >
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                                      {r.key}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    {boundRoleId ? (
+                                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                                        <Check className="w-3 h-3" />
+                                        Привязано
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
+                                        Не привязано
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteStandardRole(r.key, r.dbKey)}
+                                      className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
+                                      title={t('clan_roles_delete_std') || 'Удалить стандартную роль'}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                                {boundRoleId ? (
-                                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
-                                    <Check className="w-3 h-3" />
-                                    Привязано
-                                  </span>
-                                ) : (
-                                  <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
-                                    Не привязано
-                                  </span>
-                                )}
-                              </div>
 
                               <div>
                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
@@ -1073,7 +1354,8 @@ export default function ClanManager() {
                         );
                       })}
                     </div>
-                  </div>
+                  )}
+                </div>
 
                   {/* Custom Roles Section */}
                   <div className="pt-2">
@@ -2051,6 +2333,200 @@ export default function ClanManager() {
             setActiveTab('roles');
           }}
         />
+      )}
+
+      {/* Role Sync Progress / Verification Modal */}
+      {syncModalData && syncModalData.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              {syncModalData.isFailed ? (
+                <div className="p-3 bg-red-100 dark:bg-red-950/50 rounded-xl text-red-600 dark:text-red-400 shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+              ) : (
+                <div className="p-3 bg-blue-100 dark:bg-blue-950/50 rounded-xl text-blue-600 dark:text-blue-400 shrink-0">
+                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              <div>
+                <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                  {syncModalData.isFailed 
+                    ? (t('clan_sync_failed_title') || 'Ошибка синхронизации роли')
+                    : (t('clan_sync_in_progress') || 'Синхронизация языка ролей...')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {syncModalData.isFailed
+                    ? (t('clan_sync_failed_desc') || 'Не удалось применить новое название роли в Discord.')
+                    : `${t('clan_sync_step') || 'Обработка'}: ${syncModalData.currentStep} / ${syncModalData.totalSteps}`}
+                </p>
+              </div>
+            </div>
+
+            {!syncModalData.isFailed ? (
+              <div className="space-y-4">
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div 
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.round((syncModalData.currentStep / Math.max(syncModalData.totalSteps, 1)) * 100)}%` }}
+                  ></div>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                  <span className="font-medium text-slate-500 dark:text-slate-400">{t('clan_sync_current_role') || 'Роль'}:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{syncModalData.currentRoleName}</span>
+                </div>
+                <p className="text-[11px] text-slate-400 text-center">
+                  {t('clan_sync_verifying_hint') || 'Бот меняет имя, верифицирует изменения и в случае ошибки выполняет повторную попытку.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-xl text-xs text-red-700 dark:text-red-300 space-y-1.5">
+                  <div className="font-semibold">{syncModalData.failedRoleName}</div>
+                  <div className="font-mono text-[11px] opacity-90">{syncModalData.errorText}</div>
+                </div>
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                  <span className="shrink-0 text-base">⚠️</span>
+                  <span>{t('clan_sync_telegram_reported') || 'Отчет об ошибке автоматически отправлен в Telegram разработчикам.'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSyncModalData(null)}
+                  className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                >
+                  {t('clan_sync_close') || 'Закрыть'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Selective Factory Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-amber-100 dark:bg-amber-950/50 rounded-xl text-amber-600 dark:text-amber-400">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {t('clan_reset_modal_title') || 'Сброс к заводским настройкам'}
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t('clan_reset_modal_desc') || 'Выберите разделы, которые требуется сбросить'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Select All / Deselect All */}
+            <div className="flex items-center justify-between mb-3 text-xs">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">
+                {t('clan_reset_select_sections') || 'Разделы для сброса:'}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setResetSections(['roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'general'])}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium cursor-pointer"
+                >
+                  {t('clan_reset_select_all') || 'Выбрать все'}
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <button
+                  type="button"
+                  onClick={() => setResetSections([])}
+                  className="text-slate-500 dark:text-slate-400 hover:underline font-medium cursor-pointer"
+                >
+                  {t('clan_reset_deselect_all') || 'Снять все'}
+                </button>
+              </div>
+            </div>
+
+            {/* Checkboxes List */}
+            <div className="space-y-2 mb-6">
+              {[
+                { id: 'roles', title: t('clan_reset_sec_roles_title') || 'Роли', desc: t('clan_reset_sec_roles_desc') || 'Сброс названий, удаление кастомных ролей, восстановление стандартных ролей, снятие ID' },
+                { id: 'channels', title: t('clan_reset_sec_channels_title') || 'Каналы', desc: t('clan_reset_sec_channels_desc') || 'Сброс привязок категорий и каналов' },
+                { id: 'permissions', title: t('clan_reset_sec_permissions_title') || 'Права доступа', desc: t('clan_reset_sec_permissions_desc') || 'Сброс сохраненных конфигураций прав каналов' },
+                { id: 'voice', title: t('clan_reset_sec_voice_title') || 'Динамический голос', desc: t('clan_reset_sec_voice_desc') || 'Отключение автокомнат, очистка ID генератора и категории' },
+                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || 'Набор в клан', desc: t('clan_reset_sec_recruitment_desc') || 'Сброс вопросов анкеты и требований' },
+                { id: 'ads', title: t('clan_reset_sec_ads_title') || 'Объявления', desc: t('clan_reset_sec_ads_desc') || 'Сброс настроек периодических объявлений' },
+                { id: 'general', title: t('clan_reset_sec_general_title') || 'Основные данные', desc: t('clan_reset_sec_general_desc') || 'Сброс названия клана и Discord ссылки' },
+              ].map(sec => {
+                const isChecked = resetSections.includes(sec.id);
+                return (
+                  <label
+                    key={sec.id}
+                    className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                      isChecked
+                        ? 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/60'
+                        : 'bg-slate-50/60 dark:bg-slate-800/30 border-slate-200 dark:border-slate-800 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setResetSections(prev => [...prev, sec.id]);
+                        } else {
+                          setResetSections(prev => prev.filter(x => x !== sec.id));
+                        }
+                      }}
+                      className="w-4 h-4 mt-0.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-900 dark:bg-slate-700 dark:border-slate-600"
+                    />
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-slate-900 dark:text-white">{sec.title}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{sec.desc}</div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                disabled={isResetting}
+                className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              >
+                {t('clan_reset_cancel') || 'Отмена'}
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteFactoryReset}
+                disabled={isResetting || resetSections.length === 0}
+                className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isResetting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>{t('clan_reset_processing') || 'Сброс...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>{t('clan_reset_submit') || 'Сбросить выбранное'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
