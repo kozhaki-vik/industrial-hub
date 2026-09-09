@@ -16,10 +16,7 @@ export function GammaProvider({ children }) {
   const [isNightVision, setIsNightVision] = useState(false);
   const [displays, setDisplays] = useState([]);
   const [selectedDisplay, setSelectedDisplay] = useState(getConfigKey('selectedGammaDisplay') || '');
-  
-  let savedLevel = getConfigKey('gammaLevel');
-  if (savedLevel === undefined || savedLevel > 100) savedLevel = 75; // Migration from old 130-255 scale
-  const [nightVisionLevel, setNightVisionLevel] = useState(savedLevel);
+  const nightVisionLevel = 100;
 
   // Initialization: fetch monitors
   useEffect(() => {
@@ -44,7 +41,7 @@ export function GammaProvider({ children }) {
     let isActive = true;
     const toggleGamma = () => {
       setIsNightVision(prev => {
-        if (!prev) setDisplayGamma(nightVisionLevel, selectedDisplay);
+        if (!prev) setDisplayGamma(100, selectedDisplay);
         else resetDisplayGamma(selectedDisplay);
         return !prev;
       });
@@ -67,7 +64,7 @@ export function GammaProvider({ children }) {
       isActive = false;
       unregisterGlobalHook();
     };
-  }, [gammaBind, selectedDisplay, nightVisionLevel]);
+  }, [gammaBind, selectedDisplay]);
 
   const handleSetGammaBind = (bind) => {
     setGammaBind(bind);
@@ -77,19 +74,11 @@ export function GammaProvider({ children }) {
     setSelectedDisplay(disp);
     setConfigKey('selectedGammaDisplay', disp);
     resetDisplayGamma(selectedDisplay); // Reset old monitor just in case
-    if (isNightVision) setDisplayGamma(nightVisionLevel, disp);
-  };
-
-  const handleSetNightVisionLevel = (level) => {
-    setNightVisionLevel(level);
-    setConfigKey('gammaLevel', level);
-    if (isNightVision) {
-      setDisplayGamma(level, selectedDisplay);
-    }
+    if (isNightVision) setDisplayGamma(100, disp);
   };
 
   const enableGamma = () => {
-    setDisplayGamma(nightVisionLevel, selectedDisplay);
+    setDisplayGamma(100, selectedDisplay);
     setIsNightVision(true);
   };
 
@@ -107,8 +96,7 @@ export function GammaProvider({ children }) {
     displays,
     selectedDisplay,
     setSelectedDisplay: handleSetSelectedDisplay,
-    nightVisionLevel,
-    setNightVisionLevel: handleSetNightVisionLevel
+    nightVisionLevel: 100
   };
 
   return (

@@ -14,8 +14,7 @@ export default function Gamma() {
     gammaBind, setGammaBind,
     isNightVision,
     enableGamma, disableGamma,
-    displays, selectedDisplay, setSelectedDisplay,
-    nightVisionLevel, setNightVisionLevel
+    displays, selectedDisplay, setSelectedDisplay
   } = useGamma();
   const [showSuggestion, setShowSuggestion] = React.useState(!getConfigKey('gammaSuggestDismissed'));
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
@@ -76,21 +75,6 @@ export default function Gamma() {
                 })}
               </div>
             )}
-
-            {/* Brightness slider */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm" title={t('gamma_brightness_level')}>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap min-w-[28px]">
-                {nightVisionLevel}%
-              </span>
-              <input 
-                type="range" 
-                min="0" 
-                max="100" 
-                value={nightVisionLevel}
-                onChange={(e) => setNightVisionLevel(Number(e.target.value))}
-                className="w-20 sm:w-24 accent-orange-500 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none"
-              />
-            </div>
 
             {/* Button 1: Day (Disable) */}
             <button
