@@ -601,6 +601,8 @@ translation: {
       "gamma_night_title": "Ночное зрение (Гамма)",
       "gamma_night_desc": "Увеличенная яркость для ночи",
       "gamma_brightness_level": "Яркость",
+      "gamma_btn_day": "День (Выкл)",
+      "gamma_btn_night": "Ночь (Вкл)",
 
       "gamma_suggest_title": "Удобное переключение",
       "gamma_suggest_desc": "По статистике, 90% игроков выбирают клавишу <b>End</b> для переключения гаммы прямо во время игры. Хотите назначить её?",
@@ -1232,6 +1234,8 @@ translation: {
       "gamma_night_title": "Night Vision (Gamma)",
       "gamma_night_desc": "Increased brightness for night",
       "gamma_brightness_level": "Brightness",
+      "gamma_btn_day": "Day (Off)",
+      "gamma_btn_night": "Night (On)",
 
       "gamma_suggest_title": "Convenient switching",
       "gamma_suggest_desc": "Statistically, 90% of players choose the <b>End</b> key to switch gamma right during the game. Would you like to assign it?",
@@ -1864,6 +1868,8 @@ translation: {
       "gamma_night_title": "Нічне бачення (Гамма)",
       "gamma_night_desc": "Збільшена яскравість для ночі",
       "gamma_brightness_level": "Яскравість",
+      "gamma_btn_day": "День (Вимк)",
+      "gamma_btn_night": "Ніч (Увімк)",
 
       "gamma_suggest_title": "Зручне перемикання",
       "gamma_suggest_desc": "За статистикою, 90% гравців вибирають клавішу <b>End</b> для перемикання гами прямо під час гри. Хочете призначити її?",
