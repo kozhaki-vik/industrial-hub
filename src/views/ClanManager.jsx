@@ -349,6 +349,7 @@ export default function ClanManager() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('clan_manager_title')}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('clan_manager_subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowSetupWizard(true)} className="text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">

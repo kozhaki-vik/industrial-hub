@@ -40,7 +40,7 @@ export default function Dashboard() {
           badge={t('status_inactive')}
         />
         <Card 
-          title="Clan Manager"
+          title={t('clan_title')}
           description={t('clan_desc')}
           icon={Users}
           onClick={() => navigate('/clan')}

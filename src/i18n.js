@@ -520,6 +520,9 @@ translation: {
       "binds_desc": "Назначение команд через виртуальную клавиатуру.",
       "graphics_title": "Графика",
       "graphics_desc": "Готовые пресеты настроек под разные ПК.",
+      "clan_title": "Клан менеджер",
+      "clan_desc": "Управление составом клана, ролями, голосованиями и интеграция с Discord сервером.",
+      "clan_manager_subtitle": "Управление составом клана, ролями, голосованиями и интеграция с Discord сервером.",
 
       "categories": "Категории",
       "all_templates": "Все шаблоны",
@@ -541,6 +544,10 @@ translation: {
       "browse": "Обзор...",
       "connect": "Подключиться",
       "servers_desc": "Здесь вы можете зайти и протестировать наши сборки, конвейеры и схемы.",
+      "server_creative_name": "Industrial Hub [Креатив / Строительство]",
+      "server_creative_desc": "Креативный сервер (строительство): постройка баз, тестирование электрики и промышленных схем без ограничений ресурсов.",
+      "server_training_name": "Industrial Hub [Тренировочный / PvP]",
+      "server_training_desc": "Тренировочный сервер: полёты на коптере, стрельба, комбат и тренировка рейдов друг друга.",
       "online_count": "В сети:",
       
       "status_active": "Активен",
@@ -1144,6 +1151,9 @@ translation: {
       "binds_desc": "Assign commands via virtual keyboard.",
       "graphics_title": "Graphics Presets",
       "graphics_desc": "Ready-made configs for different PCs.",
+      "clan_title": "Clan Manager",
+      "clan_desc": "Roster management, member roles, wipe votes, and Discord bot integration.",
+      "clan_manager_subtitle": "Roster management, member roles, wipe votes, and Discord bot integration.",
 
       "categories": "Categories",
       "all_templates": "All Templates",
@@ -1164,6 +1174,10 @@ translation: {
       "browse": "Browse...",
       "connect": "Connect",
       "servers_desc": "Here you can connect to test our schemes and conveyors.",
+      "server_creative_name": "Industrial Hub [Creative / Build]",
+      "server_creative_desc": "Creative server (building): base design, electrical and industrial wiring testing with unlimited resources.",
+      "server_training_name": "Industrial Hub [Training / PvP]",
+      "server_training_desc": "Training server: minicopter piloting, target shooting, combat arenas, and raid practice.",
       "online_count": "Online:",
       
       "status_active": "Active",
@@ -1769,6 +1783,9 @@ translation: {
       "binds_desc": "Призначення команд через віртуальну клавіатуру.",
       "graphics_title": "Графіка",
       "graphics_desc": "Готові пресети налаштувань під різні ПК.",
+      "clan_title": "Клан менеджер",
+      "clan_desc": "Управління складом клану, ролями, голосуваннями та інтеграція з Discord сервером.",
+      "clan_manager_subtitle": "Управління складом клану, ролями, голосуваннями та інтеграція з Discord сервером.",
 
       "categories": "Категорії",
       "all_templates": "Всі шаблони",
@@ -1789,6 +1806,10 @@ translation: {
       "browse": "Огляд...",
       "connect": "Підключитися",
       "servers_desc": "Тут ви можете зайти і протестувати наші збірки, конвеєри та схеми.",
+      "server_creative_name": "Industrial Hub [Креатив / Будівництво]",
+      "server_creative_desc": "Креативний сервер (будівництво): побудова баз, тестування електрики та промислових схем без обмежень ресурсів.",
+      "server_training_name": "Industrial Hub [Тренувальний / PvP]",
+      "server_training_desc": "Тренувальний сервер: польоти на коптері, стрільба, комбат та тренування рейдів один одного.",
       "online_count": "В мережі:",
       
       "status_active": "Активний",

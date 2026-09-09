@@ -38,13 +38,11 @@ export default function FeedbackButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 p-3 bg-white/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 hover:text-orange-500 dark:hover:text-orange-500 hover:bg-white dark:hover:bg-slate-800 backdrop-blur rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700/50"
+        className="fixed bottom-6 right-6 z-40 px-4 py-2.5 bg-white dark:bg-slate-800 text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 backdrop-blur rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700/60 font-semibold text-sm cursor-pointer group"
         title={t('feedback_btn')}
       >
-        <MessageSquarePlus className="w-6 h-6" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[200px] transition-all duration-500 ease-in-out font-medium text-sm">
-          <span className="pl-1 pr-2">{t('feedback_btn')}</span>
-        </span>
+        <MessageSquarePlus className="w-5 h-5 text-orange-500 shrink-0 transition-transform duration-300 group-hover:scale-110" />
+        <span className="whitespace-nowrap">{t('feedback_btn')}</span>
       </button>
 
       {isOpen && (
