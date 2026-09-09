@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MessageSquarePlus, X, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from '../contexts/NetworkContext';
+import { validateForm } from '../utils/formValidation';
 
 export default function FeedbackButton() {
   const { t } = useTranslation();
@@ -15,7 +16,7 @@ export default function FeedbackButton() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!validateForm(e.currentTarget)) return;
     setIsSubmitting(true);
     setError(null);
     try {
@@ -101,7 +102,7 @@ export default function FeedbackButton() {
 
                 <button 
                   type="submit"
-                  disabled={isSubmitting || !message.trim() || status !== 'online'}
+                  disabled={isSubmitting || status !== 'online'}
                   className="mt-2 flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (

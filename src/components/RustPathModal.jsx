@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FolderSearch, FolderOpen, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { autoDetectRustPath, browseForRustPath } from '../services/rustPath';
 import { setConfigKey, getConfigKey } from '../services/store';
+import { scrollToAndHighlight } from '../utils/formValidation';
 
 export default function RustPathModal({ isOpen, onClose }) {
   const { t } = useTranslation();
   const [currentPath, setCurrentPath] = useState('');
   const [statusMsg, setStatusMsg] = useState(null); // { type: 'success'|'error'|'info', text: '' }
   const [isDetecting, setIsDetecting] = useState(false);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -55,9 +57,13 @@ export default function RustPathModal({ isOpen, onClose }) {
   };
 
   const handleSave = () => {
-    if (currentPath) {
-      setConfigKey('rustPath', currentPath);
+    if (!currentPath || !currentPath.trim()) {
+      if (inputRef.current) {
+        scrollToAndHighlight(inputRef.current);
+      }
+      return;
     }
+    setConfigKey('rustPath', currentPath);
     onClose();
   };
 
@@ -100,6 +106,7 @@ export default function RustPathModal({ isOpen, onClose }) {
           </label>
           <div className="flex gap-2">
             <input 
+              ref={inputRef}
               type="text" 
               value={currentPath} 
               onChange={(e) => setCurrentPath(e.target.value)}

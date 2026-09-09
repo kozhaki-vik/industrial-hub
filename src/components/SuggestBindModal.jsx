@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useNetwork } from '../contexts/NetworkContext';
+import { validateForm } from '../utils/formValidation';
 
 export default function SuggestBindModal({ isOpen, onClose }) {
   const { createTicket, status } = useNetwork();
@@ -16,7 +17,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!bindCommand.trim() || !bindDescription.trim()) return;
+    if (!validateForm(e.currentTarget)) return;
     
     setIsSubmitting(true);
     setError(null);
@@ -101,7 +102,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
               
               <button 
                 type="submit"
-                disabled={isSubmitting || !bindCommand.trim() || !bindDescription.trim()}
+                disabled={isSubmitting}
                 className="mt-2 flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (

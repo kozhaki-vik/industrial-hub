@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { X, Save, Trash2, Search, Download } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { itemsDB } from '../data/itemsDB';
+import { scrollToAndHighlight } from '../utils/formValidation';
 
 // --- Lightweight Virtual Scroll ---
 function VirtualList({ items, itemHeight, renderItem }) {
@@ -127,6 +128,8 @@ export default function ConveyorEditorModal({ t, lang, initialData, onClose, onS
   const [isDragOver, setIsDragOver] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [highlightTitleError, setHighlightTitleError] = useState(false);
+  const titleInputRef = useRef(null);
+  const editorDropRef = useRef(null);
   
   const maxLimit = 30;
   
@@ -216,11 +219,17 @@ export default function ConveyorEditorModal({ t, lang, initialData, onClose, onS
     if (!title.trim()) {
       setErrorMsg(t('convNameEmpty') || "Name cannot be empty");
       setHighlightTitleError(true);
+      if (titleInputRef.current) {
+        scrollToAndHighlight(titleInputRef.current);
+      }
       setTimeout(() => setHighlightTitleError(false), 3000);
       return;
     }
     if (selectedItems.length === 0) {
       setErrorMsg(t('convNoItems') || "Add at least one item to the template");
+      if (editorDropRef.current) {
+        scrollToAndHighlight(editorDropRef.current);
+      }
       return;
     }
     setErrorMsg('');
@@ -345,6 +354,7 @@ export default function ConveyorEditorModal({ t, lang, initialData, onClose, onS
               </div>
             </div>
             <input 
+              ref={titleInputRef}
               type="text" 
               className={`px-3 py-2 bg-white dark:bg-slate-900 border rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:outline-none w-64 transition-all duration-300 ${highlightTitleError ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] bg-red-50 dark:bg-red-900/20' : 'border-slate-300 dark:border-slate-700 focus:border-orange-500 focus:ring-1 focus:ring-orange-500'}`}
               placeholder={t('convTitlePlaceholder')} 
@@ -414,6 +424,7 @@ export default function ConveyorEditorModal({ t, lang, initialData, onClose, onS
             {/* Right: Dropzone */}
             <div className="flex-1 p-6 flex flex-col bg-slate-50 dark:bg-slate-950">
               <div 
+                ref={editorDropRef}
                 className={`flex-1 border-2 border-dashed rounded-2xl overflow-y-auto p-4 transition-colors ${
                   isDragOver 
                     ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10' 

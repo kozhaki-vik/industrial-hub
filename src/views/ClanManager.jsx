@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import SetupWizard from '../components/SetupWizard';
 import RoleSelect from '../components/RoleSelect';
 import ChannelSelect from '../components/ChannelSelect';
+import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
 export const isBotConfigured = (cfg) => {
   if (!cfg) return false;
@@ -171,7 +172,12 @@ export default function ClanManager() {
 
   const handleLink = (e) => {
     e.preventDefault();
-    if (!linkCode.trim()) return;
+    if (!linkCode.trim()) {
+      setError(t('clan_setup_placeholder') || 'Введите 6-значный код');
+      const inputEl = e?.target?.querySelector('input');
+      if (inputEl) scrollToAndHighlight(inputEl);
+      return;
+    }
     
     const now = Date.now();
     if (now - lastLinkAttempt < 5000) {
@@ -251,7 +257,12 @@ export default function ClanManager() {
   };
   
   const saveConfig = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    
+    const formElement = e?.currentTarget?.tagName === 'FORM' ? e.currentTarget : e?.target?.closest('form');
+    if (formElement && !validateForm(formElement)) {
+      return;
+    }
     
     setSaveStatus('saving');
     ws.send(JSON.stringify({ 
@@ -342,6 +353,7 @@ export default function ClanManager() {
             <div>
               <input 
                 type="text" 
+                required
                 placeholder={t('clan_setup_placeholder')} 
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-center text-2xl tracking-[0.5em] font-mono shadow-inner transition-all placeholder:text-slate-300 placeholder:tracking-normal placeholder:font-sans placeholder:text-base dark:placeholder:text-slate-600"
                 value={linkCode}
@@ -484,9 +496,10 @@ export default function ClanManager() {
                 </h3>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Название клана</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Название клана *</label>
                   <input 
                     type="text" 
+                    required
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                     value={config.name || ''}
                     onChange={e => setConfig({...config, name: e.target.value})}
@@ -809,9 +822,10 @@ export default function ClanManager() {
                   return (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Discord сервер (для набора)</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Discord сервер (для набора) *</label>
                         <input 
                           type="text" 
+                          required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={rConfig.link}
                           onChange={e => updateRConfig('link', e.target.value)}
@@ -831,9 +845,10 @@ export default function ClanManager() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения *</label>
                         <input 
                           type="text" 
+                          required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={rConfig.title}
                           onChange={e => updateRConfig('title', e.target.value)}
@@ -842,8 +857,9 @@ export default function ClanManager() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст с требованиями (Markdown поддерживается)</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст с требованиями (Markdown поддерживается) *</label>
                         <textarea 
+                          required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[200px]"
                           value={rConfig.text}
                           onChange={e => updateRConfig('text', e.target.value)}
@@ -898,8 +914,8 @@ export default function ClanManager() {
                           </button>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
                             <div>
-                              <label className="block text-xs font-medium text-slate-500 mb-1">Название сервера</label>
-                              <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.name || ''} onChange={e => updateTemplate(index, 'name', e.target.value)} placeholder="Rustoria Main" />
+                              <label className="block text-xs font-medium text-slate-500 mb-1">Название сервера *</label>
+                              <input type="text" required className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.name || ''} onChange={e => updateTemplate(index, 'name', e.target.value)} placeholder="Rustoria Main" />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-500 mb-1">День вайпа</label>
@@ -918,8 +934,8 @@ export default function ClanManager() {
                               <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.time || ''} onChange={e => updateTemplate(index, 'time', e.target.value)} placeholder="16:00" />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-500 mb-1">IP (connect ...)</label>
-                              <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.ip || ''} onChange={e => updateTemplate(index, 'ip', e.target.value)} placeholder="connect 127.0.0.1:28015" />
+                              <label className="block text-xs font-medium text-slate-500 mb-1">IP (connect ...) *</label>
+                              <input type="text" required className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.ip || ''} onChange={e => updateTemplate(index, 'ip', e.target.value)} placeholder="connect 127.0.0.1:28015" />
                             </div>
                             <div className="md:col-span-2">
                               <label className="block text-xs font-medium text-slate-500 mb-1">Ссылка на баннер</label>
@@ -969,9 +985,10 @@ export default function ClanManager() {
                   return (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения *</label>
                         <input 
                           type="text" 
+                          required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={aConfig.title}
                           onChange={e => updateAConfig('title', e.target.value)}
@@ -980,8 +997,9 @@ export default function ClanManager() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст *</label>
                         <textarea 
+                          required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px]"
                           value={aConfig.text}
                           onChange={e => updateAConfig('text', e.target.value)}

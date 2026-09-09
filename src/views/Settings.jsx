@@ -6,6 +6,7 @@ import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, RefreshC
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
 import { useNavigate } from 'react-router-dom';
+import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
 import kozhakiAvatar from '../assets/team/kozhaki.jpg';
 import kaktusAvatar from '../assets/team/kaktus.png';
@@ -76,6 +77,7 @@ export default function Settings() {
   const [showPinModal, setShowPinModal] = React.useState(false);
   const [pinInput, setPinInput] = React.useState('');
   const [pinError, setPinError] = React.useState('');
+  const pinInputRef = React.useRef(null);
 
   const handleChannelSwitch = (channel) => {
     if (channel === 'test') {
@@ -89,12 +91,22 @@ export default function Settings() {
   };
 
   const submitPin = () => {
+    if (!pinInput || pinInput.trim() === '') {
+      if (pinInputRef.current) {
+        scrollToAndHighlight(pinInputRef.current);
+      }
+      setPinError(t('fill_pin', 'Введите ПИН-код'));
+      return;
+    }
     if (pinInput === '2136') {
       setUpdateChannel('test');
       setConfigKey('updateChannel', 'test');
       setShowPinModal(false);
     } else {
       setPinError(t('invalid_pin', 'Неверный ПИН-код'));
+      if (pinInputRef.current) {
+        scrollToAndHighlight(pinInputRef.current);
+      }
     }
   };
 
@@ -437,8 +449,7 @@ export default function Settings() {
               <form 
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  if (!sponsorTime || !sponsorContact) {
-                    setSponsorError(t('settings_support_err_fill'));
+                  if (!validateForm(e.currentTarget)) {
                     return;
                   }
                   setIsSubmittingSponsor(true);
@@ -514,7 +525,7 @@ export default function Settings() {
 
                 <button 
                   type="submit"
-                  disabled={isSubmittingSponsor || !sponsorTime || !sponsorContact || status !== 'online'}
+                  disabled={isSubmittingSponsor || status !== 'online'}
                   className="mt-2 flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmittingSponsor ? (
@@ -540,6 +551,7 @@ export default function Settings() {
             <p className="text-sm text-slate-500 mb-4">{t('settings_pin_desc', 'Введите ПИН-код для доступа к тестовым сборкам.')}</p>
             
             <input 
+              ref={pinInputRef}
               type="password"
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value)}
