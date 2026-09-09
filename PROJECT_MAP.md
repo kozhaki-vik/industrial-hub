@@ -243,7 +243,7 @@ repos/
 ### 2.8. Нативные компоненты C#
 
 * **[`resources/native.cs`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/resources/native.cs) / `NativeHelper.exe`:**
-  * `GammaController`: Вызовы Win32 GDI API `SetDeviceGammaRamp`, `GetDeviceGammaRamp`, `EnumDisplayDevices`. Плавное осветление темных участков в ночное время суток.
+  * `GammaController`: Вызовы Win32 GDI API `SetDeviceGammaRamp` / `CreateDC` (алгоритм цветокоррекции из Electric Guide). Осветление ночи без искажения баланса чёрного и цветов.
   * `KeyboardHook`: Низкоуровневый хук клавиатуры Windows `SetWindowsHookEx(WH_KEYBOARD_LL)`. Перехватывает хоткей (по умолчанию `END`) даже когда игра находится в полноэкранном режиме, и сигнализирует в stdout `HOTKEY_PRESSED`.
 * **[`Installer.cs`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/Installer.cs) / `Installer.exe`:**
   * Автономный установщик и лаунчер на C# WinForms (.NET 4.5+).
