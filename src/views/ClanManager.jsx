@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import SetupWizard from '../components/SetupWizard';
 import RoleSelect from '../components/RoleSelect';
 import ChannelSelect from '../components/ChannelSelect';
-import { Sparkles, Unlink } from 'lucide-react';
+import { Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
 export const isBotConfigured = (cfg) => {
@@ -57,6 +57,9 @@ export default function ClanManager() {
   const [discordInfo, setDiscordInfo] = useState(null);
   const [activeVotes, setActiveVotes] = useState(null);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [dynamicVoiceData, setDynamicVoiceData] = useState(null);
+  const [loadingVoice, setLoadingVoice] = useState(false);
+  const [voiceActionLoading, setVoiceActionLoading] = useState(false);
   const hasPromptedRef = useRef(false);
 
   const addLog = (msg) => {
@@ -160,6 +163,51 @@ export default function ClanManager() {
             ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_active_votes', payload: { action: 'get_active_votes' } }));
           } else {
             setError(data.error || (data.data && data.data.error));
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_dynamic_voice') {
+          setLoadingVoice(false);
+          if (!data.error && data.data && data.data.success) {
+            setDynamicVoiceData({
+              config: data.data.config || { enabled: false, categoryId: '', generatorChannelId: '', template: '🔊 Пати {user}', defaultLimit: 0 },
+              activeRooms: data.data.activeRooms || [],
+              channels: data.data.channels || []
+            });
+            if (data.data.channels && data.data.channels.length > 0) {
+              setDiscordInfo(prev => ({
+                roles: prev?.roles || [],
+                channels: data.data.channels
+              }));
+            }
+          } else {
+            setError(data.error || (data.data && data.data.error));
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'update_dynamic_voice') {
+          setSaveStatus(data.error ? `error: ${data.error}` : 'success');
+          if (!data.error && data.data && data.data.success) {
+            setDynamicVoiceData(prev => ({
+              ...prev,
+              config: data.data.config
+            }));
+            setTimeout(() => setSaveStatus(null), 3000);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'auto_setup_dynamic_voice') {
+          setVoiceActionLoading(false);
+          setSaveStatus(data.error ? `error: ${data.error}` : 'success');
+          if (!data.error && data.data && data.data.success) {
+            setDynamicVoiceData(prev => ({
+              ...prev,
+              config: data.data.config,
+              channels: data.data.channels || prev?.channels || []
+            }));
+            fetchDiscordInfo();
+            setTimeout(() => setSaveStatus(null), 3000);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'manage_dynamic_room') {
+          setVoiceActionLoading(false);
+          if (data.error || (data.data && data.data.error)) {
+            setError(data.error || data.data.error);
+          } else {
+            fetchDynamicVoice();
           }
         }
       } catch (err) {}
@@ -278,6 +326,63 @@ export default function ClanManager() {
     addLog('Saving config...');
   };
 
+  const fetchDynamicVoice = () => {
+    setLoadingVoice(true);
+    addLog('Fetching dynamic voice config via proxy');
+    ws.send(JSON.stringify({ 
+      type: 'clan', 
+      action: 'proxy', 
+      reqId: 'get_dynamic_voice', 
+      payload: { action: 'get_dynamic_voice' } 
+    }));
+  };
+
+  const saveDynamicVoiceConfig = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const formElement = e?.currentTarget?.tagName === 'FORM' ? e.currentTarget : e?.target?.closest('form');
+    if (formElement && !validateForm(formElement)) {
+      return;
+    }
+    setSaveStatus('saving');
+    ws.send(JSON.stringify({ 
+      type: 'clan', 
+      action: 'proxy', 
+      reqId: 'update_dynamic_voice', 
+      payload: {
+        action: 'update_dynamic_voice',
+        config: dynamicVoiceData.config
+      }
+    }));
+    addLog('Saving dynamic voice config...');
+  };
+
+  const handleAutoSetupDynamicVoice = () => {
+    setVoiceActionLoading(true);
+    addLog('Запрос автоматической настройки динамических войсов...');
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'auto_setup_dynamic_voice',
+      payload: { action: 'auto_setup_dynamic_voice' }
+    }));
+  };
+
+  const handleManageDynamicRoom = (subAction, channelId, options = {}) => {
+    setVoiceActionLoading(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'manage_dynamic_room',
+      payload: {
+        action: 'manage_dynamic_room',
+        subAction,
+        channelId,
+        ...options
+      }
+    }));
+    addLog(`Manage dynamic room: ${subAction} on ${channelId}`);
+  };
+
   useEffect(() => {
     if (!ws || wsStatus !== 'online') return;
     if (activeTab === 'roster' && !rosterData) {
@@ -286,10 +391,12 @@ export default function ClanManager() {
     } else if (activeTab === 'stats' && !statsData) {
       addLog('Fetching stats via proxy');
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+    } else if (activeTab === 'voice' && !dynamicVoiceData) {
+      fetchDynamicVoice();
     } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions') && !discordInfo) {
       fetchDiscordInfo();
     }
-  }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo]);
+  }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData]);
 
   const DebugLogs = () => (
     <div className="mt-8 bg-slate-900 text-green-400 p-4 rounded-xl shadow-inner text-xs font-mono max-h-64 overflow-y-auto border border-slate-800">
@@ -378,6 +485,7 @@ export default function ClanManager() {
     { id: 'roles', label: 'Роли' },
     { id: 'channels', label: 'Каналы' },
     { id: 'permissions', label: 'Права Доступа' },
+    { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы' },
     { id: 'recruitment', label: 'Наборы' },
     { id: 'votes', label: 'Голосования' },
     { id: 'ads', label: 'Реклама' },
@@ -799,6 +907,287 @@ export default function ClanManager() {
                 <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
                   <SaveButton />
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'voice' && (
+              <div className="space-y-8 max-w-5xl">
+                {/* Header banner / info */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-200 dark:border-orange-900/30">
+                  <div className="flex items-start gap-3.5">
+                    <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-md shadow-orange-500/20 shrink-0 mt-0.5">
+                      <Volume2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                        {t('clan_voice_title')}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                        {t('clan_voice_desc')}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAutoSetupDynamicVoice}
+                    disabled={voiceActionLoading}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/80 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:border-orange-300 dark:hover:border-orange-700 rounded-xl text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
+                    <span>{voiceActionLoading ? 'Создание...' : t('clan_voice_auto_setup_btn')}</span>
+                  </button>
+                </div>
+
+                {/* Section 1: Settings Form */}
+                {loadingVoice || !dynamicVoiceData ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  </div>
+                ) : (
+                  <>
+                    <form onSubmit={saveDynamicVoiceConfig} className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-6">
+                      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                          <h4 className="font-semibold text-slate-900 dark:text-white text-base">
+                            Настройки системы Join-to-Create
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Настройте категорию и канал для автоматического создания пати
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!dynamicVoiceData.config?.enabled}
+                            onChange={(e) => setDynamicVoiceData(prev => ({
+                              ...prev,
+                              config: { ...prev.config, enabled: e.target.checked }
+                            }))}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-500"></div>
+                          <span className="ml-3 text-sm font-medium text-slate-700 dark:text-slate-300 select-none">
+                            {dynamicVoiceData.config?.enabled ? 'Включено' : 'Выключено'}
+                          </span>
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <ChannelSelect
+                          label={t('clan_voice_category_label')}
+                          description={t('clan_voice_category_desc')}
+                          value={dynamicVoiceData.config?.categoryId || ''}
+                          onChange={(val) => setDynamicVoiceData(prev => ({
+                            ...prev,
+                            config: { ...prev.config, categoryId: val }
+                          }))}
+                          discordChannels={dynamicVoiceData?.channels || discordInfo?.channels || []}
+                          typeFilter={4}
+                        />
+
+                        <ChannelSelect
+                          label={t('clan_voice_generator_label')}
+                          description={t('clan_voice_generator_desc')}
+                          value={dynamicVoiceData.config?.generatorChannelId || ''}
+                          onChange={(val) => setDynamicVoiceData(prev => ({
+                            ...prev,
+                            config: { ...prev.config, generatorChannelId: val }
+                          }))}
+                          discordChannels={dynamicVoiceData?.channels || discordInfo?.channels || []}
+                          typeFilter={2}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            {t('clan_voice_template_label')}
+                          </label>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                            {t('clan_voice_template_desc')}
+                          </p>
+                          <input
+                            type="text"
+                            value={dynamicVoiceData.config?.template || ''}
+                            onChange={(e) => setDynamicVoiceData(prev => ({
+                              ...prev,
+                              config: { ...prev.config, template: e.target.value }
+                            }))}
+                            placeholder="🔊 Пати {user}"
+                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            {t('clan_voice_limit_label')}
+                          </label>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                            {t('clan_voice_limit_desc')}
+                          </p>
+                          <select
+                            value={dynamicVoiceData.config?.defaultLimit ?? 0}
+                            onChange={(e) => setDynamicVoiceData(prev => ({
+                              ...prev,
+                              config: { ...prev.config, defaultLimit: parseInt(e.target.value, 10) || 0 }
+                            }))}
+                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
+                          >
+                            <option value={0}>0 — {t('clan_voice_unlimited')}</option>
+                            <option value={2}>2 места (Дуо)</option>
+                            <option value={3}>3 места (Трио)</option>
+                            <option value={4}>4 места (Квадро)</option>
+                            <option value={5}>5 мест (Пятерка)</option>
+                            <option value={6}>6 мест</option>
+                            <option value={8}>8 мест</option>
+                            <option value={10}>10 мест</option>
+                            <option value={12}>12 мест</option>
+                            <option value={16}>16 мест</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={saveStatus === 'saving'}
+                          className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                        >
+                          {saveStatus === 'saving' ? (
+                            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Сохранение...</>
+                          ) : saveStatus === 'success' ? (
+                            <>✓ Сохранено</>
+                          ) : (
+                            'Сохранить настройки войсов'
+                          )}
+                        </button>
+                      </div>
+                    </form>
+
+                    {/* Section 2: Active Temporary Rooms Monitoring */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-slate-900 dark:text-white text-base">
+                            {t('clan_voice_active_title')}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60">
+                            {dynamicVoiceData.activeRooms?.length || 0}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={fetchDynamicVoice}
+                          disabled={loadingVoice || voiceActionLoading}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${loadingVoice ? 'animate-spin' : ''}`} />
+                          <span>{t('clan_voice_refresh_btn')}</span>
+                        </button>
+                      </div>
+
+                      {(!dynamicVoiceData.activeRooms || dynamicVoiceData.activeRooms.length === 0) ? (
+                        <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                          <Radio className="w-8 h-8 mx-auto text-slate-400 mb-2 opacity-60" />
+                          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                            {t('clan_voice_no_rooms')}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {dynamicVoiceData.activeRooms.map(room => (
+                            <div
+                              key={room.channelId}
+                              className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                            >
+                              <div className="flex justify-between items-start gap-2">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <Volume2 className="w-4 h-4 text-orange-500 shrink-0" />
+                                    <h5 className="font-semibold text-slate-900 dark:text-white text-sm truncate max-w-[220px]" title={room.name}>
+                                      {room.name}
+                                    </h5>
+                                  </div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    {t('clan_voice_owner')} <span className="font-medium text-slate-700 dark:text-slate-300">{room.ownerName || 'Unknown'}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newLimit = window.prompt('Новый лимит мест (0 = без лимита):', room.userLimit || 0);
+                                      if (newLimit !== null) {
+                                        handleManageDynamicRoom('set_limit', room.channelId, { limit: parseInt(newLimit, 10) || 0 });
+                                      }
+                                    }}
+                                    className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                                    title="Изменить лимит мест"
+                                  >
+                                    <Sliders className="w-3 h-3" />
+                                    <span>{room.userLimit > 0 ? room.userLimit : '∞'}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (window.confirm(`Удалить комнату "${room.name}"? Все участники будут отключены.`)) {
+                                        handleManageDynamicRoom('delete_room', room.channelId);
+                                      }
+                                    }}
+                                    className="p-1.5 text-xs font-medium rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                    title={t('clan_voice_delete_room_btn')}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Members list */}
+                              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex justify-between">
+                                  <span>Участники ({room.members?.length || 0}{room.userLimit > 0 ? ` / ${room.userLimit}` : ''}):</span>
+                                </div>
+                                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                  {room.members?.map(m => (
+                                    <div
+                                      key={m.id}
+                                      className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-xs"
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <img
+                                          src={m.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                                          alt=""
+                                          className="w-5 h-5 rounded-full shrink-0"
+                                        />
+                                        <span className="truncate text-slate-800 dark:text-slate-200 font-medium max-w-[130px]" title={m.displayName}>
+                                          {m.displayName}
+                                        </span>
+                                        {m.isMuted && (
+                                          <MicOff className="w-3 h-3 text-red-500 shrink-0" title={t('clan_voice_muted')} />
+                                        )}
+                                        {m.isDeaf && (
+                                          <VolumeX className="w-3 h-3 text-red-500 shrink-0" title={t('clan_voice_deafened')} />
+                                        )}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleManageDynamicRoom('kick_member', room.channelId, { userId: m.id })}
+                                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors cursor-pointer"
+                                        title="Отключить из голосового канала"
+                                      >
+                                        <UserX className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
