@@ -789,12 +789,30 @@ app.whenReady().then(async () => {
     app.quit();
   });
 
-  ipcMain.handle('shell:openExternal', (event, url) => {
-    require('electron').shell.openExternal(url);
+  ipcMain.handle('shell:openExternal', async (event, url) => {
+    if (url) {
+      try {
+        await shell.openExternal(url);
+        return true;
+      } catch (err) {
+        console.error('shell:openExternal error:', err);
+        return false;
+      }
+    }
+    return false;
   });
 
-  ipcMain.handle('shell:openPath', (event, filePath) => {
-    require('electron').shell.openPath(filePath);
+  ipcMain.handle('shell:openPath', async (event, filePath) => {
+    if (filePath) {
+      try {
+        await shell.openPath(filePath);
+        return true;
+      } catch (err) {
+        console.error('shell:openPath error:', err);
+        return false;
+      }
+    }
+    return false;
   });
 
   ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion) => {

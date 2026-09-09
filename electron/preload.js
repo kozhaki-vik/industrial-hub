@@ -2,9 +2,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   autoDetectRustPath: () => ipcRenderer.invoke('autoDetectRustPath'),
-  shell: {
-    openPath: (path) => ipcRenderer.invoke('shell:openFolder', path)
-  },
   browseForRustPath: () => ipcRenderer.invoke('browseForRustPath'),
   app: {
     relaunch: () => ipcRenderer.invoke('app:relaunch'),
