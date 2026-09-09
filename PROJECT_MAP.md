@@ -26,6 +26,8 @@
    - [Схема данных Prisma (prisma/schema.prisma)](#43-схема-данных-prisma)
 5. [Потоки данных и протоколы взаимодействия](#5-потоки-данных-и-протоколы-взаимодействия)
 6. [Памятка для ИИ-агента](#6-памятка-для-ии-агента)
+7. [История ключевых изменений (Changelog v2.7.20 – v2.7.36)](#7-история-ключевых-изменений-changelog)
+8. [Дорожная карта и планы на будущее (Roadmap)](#8-дорожная-карта-и-планы-на-будущее-roadmap)
 
 ---
 
@@ -64,11 +66,11 @@ repos/
   * `--force-main-channel`: Принудительно устанавливает канал обновлений `main` (используется лаунчером).
 * **Ротация версий:** Хранит не более 3 предыдущих папок версий, старые перемещает в `Версии/`.
 * **Зарегистрированные IPC-хэндлеры (`ipcMain.handle`):**
-  * `shell:openFolder(folderPath)` — открывает папку в проводнике Windows.
+  * `shell:openFolder(folderPath)` / `shell:openPath(targetPath)` — безопасное открытие файла или папки в проводнике Windows без вызова `require` в коде рендерера.
   * `autoDetectRustPath()` — сканирует реестр Steam (`HKCU\Software\Valve\Steam\SteamPath`) и `libraryfolders.vdf`, возвращая путь к Rust.
   * `browseForRustPath()` — вызывает диалог выбора папки Windows.
   * `diagnostics:pingUrl(urlStr)` — замеряет HTTP/HTTPS отклик до заданного URL (timeout 3000ms).
-  * `diagnostics:getHardwareInfo()` — собирает имя ПК, платформу, модель CPU, имя GPU (через CIM/WMI PowerShell), RAM, Uptime приложения и ОС.
+  * `diagnostics:getHardwareInfo()` — собирает имя ПК, платформу, модель CPU, имя GPU (через CIM/WMI PowerShell), RAM, Uptime приложения и ОС (с точным распознаванием Windows 10 vs Windows 11 по номеру билда >= 22000).
   * `diagnostics:getAppPath()` — возвращает путь к папке приложения.
   * `diagnostics:getAppDataPath()` — путь к `%APPDATA%/industrial-hub`.
   * `diagnostics:getAppVersionInfo()` — версия из `package.json` и метка последнего обновления.
@@ -81,9 +83,9 @@ repos/
   * `config:copyFile(src, dest)` — копирует файл.
   * `config:ensureDir(dirPath)` — создает директорию рекурсивно.
   * `gamma:getDisplays()` — выполняет `NativeHelper.exe displays`, возвращает список мониторов (`\\.\DISPLAY1` и т.д.).
-  * `gamma:setDisplayGamma(brightnessLevel, deviceName)` — вызывает `NativeHelper.exe gamma <level> <display>`.
+  * `gamma:setDisplayGamma(brightnessLevel, deviceName)` — вызывает `NativeHelper.exe gamma <level> <display>` (при включении активирует фиксированную 100% калиброванную кривую из Electric Guide).
   * `gamma:registerHook(vkCode)` — запускает фоновый процесс `NativeHelper.exe hook <vkCode>`, слушает вывод `HOTKEY_PRESSED` и шлет событие `gamma:hotkey_pressed` в окно React.
-  * `gamma:unregisterHook()` — убивает запущенный процесс перехвата хоткея.
+  * `gamma:unregisterHook()` — завершает фоновый процесс перехвата хоткея.
   * `network:get-hwid()` — генерирует уникальный SHA256 хеш машины.
   * `app:relaunch()` — перезапускает приложение.
   * `app:reportError(errorDetails)` — ручная отправка ошибки в Telegram через сервер.
@@ -160,9 +162,10 @@ repos/
 * **`ThemeContext.jsx` (`useTheme`):**
   Управляет светлой (`#F8F9FA`) и темной темами. Переключает класс `dark` на теге `<html>`. Сохраняет выбор в сторе.
 * **`GammaContext.jsx` (`useGamma`):**
-  Состояние ночного видения: `isGammaEnabled`, `nightVisionLevel`, `gammaBind`, `displays`, `selectedDisplay`, методы `enableGamma()`, `disableGamma()`, `toggleGamma()`.
+  Состояние ночного видения: `isGammaEnabled`, `gammaBind`, `displays`, `selectedDisplay`, методы `enableGamma()`, `disableGamma()`, `toggleGamma()`. Ползунок ручной регулировки удален — яркость зафиксирована на 100% с калиброванной гамма-кривой из Electric Guide.
 * **`NetworkContext.jsx` (`useNetwork`):**
   Управляет WebSocket-подключением к серверу:
+  * Регулярный `heartbeat` каждую минуту (для поддержания активности через Nginx).
   * Список эндпоинтов для отказоустойчивости (`wss://industrial-hub.duckdns.org`, `ws://...`, прямые IP).
   * Экспортирует: `ws`, `status` ('connecting'|'online'|'offline'), `onlineCount`, `serverVersion`, `updateProgress`, `updateLogs`, `triggerUpdateCheck()`, `sendTelemetry(data)`, `createTicket(message, logs)`.
   * Слушает серверные события: `auth_success`, `online_count`, `update_available`, `notification`.
@@ -176,15 +179,19 @@ repos/
 * **[`Dashboard.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Dashboard.jsx) (Главная):**
   Сводка системы, быстрый переход к разделам, индикаторы онбординга с мягкой подсветкой (`glowTarget`).
 * **[`Binds.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Binds.jsx) (Бинды):**
-  Интерактивная виртуальная клавиатура ANSI, визуализация назначенных клавиш, каталог готовых биндов, ручное назначение команд, анализ конфликтов с клавишей гаммы, история и бэкапы `keys.cfg`.
+  * Интерактивная виртуальная клавиатура ANSI, визуализация назначенных клавиш.
+  * **Разделение каталога на две секции:**
+    1. *Короткие бинды* (вверху, 3 колонки) — простые команды (авто-бег, авто-добыча, kill, disconnect, clear, duck, auto-swim).
+    2. *Длинные бинды* (внизу, 2 колонки) — широкие консольные команды (combatlog, FOV, sound mute, bind toggles) с комфортным чтением без обрезки текста.
 * **[`Conveyors.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Conveyors.jsx) (Конвейеры):**
-  Менеджер промышленных фильтров Rust. Пресеты (Оружие, Патроны, Ресурсы, Медикаменты), кастомные категории с Drag & Drop (`@hello-pangea/dnd`), кнопка быстрого копирования конфига для мгновенной вставки в игру.
+  * Менеджер промышленных фильтров Rust. Пресеты, кастомные категории с Drag & Drop (`@hello-pangea/dnd`), кнопка быстрого копирования конфига для мгновенной вставки в игру.
+  * Счетчик популярности `🔥 {tpl.copyCount}` для каждого предмета/шаблона, сортировка по популярности, категория «Популярные».
 * **[`Monuments.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Monuments.jsx) (Монументы):**
   Справочник РТ (Нефтяные вышки, Космодром, Военные туннели и др.). Необходимые карты доступа (зеленые, синие, красные), предохранители, радиация, CCTV коды (копирование в 1 клик), пошаговые решения головоломок.
 * **[`Electricity.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Electricity.jsx) (Электрика):**
   Интерактивные схемы электрических цепей Rust (авто-турели, автоматическая печь, сигнализация рейда), расчет мощности (rW), интеграция с сайтом `Rustrician`.
 * **[`Gamma.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Gamma.jsx) (Гамма):**
-  Настройка аппаратного осветления экрана для ночи. Выбор монитора, ползунок яркости, привязка глобального хоткея.
+  Настройка ночного видения: выбор монитора, привязка глобального хоткея. Кнопки мгновенного включения/выключения вынесены в шапку приложения.
 * **[`Graphics.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Graphics.jsx) (Графика):**
   Оптимизация FPS в игре: готовые пресеты (`Potato`, `Low`, `Medium`, `Ultra`, `Custom`), бэкапы `client.cfg`, проверка `isRustRunning()`.
 * **[`Servers.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Servers.jsx) (Серверы):**
@@ -192,18 +199,25 @@ repos/
 * **[`Settings.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Settings.jsx) (Настройки):**
   Смена языка (`ru`, `en`, `ua`), темы оформления, изменение пути к Rust, переключение канала обновлений (Main/Test с PIN `2136`), управление бэкапами, подача заявки спонсора, сброс настроек.
 * **[`Developer.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/Developer.jsx) (Разработчик):**
-  Диагностика железа (CPU, GPU, RAM, Uptime), сетевой тест (Ping 6 сервисов), целостность файлов (10 файлов программы, 2 файла Rust), краш-тест, автообновление, кредиты команды (`Kozak`, `Кактус`, `RS6`).
+  * Точное определение ОС (Windows 10 vs Windows 11 по номерам билдов >= 22000).
+  * Диагностика железа (CPU, GPU, RAM, Uptime), сетевой тест (Ping 6 сервисов), целостность файлов (10 файлов программы, 2 файла Rust).
+  * **Кнопка сброса счетчиков огоньков предметов (`Flame`):** обнуляет `copyCount: 0` для всех шаблонов конвейеров с динамической индикацией успеха.
+  * Краш-тест, автообновление, Factory Reset, кредиты команды (`Kozak`, `Кактус`, `RS6`).
 * **[`ClanManager.jsx`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/views/ClanManager.jsx) (Клан / Состав):**
-  Панель управления кланом Rust через Discord: привязка по коду из `/hub_link`, состав участников (ростер), роли, статистика голосового онлайна, опросы по вайпам, визард авто-настройки Discord-сервера.
+  * Привязка к Discord-боту по коду `/hub_link`.
+  * **Настойчивый онбординг:** предложение настроить бота при привязке и при входе во вкладку, пока настройка не завершена.
+  * Стилизованные кнопки («Мастер настройки», «Отвязать сервер») с четкой обводкой, контрастным фоном, скруглениями `rounded-xl` и иконками.
+  * Состав (ростер), роли, статистика голосового онлайна участников, опросы по вайпам.
 
 ---
 
 ### 2.5. Компоненты (`src/components/`)
 
-* `Header.jsx`: верхняя панель, статус подключения к серверу, онлайн игроков, навигация.
+* `TitleBar.jsx` / `Header.jsx`: верхняя панель, статус сервера, онлайн игроков и **компактные заметные кнопки переключения ночной гаммы** (`Eye` / `EyeOff`), доступные на любой вкладке.
+* `SetupWizardModal.jsx`: интерактивный мастер настройки бота для Discord сервера.
 * `Card.jsx`: базовая карточка инженерного стиля с подсветкой.
 * `FullKeyboard.jsx`: полноразмерная интерактивная клавиатура с поддержкой цветовых меток типов команд.
-* `ConveyorEditorModal.jsx`: модальное окно создания и редактирования фильтра конвейера с поиском по базе предметов.
+* `ConveyorEditorModal.jsx`: модальное окно создания и редактирования фильтра конвейера с поиском по базе предметов и валидацией обязательных полей.
 * `RustPathModal.jsx`: диалог привязки папки игры при первом запуске.
 * `SetupWizard.jsx`: пошаговый мастер первой настройки (язык, тема, папка Rust).
 * `SplashScreen.jsx`: вступительная анимация при запуске программы.
@@ -212,7 +226,7 @@ repos/
 * `FeedbackButton.jsx`: плавающая кнопка обратной связи.
 * `ToastContainer.jsx`: контейнер нотификаций.
 * `ErrorBoundary.jsx`: ловушка React-ошибок с автоматической отправкой стека на сервер.
-* `RoleSelect.jsx` / `ChannelSelect.jsx`: дропдауны ролей и каналов Discord для Клан-Менеджера.
+* `RoleSelect.jsx` / `ChannelSelect.jsx`: селекты ролей и каналов с атрибутом `required` для валидации.
 
 ---
 
@@ -220,7 +234,7 @@ repos/
 
 * `itemsDB.ts`: База предметов Rust (shortname, категории, динамический импорт иконок).
 * `items_ru.json`: Локализованные русские названия всех внутриигровых предметов.
-* `defaultConveyors.js`: Готовые шаблоны конвейеров и категории по умолчанию.
+* `defaultConveyors.js`: Готовые шаблоны конвейеров и категории по умолчанию (с `copyCount: 0`).
 * `monumentsData.js`: Данные монументов Rust (радиация, карты, шаги, CCTV).
 * `electricityData.js`: Данные электросхем Rust.
 * `i18n.js`: Централизованные словари локализации (`ru`, `en`, `ua`).
@@ -229,14 +243,23 @@ repos/
 
 ### 2.7. Утилиты (`src/utils/`)
 
-* **[`SmartPatcher.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/utils/SmartPatcher.js):**
-  * Функция `checkUpdates(addLog)`:
-    * Запрашивает GitHub Releases API (`kozhaki-vik/industrial-hub-releases`) с Cache-Buster (`?t=${Date.now()}`).
-    * Канал `main`: `/releases/latest`. Канал `test`: `/releases` (берется первый релиз, включая Prerelease).
-    * Сравнивает трехзначную версию (Major.Main.Test).
-    * Вызывает `network:apply-exe-update` с прямой ссылкой на скачивание `.exe`.
-* **[`keyboardMap.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/utils/keyboardMap.js):**
-  Физическая раскладка ANSI клавиатуры (5 рядов, спецклавиши, скан-коды и VK-коды).
+#### 1. [`formValidation.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/utils/formValidation.js) (Универсальная валидация форм)
+* `validateForm(containerOrForm) -> boolean`:
+  * Сканирует форму на обязательные незаполненные поля (`input[required]`, `textarea[required]`, `select[required]`, `[data-required="true"]`).
+  * Сортирует найденные ошибки сверху вниз по координатам на экране (`getBoundingClientRect().top`).
+  * Плавно скроллит страницу или модалку к **первому незаполненному полю** (`scrollIntoView({ behavior: 'smooth', block: 'center' })`), фокусирует его, включает красную рамку со свечением (`.input-error-highlight`) и шейк-анимацию (`.animate-field-shake`).
+  * Подключает слушатель ввода, моментально снимающий ошибку при начале заполнения.
+* `scrollToAndHighlight(element, shouldFocus)`: вспомогательный метод подсветки и скролла.
+
+#### 2. [`SmartPatcher.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/utils/SmartPatcher.js):
+* Функция `checkUpdates(addLog)`:
+  * Запрашивает GitHub Releases API (`kozhaki-vik/industrial-hub-releases`) с Cache-Buster (`?t=${Date.now()}`).
+  * Канал `main`: `/releases/latest`. Канал `test`: `/releases` (берется первый релиз, включая Prerelease).
+  * Сравнивает трехзначную версию (Major.Main.Test).
+  * Вызывает `network:apply-exe-update` с прямой ссылкой на скачивание `.exe`.
+
+#### 3. [`keyboardMap.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub/src/utils/keyboardMap.js):
+* Физическая раскладка ANSI клавиатуры (5 рядов, спецклавиши, скан-коды и VK-коды).
 
 ---
 
@@ -268,7 +291,8 @@ repos/
 * **[`server.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub%20Server/server.js):**
   * HTTP Rate Limiting (`express-rate-limit`).
   * `POST /api/crash`: Прием аварийных дампов от клиентов. Немедленно уведомляет разработчика в Telegram через `telegramService.sendCrashReport(hwid, version, errorStack)`.
-  * `POST /api/webhook/github`: Прием вебхуков от GitHub репозитория `kozhaki-vik/industrial-hub-releases`. При публикации нового релиза рассылает сигнал `update_available` всем активным WebSocket клиентам в реальном времени.
+  * `POST /api/webhook/github`: Прием вебхуков от GitHub репозитория `kozhaki-vik/industrial-hub-releases`. Извлекает номер версии из `release.tag_name`, вызывает `setLatestVersion()` и рассылает сигнал `update_available` всем активным WebSocket клиентам в реальном времени.
+  * `syncLatestVersion()`: На старте сервера опрашивает GitHub API и синхронизирует актуальный номер релиза, исключая рассинхронизацию версий.
   * `GET /version.json`: Редирект на `/updates/version.json`.
   * `WSS /`: WebSocket сервер с компрессией `perMessageDeflate`.
 
@@ -276,11 +300,10 @@ repos/
 
 * **[`ws/connection.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub%20Server/ws/connection.js):**
   * Ведет учет активных клиентов (`activeClients` Map).
-  * `handleConnection(ws, req)`: парсит IP, инициирует heartbeat.
-  * Обрабатывает типы пакетов:
-    * `auth`: регистрация клиента по HWID и версии. Отправляет ответ `auth_success` и текущий счетчик онлайна.
-    * `heartbeat`: обновление активности соединения.
-  * `startHeartbeatChecker(wss)`: пингует сокеты каждые 30 секунд, отсекает мертвые соединения.
+  * `setLatestVersion(version)`: Сохраняет актуальную версию в память и файл `data/updates/version.json`.
+  * `getLatestVersion()`: Возвращает актуальную версию клиентам при авторизации.
+  * `handleConnection(ws, req)`: парсит IP, инициирует heartbeat, отправляет `auth_success` с реальной версией сервера.
+  * `startHeartbeatChecker(wss)`: каждые 60 секунд проверяет сокеты, разделяя обычные клиенты и Discord-бота (`ws.isBot`).
 * **[`ws/tickets.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub%20Server/ws/tickets.js):**
   * `handleTicket(ws, data)`: защита от спама (1 тикет в минуту на HWID). Записывает тикет в базу данных `tickets`, возвращает клиенту `ticket_success` и пересылает в Telegram бот с inline-кнопками управления.
 * **[`ws/telemetry.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub%20Server/ws/telemetry.js):**
@@ -297,10 +320,9 @@ repos/
 ### 3.3. Сервисы (`services/`)
 
 * **[`services/telegram.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub%20Server/services/telegram.js):**
-  * Интеграция с Telegram-ботом разработчика.
-  * Отправка тикетов с интерактивными кнопками («Ответить», «В процессе», «Решено»).
-  * Отправка crash-репортов с форматированным стеком ошибок.
-  * При ответе администратора в Telegram бот находит клиента по WebSocket и отправляет ему нотификацию `notification`.
+  * Интеграция с Telegram-ботом разработчика (тикеты, краши, ответы клиентам).
+  * Polling с таймаутом 30 секунд (предотвращает ошибки `502 Bad Gateway` / `504 Gateway Timeout`).
+  * Троттлинг логирования ошибок соединения (не чаще 1 раза в 60 секунд).
 * **[`services/crypto.js`](file:///C:/Users/dimav/source/repos/Industrial%20Hub%20Server/services/crypto.js):**
   * Генерация и проверка криптографических подписей манифестов (ECDSA).
 
@@ -339,13 +361,14 @@ repos/
 ### 4.2. Связка с сервером (`serverConnection.js`)
 
 * **[`src/services/serverConnection.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/src/services/serverConnection.js):**
-  Подключается к `wss://industrial-hub.duckdns.org` как авторизованный бот.
-  Обрабатывает прокси-запросы от десктопного клиента Industrial Hub:
-  * `get_config` / `update_config`: получение и сохранение ролей, каналов, баннеров и шаблонов.
-  * `get_roster`: собирает список всех участников гильдии, у которых есть клановые роли (Лидер, Зам, Коллер, Основной состав, Тестер, Фермер, Электрик, Строитель, Пилот).
-  * `get_stats`: возвращает аналитику голосовой и текстовой активности мемберов.
-  * `auto_setup`: автоматическое создание категорий, каналов и ролей на Discord сервере в один клик из программы.
-  * `sync_permissions`: настройка прав доступа ко всем клановым комнатам.
+  * Подключается к `wss://industrial-hub.duckdns.org` как авторизованный бот.
+  * **Keep-Alive Heartbeat:** каждые 25 секунд отправляет `bot_heartbeat`, исключая разрыв соединения прокси-сервером Nginx (`proxy_read_timeout 120s`). Соединение поддерживается стабильно 24/7.
+  * Обрабатывает прокси-запросы от десктопного клиента Industrial Hub:
+    * `get_config` / `update_config`: получение и сохранение ролей, каналов, баннеров и шаблонов.
+    * `get_roster`: собирает список всех участников гильдии, у которых есть клановые роли (Лидер, Зам, Коллер, Основной состав, Тестер, Фермер, Электрик, Строитель, Пилот).
+    * `get_stats`: возвращает аналитику голосовой и текстовой активности мемберов.
+    * `auto_setup`: автоматическое создание категорий, каналов и ролей на Discord сервере в один клик из программы.
+    * `sync_permissions`: настройка прав доступа ко всем клановым комнатам.
 
 ### 4.3. Схема данных Prisma (`prisma/schema.prisma`)
 
@@ -370,33 +393,97 @@ repos/
 └──────────────────────────┬─────────────────────────────┘
                            │
                  WebSocket │ HTTPS
+                 (Heartbeat│ (Crash Reports, Updates)
+                  every 60s│
                            ▼
 ┌────────────────────────────────────────────────────────┐
 │               INDUSTRIAL HUB SERVER (GERMANY)          │
+│   • Nginx Reverse Proxy (proxy_read_timeout)           │
 │   • Express HTTP (Crash dumps, GitHub Webhooks)        │
 │   • WebSocket Server (Auth, Telemetry, Tickets, Proxy) │
+│   • Version Auto-Sync (Webhook + GitHub API)           │
 │   • SQLite Database                                    │
-│   • Telegram Bot Service                               │
+│   • Telegram Bot Service (polling timeout 30s)         │
 └──────────────┬──────────────────────────▲──────────────┘
                │                          │
-      Telegram │                 WS Proxy │ 
-      Bot API  │                          │
+      Telegram │                 WS Proxy │ Keep-Alive
+      Bot API  │                          │ Heartbeat (25s)
                ▼                          ▼
       ┌─────────────────┐       ┌────────────────────────┐
       │  Разработчик    │       │       DISCORD BOT      │
       │   в Telegram    │       │  Discord.js + Prisma   │
-      └─────────────────┘       │  Voice/Chat Analytics  │
-                                └────────────────────────┘
+      │                 │       │  Voice/Chat Analytics  │
+      └─────────────────┘       └────────────────────────┘
 ```
 
 ---
 
 ## 6. Памятка для ИИ-агента
 
-1. **Запретные зоны:** НИКОГДА не сканировать и не менять `C:\Users\Developer\source\repos\BackUp`.
-2. **Версионирование:** При любых изменениях кода клиента инкрементировать третью цифру версии (тестовую) в `package.json` (`2.x.+1`).
-3. **Локализация:** Все видимые строки интерфейса добавлять через `react-i18next` в `src/i18n.js` для `ru`, `en`, `ua` (украинский ВСЕГДА `ua`).
-4. **Стили:** Строгий светлый инженерный стиль (`#F8F9FA`, карточки `bg-white`, текст `slate-900/500`) и глубокий темный (`dark:bg-slate-900`), акцент `orange-500`.
-5. **Пути Electron:** Всегда использовать `getRealAppPath()` через `process.env.PORTABLE_EXECUTABLE_DIR`, избегая временных папок `%TEMP%`.
-6. **Безопасность Rust:** Все изменения `keys.cfg` и `client.cfg` предварять проверкой `isRustRunning()` и автосозданием резервной копии.
-7. **Изменения сервера:** При правках в `Industrial Hub Server` предупреждать пользователя о необходимости загрузить файлы на немецкий сервер.
+1. **СТРОГИЙ ЗАПРЕТ:** Категорически запрещено заходить, сканировать или изменять любые файлы в `C:\Users\Developer\source\repos\BackUp`.
+2. **Версионирование:** При любых изменениях клиента инкрементировать третью цифру версии (тестовую) в `package.json` (`2.x.+1`). Выпуск Main-сборки — только по прямому указанию пользователя.
+3. **Локализация (i18n):** Приложение поддерживает 3 языка (`ru`, `en`, `ua`). Русский — по умолчанию. Украинский ВСЕГДА сокращается как `ua` (никогда `uk`). Все строки интерфейса обязаны быть в `src/i18n.js`.
+4. **Стилистика интерфейса:** Строгий чистый инженерный стиль.
+   - Light: `#F8F9FA`, карточки `bg-white`, текст `slate-900 / 500`.
+   - Dark: `dark:bg-slate-900`, текст `slate-100 / 400`.
+   - Акцент: Industrial Orange (`orange-500`).
+   - Кнопки управления должны иметь четкую контрастную обводку (`border-slate-200 dark:border-slate-700`), читаемый фон и скругления `rounded-xl` / `rounded-lg`.
+5. **Валидация форм (Обязательное правило):** При отправке, сохранении или применении любых форм использовать `validateForm()` из `src/utils/formValidation.js`. Невалидные поля подсвечиваются красным (`.input-error-highlight`), анимируются шейком (`.animate-field-shake`), а страница автоматически плавно скроллится к первому незаполненному полю сверху вниз.
+6. **Гамма (Ночное видение):** Кнопки быстрого переключения гаммы (`Eye` / `EyeOff`) всегда размещаются в шапке приложения (`TitleBar.jsx`). Ручной ползунок яркости отключен — гамма фиксирована на 100% с проверенной плавной цветокоррекцией из Electric Guide.
+7. **Пути Electron:** Всегда использовать `getRealAppPath()` через `process.env.PORTABLE_EXECUTABLE_DIR`, чтобы избежать работы во временной директории `%TEMP%`.
+8. **Безопасность Rust:** Любые модификации файлов `keys.cfg` и `client.cfg` предварять проверкой `isRustRunning()` и автосозданием бэкапа в `cfg/industrial_hub_backups/`.
+9. **Серверные изменения:** При правках в `Industrial Hub Server` или `Discord_Hub` обязательно предупреждать пользователя о необходимости загрузить файлы на удаленный сервер в Германии и перезапустить процессы.
+10. **WebSocket Heartbeat:** Все постоянные соединения (клиент и бот) обязаны слать heartbeat с интервалом 25–60 секунд, иначе Nginx сбрасывает соединение по `proxy_read_timeout`.
+11. **Сборка и публикация:**
+    - `npm run build` -> `npx electron-builder --win`.
+    - Подпись цифровым сертификатом (`Thumbprint: CF5FD177247FC2EEB561B69BE223EF0757218C08`).
+    - Публикация скриптом `.\upload_release.ps1 -Version "X.X.X" -FilePath "release\Industrial Hub X.X.X.exe" -IsPreRelease $true`.
+    - Обязательный `git commit -am "..."` и `git push origin main`.
+
+---
+
+## 7. История ключевых изменений (Changelog)
+
+* **v2.7.36 (Сброс счетчиков популярности конвейеров):**
+  * В Панель разработчика (`Developer.jsx`) добавлена кнопка «Сбросить огоньки предметов» с иконкой `Flame`.
+  * Обнуляет `copyCount: 0` для всех шаблонов конвейеров в сторе с подтверждением и динамической анимацией успеха.
+  * Устранена проблема 120-секундных разрывов Discord-бота через добавление `bot_heartbeat`.
+  * Устранена застрявшая версия сервера `2.7.7` через авто-синхронизацию с GitHub Releases.
+  * Увеличен таймаут Telegram long-polling до 30s.
+* **v2.7.35 (Двухсекционный каталог биндов):**
+  * Разделение каталога на короткие команды (вверху, 3 колонки) и длинные консольные команды (внизу, 2 колонки).
+* **v2.7.34 (Фиксация ночной гаммы):**
+  * Удален ползунок ручной регулировки гаммы — яркость зафиксирована на 100%.
+  * Интегрирована корректная калибровка цветов из Electric Guide.
+* **v2.7.33 (Редизайн кнопок Клан Менеджера):**
+  * Кнопки «Мастер настройки» и «Отвязать сервер» получили четкую обводку, контрастный фон, скругления `rounded-xl` и иконки.
+* **v2.7.32 (Универсальная валидация форм с автоскроллом):**
+  * Создан модуль `formValidation.js` с авто-скроллом к первому невалидному полю сверху вниз и шейк-анимацией.
+  * Интегрирован во все формы приложения: Клан Менеджер, Настройки, Тикеты, Обратная связь, Предложение бинда, Конвейеры.
+* **v2.7.30 – v2.7.31 (Онбординг настройки бота):**
+  * Добавлено настойчивое напоминание запустить мастер настройки бота при входе во вкладку «Клан Менеджер», пока бот не настроен.
+* **v2.7.27 – v2.7.29 (Диагностика ОС и фикс проводника):**
+  * Добавлено точное распознавание Windows 10 vs Windows 11 по номеру билда (>= 22000).
+  * Исправлен краш `ReferenceError: require is not defined` при открытии папок через безопасный IPC `shell:openPath`.
+* **v2.7.20 – v2.7.26 (Кнопки гаммы в шапке):**
+  * Перенос кнопок включения/выключения гаммы в шапку приложения (`TitleBar.jsx`).
+
+---
+
+## 8. Дорожная карта и планы на будущее (Roadmap)
+
+1. **Клан Менеджер и автоматизация Rust:**
+   - **Rust+ Интеграция:** Прием сигналов тревоги (Smart Alarm) через Rust+ Companion API и мгновенная отправка алерта в Discord-канал рейда с упоминанием роли боевого состава.
+   - **Интерактивная карта рейда:** Отображение статуса базы, турелей и ловушек в реальном времени внутри десктопного клиента.
+   - **Голосовые комнаты:** Автоматическое создание временных голосовых каналов (пати-румы) при заходе игроков в Discord.
+2. **Система профилей и облачная синхронизация:**
+   - Создание персональных профилей настроек (Бинды + Графика + Конвейеры) с возможностью сохранения в облако через сервер Industrial Hub и восстановления на любом ПК по HWID/аккаунту.
+3. **Улучшения гаммы:**
+   - Поддержка индивидуальных профилей калибровки под разные типы матриц мониторов (IPS, VA, OLED, TN).
+   - Поддержка составных хоткеев с модификаторами (`Ctrl + Key`, `Alt + Key`).
+4. **Установщик и экосистема:**
+   - Создание единого современного установщика с авто-ассоциацией ссылок `industrial-hub://` для импорта биндов и схем в один клик из браузера.
+   - Автоматическая очистка временных файлов и логов при выходе из приложения.
+5. **База знаний и калькуляторы:**
+   - Добавление интерактивного калькулятора рейдов (стоимость взрыва стен, дверей, турелей в сере/ракетах/C4).
+   - Расширение базы пресетов конвейеров под свежие ежемесячные обновления Rust (новые предметы, дроны, промышленные крафтеры).
