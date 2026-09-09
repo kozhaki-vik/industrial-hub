@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import SetupWizard from '../components/SetupWizard';
 import RoleSelect from '../components/RoleSelect';
 import ChannelSelect from '../components/ChannelSelect';
+import { Sparkles, Unlink } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
 export const isBotConfigured = (cfg) => {
@@ -419,13 +420,20 @@ export default function ClanManager() {
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('clan_manager_title')}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('clan_manager_subtitle')}</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowSetupWizard(true)} className="text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-            {t('clan_wizard_btn')}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowSetupWizard(true)} 
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-blue-500 shrink-0" />
+            <span>{t('clan_wizard_btn')}</span>
           </button>
-          <button onClick={handleUnlink} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            {t('clan_unlink_btn')}
+          <button 
+            onClick={handleUnlink} 
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-700 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+          >
+            <Unlink className="w-4 h-4 text-red-500 shrink-0" />
+            <span>{t('clan_unlink_btn')}</span>
           </button>
         </div>
       </div>
