@@ -423,21 +423,57 @@ app.whenReady().then(async () => {
   ipcMain.handle('diagnostics:getHardwareInfo', async () => {
     const cpus = os.cpus();
     let gpuName = 'Unknown';
+    let osName = '';
     try {
-      gpuName = await new Promise((resolve) => {
-        child_process.exec('powershell -Command "(Get-CimInstance Win32_VideoController).Name"', { timeout: 3000 }, (error, stdout) => {
-          if (error || !stdout.trim()) resolve('Unknown');
-          else resolve(stdout.split('\n')[0].trim());
-        });
+      const psResult = await new Promise((resolve) => {
+        child_process.exec(
+          'powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).Caption; (Get-CimInstance Win32_VideoController).Name"',
+          { timeout: 3000 },
+          (error, stdout) => {
+            if (error || !stdout.trim()) resolve({ os: '', gpu: '' });
+            else {
+              const lines = stdout.trim().split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+              resolve({
+                os: lines[0] || '',
+                gpu: lines[1] || ''
+              });
+            }
+          }
+        );
       });
+      if (psResult.gpu) gpuName = psResult.gpu;
+      if (psResult.os) osName = psResult.os.replace(/^Майкрософт\s+/i, '').replace(/^Microsoft\s+/i, '').trim();
     } catch (e) {
       console.error(e);
+    }
+
+    if (!osName) {
+      if (process.platform === 'win32') {
+        const build = parseInt((os.release() || '').split('.')[2], 10);
+        if (!isNaN(build)) {
+          if (build >= 22000) osName = 'Windows 11';
+          else if (build >= 10240) osName = 'Windows 10';
+          else if (build >= 9600) osName = 'Windows 8.1';
+          else if (build >= 9200) osName = 'Windows 8';
+          else if (build >= 7600) osName = 'Windows 7';
+          else osName = 'Windows';
+        } else {
+          osName = 'Windows';
+        }
+      } else if (process.platform === 'darwin') {
+        osName = 'macOS';
+      } else if (process.platform === 'linux') {
+        osName = 'Linux';
+      } else {
+        osName = os.platform();
+      }
     }
 
     const currentSessionSec = Math.floor((Date.now() - sessionStartTime) / 1000);
     return {
       pcName: os.hostname(),
       platform: os.platform(),
+      osName,
       release: os.release(),
       arch: os.arch(),
       cpu: cpus.length > 0 ? cpus[0].model : 'Unknown',

@@ -120,6 +120,33 @@ export default function Developer() {
     return `${h}${t('time_hours')} ${m}${t('time_mins')} ${s}${t('time_secs')}`;
   };
 
+  const formatOS = (info) => {
+    if (!info) return '';
+    let name = info.osName;
+    if (!name) {
+      if (info.platform === 'win32') {
+        const build = parseInt((info.release || '').split('.')[2], 10);
+        if (!isNaN(build)) {
+          if (build >= 22000) name = 'Windows 11';
+          else if (build >= 10240) name = 'Windows 10';
+          else if (build >= 9600) name = 'Windows 8.1';
+          else if (build >= 9200) name = 'Windows 8';
+          else if (build >= 7600) name = 'Windows 7';
+          else name = 'Windows';
+        } else {
+          name = 'Windows';
+        }
+      } else if (info.platform === 'darwin') {
+        name = 'macOS';
+      } else if (info.platform === 'linux') {
+        name = 'Linux';
+      } else {
+        name = info.platform || 'Unknown';
+      }
+    }
+    return `${name} (${info.release} ${info.arch})`;
+  };
+
   const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
 
   return (
@@ -166,7 +193,7 @@ export default function Developer() {
           {hwInfo ? (
             <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_sys_pc')}</span> {hwInfo.pcName}</p>
-              <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_sys_os')}</span> {hwInfo.platform} ({hwInfo.release} {hwInfo.arch})</p>
+              <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_sys_os')}</span> {formatOS(hwInfo)}</p>
               <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_sys_cpu')}</span> {hwInfo.cpu} ({hwInfo.cores} {t('dev_sys_cores')})</p>
               <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_sys_gpu')}</span> {hwInfo.gpu}</p>
               <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_sys_ram')}</span> {hwInfo.ramTotal} {t('dev_sys_total')} / {hwInfo.ramFree} {t('dev_sys_free')}</p>
