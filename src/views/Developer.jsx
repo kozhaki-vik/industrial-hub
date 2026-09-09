@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen } from 'lucide-react';
+import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath } from '../services/diagnostics';
 import { getButtonStats } from '../services/analytics';
-import { getConfigKey, factoryReset } from '../services/store';
+import { getConfigKey, setConfigKey, factoryReset } from '../services/store';
+import { defaultConveyors } from '../data/defaultConveyors';
 import SplashScreen from '../components/SplashScreen';
 
 import { useNetwork } from '../contexts/NetworkContext';
@@ -27,6 +28,7 @@ export default function Developer() {
   
   const [isTestingSplash, setIsTestingSplash] = useState(false);
   const [shouldCrash, setShouldCrash] = useState(false);
+  const [flamesResetSuccess, setFlamesResetSuccess] = useState(false);
 
   const compareVersions = (v1, v2) => {
     if (!v1 || !v2) return 0;
@@ -110,6 +112,18 @@ export default function Developer() {
     ]);
     setIntegrity(resApp);
     setRustIntegrity(resRust);
+  };
+ 
+  const handleResetFlames = () => {
+    if (!window.confirm(t('dev_reset_flames_confirm'))) return;
+    let savedConveyors = getConfigKey('conveyorTemplates');
+    if (!savedConveyors || !Array.isArray(savedConveyors) || savedConveyors.length === 0) {
+      savedConveyors = defaultConveyors || [];
+    }
+    const updated = savedConveyors.map(c => ({ ...c, copyCount: 0 }));
+    setConfigKey('conveyorTemplates', updated);
+    setFlamesResetSuccess(true);
+    setTimeout(() => setFlamesResetSuccess(false), 3000);
   };
 
   const formatUptime = (seconds) => {
@@ -349,6 +363,17 @@ export default function Developer() {
             </button>
             <button onClick={() => setIsTestingSplash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors">
               <PlayCircle className="w-4 h-4" /> {t('dev_app_test_splash')}
+            </button>
+            <button 
+              onClick={handleResetFlames}
+              className={`flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium transition-all ${
+                flamesResetSuccess 
+                  ? 'bg-green-500 text-white shadow-md shadow-green-500/20' 
+                  : 'bg-orange-100 dark:bg-orange-950/40 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20'
+              }`}
+            >
+              {flamesResetSuccess ? <Check className="w-4 h-4" /> : <Flame className="w-4 h-4 text-orange-500" />}
+              <span>{flamesResetSuccess ? t('dev_reset_flames_success') : t('dev_reset_flames')}</span>
             </button>
             <button onClick={() => setShouldCrash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors hover:bg-red-200 dark:hover:bg-red-900/40">
               <AlertTriangle className="w-4 h-4" /> {t('dev_trigger_error')}
