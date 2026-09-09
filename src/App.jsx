@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Dashboard from './views/Dashboard';
 import Settings from './views/Settings';
@@ -101,8 +101,8 @@ function App() {
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/conveyors" element={<Conveyors />} />
-                      <Route path="/monuments" element={<Monuments />} />
-                      <Route path="/electricity" element={<Electricity />} />
+                      <Route path="/monuments" element={<Navigate to="/" replace />} />
+                      <Route path="/electricity" element={<Navigate to="/" replace />} />
                       <Route path="/graphics" element={<Graphics />} />
                       <Route path="/servers" element={<Servers />} />
                       <Route path="/binds" element={<Binds />} />

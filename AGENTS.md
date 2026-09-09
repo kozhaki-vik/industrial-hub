@@ -17,6 +17,7 @@
 * **Папка с проектами:** `C:\Users\Developer\source\repos`
 * **Текущий проект (Клиент):** `C:\Users\Developer\source\repos\Industrial Hub`
 * **Серверная часть:** `C:\Users\Developer\source\repos\Industrial Hub Server` (содержит точную копию кода, работающего на удаленном сервере в Германии).
+* **Архитектурная карта проекта:** Все функции, IPC каналы, WebSocket события, базы данных и связи между Client, Server и Discord Bot подробно задокументированы в файле `PROJECT_MAP.md` (находится в корне `C:\Users\Developer\source\repos\PROJECT_MAP.md` и в `C:\Users\Developer\source\repos\Industrial Hub\PROJECT_MAP.md`). Агент ОБЯЗАН использовать этот файл для быстрой ориентации в кодовой базе вместо лишнего повторного сканирования.
 * **ВАЖНО:** При внесении любых изменений в код серверной части, агент обязан сообщить об этом пользователю, чтобы он мог вручную загрузить эти изменения на сервер.
 
 ## Дополнительные директории (Additional Directories)

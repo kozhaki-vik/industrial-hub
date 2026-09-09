@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Map, Zap, Monitor, MonitorPlay, Keyboard, Users } from 'lucide-react';
+import { LayoutDashboard, Map, Monitor, MonitorPlay, Keyboard, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
@@ -36,7 +36,8 @@ export default function Dashboard() {
           title={t('monuments_title')}
           description={t('monuments_desc')}
           icon={Map}
-          onClick={() => navigate('/monuments')}
+          disabled={true}
+          badge={t('status_inactive')}
         />
         <Card 
           title="Clan Manager"
@@ -48,7 +49,7 @@ export default function Dashboard() {
       </div>
 
       {/* Row 2: 3 cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card 
           title={t('gamma_title')}
           description={t('gamma_desc')}
@@ -72,15 +73,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Row 3: Addons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card 
-          title={t('electricity_title')}
-          description={t('electricity_desc')}
-          icon={Zap}
-          onClick={() => navigate('/electricity')}
-        />
-      </div>
+      {/* Вкладка Электричество скрыта, код views/Electricity.jsx сохранен для будущего использования */}
     </div>
   );
 }
