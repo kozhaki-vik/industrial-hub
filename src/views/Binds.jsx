@@ -219,40 +219,75 @@ export default function Binds() {
     }
     
     if (activeTab === 'catalog') {
+      const shortBinds = bindSignatures.filter(item => !item.isLong);
+      const longBinds = bindSignatures.filter(item => item.isLong);
+
+      const renderBindCard = (item, i) => (
+        <div key={item.id || i} className="flex flex-col bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 transition-colors group shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${item.color}-100 dark:bg-${item.color}-900/30 text-${item.color}-500 shrink-0`}>
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate" title={t('bind_sig_' + item.id)}>
+                {t('bind_sig_' + item.id)}
+              </h4>
+            </div>
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 mb-4 overflow-x-auto whitespace-nowrap border border-slate-100 dark:border-slate-800/60">
+            bind [key] "{item.command}"
+          </div>
+          <button 
+            onClick={() => handleUseCatalogItem(item.command)}
+            className="mt-auto w-full py-2 bg-slate-100 hover:bg-indigo-500 hover:text-white dark:bg-slate-800 dark:hover:bg-indigo-600 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-colors cursor-pointer"
+          >
+            {t('binds_use')}
+          </button>
+        </div>
+      );
+
       return (
-        <div className="mb-6">
-          <div className="mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl gap-4">
+        <div className="mb-6 space-y-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl gap-4 shadow-sm">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Хотите добавить свой бинд в каталог?</p>
             <button 
               onClick={() => setIsSuggestModalOpen(true)}
-              className="px-5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-sm font-bold transition-all shadow-sm w-full sm:w-auto"
+              className="px-5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl text-sm font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
             >
               Предложить свой бинд
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {bindSignatures.map((item, i) => (
-              <div key={i} className="flex flex-col bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 transition-colors group">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${item.color}-100 dark:bg-${item.color}-900/30 text-${item.color}-500`}>
-                    <BookOpen className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-slate-800 dark:text-slate-200">{t('bind_sig_' + item.id)}</h4>
-                  </div>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 mb-4 overflow-x-auto whitespace-nowrap">
-                  bind [key] "{item.command}"
-                </div>
-                <button 
-                  onClick={() => handleUseCatalogItem(item.command)}
-                  className="mt-auto w-full py-2 bg-slate-100 hover:bg-indigo-500 hover:text-white dark:bg-slate-800 dark:hover:bg-indigo-600 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold transition-colors"
-                >
-                  {t('binds_use')}
-                </button>
-              </div>
-            ))}
+          {/* Короткие бинды (3 колонки) */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                {t('binds_cat_short', 'Короткие бинды')}
+              </h3>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                {shortBinds.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {shortBinds.map(renderBindCard)}
+            </div>
+          </div>
+
+          {/* Длинные бинды (2 колонки) */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                {t('binds_cat_long', 'Длинные бинды')}
+              </h3>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                {longBinds.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {longBinds.map(renderBindCard)}
+            </div>
           </div>
         </div>
       );
