@@ -17,7 +17,8 @@ export const DEFAULT_BAD_WORDS = [
   'кацап', 'кацапы', 'кацапов', 'кацапам', 'кацапами', 'кацапах',
   'русня', 'русни', 'русне', 'русню', 'русней',
   'свинорез', 'свинособака', 'свинособаки', 'чурка', 'чурки', 'чуркам', 'чурками',
-  'укроп', 'укропы', 'укропов', 'ватник', 'ватники', 'ватников', 'колорад', 'колорады'
+  'укроп', 'укропы', 'укропов', 'ватник', 'ватники', 'ватников',
+  'мать шлюха', 'мать шлюхи', 'сын шлюхи', 'дочь шлюхи', 'мать ебал', 'мать ебу', 'мать жива', 'мать проверял', 'мать сдохла', 'мамкоеб', 'мамкоебы', 'mq'
 ];
 
 export const isBotConfigured = (cfg) => {
@@ -30,9 +31,11 @@ export const isBotConfigured = (cfg) => {
     'mainRosterRoleId',
     'trialRoleId',
     'farmerRoleId',
+    'plantFarmerRoleId',
     'electricianRoleId',
     'builderRoleId',
     'pilotRoleId',
+    'sponsorRoleId',
     'vipRoleId'
   ];
   const hasRoles = roleKeys.some(k => typeof cfg[k] === 'string' && cfg[k].trim().length > 0);
@@ -231,6 +234,15 @@ export default function ClanManager() {
   const [loadingApps, setLoadingApps] = useState(false);
   const [appFilter, setAppFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'AUTO_REJECTED'
 
+  // Warning System state
+  const [selectedUserForWarns, setSelectedUserForWarns] = useState(null);
+  const [userWarningsList, setUserWarningsList] = useState([]);
+  const [loadingUserWarnings, setLoadingUserWarnings] = useState(false);
+  const [newWarnReason, setNewWarnReason] = useState('');
+  const [warnActionLoading, setWarnActionLoading] = useState(false);
+  const [clanWarnings, setClanWarnings] = useState([]);
+  const [loadingClanWarnings, setLoadingClanWarnings] = useState(false);
+
   // --- Centralized Debounced & Throttled Auto-Save Engine ---
   const latestConfigRef = useRef(config);
   latestConfigRef.current = config;
@@ -253,6 +265,124 @@ export default function ClanManager() {
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+  };
+
+  const sendProxyAction = (action, payload = {}) => {
+    return new Promise((resolve) => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        resolve({ success: false, error: 'WebSocket not connected' });
+        return;
+      }
+      const reqId = `${action}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const timeout = setTimeout(() => {
+        cleanup();
+        resolve({ success: false, error: 'Таймаут ожидания ответа бота' });
+      }, 15000);
+
+      const onMsg = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'clan_proxy_res' && msg.reqId === reqId) {
+            cleanup();
+            resolve(msg.data || msg);
+          }
+        } catch (e) {}
+      };
+
+      const cleanup = () => {
+        clearTimeout(timeout);
+        ws.removeEventListener('message', onMsg);
+      };
+
+      ws.addEventListener('message', onMsg);
+      ws.send(JSON.stringify({
+        type: 'clan',
+        action: 'proxy',
+        reqId,
+        payload: {
+          action,
+          ...payload
+        }
+      }));
+    });
+  };
+
+  const fetchUserWarnings = async (userId) => {
+    if (!userId) return;
+    setLoadingUserWarnings(true);
+    const res = await sendProxyAction('get_warnings', { userId });
+    setLoadingUserWarnings(false);
+    if (res && res.success && Array.isArray(res.warnings)) {
+      setUserWarningsList(res.warnings);
+    }
+  };
+
+  const fetchClanWarnings = async () => {
+    setLoadingClanWarnings(true);
+    const res = await sendProxyAction('get_warnings', { limit: 100 });
+    setLoadingClanWarnings(false);
+    if (res && res.success && Array.isArray(res.warnings)) {
+      setClanWarnings(res.warnings);
+    }
+  };
+
+  const handleAddWarn = async () => {
+    if (!selectedUserForWarns || !newWarnReason.trim()) return;
+    setWarnActionLoading(true);
+    const res = await sendProxyAction('add_warning', {
+      userId: selectedUserForWarns.userId,
+      userName: selectedUserForWarns.displayName || selectedUserForWarns.username,
+      reason: newWarnReason.trim()
+    });
+    setWarnActionLoading(false);
+    if (res && res.success) {
+      setNewWarnReason('');
+      await fetchUserWarnings(selectedUserForWarns.userId);
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+      if (activeTab === 'moderation') fetchClanWarnings();
+    } else {
+      setError(res?.error || 'Не удалось выдать предупреждение');
+    }
+  };
+
+  const handleRemoveWarn = async (warningId) => {
+    if (!warningId) return;
+    setWarnActionLoading(true);
+    const res = await sendProxyAction('remove_warning', { warningId });
+    setWarnActionLoading(false);
+    if (res && res.success) {
+      if (selectedUserForWarns) {
+        await fetchUserWarnings(selectedUserForWarns.userId);
+      }
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+      if (activeTab === 'moderation') fetchClanWarnings();
+    } else {
+      setError(res?.error || 'Не удалось снять предупреждение');
+    }
+  };
+
+  const handleClearUserWarns = async (userId) => {
+    if (!userId) return;
+    if (!window.confirm('Снять все активные предупреждения с данного пользователя?')) return;
+    setWarnActionLoading(true);
+    const res = await sendProxyAction('clear_warnings', { userId });
+    setWarnActionLoading(false);
+    if (res && res.success) {
+      if (selectedUserForWarns) {
+        await fetchUserWarnings(selectedUserForWarns.userId);
+      }
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+      if (activeTab === 'moderation') fetchClanWarnings();
+    } else {
+      setError(res?.error || 'Не удалось очистить предупреждения');
+    }
+  };
+
+  const openUserWarningsModal = (stat) => {
+    setSelectedUserForWarns(stat);
+    setUserWarningsList([]);
+    setNewWarnReason('');
+    fetchUserWarnings(stat.userId);
   };
 
   useEffect(() => {
@@ -725,13 +855,15 @@ export default function ClanManager() {
   const standardRoles = [
     { key: 'leader', dbKey: 'leaderRoleId', defaultRu: 'Лидер', defaultEn: 'Leader' },
     { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultRu: 'Зам. Лидера', defaultEn: 'Co-Leader' },
-    { key: 'caller', dbKey: 'callerRoleId', defaultRu: 'Коллер', defaultEn: 'Caller' },
+    { key: 'caller', dbKey: 'callerRoleId', defaultRu: 'Коллер', defaultEn: 'Coller' },
     { key: 'main', dbKey: 'mainRosterRoleId', defaultRu: 'Main Состав', defaultEn: 'Main Roster' },
     { key: 'trial', dbKey: 'trialRoleId', defaultRu: 'Испытательный', defaultEn: 'Trial' },
-    { key: 'farmer', dbKey: 'farmerRoleId', defaultRu: 'Фармер', defaultEn: 'Farmer' },
+    { key: 'farmer', dbKey: 'farmerRoleId', defaultRu: 'Фармер (Ресурсы)', defaultEn: 'Miner / Farmer (Resources)' },
+    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultRu: 'Фермер (Урожай)', defaultEn: 'Farmer (Crops / Plants)' },
     { key: 'electrician', dbKey: 'electricianRoleId', defaultRu: 'Электрик', defaultEn: 'Electrician' },
     { key: 'builder', dbKey: 'builderRoleId', defaultRu: 'Билдер', defaultEn: 'Builder' },
     { key: 'pilot', dbKey: 'pilotRoleId', defaultRu: 'Пилот', defaultEn: 'Pilot' },
+    { key: 'sponsor', dbKey: 'sponsorRoleId', defaultRu: 'Спонсор', defaultEn: 'Sponsor' },
     { key: 'vip', dbKey: 'vipRoleId', defaultRu: 'VIP', defaultEn: 'VIP' },
   ];
 
@@ -1269,7 +1401,10 @@ export default function ClanManager() {
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
     } else if (activeTab === 'voice' && !dynamicVoiceData) {
       fetchDynamicVoice();
-    } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions' || activeTab === 'logs' || activeTab === 'moderation') && !discordInfo) {
+    } else if (activeTab === 'moderation') {
+      if (!discordInfo) fetchDiscordInfo();
+      fetchClanWarnings();
+    } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions' || activeTab === 'logs') && !discordInfo) {
       fetchDiscordInfo();
     }
   }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData, config?.discordLink]);
@@ -1426,9 +1561,9 @@ export default function ClanManager() {
       ) : config ? (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0">
           {/* Left Sidebar Navigation */}
-          <div className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto h-full scrollbar-thin">
+          <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto h-full scrollbar-thin">
             <div className="hidden md:flex items-center justify-between px-3 py-1.5 mb-1 shrink-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {t('clan_nav_sections') || 'Разделы'}
               </span>
               {saveStatus && (
@@ -1445,7 +1580,7 @@ export default function ClanManager() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
                       : isUnconfigured
@@ -1453,10 +1588,10 @@ export default function ClanManager() {
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
-                  {Icon && <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : isUnconfigured ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />}
+                  {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : isUnconfigured ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />}
                   <span className="truncate">{tab.label}</span>
                   {isUnconfigured && (
-                    <span className={`ml-auto w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
+                    <span className={`ml-auto w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
                   )}
                 </button>
               );
@@ -2601,7 +2736,7 @@ export default function ClanManager() {
                                 onBlur={e => updateRConfig('minHours', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
                                 placeholder={t('clan_recruitment_min_hours_ph') || 'Например: 2000 (0 — без ограничений)'}
                               />
-                              <p className="text-[11px] text-slate-400 mt-1">Проверяется по верифицированным часам Steam или анкете.</p>
+                              <p className="text-[11px] text-slate-400 mt-1">{t('clan_recruitment_min_hours_hint') || 'Проверяется строго по анкете. В карточке суммируются реальные часы всех указанных Steam аккаунтов.'}</p>
                             </div>
                           </div>
 
@@ -3109,7 +3244,7 @@ export default function ClanManager() {
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {member.roles.map(rId => {
                                   // Find internal role key matching this ID
-                                  const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'vipRoleId'].find(k => config[k] === rId);
+                                  const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'].find(k => config[k] === rId);
                                   if (roleKey) {
                                     const shortKey = roleKey.replace('RoleId', ''); // e.g. leader
                                     const roleName = roleNamesMap[shortKey] || shortKey;
@@ -3249,12 +3384,26 @@ export default function ClanManager() {
                                 )}
                               </div>
                             </th>
+                            <th 
+                              scope="col" 
+                              onClick={() => handleStatsSort('warnCount')} 
+                              className="px-6 py-3.5 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span>{t('clan_stats_col_warns') || 'Варны'}</span>
+                                {statsSortField === 'warnCount' ? (
+                                  <span className="text-blue-500 font-bold">{statsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                                ) : (
+                                  <span className="text-slate-400/60 text-[10px]">↕</span>
+                                )}
+                              </div>
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {sortedStats.length === 0 ? (
                             <tr>
-                              <td colSpan="5" className="px-6 py-8 text-center">Нет данных для отображения.</td>
+                              <td colSpan="6" className="px-6 py-8 text-center">Нет данных для отображения.</td>
                             </tr>
                           ) : (
                             sortedStats.map(stat => (
@@ -3277,6 +3426,30 @@ export default function ClanManager() {
                                 </td>
                                 <td className="px-6 py-4 text-center font-mono">
                                   {stat.votesCast}
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => openUserWarningsModal(stat)}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                                      (stat.warnCount || 0) > 0
+                                        ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700 shadow-xs'
+                                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-400 border border-transparent'
+                                    }`}
+                                    title={t('clan_stats_warns_tooltip') || 'Нажмите для управления предупреждениями'}
+                                  >
+                                    {(stat.warnCount || 0) > 0 ? (
+                                      <>
+                                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                        <span>{stat.warnCount}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Check className="w-3.5 h-3.5 text-green-500" />
+                                        <span>0</span>
+                                      </>
+                                    )}
+                                  </button>
                                 </td>
                               </tr>
                             ))
@@ -3580,6 +3753,13 @@ export default function ClanManager() {
                   warnMessage: 'Использование запретных выражений недопустимо на нашем сервере!',
                   ignoreRoles: [],
                   ignoreChannels: []
+                },
+                warnings: {
+                  enabled: true,
+                  threshold: 3,
+                  action: 'timeout',
+                  durationMinutes: 60,
+                  ignoreRoles: []
                 }
               };
               try {
@@ -3595,6 +3775,10 @@ export default function ClanManager() {
                     badWords: {
                       ...modCfg.badWords,
                       ...(parsed.badWords || {})
+                    },
+                    warnings: {
+                      ...modCfg.warnings,
+                      ...(parsed.warnings || {})
                     }
                   };
                 }
@@ -3602,6 +3786,7 @@ export default function ClanManager() {
 
               const am = modCfg.antiMention;
               const bw = modCfg.badWords;
+              const warns = modCfg.warnings;
               const textChannels = (discordInfo?.channels || []).filter(c => c.type === 0);
               const allRoles = discordInfo?.roles || [];
 
@@ -3631,6 +3816,17 @@ export default function ClanManager() {
                   ...modCfg,
                   badWords: {
                     ...bw,
+                    [field]: val
+                  }
+                };
+                queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, immediate);
+              };
+
+              const handleUpdateWarn = (field, val, immediate = true) => {
+                const updated = {
+                  ...modCfg,
+                  warnings: {
+                    ...warns,
                     [field]: val
                   }
                 };
@@ -4176,6 +4372,167 @@ export default function ClanManager() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Warning System (Warns) Settings Card */}
+                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                    <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5 text-amber-500" />
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {t('clan_warn_settings_title') || 'Система предупреждений (Варны)'}
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {t('clan_warn_settings_desc') || 'Автоматический учет нарушений и применение санкций при превышении лимита.'}
+                        </p>
+                      </div>
+                      <ToggleSwitch
+                        checked={warns?.enabled !== false}
+                        onChange={val => handleUpdateWarn('enabled', val, true)}
+                        activeColor="orange"
+                      />
+                    </div>
+
+                    {warns?.enabled !== false && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                              {t('clan_warn_threshold') || 'Порог срабатывания (варнов)'}
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="20"
+                              value={warns?.threshold || 3}
+                              onChange={e => handleUpdateWarn('threshold', Math.max(1, parseInt(e.target.value, 10) || 1), false)}
+                              onBlur={e => handleUpdateWarn('threshold', Math.max(1, parseInt(e.target.value, 10) || 1), true)}
+                              className="w-full px-3.5 py-2 border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-800/50 dark:text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                              {t('clan_warn_action') || 'Наказание при превышении'}
+                            </label>
+                            <select
+                              value={
+                                warns?.action === 'kick' ? 'kick' :
+                                warns?.action === 'ban' ? 'ban' :
+                                warns?.durationMinutes === 1440 ? 'timeout_1440' :
+                                warns?.durationMinutes === 10080 ? 'timeout_10080' :
+                                'timeout_60'
+                              }
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (val === 'kick') {
+                                  handleUpdateWarn('action', 'kick', true);
+                                } else if (val === 'ban') {
+                                  handleUpdateWarn('action', 'ban', true);
+                                } else if (val === 'timeout_1440') {
+                                  handleUpdateWarn('action', 'timeout', false);
+                                  handleUpdateWarn('durationMinutes', 1440, true);
+                                } else if (val === 'timeout_10080') {
+                                  handleUpdateWarn('action', 'timeout', false);
+                                  handleUpdateWarn('durationMinutes', 10080, true);
+                                } else {
+                                  handleUpdateWarn('action', 'timeout', false);
+                                  handleUpdateWarn('durationMinutes', 60, true);
+                                }
+                              }}
+                              className="w-full px-3.5 py-2 border border-slate-200 dark:border-slate-700 rounded-xl dark:bg-slate-800/50 dark:text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none cursor-pointer"
+                            >
+                              <option value="timeout_60">{t('clan_warn_action_timeout_60') || 'Таймаут (Мут) на 1 час'}</option>
+                              <option value="timeout_1440">{t('clan_warn_action_timeout_1440') || 'Таймаут (Мут) на 1 день'}</option>
+                              <option value="timeout_10080">{t('clan_warn_action_timeout_10080') || 'Таймаут (Мут) на 1 неделю'}</option>
+                              <option value="kick">{t('clan_warn_action_kick') || 'Кик с сервера'}</option>
+                              <option value="ban">{t('clan_warn_action_ban') || 'Бан на сервере'}</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Clan Warnings Log */}
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                              {t('clan_warn_log_title') || 'Журнал предупреждений клана'}
+                            </h5>
+                            <button
+                              type="button"
+                              onClick={fetchClanWarnings}
+                              className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <RefreshCw className={`w-3 h-3 ${loadingClanWarnings ? 'animate-spin' : ''}`} />
+                              <span>Обновить</span>
+                            </button>
+                          </div>
+
+                          {clanWarnings.length === 0 ? (
+                            <div className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl text-center text-xs text-slate-400">
+                              Предупреждений нет или они не загружены.
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                              <table className="w-full text-left text-xs text-slate-500 dark:text-slate-400">
+                                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 uppercase select-none border-b border-slate-200 dark:border-slate-700">
+                                  <tr>
+                                    <th className="px-4 py-2.5">Участник</th>
+                                    <th className="px-4 py-2.5">Причина</th>
+                                    <th className="px-4 py-2.5">Модератор</th>
+                                    <th className="px-4 py-2.5">Дата</th>
+                                    <th className="px-4 py-2.5 text-center">Статус</th>
+                                    <th className="px-4 py-2.5 text-right">Действие</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                  {clanWarnings.map(w => (
+                                    <tr key={w.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                      <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
+                                        {w.userName || w.userId}
+                                      </td>
+                                      <td className="px-4 py-2.5 font-mono text-[11px] max-w-xs truncate" title={w.reason}>
+                                        {w.reason}
+                                      </td>
+                                      <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                                        {w.moderatorTag || 'Система'}
+                                      </td>
+                                      <td className="px-4 py-2.5 text-slate-400">
+                                        {new Date(w.createdAt).toLocaleDateString()}
+                                      </td>
+                                      <td className="px-4 py-2.5 text-center">
+                                        {w.active ? (
+                                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                            Активен
+                                          </span>
+                                        ) : (
+                                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                            Снят
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-2.5 text-right">
+                                        {w.active && (
+                                          <button
+                                            type="button"
+                                            disabled={warnActionLoading}
+                                            onClick={() => handleRemoveWarn(w.id)}
+                                            className="text-xs text-red-600 dark:text-red-400 hover:underline cursor-pointer font-medium disabled:opacity-50"
+                                          >
+                                            Снять
+                                          </button>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </form>
               );
             })()}
@@ -4389,6 +4746,158 @@ export default function ClanManager() {
                     <span>{t('clan_reset_submit') || 'Сбросить выбранное'}</span>
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Warnings Details & Management Modal */}
+      {selectedUserForWarns && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedUserForWarns.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                  alt="avatar"
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>{selectedUserForWarns.displayName}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                      ⚠️ {userWarningsList.filter(w => w.active).length} активных
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500">@{selectedUserForWarns.username} • ID: {selectedUserForWarns.userId}</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedUserForWarns(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="py-4 space-y-4 overflow-y-auto flex-1 scrollbar-thin">
+              {/* Add Warn Form */}
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {t('clan_warn_add_btn') || 'Выдать предупреждение'}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newWarnReason}
+                    onChange={e => setNewWarnReason(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddWarn(); } }}
+                    placeholder={t('clan_warn_reason_ph') || 'Укажите причину предупреждения...'}
+                    className="flex-1 px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
+                  />
+                  <button
+                    type="button"
+                    disabled={warnActionLoading || !newWarnReason.trim()}
+                    onClick={handleAddWarn}
+                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
+                  >
+                    {warnActionLoading ? '...' : (t('clan_warn_add_btn') || 'Выдать')}
+                  </button>
+                </div>
+              </div>
+
+              {/* History List */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    История варнов ({userWarningsList.length})
+                  </span>
+                  {userWarningsList.some(w => w.active) && (
+                    <button
+                      type="button"
+                      disabled={warnActionLoading}
+                      onClick={() => handleClearUserWarns(selectedUserForWarns.userId)}
+                      className="text-[11px] text-red-600 dark:text-red-400 hover:underline cursor-pointer font-medium disabled:opacity-50"
+                    >
+                      {t('clan_warn_clear_all') || 'Очистить все варны'}
+                    </button>
+                  )}
+                </div>
+
+                {loadingUserWarnings ? (
+                  <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Загрузка предупреждений...</span>
+                  </div>
+                ) : userWarningsList.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/20 rounded-xl">
+                    У пользователя нет предупреждений.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {userWarningsList.map(w => (
+                      <div
+                        key={w.id}
+                        className={`p-3 rounded-xl border flex items-start justify-between gap-3 text-xs ${
+                          w.active
+                            ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-800/60'
+                            : 'bg-slate-50/50 dark:bg-slate-800/20 border-slate-200 dark:border-slate-800 opacity-60'
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>{w.reason}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
+                              w.active ? 'bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                            }`}>
+                              {w.active ? 'Активен' : 'Снят'}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            Модератор: {w.moderatorTag || 'Система'} • {new Date(w.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+
+                        {w.active && (
+                          <button
+                            type="button"
+                            disabled={warnActionLoading}
+                            onClick={() => handleRemoveWarn(w.id)}
+                            className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-medium cursor-pointer shrink-0 transition-all"
+                          >
+                            Снять
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedUserForWarns(null);
+                  setActiveTab('moderation');
+                }}
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>{t('clan_warn_go_to_mod') || 'Настройки в Модерации'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedUserForWarns(null)}
+                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold cursor-pointer transition-all"
+              >
+                {t('clan_sync_close') || 'Закрыть'}
               </button>
             </div>
           </div>
