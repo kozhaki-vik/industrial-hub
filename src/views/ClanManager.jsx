@@ -42,6 +42,43 @@ export const isBotConfigured = (cfg) => {
   return hasRoles || hasChannels;
 };
 
+const sanitizeClanConfig = (cfg) => {
+  if (!cfg) return cfg;
+  return {
+    ...cfg,
+    name: cfg.name ?? '',
+    discordLink: cfg.discordLink ?? ''
+  };
+};
+
+function SaveButton({ saveStatus }) {
+  const isError = saveStatus && saveStatus.startsWith('error');
+  const isLoading = saveStatus === 'saving' || saveStatus === 'loading';
+  return (
+    <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
+      <button 
+        type="submit" 
+        disabled={isLoading}
+        className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
+          saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
+          isError ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
+          'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
+        } ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+      >
+        {isLoading ? (
+          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> {saveStatus === 'loading' ? 'Обработка...' : 'Сохранение...'}</>
+        ) : saveStatus === 'success' ? (
+          <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Успешно</>
+        ) : isError ? (
+          <><svg className="w-5 h-5 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> <span className="truncate">{saveStatus.replace('error:', 'Ошибка:')}</span></>
+        ) : (
+          "Сохранить настройки"
+        )}
+      </button>
+    </div>
+  );
+}
+
 export default function ClanManager() {
   const { t } = useTranslation();
   const { ws, status: wsStatus } = useNetwork();
@@ -119,7 +156,7 @@ export default function ClanManager() {
             setError(data.error);
           } else {
             const fetchedConfig = data.data.config;
-            setConfig(fetchedConfig);
+            setConfig(sanitizeClanConfig(fetchedConfig));
             if (!hasPromptedRef.current && !isBotConfigured(fetchedConfig)) {
               hasPromptedRef.current = true;
               setShowSetupWizard(true);
@@ -131,7 +168,7 @@ export default function ClanManager() {
             setSaveStatus(`error: ${data.error}`);
           } else {
             setSaveStatus('success');
-            setConfig(data.data.config);
+            setConfig(sanitizeClanConfig(data.data.config));
             setTimeout(() => setSaveStatus(null), 3000);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'auto_setup') {
@@ -141,7 +178,7 @@ export default function ClanManager() {
           } else {
             setSaveStatus('success');
             if (data.data.discordInfo) setDiscordInfo(data.data.discordInfo);
-            if (data.data.config) setConfig(data.data.config);
+            if (data.data.config) setConfig(sanitizeClanConfig(data.data.config));
             setTimeout(() => setSaveStatus(null), 3000);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'sync_permissions') {
@@ -233,7 +270,7 @@ export default function ClanManager() {
               setDiscordInfo(prev => ({ roles: data.data.roles, channels: prev?.channels || [] }));
             }
             if (data.data.config) {
-              setConfig(data.data.config);
+              setConfig(sanitizeClanConfig(data.data.config));
             }
             setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 2500);
@@ -245,7 +282,7 @@ export default function ClanManager() {
           setShowResetModal(false);
           if (!data.error && data.data && data.data.success) {
             if (data.data.config) {
-              setConfig(data.data.config);
+              setConfig(sanitizeClanConfig(data.data.config));
             }
             fetchDiscordInfo();
             setSaveStatus('success');
@@ -894,7 +931,7 @@ export default function ClanManager() {
             </div>
           </div>
           
-          <form onSubmit={handleLink} className="space-y-4">
+          <form onSubmit={handleLink} noValidate className="space-y-4">
             <div>
               <input 
                 type="text" 
@@ -930,33 +967,6 @@ export default function ClanManager() {
     { id: 'stats', label: 'Статистика', icon: BarChart3 },
   ];
 
-  const SaveButton = () => {
-    const isError = saveStatus && saveStatus.startsWith('error');
-    const isLoading = saveStatus === 'saving' || saveStatus === 'loading';
-    return (
-      <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
-        <button 
-          type="submit" 
-          disabled={isLoading}
-          className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
-            saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
-            isError ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
-            'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
-          } ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-        >
-          {isLoading ? (
-            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> {saveStatus === 'loading' ? 'Обработка...' : 'Сохранение...'}</>
-          ) : saveStatus === 'success' ? (
-            <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Успешно</>
-          ) : isError ? (
-            <><svg className="w-5 h-5 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> <span className="truncate">{saveStatus.replace('error:', 'Ошибка:')}</span></>
-          ) : (
-            "Сохранить настройки"
-          )}
-        </button>
-      </div>
-    );
-  };
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto h-[calc(100vh-100px)] overflow-y-auto">
@@ -1061,7 +1071,7 @@ export default function ClanManager() {
           <div className="flex-1 p-6 md:p-8 overflow-y-auto">
             
             {activeTab === 'general' && (
-              <form onSubmit={saveConfig} className="space-y-6 max-w-2xl">
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-2xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                   Основные настройки
@@ -1072,9 +1082,9 @@ export default function ClanManager() {
                   <input 
                     type="text" 
                     required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                    value={config.name || ''}
-                    onChange={e => setConfig({...config, name: e.target.value})}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white dark:bg-slate-800/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                    value={config?.name ?? ''}
+                    onChange={e => setConfig(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Например: GODS"
                   />
                 </div>
@@ -1083,9 +1093,9 @@ export default function ClanManager() {
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Основная ссылка на Discord</label>
                   <input 
                     type="text" 
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                    value={config.discordLink || ''}
-                    onChange={e => setConfig({...config, discordLink: e.target.value})}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white dark:bg-slate-800/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                    value={config?.discordLink ?? ''}
+                    onChange={e => setConfig(prev => ({ ...prev, discordLink: e.target.value }))}
                     placeholder="https://discord.gg/..."
                   />
                 </div>
@@ -1167,7 +1177,7 @@ export default function ClanManager() {
                   </button>
                 </div>
                 
-                <SaveButton />
+                <SaveButton saveStatus={saveStatus} />
               </form>
             )}
 
@@ -1478,7 +1488,7 @@ export default function ClanManager() {
             })()}
 
             {activeTab === 'channels' && (
-              <form onSubmit={saveConfig} className="space-y-6 max-w-4xl">
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-4xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
                   Настройки каналов
@@ -1526,7 +1536,7 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton />
+                <SaveButton saveStatus={saveStatus} />
               </form>
             )}
 
@@ -1664,7 +1674,7 @@ export default function ClanManager() {
                 })()}
                 
                 <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <SaveButton />
+                  <SaveButton saveStatus={saveStatus} />
                 </div>
               </div>
             )}
@@ -1704,7 +1714,7 @@ export default function ClanManager() {
                   </div>
                 ) : (
                   <>
-                    <form onSubmit={saveDynamicVoiceConfig} className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-6">
+                    <form onSubmit={saveDynamicVoiceConfig} noValidate className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-6">
                       <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                         <div>
                           <h4 className="font-semibold text-slate-900 dark:text-white text-base">
@@ -1951,7 +1961,7 @@ export default function ClanManager() {
             )}
 
             {activeTab === 'recruitment' && (
-              <form onSubmit={saveConfig} className="space-y-6 max-w-2xl">
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-2xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                   Настройки набора в клан
@@ -2026,12 +2036,12 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton />
+                <SaveButton saveStatus={saveStatus} />
               </form>
             )}
 
             {activeTab === 'votes' && (
-              <form onSubmit={saveConfig} className="space-y-6 max-w-4xl">
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-4xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                   Шаблоны серверов для голосований
@@ -2109,12 +2119,12 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton />
+                <SaveButton saveStatus={saveStatus} />
               </form>
             )}
 
             {activeTab === 'ads' && (
-              <form onSubmit={saveConfig} className="space-y-6 max-w-2xl">
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-2xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
                   Настройки панели рекламы
@@ -2188,7 +2198,7 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton />
+                <SaveButton saveStatus={saveStatus} />
               </form>
             )}
 
