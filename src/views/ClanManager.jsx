@@ -70,6 +70,58 @@ function SaveButton() {
   return null;
 }
 
+function ToggleSwitch({ 
+  checked, 
+  onChange, 
+  label, 
+  disabled = false, 
+  size = 'md', 
+  activeColor = 'blue',
+  title
+}) {
+  const { t } = useTranslation();
+  const onText = t('common_on') || 'Вкл';
+  const offText = t('common_off') || 'Выкл';
+  const displayLabel = label !== undefined ? label : (checked ? onText : offText);
+
+  const isSmall = size === 'sm';
+  const activeBg = activeColor === 'orange' ? 'peer-checked:bg-orange-500' : 'peer-checked:bg-blue-600';
+  const activeText = activeColor === 'orange' ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400';
+
+  return (
+    <label 
+      title={title}
+      className={`relative inline-flex items-center gap-2 select-none shrink-0 ${
+        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={Boolean(checked)}
+        onChange={e => {
+          if (!disabled && onChange) {
+            onChange(e.target.checked);
+          }
+        }}
+        disabled={disabled}
+        className="sr-only peer"
+      />
+      <div 
+        className={`${
+          isSmall ? 'w-9 h-5 after:h-4 after:w-4' : 'w-11 h-6 after:h-5 after:w-5'
+        } bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:transition-all after:duration-200 transition-colors duration-200 shadow-inner ${activeBg}`}
+      ></div>
+      {displayLabel !== null && (
+        <span className={`text-xs font-semibold select-none transition-colors ${
+          checked ? activeText : 'text-slate-400 dark:text-slate-500'
+        }`}>
+          {displayLabel}
+        </span>
+      )}
+    </label>
+  );
+}
+
 const loggingEventGroups = [
   {
     id: 'members',
@@ -1574,20 +1626,23 @@ export default function ClanManager() {
                   </div>
                 </div>
 
-                <div className="flex items-center p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30">
-                  <input 
-                    type="checkbox" 
-                    id="recruitmentOpen"
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3 cursor-pointer"
+                <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 select-none">
+                      {t('clan_recruitment_open_title') || 'Набор в клан открыт'}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {t('clan_recruitment_open_hint') || 'Позволяет кандидатам подавать заявки через Discord'}
+                    </p>
+                  </div>
+                  <ToggleSwitch
                     checked={!!config.recruitmentOpen}
-                    onChange={e => {
-                      const updated = { ...config, recruitmentOpen: e.target.checked };
+                    onChange={val => {
+                      const updated = { ...config, recruitmentOpen: val };
                       queueAutoSave(updated, true);
                     }}
+                    activeColor="blue"
                   />
-                  <label htmlFor="recruitmentOpen" className="text-sm font-medium text-slate-700 dark:text-slate-300 select-none cursor-pointer">
-                    Набор в клан открыт (Позволяет создавать тикеты заявок)
-                  </label>
                 </div>
 
                 {/* Factory Reset Section */}
@@ -2157,21 +2212,14 @@ export default function ClanManager() {
                             Настройте категорию и канал для автоматического создания пати
                           </p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={!!dynamicVoiceData.config?.enabled}
-                            onChange={(e) => {
-                              const updated = { ...(dynamicVoiceData.config || {}), enabled: e.target.checked };
-                              queueAutoSaveVoice(updated, true);
-                            }}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-500"></div>
-                          <span className="ml-3 text-sm font-medium text-slate-700 dark:text-slate-300 select-none">
-                            {dynamicVoiceData.config?.enabled ? 'Включено' : 'Выключено'}
-                          </span>
-                        </label>
+                        <ToggleSwitch
+                          checked={!!dynamicVoiceData.config?.enabled}
+                          onChange={val => {
+                            const updated = { ...(dynamicVoiceData.config || {}), enabled: val };
+                            queueAutoSaveVoice(updated, true);
+                          }}
+                          activeColor="orange"
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2510,15 +2558,11 @@ export default function ClanManager() {
                           </div>
                           
                           {/* Toggle Switch */}
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              className="sr-only peer"
-                              checked={!!rConfig.autoRejectEnabled}
-                              onChange={e => updateRConfig('autoRejectEnabled', e.target.checked, true)}
-                            />
-                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-500"></div>
-                          </label>
+                          <ToggleSwitch 
+                            checked={!!rConfig.autoRejectEnabled}
+                            onChange={val => updateRConfig('autoRejectEnabled', val, true)}
+                            activeColor="orange"
+                          />
                         </div>
 
                         {/* Settings Container */}
@@ -2562,41 +2606,41 @@ export default function ClanManager() {
                           </div>
 
                           <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
-                            <label className="flex items-center space-x-3 cursor-pointer select-none">
-                              <input 
-                                type="checkbox"
-                                className="w-4 h-4 rounded text-orange-500 border-slate-300 dark:border-slate-600 focus:ring-orange-500/50"
-                                checked={rConfig.rejectBanned ?? true}
-                                onChange={e => updateRConfig('rejectBanned', e.target.checked, true)}
-                              />
-                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none">
                                 {t('clan_recruitment_reject_banned') || 'Автоматически отклонять игроков с VAC/Game блокировками'}
                               </span>
-                            </label>
-
-                            <label className="flex items-center space-x-3 cursor-pointer select-none">
-                              <input 
-                                type="checkbox"
-                                className="w-4 h-4 rounded text-orange-500 border-slate-300 dark:border-slate-600 focus:ring-orange-500/50"
-                                checked={!!rConfig.strictSteamCheck}
-                                onChange={e => updateRConfig('strictSteamCheck', e.target.checked, true)}
+                              <ToggleSwitch
+                                checked={rConfig.rejectBanned ?? true}
+                                onChange={val => updateRConfig('rejectBanned', val, true)}
+                                activeColor="orange"
+                                size="sm"
                               />
-                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none">
                                 {t('clan_recruitment_strict_steam') || 'Строгая проверка Steam (профиль должен быть открыт для сверки часов)'}
                               </span>
-                            </label>
-
-                            <label className="flex items-center space-x-3 cursor-pointer select-none">
-                              <input 
-                                type="checkbox"
-                                className="w-4 h-4 rounded text-orange-500 border-slate-300 dark:border-slate-600 focus:ring-orange-500/50"
-                                checked={rConfig.silentAutoReject !== false}
-                                onChange={e => updateRConfig('silentAutoReject', e.target.checked, true)}
+                              <ToggleSwitch
+                                checked={!!rConfig.strictSteamCheck}
+                                onChange={val => updateRConfig('strictSteamCheck', val, true)}
+                                activeColor="orange"
+                                size="sm"
                               />
-                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none">
                                 {t('clan_recruitment_silent_reject') || 'Экономить лимит каналов (мгновенный отказ кандидату без создания тикета)'}
                               </span>
-                            </label>
+                              <ToggleSwitch
+                                checked={rConfig.silentAutoReject !== false}
+                                onChange={val => updateRConfig('silentAutoReject', val, true)}
+                                activeColor="orange"
+                                size="sm"
+                              />
+                            </div>
                           </div>
 
                           <div>
@@ -3322,84 +3366,69 @@ export default function ClanManager() {
               return (
                 <form onSubmit={saveConfig} noValidate className="space-y-6">
                   {/* Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <ScrollText className="w-5 h-5 text-blue-500" />
-                        <span>{t('clan_logs_title')}</span>
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {t('clan_logs_desc')}
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <ScrollText className="w-5 h-5 text-blue-500" />
+                      <span>{t('clan_logs_title')}</span>
+                    </h3>
 
                     {/* Master Switch */}
-                    <label className="flex items-center gap-3 cursor-pointer select-none bg-slate-100 dark:bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <input
-                        type="checkbox"
+                    <div className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                      <ToggleSwitch
                         checked={isMasterEnabled}
-                        onChange={e => handleMasterToggle(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                        onChange={handleMasterToggle}
+                        activeColor="blue"
                       />
-                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                        {t('clan_logs_enable_master')}
-                      </span>
-                    </label>
+                    </div>
                   </div>
 
-                  {/* Default Channel Card */}
-                  <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-slate-800/60 dark:to-slate-800/40 border border-blue-100 dark:border-slate-700/80 space-y-4 shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <span>{t('clan_logs_default_channel')}</span>
-                          {defaultChId ? (
-                            <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
-                              #{defaultChName || defaultChId}
-                            </span>
-                          ) : (
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
-                              Не задан
-                            </span>
-                          )}
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {t('clan_logs_default_channel_desc')}
-                        </p>
-                      </div>
-
-                      {/* 1-click Create Log Channel Button */}
-                      <button
-                        type="button"
-                        onClick={handleCreateDiscordLogChannel}
-                        disabled={creatingLogChannel}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer shrink-0"
-                      >
-                        {creatingLogChannel ? (
-                          <>
-                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>{t('clan_logs_creating_channel')}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-4 h-4" />
-                            <span>{t('clan_logs_create_channel_btn')}</span>
-                          </>
-                        )}
-                      </button>
+                  {/* Default Channel Card - Compact & Tautology-free */}
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-slate-800/60 dark:to-slate-800/40 border border-blue-100 dark:border-slate-700/80 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        {t('clan_logs_default_channel')}:
+                      </span>
+                      {defaultChId ? (
+                        <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                          #{defaultChName || defaultChId}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
+                          {t('clan_logs_channel_not_set') || 'Не задан'}
+                        </span>
+                      )}
                     </div>
 
-                    <div className="max-w-md">
+                    <div className="flex flex-1 items-center gap-2 max-w-lg md:ml-auto">
                       <select
                         value={defaultChId}
                         onChange={e => handleDefaultChannelChange(e.target.value)}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all"
+                        className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none shadow-xs transition-all"
                       >
-                        <option value="">-- Выберите основной канал для логов --</option>
+                        <option value="">{t('clan_logs_select_channel_ph') || '-- Выберите канал --'}</option>
                         {textChannels.map(ch => (
                           <option key={ch.id} value={ch.id}>#️⃣ {ch.name}</option>
                         ))}
                       </select>
+
+                      <button
+                        type="button"
+                        onClick={handleCreateDiscordLogChannel}
+                        disabled={creatingLogChannel}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                      >
+                        {creatingLogChannel ? (
+                          <>
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>{t('clan_logs_creating_channel')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>{t('clan_logs_create_channel_btn')}</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -3479,12 +3508,14 @@ export default function ClanManager() {
                                 >
                                   {/* Toggle + Title */}
                                   <div className="flex items-start gap-3 flex-1 min-w-0">
-                                    <input
-                                      type="checkbox"
-                                      checked={isEvEnabled}
-                                      onChange={e => handleToggleEvent(ev.key, e.target.checked)}
-                                      className="w-4 h-4 mt-1 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700 cursor-pointer shrink-0"
-                                    />
+                                    <div className="pt-0.5 shrink-0">
+                                      <ToggleSwitch
+                                        checked={isEvEnabled}
+                                        onChange={val => handleToggleEvent(ev.key, val)}
+                                        activeColor="blue"
+                                        size="sm"
+                                      />
+                                    </div>
                                     <div>
                                       <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                                         <span>{t(`clan_logs_event_${ev.key}`) || ev.title}</span>
@@ -3687,17 +3718,13 @@ export default function ClanManager() {
                         </p>
                       </div>
 
-                      <label className="flex items-center gap-3 cursor-pointer select-none bg-slate-50 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
-                        <input
-                          type="checkbox"
+                      <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                        <ToggleSwitch
                           checked={Boolean(am.enabled)}
-                          onChange={e => handleUpdateAM('enabled', e.target.checked)}
-                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                          onChange={val => handleUpdateAM('enabled', val)}
+                          activeColor="blue"
                         />
-                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                          {t('clan_mod_enable')}
-                        </span>
-                      </label>
+                      </div>
                     </div>
 
                     {/* Parameters Grid */}
@@ -3823,17 +3850,16 @@ export default function ClanManager() {
                     </div>
 
                     {/* Auto-delete toggle */}
-                    <div className="flex items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-                      <input
-                        type="checkbox"
-                        id="amAutoDelete"
-                        checked={am.autoDelete !== false}
-                        onChange={e => handleUpdateAM('autoDelete', e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700 mr-3 cursor-pointer"
-                      />
-                      <label htmlFor="amAutoDelete" className="text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                      <span className="text-xs font-medium text-slate-800 dark:text-slate-200 select-none">
                         {t('clan_mod_auto_delete')}
-                      </label>
+                      </span>
+                      <ToggleSwitch
+                        checked={am.autoDelete !== false}
+                        onChange={val => handleUpdateAM('autoDelete', val)}
+                        activeColor="blue"
+                        size="sm"
+                      />
                     </div>
 
                     {/* Warning text */}
@@ -3869,17 +3895,13 @@ export default function ClanManager() {
                         </p>
                       </div>
 
-                      <label className="flex items-center gap-3 cursor-pointer select-none bg-slate-50 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
-                        <input
-                          type="checkbox"
+                      <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                        <ToggleSwitch
                           checked={Boolean(bw.enabled)}
-                          onChange={e => handleUpdateBW('enabled', e.target.checked)}
-                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                          onChange={val => handleUpdateBW('enabled', val)}
+                          activeColor="blue"
                         />
-                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                          {t('clan_mod_badwords_enable')}
-                        </span>
-                      </label>
+                      </div>
                     </div>
 
                     {/* Action & Duration */}
@@ -3925,17 +3947,16 @@ export default function ClanManager() {
                     </div>
 
                     {/* Auto-delete toggle */}
-                    <div className="flex items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-                      <input
-                        type="checkbox"
-                        id="bwAutoDelete"
-                        checked={bw.autoDelete !== false}
-                        onChange={e => handleUpdateBW('autoDelete', e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700 mr-3 cursor-pointer"
-                      />
-                      <label htmlFor="bwAutoDelete" className="text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                      <span className="text-xs font-medium text-slate-800 dark:text-slate-200 select-none">
                         {t('clan_mod_auto_delete')}
-                      </label>
+                      </span>
+                      <ToggleSwitch
+                        checked={bw.autoDelete !== false}
+                        onChange={val => handleUpdateBW('autoDelete', val)}
+                        activeColor="blue"
+                        size="sm"
+                      />
                     </div>
 
                     {/* Warning text */}
