@@ -42,7 +42,7 @@ export const isBotConfigured = (cfg) => {
     try {
       const ch = typeof cfg.channelsConfigJson === 'string' ? JSON.parse(cfg.channelsConfigJson) : cfg.channelsConfigJson;
       if (ch && typeof ch === 'object') {
-        const channelKeys = ['ticketsCategory', 'logs', 'applications', 'leaderboard', 'news', 'votes', 'ads', 'roster', 'waitingRoom'];
+        const channelKeys = ['ticketsCategory', 'logs', 'applications', 'autoRejectedApplications', 'rejectedApplications', 'leaderboard', 'news', 'votes', 'ads', 'roster', 'waitingRoom'];
         hasChannels = channelKeys.some(k => typeof ch[k] === 'string' && ch[k].trim().length > 0);
       }
     } catch (e) {}
@@ -66,50 +66,8 @@ const sanitizeClanConfig = (cfg) => {
   };
 };
 
-function SaveButton({ saveStatus, onManualSave }) {
-  const isError = saveStatus && saveStatus.startsWith('error');
-  const isLoading = saveStatus === 'saving' || saveStatus === 'loading';
-  return (
-    <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-xs">
-        {isLoading ? (
-          <span className="text-blue-500 font-medium flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/40 px-3 py-1.5 rounded-full border border-blue-200/60 dark:border-blue-800/60">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-            Синхронизация с сервером...
-          </span>
-        ) : isError ? (
-          <span className="text-red-500 font-medium flex items-center gap-1.5 bg-red-50 dark:bg-red-950/40 px-3 py-1.5 rounded-full border border-red-200/60 dark:border-red-800/60">
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{saveStatus.replace('error:', 'Ошибка:')}</span>
-          </span>
-        ) : (
-          <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
-            <Check className="w-3.5 h-3.5 text-emerald-500" />
-            Все изменения сохраняются автоматически
-          </span>
-        )}
-      </div>
-
-      <button 
-        type="button" 
-        onClick={onManualSave}
-        disabled={isLoading}
-        className={`flex items-center justify-center font-medium py-2 px-4 rounded-xl text-xs transition-all shadow-sm focus:ring-2 cursor-pointer shrink-0 ${
-          saveStatus === 'success' ? 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500/20' :
-          isError ? 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500/20' :
-          'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-        } ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-      >
-        {isLoading ? (
-          <><div className="w-3.5 h-3.5 border-2 border-slate-400/30 border-t-slate-500 rounded-full animate-spin mr-1.5"></div> Обработка...</>
-        ) : saveStatus === 'success' ? (
-          <><Check className="w-3.5 h-3.5 mr-1 text-white" /> Сохранено</>
-        ) : (
-          "Сохранить сейчас"
-        )}
-      </button>
-    </div>
-  );
+function SaveButton() {
+  return null;
 }
 
 const loggingEventGroups = [
@@ -1363,11 +1321,11 @@ export default function ClanManager() {
 
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto h-[calc(100vh-100px)] overflow-y-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-4 shrink-0">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('clan_manager_title')}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('clan_manager_subtitle')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('clan_manager_subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -1395,7 +1353,7 @@ export default function ClanManager() {
       </div>
       
       {config && !isBotConfigured(config) && (
-        <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-300">
+        <div className="mb-4 shrink-0 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-300">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1428,10 +1386,10 @@ export default function ClanManager() {
       {loadingConfig ? (
         <div className="text-slate-500 font-medium">{t('clan_loading')}</div>
       ) : config ? (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row min-h-[660px]">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0">
           {/* Left Sidebar Navigation */}
-          <div className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-3 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto scrollbar-hide">
-            <div className="hidden md:flex items-center justify-between px-3 py-2 mb-1">
+          <div className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-3 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto h-full scrollbar-thin">
+            <div className="hidden md:flex items-center justify-between px-3 py-2 mb-1 shrink-0">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {t('clan_nav_sections') || 'Разделы'}
               </span>
@@ -1448,7 +1406,7 @@ export default function ClanManager() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
@@ -1462,7 +1420,7 @@ export default function ClanManager() {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+          <div className="flex-1 p-6 md:p-8 overflow-y-auto h-full scrollbar-thin">
             
             {activeTab === 'general' && (
               <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-2xl">
@@ -1659,8 +1617,6 @@ export default function ClanManager() {
                     {t('clan_reset_btn') || 'Сбросить...'}
                   </button>
                 </div>
-                
-                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -1994,6 +1950,8 @@ export default function ClanManager() {
                   const channelsList = [
                     { key: 'ticketsCategory', label: 'Категория для тикетов', desc: 'Здесь бот будет создавать приватные каналы тикетов заявок.', typeFilter: 4 },
                     { key: 'applications', label: 'Одобренные заявки', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.', typeFilter: [0, 2] },
+                    { key: 'autoRejectedApplications', label: t('clan_channel_auto_rejected_app') || 'Отклоненные ботом заявки', desc: t('clan_channel_auto_rejected_app_desc') || 'Канал для автоматических отказов кандидатам (нехватка часов, возраст, блокировки VAC/Game).', typeFilter: [0, 2] },
+                    { key: 'rejectedApplications', label: t('clan_channel_rejected_app') || 'Отклоненные админами заявки', desc: t('clan_channel_rejected_app_desc') || 'Канал для заявок, отклоненных вручную модераторами/рекрутерами с указанием причины.', typeFilter: [0, 2] },
                     { key: 'leaderboard', label: 'Статистика (Leaderboard)', desc: 'Канал, где публикуется статистика по вайпам и топам.', typeFilter: [0, 2] },
                     { key: 'news', label: 'Новости клана', desc: 'Канал для публикации объявлений и новостей бота.', typeFilter: [0, 2] },
                     { key: 'votes', label: 'Голосования', desc: 'Канал для создания голосований. Может быть тем же, что и новости.', typeFilter: [0, 2] },
@@ -2018,8 +1976,6 @@ export default function ClanManager() {
                     </div>
                   );
                 })()}
-                
-                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -2161,10 +2117,6 @@ export default function ClanManager() {
                     </div>
                   );
                 })()}
-                
-                <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
-                </div>
               </div>
             )}
 
@@ -2308,8 +2260,6 @@ export default function ClanManager() {
                           </select>
                         </div>
                       </div>
-
-                      <SaveButton saveStatus={saveStatus} onManualSave={() => flushVoiceSave()} />
                     </form>
 
                     {/* Section 2: Active Temporary Rooms Monitoring */}
@@ -2470,6 +2420,19 @@ export default function ClanManager() {
                     const newConfig = { ...rConfig, [key]: val };
                     const updated = { ...config, recruitmentConfigJson: JSON.stringify(newConfig) };
                     queueAutoSave(updated, immediate);
+                  };
+
+                  let cConfig = {};
+                  try {
+                    if (config.channelsConfigJson) {
+                      cConfig = JSON.parse(config.channelsConfigJson);
+                    }
+                  } catch(e) {}
+
+                  const updateChannelConfig = (key, val) => {
+                    const newCConfig = { ...cConfig, [key]: val };
+                    const updated = { ...config, channelsConfigJson: JSON.stringify(newCConfig) };
+                    queueAutoSave(updated, true);
                   };
                   
                   return (
@@ -2656,11 +2619,44 @@ export default function ClanManager() {
                               placeholder={t('clan_recruitment_reject_msg_ph') || 'К сожалению, ваша анкета не соответствует минимальным требованиям клана...'}
                             ></textarea>
                           </div>
+
+                          {/* Выбор каналов для отправки отклоненных заявок */}
+                          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+                            <div>
+                              <h5 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                <Hash className="w-3.5 h-3.5 text-orange-500" />
+                                {t('clan_recruitment_channels_title') || 'Куда отсылать отклоненные заявки'}
+                              </h5>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                {t('clan_recruitment_channels_desc') || 'Выберите каналы Discord, в которые бот будет отправлять карточки отклоненных анкет.'}
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                              <div>
+                                <ChannelSelect
+                                  label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}
+                                  description="Канал для карточек авто-отказа (нехватка часов, возраст, VAC-баны)"
+                                  value={cConfig.autoRejectedApplications || ''}
+                                  onChange={val => updateChannelConfig('autoRejectedApplications', val)}
+                                  discordChannels={discordInfo?.channels || []}
+                                  typeFilter={[0, 2]}
+                                />
+                              </div>
+                              <div>
+                                <ChannelSelect
+                                  label={t('clan_recruitment_channel_admin') || 'Отклоненные админами заявки'}
+                                  description="Канал для карточек заявок, отклоненных рекрутерами вручную"
+                                  value={cConfig.rejectedApplications || ''}
+                                  onChange={val => updateChannelConfig('rejectedApplications', val)}
+                                  discordChannels={discordInfo?.channels || []}
+                                  typeFilter={[0, 2]}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Кнопка автосохранения */}
-                      <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
 
                       {/* Журнал и история заявок в клан */}
                       <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
@@ -2953,8 +2949,6 @@ export default function ClanManager() {
                     </div>
                   );
                 })()}
-                
-                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -3037,8 +3031,6 @@ export default function ClanManager() {
                     </>
                   );
                 })()}
-                
-                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -3535,8 +3527,6 @@ export default function ClanManager() {
                       );
                     })}
                   </div>
-
-                  <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
                 </form>
               );
             })()}
@@ -4173,8 +4163,6 @@ export default function ClanManager() {
                       </div>
                     </div>
                   </div>
-
-                  <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
                 </form>
               );
             })()}
