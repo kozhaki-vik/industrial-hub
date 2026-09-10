@@ -7,9 +7,18 @@ import ChannelSelect from '../components/ChannelSelect';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
-  RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban
+  RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
+
+export const DEFAULT_BAD_WORDS = [
+  'хохол', 'хохлы', 'хохлов', 'хохлу', 'хохлом', 'хохлам', 'хохлами', 'хохлах', 'хохляра', 'хохлят',
+  'москаль', 'москали', 'москалей', 'москалям', 'москалями', 'москалях', 'москаляка',
+  'кацап', 'кацапы', 'кацапов', 'кацапам', 'кацапами', 'кацапах',
+  'русня', 'русни', 'русне', 'русню', 'русней',
+  'свинорез', 'свинособака', 'свинособаки', 'чурка', 'чурки', 'чуркам', 'чурками',
+  'укроп', 'укропы', 'укропов', 'ватник', 'ватники', 'ватников', 'колорад', 'колорады'
+];
 
 export const isBotConfigured = (cfg) => {
   if (!cfg) return false;
@@ -192,6 +201,21 @@ export default function ClanManager() {
   const [syncModalData, setSyncModalData] = useState(null);
   const hasPromptedRef = useRef(false);
 
+  // Invite link verification & creation state
+  const [inviteStatus, setInviteStatus] = useState(null); // 'checking' | 'valid' | 'invalid' | null
+  const [inviteDetails, setInviteDetails] = useState(null);
+  const [creatingInvite, setCreatingInvite] = useState(false);
+  const [checkingInvite, setCheckingInvite] = useState(false);
+  const lastVerifiedLinkRef = useRef('');
+  const lastSavedConfigRef = useRef(null);
+
+  // Stats interactive sorting state
+  const [statsSortField, setStatsSortField] = useState('voiceTime');
+  const [statsSortOrder, setStatsSortOrder] = useState('desc'); // 'asc' | 'desc'
+
+  // Bad words input state
+  const [newBadWordInput, setNewBadWordInput] = useState('');
+
   // --- Centralized Debounced & Throttled Auto-Save Engine ---
   const latestConfigRef = useRef(config);
   latestConfigRef.current = config;
@@ -258,10 +282,26 @@ export default function ClanManager() {
             setError(data.error);
           } else {
             const fetchedConfig = data.data.config;
-            setConfig(sanitizeClanConfig(fetchedConfig));
+            const sanitized = sanitizeClanConfig(fetchedConfig);
+            setConfig(sanitized);
+            lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
             if (!hasPromptedRef.current && !isBotConfigured(fetchedConfig)) {
               hasPromptedRef.current = true;
               setShowSetupWizard(true);
+            }
+            if (sanitized?.discordLink && sanitized.discordLink.trim()) {
+              setCheckingInvite(true);
+              setInviteStatus('checking');
+              lastVerifiedLinkRef.current = sanitized.discordLink.trim();
+              ws.send(JSON.stringify({
+                type: 'clan',
+                action: 'proxy',
+                reqId: 'check_discord_invite',
+                payload: {
+                  action: 'check_discord_invite',
+                  inviteUrl: sanitized.discordLink.trim()
+                }
+              }));
             }
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'update_config') {
@@ -270,7 +310,9 @@ export default function ClanManager() {
             setSaveStatus(`error: ${data.error}`);
           } else {
             setSaveStatus('success');
-            setConfig(sanitizeClanConfig(data.data.config));
+            const sanitized = sanitizeClanConfig(data.data.config);
+            setConfig(sanitized);
+            lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
             setTimeout(() => setSaveStatus(null), 3000);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'auto_setup') {
@@ -280,7 +322,11 @@ export default function ClanManager() {
           } else {
             setSaveStatus('success');
             if (data.data.discordInfo) setDiscordInfo(data.data.discordInfo);
-            if (data.data.config) setConfig(sanitizeClanConfig(data.data.config));
+            if (data.data.config) {
+              const sanitized = sanitizeClanConfig(data.data.config);
+              setConfig(sanitized);
+              lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
+            }
             setTimeout(() => setSaveStatus(null), 3000);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'sync_permissions') {
@@ -423,6 +469,39 @@ export default function ClanManager() {
           } else {
             setError(data.error || (data.data && data.data.error));
           }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'create_discord_invite') {
+          setCreatingInvite(false);
+          if (!data.error && data.data && data.data.success && data.data.inviteUrl) {
+            const newUrl = data.data.inviteUrl;
+            setConfig(prev => {
+              if (!prev) return prev;
+              const updated = { ...prev, discordLink: newUrl };
+              lastSavedConfigRef.current = JSON.parse(JSON.stringify(updated));
+              return updated;
+            });
+            setInviteStatus('valid');
+            setInviteDetails(data.data.invite || null);
+            lastVerifiedLinkRef.current = newUrl;
+            setSaveStatus('success');
+            setTimeout(() => setSaveStatus(null), 3000);
+            addLog(`Permanent invite created: ${newUrl}`);
+          } else {
+            setError(data.error || (data.data && data.data.error) || 'Failed to create invite');
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'check_discord_invite') {
+          setCheckingInvite(false);
+          if (!data.error && data.data) {
+            if (data.data.valid) {
+              setInviteStatus('valid');
+              setInviteDetails(data.data.invite || null);
+            } else {
+              setInviteStatus('invalid');
+              setInviteDetails(null);
+            }
+          } else {
+            setInviteStatus('invalid');
+            setInviteDetails(null);
+          }
         }
       } catch (err) {}
     };
@@ -483,6 +562,42 @@ export default function ClanManager() {
     }));
   };
 
+  const verifyInvite = (link) => {
+    const trimmed = (link || '').trim();
+    if (!trimmed || !ws || wsStatus !== 'online') {
+      setInviteStatus(null);
+      setInviteDetails(null);
+      lastVerifiedLinkRef.current = '';
+      return;
+    }
+    setCheckingInvite(true);
+    setInviteStatus('checking');
+    lastVerifiedLinkRef.current = trimmed;
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'check_discord_invite',
+      payload: {
+        action: 'check_discord_invite',
+        inviteUrl: trimmed
+      }
+    }));
+  };
+
+  const handleCreatePermanentInvite = () => {
+    if (!ws || wsStatus !== 'online' || creatingInvite) return;
+    setCreatingInvite(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'create_discord_invite',
+      payload: {
+        action: 'create_discord_invite'
+      }
+    }));
+    addLog('Generating permanent Discord invite...');
+  };
+
   const startAutoSetup = (options) => {
     setShowSetupWizard(false);
     setSaveStatus('saving');
@@ -528,8 +643,15 @@ export default function ClanManager() {
     const cfgToSend = pendingConfigRef.current || latestConfigRef.current;
     if (!cfgToSend || !ws || wsStatus !== 'online') return;
 
+    // No-op guard: if the configuration hasn't changed compared to lastSavedConfigRef, skip sending
+    if (lastSavedConfigRef.current && JSON.stringify(cfgToSend) === JSON.stringify(lastSavedConfigRef.current)) {
+      pendingConfigRef.current = null;
+      return;
+    }
+
     pendingConfigRef.current = null;
     lastSaveTimeRef.current = Date.now();
+    lastSavedConfigRef.current = JSON.parse(JSON.stringify(cfgToSend));
     setSaveStatus('saving');
 
     ws.send(JSON.stringify({ 
@@ -635,6 +757,29 @@ export default function ClanManager() {
 
   const handleRoleNameBlur = (key, dbKey, currentName, isCustom, customId) => {
     if (!config) return;
+    const trimmed = (currentName || '').trim();
+
+    // No-op guard: if name didn't change, do not auto-save or rename in Discord
+    if (isCustom) {
+      let customRoles = [];
+      try {
+        if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
+      } catch (e) {}
+      const cur = customRoles.find(r => r.id === customId);
+      if (!cur || (cur.name || '').trim() === trimmed) {
+        return;
+      }
+    } else {
+      let roleNames = {};
+      try {
+        if (config.roleNamesJson) roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
+      } catch (e) {}
+      const curName = (roleNames[key] || '').trim();
+      if (curName === trimmed) {
+        return;
+      }
+    }
+
     let updatedConfig = { ...config };
     if (isCustom) {
       let customRoles = [];
@@ -668,7 +813,12 @@ export default function ClanManager() {
         })()
       : updatedConfig[dbKey];
 
-    if (roleId && currentName && currentName.trim().length > 0) {
+    if (roleId && trimmed.length > 0) {
+      const discordRole = discordInfo?.roles?.find(r => r.id === roleId);
+      if (discordRole && discordRole.name === trimmed) {
+        return;
+      }
+
       ws.send(JSON.stringify({
         type: 'clan',
         action: 'proxy',
@@ -676,7 +826,7 @@ export default function ClanManager() {
         payload: {
           action: 'rename_discord_role',
           roleId,
-          newName: currentName.trim()
+          newName: trimmed
         }
       }));
     }
@@ -1074,7 +1224,11 @@ export default function ClanManager() {
 
   useEffect(() => {
     if (!ws || wsStatus !== 'online') return;
-    if (activeTab === 'roster' && !rosterData) {
+    if (activeTab === 'general' && config?.discordLink) {
+      if (config.discordLink.trim() && config.discordLink.trim() !== lastVerifiedLinkRef.current) {
+        verifyInvite(config.discordLink);
+      }
+    } else if (activeTab === 'roster' && !rosterData) {
       addLog('Fetching roster via proxy');
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_roster', payload: { action: 'get_roster' } }));
     } else if (activeTab === 'stats' && !statsData) {
@@ -1085,7 +1239,7 @@ export default function ClanManager() {
     } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions' || activeTab === 'logs' || activeTab === 'moderation') && !discordInfo) {
       fetchDiscordInfo();
     }
-  }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData]);
+  }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData, config?.discordLink]);
 
   const DebugLogs = () => (
     <div className="mt-8 bg-slate-900 text-green-400 p-4 rounded-xl shadow-inner text-xs font-mono max-h-64 overflow-y-auto border border-slate-800">
@@ -1174,7 +1328,6 @@ export default function ClanManager() {
     { id: 'roles', label: 'Роли', icon: Users },
     { id: 'channels', label: 'Каналы', icon: Hash },
     { id: 'recruitment', label: 'Наборы', icon: UserPlus },
-    { id: 'votes', label: 'Голосования', icon: Vote },
     { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
     { id: 'roster', label: 'Состав', icon: UserCheck },
     { id: 'stats', label: 'Статистика', icon: BarChart3 },
@@ -1182,6 +1335,7 @@ export default function ClanManager() {
     { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
     { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
     { id: 'ads', label: 'Реклама', icon: Megaphone },
+    { id: 'votes', label: 'Голосования', icon: Vote },
   ];
 
 
@@ -1306,29 +1460,101 @@ export default function ClanManager() {
                       queueAutoSave(updated, false);
                     }}
                     onBlur={e => {
-                      const updated = { ...config, name: e.target.value };
-                      queueAutoSave(updated, true);
+                      const val = e.target.value;
+                      if (val !== (config?.name ?? '')) {
+                        const updated = { ...config, name: val };
+                        queueAutoSave(updated, true);
+                      }
                     }}
                     placeholder="Например: GODS"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Основная ссылка на Discord</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white dark:bg-slate-800/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                    value={config?.discordLink ?? ''}
-                    onChange={e => {
-                      const updated = { ...config, discordLink: e.target.value };
-                      queueAutoSave(updated, false);
-                    }}
-                    onBlur={e => {
-                      const updated = { ...config, discordLink: e.target.value };
-                      queueAutoSave(updated, true);
-                    }}
-                    placeholder="https://discord.gg/..."
-                  />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {t('clan_discord_link_title') || 'Основная ссылка на Discord'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleCreatePermanentInvite}
+                      disabled={creatingInvite}
+                      className="text-xs font-semibold px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer border border-blue-200/60 dark:border-blue-800/60"
+                    >
+                      {creatingInvite ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                          <span>{t('clan_discord_link_generating') || 'Создание ссылки...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>{t('clan_discord_link_generate') || 'Создать вечную ссылку'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 outline-none transition-shadow ${
+                        inviteStatus === 'invalid' 
+                          ? 'border-red-400 dark:border-red-500/60 focus:ring-red-500/40' 
+                          : inviteStatus === 'valid'
+                          ? 'border-emerald-400 dark:border-emerald-500/60 focus:ring-emerald-500/40'
+                          : 'border-slate-200 dark:border-slate-700 focus:ring-blue-500/50'
+                      }`}
+                      value={config?.discordLink ?? ''}
+                      onChange={e => {
+                        const updated = { ...config, discordLink: e.target.value };
+                        queueAutoSave(updated, false);
+                      }}
+                      onBlur={e => {
+                        const val = e.target.value;
+                        if (val !== (config?.discordLink ?? '')) {
+                          const updated = { ...config, discordLink: val };
+                          queueAutoSave(updated, true);
+                        }
+                        if (val.trim() && val.trim() !== lastVerifiedLinkRef.current) {
+                          verifyInvite(val);
+                        } else if (!val.trim()) {
+                          setInviteStatus(null);
+                          setInviteDetails(null);
+                        }
+                      }}
+                      placeholder="https://discord.gg/..."
+                    />
+
+                    {checkingInvite && (
+                      <div className="absolute right-3 top-2.5 flex items-center gap-1.5 text-xs text-slate-400">
+                        <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Verification Status Badge / Alert */}
+                  {inviteStatus === 'valid' && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                      <Check className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {t('clan_discord_link_valid') || 'Ссылка активна'}
+                        {inviteDetails?.serverName ? ` (${inviteDetails.serverName}${inviteDetails.memberCount ? ` • ${inviteDetails.memberCount} уч.` : ''})` : ''}
+                      </span>
+                    </div>
+                  )}
+
+                  {inviteStatus === 'invalid' && (
+                    <div className="mt-2 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs space-y-1">
+                      <div className="font-semibold flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{t('clan_discord_link_invalid') || 'Ссылка недействительна или была удалена'}</span>
+                      </div>
+                      <p className="text-[11px] opacity-90">
+                        {t('clan_discord_link_invalid_hint') || 'Приглашение устарело или было удалено в Discord. Сгенерируйте новую ссылку кнопкой выше.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Bot Language Card */}
@@ -2537,74 +2763,169 @@ export default function ClanManager() {
               </div>
             )}
 
-            {activeTab === 'stats' && (
-              <div className="space-y-6 max-w-5xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Статистика участников
-                  </h3>
-                  <button onClick={() => setStatsData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Обновить
-                  </button>
-                </div>
-                
-                {!statsData ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            {activeTab === 'stats' && (() => {
+              const handleStatsSort = (field) => {
+                if (statsSortField === field) {
+                  setStatsSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setStatsSortField(field);
+                  setStatsSortOrder(field === 'displayName' ? 'asc' : 'desc');
+                }
+              };
+
+              const sortedStats = !statsData || !Array.isArray(statsData) ? [] : [...statsData].sort((a, b) => {
+                let cmp = 0;
+                if (statsSortField === 'displayName') {
+                  const nameA = (a.displayName || a.username || '').toLowerCase();
+                  const nameB = (b.displayName || b.username || '').toLowerCase();
+                  cmp = nameA.localeCompare(nameB);
+                } else {
+                  const valA = Number(a[statsSortField]) || 0;
+                  const valB = Number(b[statsSortField]) || 0;
+                  cmp = valA - valB;
+                }
+                return statsSortOrder === 'asc' ? cmp : -cmp;
+              });
+
+              return (
+                <div className="space-y-6 max-w-5xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
+                        <BarChart3 className="w-5 h-5 mr-2 text-blue-500" />
+                        {t('clan_stats_title') || 'Статистика участников'}
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {t('clan_stats_sort_tip')}
+                      </p>
+                    </div>
+                    <button onClick={() => setStatsData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center self-start sm:self-auto cursor-pointer">
+                      <RefreshCw className="w-4 h-4 mr-1.5" />
+                      Обновить
+                    </button>
                   </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-500 dark:text-slate-400">
-                      <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-800/50 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                        <tr>
-                          <th scope="col" className="px-6 py-3">Участник</th>
-                          <th scope="col" className="px-6 py-3 text-center">Время в Voice</th>
-                          <th scope="col" className="px-6 py-3 text-center">Сообщения</th>
-                          <th scope="col" className="px-6 py-3 text-center">Вайпы</th>
-                          <th scope="col" className="px-6 py-3 text-center">Голосования</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {statsData.length === 0 ? (
+                  
+                  {!statsData ? (
+                    <div className="flex justify-center items-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                      <table className="w-full text-left text-sm text-slate-500 dark:text-slate-400">
+                        <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-800/60 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 select-none">
                           <tr>
-                            <td colSpan="5" className="px-6 py-8 text-center">Нет данных для отображения.</td>
+                            <th 
+                              scope="col" 
+                              onClick={() => handleStatsSort('displayName')} 
+                              className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span>{t('clan_stats_col_member') || 'Участник'}</span>
+                                {statsSortField === 'displayName' ? (
+                                  <span className="text-blue-500 font-bold">{statsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                                ) : (
+                                  <span className="text-slate-400/60 text-[10px]">↕</span>
+                                )}
+                              </div>
+                            </th>
+                            <th 
+                              scope="col" 
+                              onClick={() => handleStatsSort('voiceTime')} 
+                              className="px-6 py-3.5 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span>{t('clan_stats_col_voice') || 'Время в Voice'}</span>
+                                {statsSortField === 'voiceTime' ? (
+                                  <span className="text-blue-500 font-bold">{statsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                                ) : (
+                                  <span className="text-slate-400/60 text-[10px]">↕</span>
+                                )}
+                              </div>
+                            </th>
+                            <th 
+                              scope="col" 
+                              onClick={() => handleStatsSort('messageCount')} 
+                              className="px-6 py-3.5 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span>{t('clan_stats_col_messages') || 'Сообщения'}</span>
+                                {statsSortField === 'messageCount' ? (
+                                  <span className="text-blue-500 font-bold">{statsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                                ) : (
+                                  <span className="text-slate-400/60 text-[10px]">↕</span>
+                                )}
+                              </div>
+                            </th>
+                            <th 
+                              scope="col" 
+                              onClick={() => handleStatsSort('wipesPlayed')} 
+                              className="px-6 py-3.5 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span>{t('clan_stats_col_wipes') || 'Вайпы'}</span>
+                                {statsSortField === 'wipesPlayed' ? (
+                                  <span className="text-blue-500 font-bold">{statsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                                ) : (
+                                  <span className="text-slate-400/60 text-[10px]">↕</span>
+                                )}
+                              </div>
+                            </th>
+                            <th 
+                              scope="col" 
+                              onClick={() => handleStatsSort('votesCast')} 
+                              className="px-6 py-3.5 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span>{t('clan_stats_col_votes') || 'Голосования'}</span>
+                                {statsSortField === 'votesCast' ? (
+                                  <span className="text-blue-500 font-bold">{statsSortOrder === 'asc' ? '↑' : '↓'}</span>
+                                ) : (
+                                  <span className="text-slate-400/60 text-[10px]">↕</span>
+                                )}
+                              </div>
+                            </th>
                           </tr>
-                        ) : (
-                          statsData.sort((a, b) => b.voiceTime - a.voiceTime).map(stat => (
-                            <tr key={stat.userId} className="bg-white border-b dark:bg-slate-900/50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
-                              <th scope="row" className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap dark:text-white flex items-center">
-                                <img src={stat.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-8 h-8 rounded-full mr-3" />
-                                <div>
-                                  <div className={!stat.isMember ? "text-slate-400 line-through" : ""}>{stat.displayName}</div>
-                                  <div className="text-[10px] text-slate-500">@{stat.username}</div>
-                                </div>
-                              </th>
-                              <td className="px-6 py-4 text-center font-mono">
-                                {Math.floor(stat.voiceTime / 3600)}ч {Math.floor((stat.voiceTime % 3600) / 60)}м
-                              </td>
-                              <td className="px-6 py-4 text-center font-mono">
-                                {stat.messageCount}
-                              </td>
-                              <td className="px-6 py-4 text-center font-mono">
-                                {stat.wipesPlayed}
-                              </td>
-                              <td className="px-6 py-4 text-center font-mono">
-                                {stat.votesCast}
-                              </td>
+                        </thead>
+                        <tbody>
+                          {sortedStats.length === 0 ? (
+                            <tr>
+                              <td colSpan="5" className="px-6 py-8 text-center">Нет данных для отображения.</td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
+                          ) : (
+                            sortedStats.map(stat => (
+                              <tr key={stat.userId} className="bg-white border-b dark:bg-slate-900/50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                                <th scope="row" className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap dark:text-white flex items-center">
+                                  <img src={stat.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-8 h-8 rounded-full mr-3" />
+                                  <div>
+                                    <div className={!stat.isMember ? "text-slate-400 line-through" : ""}>{stat.displayName}</div>
+                                    <div className="text-[10px] text-slate-500">@{stat.username}</div>
+                                  </div>
+                                </th>
+                                <td className="px-6 py-4 text-center font-mono">
+                                  {Math.floor(stat.voiceTime / 3600)}ч {Math.floor((stat.voiceTime % 3600) / 60)}м
+                                </td>
+                                <td className="px-6 py-4 text-center font-mono">
+                                  {stat.messageCount}
+                                </td>
+                                <td className="px-6 py-4 text-center font-mono">
+                                  {stat.wipesPlayed}
+                                </td>
+                                <td className="px-6 py-4 text-center font-mono">
+                                  {stat.votesCast}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {activeTab === 'logs' && (() => {
-              let logCfg = { enabled: true, defaultChannelId: '', events: {} };
+              let logCfg = { enabled: false, defaultChannelId: '', events: {} };
               try {
                 if (config?.loggingConfigJson) {
                   logCfg = typeof config.loggingConfigJson === 'string' ? JSON.parse(config.loggingConfigJson) : config.loggingConfigJson;
@@ -2612,7 +2933,7 @@ export default function ClanManager() {
                 }
               } catch (e) {}
 
-              const isMasterEnabled = logCfg.enabled !== false;
+              const isMasterEnabled = Boolean(logCfg.enabled);
               const defaultChId = logCfg.defaultChannelId || '';
               const textChannels = (discordInfo?.channels || []).filter(c => c.type === 0);
               const defaultChObj = textChannels.find(c => c.id === defaultChId);
@@ -2887,7 +3208,7 @@ export default function ClanManager() {
               let modCfg = {
                 logChannelId: '',
                 antiMention: {
-                  enabled: true,
+                  enabled: false,
                   maxMentions: 5,
                   timeWindowSeconds: 10,
                   countUsers: true,
@@ -2897,6 +3218,16 @@ export default function ClanManager() {
                   durationMinutes: 10,
                   autoDelete: true,
                   warnMessage: 'Массовые упоминания запрещены на этом сервере!',
+                  ignoreRoles: [],
+                  ignoreChannels: []
+                },
+                badWords: {
+                  enabled: false,
+                  words: [...DEFAULT_BAD_WORDS],
+                  action: 'timeout',
+                  durationMinutes: 10,
+                  autoDelete: true,
+                  warnMessage: 'Использование запретных выражений недопустимо на нашем сервере!',
                   ignoreRoles: [],
                   ignoreChannels: []
                 }
@@ -2910,14 +3241,29 @@ export default function ClanManager() {
                     antiMention: {
                       ...modCfg.antiMention,
                       ...(parsed.antiMention || {})
+                    },
+                    badWords: {
+                      ...modCfg.badWords,
+                      ...(parsed.badWords || {})
                     }
                   };
                 }
               } catch (e) {}
 
               const am = modCfg.antiMention;
+              const bw = modCfg.badWords;
               const textChannels = (discordInfo?.channels || []).filter(c => c.type === 0);
               const allRoles = discordInfo?.roles || [];
+
+              const isLeadershipRole = (roleId) => {
+                return Boolean(
+                  roleId && (
+                    roleId === config?.leaderRoleId ||
+                    roleId === config?.deputyLeaderRoleId ||
+                    roleId === config?.callerRoleId
+                  )
+                );
+              };
 
               const handleUpdateAM = (field, val, immediate = true) => {
                 const updated = {
@@ -2930,6 +3276,42 @@ export default function ClanManager() {
                 queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, immediate);
               };
 
+              const handleUpdateBW = (field, val, immediate = true) => {
+                const updated = {
+                  ...modCfg,
+                  badWords: {
+                    ...bw,
+                    [field]: val
+                  }
+                };
+                queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, immediate);
+              };
+
+              const handleAddBadWord = (word) => {
+                const clean = (word || '').trim().toLowerCase();
+                if (!clean) return;
+                const currentWords = Array.isArray(bw.words) ? [...bw.words] : [];
+                if (!currentWords.includes(clean)) {
+                  currentWords.push(clean);
+                  handleUpdateBW('words', currentWords, true);
+                }
+                setNewBadWordInput('');
+              };
+
+              const handleRemoveBadWord = (wordToRemove) => {
+                const currentWords = Array.isArray(bw.words) ? [...bw.words] : [];
+                const filtered = currentWords.filter(w => w !== wordToRemove);
+                handleUpdateBW('words', filtered, true);
+              };
+
+              const handleResetBadWords = () => {
+                handleUpdateBW('words', [...DEFAULT_BAD_WORDS], true);
+              };
+
+              const handleClearBadWords = () => {
+                handleUpdateBW('words', [], true);
+              };
+
               const handleUpdateModRoot = (field, val, immediate = true) => {
                 const updated = { ...modCfg, [field]: val };
                 queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, immediate);
@@ -2940,7 +3322,12 @@ export default function ClanManager() {
                 const idx = current.indexOf(roleId);
                 if (idx === -1) current.push(roleId);
                 else current.splice(idx, 1);
-                handleUpdateAM('ignoreRoles', current, true);
+                const updated = {
+                  ...modCfg,
+                  antiMention: { ...am, ignoreRoles: current },
+                  badWords: { ...bw, ignoreRoles: current }
+                };
+                queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, true);
               };
 
               const handleToggleChannelWhitelist = (chId) => {
@@ -2948,7 +3335,12 @@ export default function ClanManager() {
                 const idx = current.indexOf(chId);
                 if (idx === -1) current.push(chId);
                 else current.splice(idx, 1);
-                handleUpdateAM('ignoreChannels', current, true);
+                const updated = {
+                  ...modCfg,
+                  antiMention: { ...am, ignoreChannels: current },
+                  badWords: { ...bw, ignoreChannels: current }
+                };
+                queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, true);
               };
 
               return (
@@ -2979,7 +3371,7 @@ export default function ClanManager() {
                       <label className="flex items-center gap-3 cursor-pointer select-none bg-slate-50 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
                         <input
                           type="checkbox"
-                          checked={am.enabled !== false}
+                          checked={Boolean(am.enabled)}
                           onChange={e => handleUpdateAM('enabled', e.target.checked)}
                           className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
                         />
@@ -3004,7 +3396,10 @@ export default function ClanManager() {
                           max={50}
                           value={am.maxMentions || 5}
                           onChange={e => handleUpdateAM('maxMentions', parseInt(e.target.value, 10) || 5, false)}
-                          onBlur={e => handleUpdateAM('maxMentions', parseInt(e.target.value, 10) || 5, true)}
+                          onBlur={e => {
+                            const val = parseInt(e.target.value, 10) || 5;
+                            if (val !== am.maxMentions) handleUpdateAM('maxMentions', val, true);
+                          }}
                           className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                       </div>
@@ -3022,7 +3417,10 @@ export default function ClanManager() {
                           max={120}
                           value={am.timeWindowSeconds || 10}
                           onChange={e => handleUpdateAM('timeWindowSeconds', parseInt(e.target.value, 10) || 10, false)}
-                          onBlur={e => handleUpdateAM('timeWindowSeconds', parseInt(e.target.value, 10) || 10, true)}
+                          onBlur={e => {
+                            const val = parseInt(e.target.value, 10) || 10;
+                            if (val !== am.timeWindowSeconds) handleUpdateAM('timeWindowSeconds', val, true);
+                          }}
                           className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                       </div>
@@ -3129,9 +3527,196 @@ export default function ClanManager() {
                         value={am.warnMessage || ''}
                         placeholder={t('clan_mod_warn_msg_default')}
                         onChange={e => handleUpdateAM('warnMessage', e.target.value, false)}
-                        onBlur={e => handleUpdateAM('warnMessage', e.target.value, true)}
+                        onBlur={e => {
+                          if (e.target.value !== (am.warnMessage || '')) {
+                            handleUpdateAM('warnMessage', e.target.value, true);
+                          }
+                        }}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                       />
+                    </div>
+                  </div>
+
+                  {/* Bad Words Filter Main Card */}
+                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Ban className="w-4 h-4 text-red-500" />
+                          <span>{t('clan_mod_badwords_title')}</span>
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {t('clan_mod_badwords_desc')}
+                        </p>
+                      </div>
+
+                      <label className="flex items-center gap-3 cursor-pointer select-none bg-slate-50 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(bw.enabled)}
+                          onChange={e => handleUpdateBW('enabled', e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                        />
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {t('clan_mod_badwords_enable')}
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Action & Duration */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          {t('clan_mod_action')}
+                        </label>
+                        <select
+                          value={bw.action || 'timeout'}
+                          onChange={e => handleUpdateBW('action', e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        >
+                          <option value="delete_only">🗑️ {t('clan_mod_action_delete_only')}</option>
+                          <option value="warn">⚠️ {t('clan_mod_action_warn')}</option>
+                          <option value="timeout">🔇 {t('clan_mod_action_timeout')}</option>
+                          <option value="kick">👢 {t('clan_mod_action_kick')}</option>
+                          <option value="ban">🔨 {t('clan_mod_action_ban')}</option>
+                        </select>
+                      </div>
+
+                      {bw.action === 'timeout' && (
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            {t('clan_mod_timeout_duration')}
+                          </label>
+                          <select
+                            value={bw.durationMinutes || 10}
+                            onChange={e => handleUpdateBW('durationMinutes', parseInt(e.target.value, 10))}
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                          >
+                            <option value={1}>{t('clan_mod_timeout_1m')}</option>
+                            <option value={5}>{t('clan_mod_timeout_5m')}</option>
+                            <option value={10}>{t('clan_mod_timeout_10m')}</option>
+                            <option value={30}>{t('clan_mod_timeout_30m')}</option>
+                            <option value={60}>{t('clan_mod_timeout_1h')}</option>
+                            <option value={360}>{t('clan_mod_timeout_6h')}</option>
+                            <option value={1440}>{t('clan_mod_timeout_1d')}</option>
+                            <option value={10080}>{t('clan_mod_timeout_1w')}</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Auto-delete toggle */}
+                    <div className="flex items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                      <input
+                        type="checkbox"
+                        id="bwAutoDelete"
+                        checked={bw.autoDelete !== false}
+                        onChange={e => handleUpdateBW('autoDelete', e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700 mr-3 cursor-pointer"
+                      />
+                      <label htmlFor="bwAutoDelete" className="text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+                        {t('clan_mod_auto_delete')}
+                      </label>
+                    </div>
+
+                    {/* Warning text */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t('clan_mod_warn_msg')}
+                      </label>
+                      <input
+                        type="text"
+                        value={bw.warnMessage || ''}
+                        placeholder={t('clan_mod_badwords_warn_default')}
+                        onChange={e => handleUpdateBW('warnMessage', e.target.value, false)}
+                        onBlur={e => {
+                          if (e.target.value !== (bw.warnMessage || '')) {
+                            handleUpdateBW('warnMessage', e.target.value, true);
+                          }
+                        }}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+
+                    {/* Words List Header and Controls */}
+                    <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            {t('clan_mod_badwords_list_title')}
+                          </span>
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+                            {(bw.words || []).length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleResetBadWords}
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>{t('clan_mod_badwords_reset_btn')}</span>
+                          </button>
+                          <span className="text-slate-300 dark:text-slate-700">|</span>
+                          <button
+                            type="button"
+                            onClick={handleClearBadWords}
+                            className="text-xs text-red-500 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>{t('clan_mod_badwords_clear_btn')}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Add Word Input */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newBadWordInput}
+                          onChange={e => setNewBadWordInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddBadWord(newBadWordInput);
+                            }
+                          }}
+                          placeholder={t('clan_mod_badwords_add_ph')}
+                          className="flex-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddBadWord(newBadWordInput)}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>{t('clan_mod_badwords_add_btn')}</span>
+                        </button>
+                      </div>
+
+                      {/* Word Pills */}
+                      <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-2.5 bg-slate-50/60 dark:bg-slate-950/30 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                        {(!bw.words || bw.words.length === 0) ? (
+                          <span className="text-xs text-slate-400 italic py-2 px-1">Список пуст</span>
+                        ) : (
+                          bw.words.map((word, idx) => (
+                            <span
+                              key={`${word}-${idx}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 shadow-2xs group"
+                            >
+                              <span>{word}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveBadWord(word)}
+                                className="text-slate-400 hover:text-red-500 rounded p-0.5 transition-colors cursor-pointer"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -3170,22 +3755,32 @@ export default function ClanManager() {
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
                         {t('clan_mod_whitelist_roles_desc')}
+                        <span className="block mt-0.5 text-amber-600 dark:text-amber-400 font-medium">
+                          • {t('clan_mod_auto_exempt_hint')}
+                        </span>
                       </p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {allRoles.length === 0 ? (
                           <span className="text-xs text-slate-400 italic">Роли не загружены</span>
                         ) : (
                           allRoles.map(r => {
-                            const isIgnored = Array.isArray(am.ignoreRoles) && am.ignoreRoles.includes(r.id);
+                            const isAuto = isLeadershipRole(r.id);
+                            const isIgnored = isAuto || (Array.isArray(am.ignoreRoles) && am.ignoreRoles.includes(r.id));
                             return (
                               <button
                                 key={r.id}
                                 type="button"
-                                onClick={() => handleToggleRoleWhitelist(r.id)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
-                                  isIgnored
-                                    ? 'bg-blue-500 text-white border-blue-600 shadow-sm'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                onClick={() => {
+                                  if (isAuto) return;
+                                  handleToggleRoleWhitelist(r.id);
+                                }}
+                                title={isAuto ? t('clan_mod_auto_exempt_hint') : undefined}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                                  isAuto
+                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 cursor-default'
+                                    : isIgnored
+                                    ? 'bg-blue-500 text-white border-blue-600 shadow-sm cursor-pointer'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer'
                                 }`}
                               >
                                 <span
@@ -3193,7 +3788,13 @@ export default function ClanManager() {
                                   style={{ backgroundColor: r.color && r.color !== '#000000' ? r.color : '#94a3b8' }}
                                 ></span>
                                 <span>{r.name}</span>
-                                {isIgnored && <Check className="w-3 h-3" />}
+                                {isAuto ? (
+                                  <span className="text-[10px] font-bold px-1 py-0.2 rounded bg-amber-200/50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200">
+                                    {t('clan_mod_auto_exempt_badge') || 'Авто'}
+                                  </span>
+                                ) : isIgnored ? (
+                                  <Check className="w-3 h-3" />
+                                ) : null}
                               </button>
                             );
                           })
