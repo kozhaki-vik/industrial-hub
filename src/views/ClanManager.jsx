@@ -7,7 +7,7 @@ import ChannelSelect from '../components/ChannelSelect';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
-  RotateCcw, AlertTriangle
+  RotateCcw, AlertTriangle, ScrollText, ShieldAlert
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -79,6 +79,63 @@ function SaveButton({ saveStatus }) {
   );
 }
 
+const loggingEventGroups = [
+  {
+    id: 'members',
+    title: 'Участники сервера',
+    icon: Users,
+    events: [
+      { key: 'member_join', title: 'Вход участника', desc: 'Оповещение о входе нового участника на сервер' },
+      { key: 'member_leave', title: 'Выход участника', desc: 'Участник покинул сервер по собственному желанию' },
+      { key: 'member_kick', title: 'Кик участника', desc: 'Участник был кикнут модератором (с указанием автора и причины)' },
+      { key: 'member_ban', title: 'Бан участника', desc: 'Блокировка участника на сервере' },
+      { key: 'member_unban', title: 'Разбан участника', desc: 'Снятие бана с участника' },
+      { key: 'nickname_change', title: 'Смена никнейма', desc: 'Изменение локального никнейма участника на сервере' },
+    ]
+  },
+  {
+    id: 'messages',
+    title: 'Сообщения',
+    icon: Hash,
+    events: [
+      { key: 'message_delete', title: 'Удаление сообщения', desc: 'Логирование удаленного текста, автора и канала' },
+      { key: 'message_edit', title: 'Редактирование сообщения', desc: 'Логирование старого и нового текста сообщения' },
+    ]
+  },
+  {
+    id: 'roles',
+    title: 'Роли',
+    icon: ShieldCheck,
+    events: [
+      { key: 'member_role_update', title: 'Выдача и снятие ролей', desc: 'Логирование изменений ролей у участников' },
+      { key: 'role_create', title: 'Создание роли', desc: 'Создание новой роли на сервере' },
+      { key: 'role_update', title: 'Изменение роли', desc: 'Изменение названия, цвета или разрешений роли' },
+      { key: 'role_delete', title: 'Удаление роли', desc: 'Удаление роли с сервера' },
+    ]
+  },
+  {
+    id: 'channels',
+    title: 'Каналы',
+    icon: Sliders,
+    events: [
+      { key: 'channel_create', title: 'Создание канала', desc: 'Создание текстового/голосового канала или категории' },
+      { key: 'channel_update', title: 'Изменение канала', desc: 'Изменение названия, темы или прав доступа канала' },
+      { key: 'channel_delete', title: 'Удаление канала', desc: 'Удаление канала или категории' },
+    ]
+  },
+  {
+    id: 'voice',
+    title: 'Голосовые каналы',
+    icon: Volume2,
+    events: [
+      { key: 'voice_join', title: 'Вход в голосовой канал', desc: 'Участник подключился к голосовому каналу' },
+      { key: 'voice_leave', title: 'Выход из голосового канала', desc: 'Участник отключился от голосового канала' },
+      { key: 'voice_move', title: 'Перемещение между войсами', desc: 'Переход участника из одного голосового канала в другой' },
+      { key: 'voice_mute_deaf', title: 'Серверный мут / глушение', desc: 'Включение/отключение серверного мута микрофона или наушников' },
+    ]
+  }
+];
+
 export default function ClanManager() {
   const { t } = useTranslation();
   const { ws, status: wsStatus } = useNetwork();
@@ -102,9 +159,10 @@ export default function ClanManager() {
   const [loadingVoice, setLoadingVoice] = useState(false);
   const [voiceActionLoading, setVoiceActionLoading] = useState(false);
   const [creatingRoleKey, setCreatingRoleKey] = useState(null);
+  const [creatingLogChannel, setCreatingLogChannel] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetSections, setResetSections] = useState([
-    'roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'general'
+    'roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'logging', 'moderation', 'general'
   ]);
   const [isResetting, setIsResetting] = useState(false);
   const [syncModalData, setSyncModalData] = useState(null);
@@ -285,6 +343,37 @@ export default function ClanManager() {
               setConfig(sanitizeClanConfig(data.data.config));
             }
             fetchDiscordInfo();
+            setSaveStatus('success');
+            setTimeout(() => setSaveStatus(null), 3000);
+          } else {
+            setError(data.error || (data.data && data.data.error));
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'create_log_channel') {
+          setCreatingLogChannel(false);
+          if (!data.error && data.data && data.data.success) {
+            if (data.data.channels) {
+              setDiscordInfo(prev => ({ roles: prev?.roles || [], channels: data.data.channels }));
+            }
+            if (data.data.channel) {
+              const newChannelId = data.data.channel.id;
+              setConfig(prev => {
+                if (!prev) return prev;
+                let logCfg = {};
+                try {
+                  if (prev.loggingConfigJson) {
+                    logCfg = typeof prev.loggingConfigJson === 'string' ? JSON.parse(prev.loggingConfigJson) : prev.loggingConfigJson;
+                  }
+                } catch (e) {}
+                logCfg.defaultChannelId = newChannelId;
+                if (logCfg.enabled === undefined) logCfg.enabled = true;
+                const updatedConfig = {
+                  ...prev,
+                  loggingConfigJson: JSON.stringify(logCfg)
+                };
+                autoSaveConfig(updatedConfig);
+                return updatedConfig;
+              });
+            }
             setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 3000);
           } else {
@@ -857,6 +946,21 @@ export default function ClanManager() {
     addLog(`Manage dynamic room: ${subAction} on ${channelId}`);
   };
 
+  const handleCreateDiscordLogChannel = () => {
+    if (!ws || wsStatus !== 'online') return;
+    setCreatingLogChannel(true);
+    addLog('Создание канала логов в Discord...');
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'create_log_channel',
+      payload: {
+        action: 'create_log_channel',
+        name: '📜・логи-сервера'
+      }
+    }));
+  };
+
   useEffect(() => {
     if (!ws || wsStatus !== 'online') return;
     if (activeTab === 'roster' && !rosterData) {
@@ -867,7 +971,7 @@ export default function ClanManager() {
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
     } else if (activeTab === 'voice' && !dynamicVoiceData) {
       fetchDynamicVoice();
-    } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions') && !discordInfo) {
+    } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions' || activeTab === 'logs' || activeTab === 'moderation') && !discordInfo) {
       fetchDiscordInfo();
     }
   }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData]);
@@ -960,6 +1064,8 @@ export default function ClanManager() {
     { id: 'channels', label: 'Каналы', icon: Hash },
     { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
     { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
+    { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
+    { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
     { id: 'recruitment', label: 'Наборы', icon: UserPlus },
     { id: 'votes', label: 'Голосования', icon: Vote },
     { id: 'ads', label: 'Реклама', icon: Megaphone },
@@ -2325,6 +2431,631 @@ export default function ClanManager() {
                 )}
               </div>
             )}
+
+            {activeTab === 'logs' && (() => {
+              let logCfg = { enabled: true, defaultChannelId: '', events: {} };
+              try {
+                if (config?.loggingConfigJson) {
+                  logCfg = typeof config.loggingConfigJson === 'string' ? JSON.parse(config.loggingConfigJson) : config.loggingConfigJson;
+                  if (!logCfg.events) logCfg.events = {};
+                }
+              } catch (e) {}
+
+              const isMasterEnabled = logCfg.enabled !== false;
+              const defaultChId = logCfg.defaultChannelId || '';
+              const textChannels = (discordInfo?.channels || []).filter(c => c.type === 0);
+              const defaultChObj = textChannels.find(c => c.id === defaultChId);
+              const defaultChName = defaultChObj ? defaultChObj.name : '';
+
+              const handleMasterToggle = (val) => {
+                const updated = { ...logCfg, enabled: val };
+                autoSaveConfig({ ...config, loggingConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleDefaultChannelChange = (val) => {
+                const updated = { ...logCfg, defaultChannelId: val };
+                autoSaveConfig({ ...config, loggingConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleToggleEvent = (key, val) => {
+                const events = { ...(logCfg.events || {}) };
+                const cur = events[key] || { enabled: true, channelId: '' };
+                events[key] = { ...cur, enabled: val };
+                const updated = { ...logCfg, events };
+                autoSaveConfig({ ...config, loggingConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleEventChannelChange = (key, chId) => {
+                const events = { ...(logCfg.events || {}) };
+                const cur = events[key] || { enabled: true, channelId: '' };
+                events[key] = { ...cur, channelId: chId };
+                const updated = { ...logCfg, events };
+                autoSaveConfig({ ...config, loggingConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleEnableAll = () => {
+                const events = { ...(logCfg.events || {}) };
+                loggingEventGroups.forEach(g => {
+                  g.events.forEach(ev => {
+                    const cur = events[ev.key] || { channelId: '' };
+                    events[ev.key] = { ...cur, enabled: true };
+                  });
+                });
+                const updated = { ...logCfg, events, enabled: true };
+                autoSaveConfig({ ...config, loggingConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleDisableAll = () => {
+                const events = { ...(logCfg.events || {}) };
+                loggingEventGroups.forEach(g => {
+                  g.events.forEach(ev => {
+                    const cur = events[ev.key] || { channelId: '' };
+                    events[ev.key] = { ...cur, enabled: false };
+                  });
+                });
+                const updated = { ...logCfg, events };
+                autoSaveConfig({ ...config, loggingConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleResetChannelsToDefault = () => {
+                const events = { ...(logCfg.events || {}) };
+                Object.keys(events).forEach(k => {
+                  events[k] = { ...events[k], channelId: '' };
+                });
+                const updated = { ...logCfg, events };
+                autoSaveConfig({ ...config, loggingConfigJson: JSON.stringify(updated) });
+              };
+
+              return (
+                <form onSubmit={saveConfig} noValidate className="space-y-6">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <ScrollText className="w-5 h-5 text-blue-500" />
+                        <span>{t('clan_logs_title')}</span>
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {t('clan_logs_desc')}
+                      </p>
+                    </div>
+
+                    {/* Master Switch */}
+                    <label className="flex items-center gap-3 cursor-pointer select-none bg-slate-100 dark:bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={isMasterEnabled}
+                        onChange={e => handleMasterToggle(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                      />
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        {t('clan_logs_enable_master')}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Default Channel Card */}
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-slate-800/60 dark:to-slate-800/40 border border-blue-100 dark:border-slate-700/80 space-y-4 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <span>{t('clan_logs_default_channel')}</span>
+                          {defaultChId ? (
+                            <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                              #{defaultChName || defaultChId}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
+                              Не задан
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {t('clan_logs_default_channel_desc')}
+                        </p>
+                      </div>
+
+                      {/* 1-click Create Log Channel Button */}
+                      <button
+                        type="button"
+                        onClick={handleCreateDiscordLogChannel}
+                        disabled={creatingLogChannel}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                      >
+                        {creatingLogChannel ? (
+                          <>
+                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>{t('clan_logs_creating_channel')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" />
+                            <span>{t('clan_logs_create_channel_btn')}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="max-w-md">
+                      <select
+                        value={defaultChId}
+                        onChange={e => handleDefaultChannelChange(e.target.value)}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all"
+                      >
+                        <option value="">-- Выберите основной канал для логов --</option>
+                        {textChannels.map(ch => (
+                          <option key={ch.id} value={ch.id}>#️⃣ {ch.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Bulk Actions Toolbar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Быстрые действия:</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleEnableAll}
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer"
+                      >
+                        {t('clan_logs_enable_all')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDisableAll}
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer"
+                      >
+                        {t('clan_logs_disable_all')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleResetChannelsToDefault}
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer"
+                      >
+                        {t('clan_logs_reset_channels')}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Event Groups */}
+                  <div className="space-y-4">
+                    {loggingEventGroups.map(group => {
+                      const GroupIcon = group.icon;
+                      const enabledCount = group.events.filter(ev => logCfg.events?.[ev.key]?.enabled !== false).length;
+                      return (
+                        <div key={group.id} className="border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                          {/* Group Header */}
+                          <div className="px-5 py-3 bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-1.5 bg-blue-100 dark:bg-blue-950/60 rounded-lg text-blue-600 dark:text-blue-400">
+                                <GroupIcon className="w-4 h-4" />
+                              </div>
+                              <span className="font-bold text-sm text-slate-900 dark:text-white">
+                                {t(`clan_logs_group_${group.id}`) || group.title}
+                              </span>
+                            </div>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              {enabledCount} / {group.events.length}
+                            </span>
+                          </div>
+
+                          {/* Events List */}
+                          <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                            {group.events.map(ev => {
+                              const evSettings = logCfg.events?.[ev.key] || { enabled: true, channelId: '' };
+                              const isEvEnabled = evSettings.enabled !== false;
+                              const evChannelId = evSettings.channelId || '';
+
+                              return (
+                                <div
+                                  key={ev.key}
+                                  className={`p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors ${
+                                    isEvEnabled ? 'bg-transparent' : 'bg-slate-50/30 dark:bg-slate-950/20 opacity-60'
+                                  }`}
+                                >
+                                  {/* Toggle + Title */}
+                                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                                    <input
+                                      type="checkbox"
+                                      checked={isEvEnabled}
+                                      onChange={e => handleToggleEvent(ev.key, e.target.checked)}
+                                      className="w-4 h-4 mt-1 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700 cursor-pointer shrink-0"
+                                    />
+                                    <div>
+                                      <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                        <span>{t(`clan_logs_event_${ev.key}`) || ev.title}</span>
+                                      </div>
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                        {t(`clan_logs_event_${ev.key}_desc`) || ev.desc}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Channel Selector */}
+                                  <div className="md:w-64 shrink-0 pl-7 md:pl-0">
+                                    <select
+                                      value={evChannelId}
+                                      onChange={e => handleEventChannelChange(ev.key, e.target.value)}
+                                      disabled={!isEvEnabled}
+                                      className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      <option value="">
+                                        {defaultChName ? `(По умолч.: #${defaultChName})` : '(По умолчанию)'}
+                                      </option>
+                                      {textChannels.map(ch => (
+                                        <option key={ch.id} value={ch.id}>#️⃣ {ch.name}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <SaveButton saveStatus={saveStatus} />
+                </form>
+              );
+            })()}
+
+            {activeTab === 'moderation' && (() => {
+              let modCfg = {
+                logChannelId: '',
+                antiMention: {
+                  enabled: true,
+                  maxMentions: 5,
+                  timeWindowSeconds: 10,
+                  countUsers: true,
+                  countRoles: true,
+                  countEveryone: true,
+                  action: 'timeout',
+                  durationMinutes: 10,
+                  autoDelete: true,
+                  warnMessage: 'Массовые упоминания запрещены на этом сервере!',
+                  ignoreRoles: [],
+                  ignoreChannels: []
+                }
+              };
+              try {
+                if (config?.moderationConfigJson) {
+                  const parsed = typeof config.moderationConfigJson === 'string' ? JSON.parse(config.moderationConfigJson) : config.moderationConfigJson;
+                  modCfg = {
+                    ...modCfg,
+                    ...parsed,
+                    antiMention: {
+                      ...modCfg.antiMention,
+                      ...(parsed.antiMention || {})
+                    }
+                  };
+                }
+              } catch (e) {}
+
+              const am = modCfg.antiMention;
+              const textChannels = (discordInfo?.channels || []).filter(c => c.type === 0);
+              const allRoles = discordInfo?.roles || [];
+
+              const handleUpdateAM = (field, val) => {
+                const updated = {
+                  ...modCfg,
+                  antiMention: {
+                    ...am,
+                    [field]: val
+                  }
+                };
+                autoSaveConfig({ ...config, moderationConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleUpdateModRoot = (field, val) => {
+                const updated = { ...modCfg, [field]: val };
+                autoSaveConfig({ ...config, moderationConfigJson: JSON.stringify(updated) });
+              };
+
+              const handleToggleRoleWhitelist = (roleId) => {
+                const current = Array.isArray(am.ignoreRoles) ? [...am.ignoreRoles] : [];
+                const idx = current.indexOf(roleId);
+                if (idx === -1) current.push(roleId);
+                else current.splice(idx, 1);
+                handleUpdateAM('ignoreRoles', current);
+              };
+
+              const handleToggleChannelWhitelist = (chId) => {
+                const current = Array.isArray(am.ignoreChannels) ? [...am.ignoreChannels] : [];
+                const idx = current.indexOf(chId);
+                if (idx === -1) current.push(chId);
+                else current.splice(idx, 1);
+                handleUpdateAM('ignoreChannels', current);
+              };
+
+              return (
+                <form onSubmit={saveConfig} noValidate className="space-y-6">
+                  {/* Header */}
+                  <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <ShieldAlert className="w-5 h-5 text-amber-500" />
+                      <span>{t('clan_mod_title')}</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {t('clan_mod_desc')}
+                    </p>
+                  </div>
+
+                  {/* Anti-Mass-Mention Main Card */}
+                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <span>{t('clan_mod_anti_mention_title')}</span>
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {t('clan_mod_anti_mention_desc')}
+                        </p>
+                      </div>
+
+                      <label className="flex items-center gap-3 cursor-pointer select-none bg-slate-50 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={am.enabled !== false}
+                          onChange={e => handleUpdateAM('enabled', e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                        />
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {t('clan_mod_enable')}
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Parameters Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          {t('clan_mod_max_mentions')}
+                        </label>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5">
+                          {t('clan_mod_max_mentions_hint')}
+                        </p>
+                        <input
+                          type="number"
+                          min={2}
+                          max={50}
+                          value={am.maxMentions || 5}
+                          onChange={e => handleUpdateAM('maxMentions', parseInt(e.target.value, 10) || 5)}
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          {t('clan_mod_time_window')}
+                        </label>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5">
+                          {t('clan_mod_time_window_hint')}
+                        </p>
+                        <input
+                          type="number"
+                          min={1}
+                          max={120}
+                          value={am.timeWindowSeconds || 10}
+                          onChange={e => handleUpdateAM('timeWindowSeconds', parseInt(e.target.value, 10) || 10)}
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* What to count checkboxes */}
+                    <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2.5">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                        Что учитывать при подсчете:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={am.countUsers !== false}
+                            onChange={e => handleUpdateAM('countUsers', e.target.checked)}
+                            className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                          />
+                          <span>{t('clan_mod_count_users')}</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={am.countRoles !== false}
+                            onChange={e => handleUpdateAM('countRoles', e.target.checked)}
+                            className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                          />
+                          <span>{t('clan_mod_count_roles')}</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={am.countEveryone !== false}
+                            onChange={e => handleUpdateAM('countEveryone', e.target.checked)}
+                            className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700"
+                          />
+                          <span>{t('clan_mod_count_everyone')}</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Action & Duration */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          {t('clan_mod_action')}
+                        </label>
+                        <select
+                          value={am.action || 'timeout'}
+                          onChange={e => handleUpdateAM('action', e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        >
+                          <option value="warn">⚠️ {t('clan_mod_action_warn')}</option>
+                          <option value="timeout">🔇 {t('clan_mod_action_timeout')}</option>
+                          <option value="kick">👢 {t('clan_mod_action_kick')}</option>
+                          <option value="ban">🔨 {t('clan_mod_action_ban')}</option>
+                        </select>
+                      </div>
+
+                      {am.action === 'timeout' && (
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            {t('clan_mod_timeout_duration')}
+                          </label>
+                          <select
+                            value={am.durationMinutes || 10}
+                            onChange={e => handleUpdateAM('durationMinutes', parseInt(e.target.value, 10))}
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                          >
+                            <option value={1}>{t('clan_mod_timeout_1m')}</option>
+                            <option value={5}>{t('clan_mod_timeout_5m')}</option>
+                            <option value={10}>{t('clan_mod_timeout_10m')}</option>
+                            <option value={30}>{t('clan_mod_timeout_30m')}</option>
+                            <option value={60}>{t('clan_mod_timeout_1h')}</option>
+                            <option value={360}>{t('clan_mod_timeout_6h')}</option>
+                            <option value={1440}>{t('clan_mod_timeout_1d')}</option>
+                            <option value={10080}>{t('clan_mod_timeout_1w')}</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Auto-delete toggle */}
+                    <div className="flex items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                      <input
+                        type="checkbox"
+                        id="amAutoDelete"
+                        checked={am.autoDelete !== false}
+                        onChange={e => handleUpdateAM('autoDelete', e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-slate-700 mr-3 cursor-pointer"
+                      />
+                      <label htmlFor="amAutoDelete" className="text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+                        {t('clan_mod_auto_delete')}
+                      </label>
+                    </div>
+
+                    {/* Warning text */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t('clan_mod_warn_msg')}
+                      </label>
+                      <input
+                        type="text"
+                        value={am.warnMessage || ''}
+                        placeholder={t('clan_mod_warn_msg_default')}
+                        onChange={e => handleUpdateAM('warnMessage', e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Moderation Log Channel Card */}
+                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {t('clan_mod_log_channel')}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {t('clan_mod_log_channel_hint')}
+                    </p>
+                    <div className="max-w-md">
+                      <select
+                        value={modCfg.logChannelId || ''}
+                        onChange={e => handleUpdateModRoot('logChannelId', e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      >
+                        <option value="">(По умолчанию: основной канал логов)</option>
+                        {textChannels.map(ch => (
+                          <option key={ch.id} value={ch.id}>#️⃣ {ch.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Whitelists Card */}
+                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Исключения (Белый список)
+                    </h4>
+
+                    {/* Roles Whitelist */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        {t('clan_mod_whitelist_roles')}
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('clan_mod_whitelist_roles_desc')}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {allRoles.length === 0 ? (
+                          <span className="text-xs text-slate-400 italic">Роли не загружены</span>
+                        ) : (
+                          allRoles.map(r => {
+                            const isIgnored = Array.isArray(am.ignoreRoles) && am.ignoreRoles.includes(r.id);
+                            return (
+                              <button
+                                key={r.id}
+                                type="button"
+                                onClick={() => handleToggleRoleWhitelist(r.id)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
+                                  isIgnored
+                                    ? 'bg-blue-500 text-white border-blue-600 shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
+                              >
+                                <span
+                                  className="w-2 h-2 rounded-full inline-block shrink-0"
+                                  style={{ backgroundColor: r.color && r.color !== '#000000' ? r.color : '#94a3b8' }}
+                                ></span>
+                                <span>{r.name}</span>
+                                {isIgnored && <Check className="w-3 h-3" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Channels Whitelist */}
+                    <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        {t('clan_mod_whitelist_channels')}
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('clan_mod_whitelist_channels_desc')}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {textChannels.length === 0 ? (
+                          <span className="text-xs text-slate-400 italic">Каналы не загружены</span>
+                        ) : (
+                          textChannels.map(ch => {
+                            const isIgnored = Array.isArray(am.ignoreChannels) && am.ignoreChannels.includes(ch.id);
+                            return (
+                              <button
+                                key={ch.id}
+                                type="button"
+                                onClick={() => handleToggleChannelWhitelist(ch.id)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
+                                  isIgnored
+                                    ? 'bg-blue-500 text-white border-blue-600 shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
+                              >
+                                <span>#️⃣ {ch.name}</span>
+                                {isIgnored && <Check className="w-3 h-3" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <SaveButton saveStatus={saveStatus} />
+                </form>
+              );
+            })()}
             
           </div>
         </div>
@@ -2449,7 +3180,7 @@ export default function ClanManager() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setResetSections(['roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'general'])}
+                  onClick={() => setResetSections(['roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'logging', 'moderation', 'general'])}
                   className="text-blue-600 dark:text-blue-400 hover:underline font-medium cursor-pointer"
                 >
                   {t('clan_reset_select_all') || 'Выбрать все'}
@@ -2472,6 +3203,8 @@ export default function ClanManager() {
                 { id: 'channels', title: t('clan_reset_sec_channels_title') || 'Каналы', desc: t('clan_reset_sec_channels_desc') || 'Сброс привязок категорий и каналов' },
                 { id: 'permissions', title: t('clan_reset_sec_permissions_title') || 'Права доступа', desc: t('clan_reset_sec_permissions_desc') || 'Сброс сохраненных конфигураций прав каналов' },
                 { id: 'voice', title: t('clan_reset_sec_voice_title') || 'Динамический голос', desc: t('clan_reset_sec_voice_desc') || 'Отключение автокомнат, очистка ID генератора и категории' },
+                { id: 'logging', title: t('clan_reset_sec_logging_title') || 'Логирование', desc: t('clan_reset_sec_logging_desc') || 'Сброс всех настроек каналов и событий аудита' },
+                { id: 'moderation', title: t('clan_reset_sec_moderation_title') || 'Модерация', desc: t('clan_reset_sec_moderation_desc') || 'Сброс правил анти-спама и белых списков' },
                 { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || 'Набор в клан', desc: t('clan_reset_sec_recruitment_desc') || 'Сброс вопросов анкеты и требований' },
                 { id: 'ads', title: t('clan_reset_sec_ads_title') || 'Объявления', desc: t('clan_reset_sec_ads_desc') || 'Сброс настроек периодических объявлений' },
                 { id: 'general', title: t('clan_reset_sec_general_title') || 'Основные данные', desc: t('clan_reset_sec_general_desc') || 'Сброс названия клана и Discord ссылки' },
