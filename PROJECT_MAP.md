@@ -26,7 +26,7 @@
    - [Схема данных Prisma (prisma/schema.prisma)](#43-схема-данных-prisma)
 5. [Потоки данных и протоколы взаимодействия](#5-потоки-данных-и-протоколы-взаимодействия)
 6. [Памятка для ИИ-агента](#6-памятка-для-ии-агента)
-7. [История ключевых изменений (Changelog v2.7.20 – v2.7.36)](#7-история-ключевых-изменений-changelog)
+7. [История ключевых изменений (Changelog v2.7.20 – v2.7.48)](#7-история-ключевых-изменений-changelog)
 8. [Дорожная карта и планы на будущее (Roadmap)](#8-дорожная-карта-и-планы-на-будущее-roadmap)
 
 ---
@@ -382,8 +382,15 @@ repos/
   * Полное отсутствие бэкдоров: все права администрирования строго привязаны к ролям гильдии.
 * **[`src/services/ticketService.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/src/services/ticketService.js):**
   * `showClanAppModal`: нативное всплывающее окно Discord (`ModalBuilder`) с полями возраста, часов в Rust, Steam и опыта.
-  * `handleClanAppModalSubmit`: парсинг SteamID64, проверка дубликатов открытых тикетов, создание приватного канала в категории, выдача прав руководству (Лидер, Зам, Коллер), публикация карточки анкеты с ссылками на Steam и Battlemetrics.
-  * `handleTicketClose`: сбор до 100 последних сообщений, экспорт форматированного файла переписки `transcript-ticket-xxx.txt`, отправка файла в аудит-канал логов и в ЛС создателю тикета, удаление канала через 5 секунд.
+  * `handleClanAppModalSubmit`: парсинг SteamID64, проверка дубликатов открытых тикетов, обогащение профиля кандидата данными из Steam & Battlemetrics API (верифицированные часы, баны, последний сервер, аватар), создание приватного канала в категории, выдача прав руководству (Лидер, Зам, Коллер), публикация расширенной карточки анкеты.
+  * `handleTicketClose`: сбор до 100 последних сообщений, генерация автономного визуального HTML-файла переписки в аутентичном темном стиле Discord Dark (`transcriptGenerator.js`), отправка файла в специальный канал архивов (`channelsConfig.transcripts`) и в аудит-канал логов (`loggingConfig.tickets` / `defaultChannelId`) без дублирования, исключена отправка в ЛС, безопасное удаление канала через 5 секунд.
+* **[`src/utils/transcriptGenerator.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/src/utils/transcriptGenerator.js):**
+  * Генератор автономных HTML-страниц транскриптов в палитре Discord Dark (`#313338`, `#1e1f22`).
+  * Полный рендеринг шапки сервера/канала, сводной карточки тикета (заявитель, закрыл, сообщений, время), аватаров пользователей, форматирования Markdown (жирный, курсив, цитаты, код, упоминания пользователей/ролей/каналов), эмбедов с цветными боковыми рамками и вложений (превью изображений и карточки загрузки файлов).
+* **[`src/services/steamBattlemetricsService.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/src/services/steamBattlemetricsService.js):**
+  * Централизованный сервис интеграции со Steam Web API и Battlemetrics Developer API.
+  * Скользящее ограничение запросов (Throttler: 500мс для Steam, 1200мс для Battlemetrics) и 30-минутное LRU-кэширование (`playerCache`) для 100% защиты от бана и блокировок `429 Too Many Requests`.
+  * Бесшовный graceful fallback: при отсутствии API-ключей автоматически генерирует прямые ссылки на профили игроков.
 * **[`src/services/moderationService.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/src/services/moderationService.js):**
   * Защита от спама упоминаниями (Anti-Mass-Mention) со скользящим окном и автоматической очисткой устаревших таймстемпов (исключена утечка памяти).
   * Фильтр нецензурных слов с регулярными выражениями границ слов (исключена проблема Scunthorpe).
@@ -413,14 +420,14 @@ repos/
 ### 4.4. Схемы данных Prisma и масштабирование
 
 * **[`prisma/schema.prisma`](file:///C:/Users/dimav/source/repos/Discord_Hub/prisma/schema.prisma):**
-  * Схема для SQLite (`file:./dev.db`), используемая для локальной разработки и небольших серверов.
+  * Основная production-схема, настроенная на PostgreSQL 18 (`provider = "postgresql"`, `url = env("DATABASE_URL")`).
   * Модели: `GuildConfig`, `TempVoiceChannel`, `UserStat` (с полем `steamId`), `VoiceSession`, `Application`, `Ticket`, `Vote`, `VoteOption`, `UserVote`.
 * **[`prisma/schema.postgresql.prisma`](file:///C:/Users/dimav/source/repos/Discord_Hub/prisma/schema.postgresql.prisma):**
-  * Production-схема для PostgreSQL с поддержкой каскадных удалений, индексов и высокой параллельной нагрузки для масштабирования на 75+ серверов.
+  * Резервная эталонная схема PostgreSQL с оптимизированными типами, внешними ключами и каскадными связями.
 * **[`scripts/migrate-to-postgres.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/scripts/migrate-to-postgres.js):**
   * Скрипт автоматического переноса всех существующих таблиц и строк из SQLite в PostgreSQL с соблюдением порядка внешних ключей.
 * **[`.env.example`](file:///C:/Users/dimav/source/repos/Discord_Hub/.env.example):**
-  * Документированный шаблон переменных окружения бота (токен, WS-сервер, настройки базы данных SQLite/PostgreSQL, рейт-лимиты).
+  * Документированный шаблон переменных окружения бота (токен, WS-сервер, `DATABASE_URL` для PostgreSQL, `STEAM_API_KEY`, `BATTLEMETRICS_API_KEY`).
 
 ---
 
@@ -495,6 +502,21 @@ repos/
 
 ## 7. История ключевых изменений (Changelog)
 
+* **v2.7.48 (Discord Dark HTML Transcripts, Steam & Battlemetrics API & Full PostgreSQL Switch):**
+  * **Визуальные HTML-транскрипты в стиле Discord Dark (`transcriptGenerator.js`):**
+    - Полный отказ от простых текстовых `.txt` файлов в пользу автономных HTML-страниц с аутентичным темным дизайном Discord Dark (`#313338`, `#1e1f22`).
+    - Поддержка рендеринга аватаров пользователей, форматирования Markdown, цитат, блоков кода, упоминаний (@user, #channel, @role), карточек Embeds с цветными рамками и вложений (картинки, файлы).
+    - Маршрутизация транскриптов: отправка в специальный канал архивов (`channelsConfig.transcripts`) и в канал аудита логов (`loggingConfig.tickets` / `defaultChannelId`) без дублирования. Исключена нежелательная отправка в личные сообщения заявителя.
+  * **Интеграция со Steam Web API & Battlemetrics API (`steamBattlemetricsService.js`):**
+    - Автоматический парсинг SteamID64 (`7656119...`) из текста/ссылок в модальных окнах набора и команде `/profile`.
+    - Получение верифицированных часов в Rust (`IPlayerService/GetOwnedGames`), аватара и статуса блокировок VAC/Game bans (`ISteamUser/GetPlayerBans`).
+    - Получение данных Battlemetrics: последний сервер игры, общее игровое время на серверах, статус банов.
+    - Встроенная защита от блокировок: скользящий троттлинг запросов и 30-минутное LRU-кэширование результатов.
+    - Graceful fallback: бот полноценно функционирует и генерирует прямые ссылки даже при отсутствии API-ключей в `.env`.
+  * **Полный переход на PostgreSQL 18 (`prisma/schema.prisma`):**
+    - `Discord_Hub` полностью переведен с SQLite на промышленную реляционную СУБД PostgreSQL 18.
+    - Успешно выполнена миграция структуры базы данных (`prisma db push`) и перенос всех существующих записей (`migrate-to-postgres.js`).
+    - Поддержка высокой параллельной нагрузки и масштабирование без блокировок файлов.
 * **v2.7.47 (Next-Gen Roadmap: Rate Limiting, Discord Modals, Transcripts, Steam/BM, Anti-Raid & PostgreSQL Migration):**
   * **Server-Side Rate Limiting (`ws/clan.js`):**
     - Встроен механизм троттлинга со скользящим окном (1 секунда): не более 5 прокси-запросов в секунду на 1 HWID.
