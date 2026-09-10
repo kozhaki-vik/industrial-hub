@@ -51,28 +51,46 @@ const sanitizeClanConfig = (cfg) => {
   };
 };
 
-function SaveButton({ saveStatus }) {
+function SaveButton({ saveStatus, onManualSave }) {
   const isError = saveStatus && saveStatus.startsWith('error');
   const isLoading = saveStatus === 'saving' || saveStatus === 'loading';
   return (
-    <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6">
+    <div className="pt-6 border-t border-slate-200 dark:border-slate-700 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="flex items-center gap-2 text-xs">
+        {isLoading ? (
+          <span className="text-blue-500 font-medium flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/40 px-3 py-1.5 rounded-full border border-blue-200/60 dark:border-blue-800/60">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+            Синхронизация с сервером...
+          </span>
+        ) : isError ? (
+          <span className="text-red-500 font-medium flex items-center gap-1.5 bg-red-50 dark:bg-red-950/40 px-3 py-1.5 rounded-full border border-red-200/60 dark:border-red-800/60">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{saveStatus.replace('error:', 'Ошибка:')}</span>
+          </span>
+        ) : (
+          <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+            <Check className="w-3.5 h-3.5 text-emerald-500" />
+            Все изменения сохраняются автоматически
+          </span>
+        )}
+      </div>
+
       <button 
-        type="submit" 
+        type="button" 
+        onClick={onManualSave}
         disabled={isLoading}
-        className={`flex items-center justify-center font-medium py-2.5 px-4 rounded-xl w-full transition-all shadow-sm focus:ring-4 ${
-          saveStatus === 'success' ? 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500/20' :
-          isError ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/20' :
-          'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500/20'
+        className={`flex items-center justify-center font-medium py-2 px-4 rounded-xl text-xs transition-all shadow-sm focus:ring-2 cursor-pointer shrink-0 ${
+          saveStatus === 'success' ? 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500/20' :
+          isError ? 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500/20' :
+          'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
         } ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
       >
         {isLoading ? (
-          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div> {saveStatus === 'loading' ? 'Обработка...' : 'Сохранение...'}</>
+          <><div className="w-3.5 h-3.5 border-2 border-slate-400/30 border-t-slate-500 rounded-full animate-spin mr-1.5"></div> Обработка...</>
         ) : saveStatus === 'success' ? (
-          <><svg className="w-5 h-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Успешно</>
-        ) : isError ? (
-          <><svg className="w-5 h-5 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> <span className="truncate">{saveStatus.replace('error:', 'Ошибка:')}</span></>
+          <><Check className="w-3.5 h-3.5 mr-1 text-white" /> Сохранено</>
         ) : (
-          "Сохранить настройки"
+          "Сохранить сейчас"
         )}
       </button>
     </div>
@@ -167,6 +185,26 @@ export default function ClanManager() {
   const [isResetting, setIsResetting] = useState(false);
   const [syncModalData, setSyncModalData] = useState(null);
   const hasPromptedRef = useRef(false);
+
+  // --- Centralized Debounced & Throttled Auto-Save Engine ---
+  const latestConfigRef = useRef(config);
+  latestConfigRef.current = config;
+  const saveTimerRef = useRef(null);
+  const lastSaveTimeRef = useRef(0);
+  const pendingConfigRef = useRef(null);
+
+  const latestVoiceConfigRef = useRef(dynamicVoiceData?.config);
+  latestVoiceConfigRef.current = dynamicVoiceData?.config;
+  const voiceSaveTimerRef = useRef(null);
+  const lastVoiceSaveTimeRef = useRef(0);
+  const pendingVoiceConfigRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (voiceSaveTimerRef.current) clearTimeout(voiceSaveTimerRef.current);
+    };
+  }, []);
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -475,39 +513,65 @@ export default function ClanManager() {
     addLog('Синхронизация прав доступа с Discord...');
   };
   
-  const saveConfig = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    
-    const formElement = e?.currentTarget?.tagName === 'FORM' ? e.currentTarget : e?.target?.closest('form');
-    if (formElement && !validateForm(formElement)) {
-      return;
+  const flushSave = () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
     }
-    
+
+    const cfgToSend = pendingConfigRef.current || latestConfigRef.current;
+    if (!cfgToSend || !ws || wsStatus !== 'online') return;
+
+    pendingConfigRef.current = null;
+    lastSaveTimeRef.current = Date.now();
     setSaveStatus('saving');
+
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
       reqId: 'update_config', 
       payload: {
         action: 'update_config',
-        updates: config
+        updates: cfgToSend
       }
     }));
-    addLog('Saving config...');
+    addLog('Auto-saving config (batched)...');
   };
 
-  const autoSaveConfig = (updatedConfig) => {
-    setConfig(updatedConfig);
-    setSaveStatus('saving');
-    ws.send(JSON.stringify({ 
-      type: 'clan', 
-      action: 'proxy', 
-      reqId: 'update_config', 
-      payload: {
-        action: 'update_config',
-        updates: updatedConfig
+  const queueAutoSave = (newConfig, immediate = false) => {
+    setConfig(newConfig);
+    latestConfigRef.current = newConfig;
+    pendingConfigRef.current = newConfig;
+
+    const now = Date.now();
+    const timeSinceLastSave = now - lastSaveTimeRef.current;
+
+    if (immediate) {
+      if (timeSinceLastSave >= 1000) {
+        flushSave();
+      } else {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        const delay = Math.max(50, 1000 - timeSinceLastSave);
+        saveTimerRef.current = setTimeout(() => {
+          flushSave();
+        }, delay);
       }
-    }));
+    } else {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      const delay = Math.max(1000, 1000 - timeSinceLastSave);
+      saveTimerRef.current = setTimeout(() => {
+        flushSave();
+      }, delay);
+    }
+  };
+
+  const autoSaveConfig = (updatedConfig, immediate = true) => {
+    queueAutoSave(updatedConfig, immediate);
+  };
+
+  const saveConfig = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    flushSave();
   };
 
   const standardRoles = [
@@ -900,23 +964,64 @@ export default function ClanManager() {
     }));
   };
 
-  const saveDynamicVoiceConfig = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    const formElement = e?.currentTarget?.tagName === 'FORM' ? e.currentTarget : e?.target?.closest('form');
-    if (formElement && !validateForm(formElement)) {
-      return;
+  const flushVoiceSave = () => {
+    if (voiceSaveTimerRef.current) {
+      clearTimeout(voiceSaveTimerRef.current);
+      voiceSaveTimerRef.current = null;
     }
+
+    const cfgToSend = pendingVoiceConfigRef.current || latestVoiceConfigRef.current;
+    if (!cfgToSend || !ws || wsStatus !== 'online') return;
+
+    pendingVoiceConfigRef.current = null;
+    lastVoiceSaveTimeRef.current = Date.now();
     setSaveStatus('saving');
+
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
       reqId: 'update_dynamic_voice', 
       payload: {
         action: 'update_dynamic_voice',
-        config: dynamicVoiceData.config
+        config: cfgToSend
       }
     }));
-    addLog('Saving dynamic voice config...');
+    addLog('Auto-saving dynamic voice config...');
+  };
+
+  const queueAutoSaveVoice = (newVoiceConfig, immediate = false) => {
+    setDynamicVoiceData(prev => ({
+      ...prev,
+      config: newVoiceConfig
+    }));
+    latestVoiceConfigRef.current = newVoiceConfig;
+    pendingVoiceConfigRef.current = newVoiceConfig;
+
+    const now = Date.now();
+    const timeSinceLastSave = now - lastVoiceSaveTimeRef.current;
+
+    if (immediate) {
+      if (timeSinceLastSave >= 1000) {
+        flushVoiceSave();
+      } else {
+        if (voiceSaveTimerRef.current) clearTimeout(voiceSaveTimerRef.current);
+        const delay = Math.max(50, 1000 - timeSinceLastSave);
+        voiceSaveTimerRef.current = setTimeout(() => {
+          flushVoiceSave();
+        }, delay);
+      }
+    } else {
+      if (voiceSaveTimerRef.current) clearTimeout(voiceSaveTimerRef.current);
+      const delay = Math.max(1000, 1000 - timeSinceLastSave);
+      voiceSaveTimerRef.current = setTimeout(() => {
+        flushVoiceSave();
+      }, delay);
+    }
+  };
+
+  const saveDynamicVoiceConfig = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    flushVoiceSave();
   };
 
   const handleAutoSetupDynamicVoice = () => {
@@ -1190,7 +1295,14 @@ export default function ClanManager() {
                     required
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white dark:bg-slate-800/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                     value={config?.name ?? ''}
-                    onChange={e => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={e => {
+                      const updated = { ...config, name: e.target.value };
+                      queueAutoSave(updated, false);
+                    }}
+                    onBlur={e => {
+                      const updated = { ...config, name: e.target.value };
+                      queueAutoSave(updated, true);
+                    }}
                     placeholder="Например: GODS"
                   />
                 </div>
@@ -1201,7 +1313,14 @@ export default function ClanManager() {
                     type="text" 
                     className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white dark:bg-slate-800/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                     value={config?.discordLink ?? ''}
-                    onChange={e => setConfig(prev => ({ ...prev, discordLink: e.target.value }))}
+                    onChange={e => {
+                      const updated = { ...config, discordLink: e.target.value };
+                      queueAutoSave(updated, false);
+                    }}
+                    onBlur={e => {
+                      const updated = { ...config, discordLink: e.target.value };
+                      queueAutoSave(updated, true);
+                    }}
                     placeholder="https://discord.gg/..."
                   />
                 </div>
@@ -1254,9 +1373,12 @@ export default function ClanManager() {
                   <input 
                     type="checkbox" 
                     id="recruitmentOpen"
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3"
-                    checked={config.recruitmentOpen}
-                    onChange={e => setConfig({...config, recruitmentOpen: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3 cursor-pointer"
+                    checked={!!config.recruitmentOpen}
+                    onChange={e => {
+                      const updated = { ...config, recruitmentOpen: e.target.checked };
+                      queueAutoSave(updated, true);
+                    }}
                   />
                   <label htmlFor="recruitmentOpen" className="text-sm font-medium text-slate-700 dark:text-slate-300 select-none cursor-pointer">
                     Набор в клан открыт (Позволяет создавать тикеты заявок)
@@ -1283,7 +1405,7 @@ export default function ClanManager() {
                   </button>
                 </div>
                 
-                <SaveButton saveStatus={saveStatus} />
+                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -1610,7 +1732,8 @@ export default function ClanManager() {
                   
                   const updateCConfig = (key, val) => {
                     const newConfig = { ...cConfig, [key]: val };
-                    setConfig({ ...config, channelsConfigJson: JSON.stringify(newConfig) });
+                    const updated = { ...config, channelsConfigJson: JSON.stringify(newConfig) };
+                    queueAutoSave(updated, true);
                   };
                   
                   const channelsList = [
@@ -1642,7 +1765,7 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton saveStatus={saveStatus} />
+                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -1716,7 +1839,8 @@ export default function ClanManager() {
                     newPermissions[roleId] = Array.from(currentSet);
                     
                     const newConfig = { ...cConfig, permissions: newPermissions };
-                    setConfig({ ...config, channelsConfigJson: JSON.stringify(newConfig) });
+                    const updated = { ...config, channelsConfigJson: JSON.stringify(newConfig) };
+                    queueAutoSave(updated, true);
                   };
 
                   return (
@@ -1780,7 +1904,7 @@ export default function ClanManager() {
                 })()}
                 
                 <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <SaveButton saveStatus={saveStatus} />
+                  <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
                 </div>
               </div>
             )}
@@ -1834,10 +1958,10 @@ export default function ClanManager() {
                           <input
                             type="checkbox"
                             checked={!!dynamicVoiceData.config?.enabled}
-                            onChange={(e) => setDynamicVoiceData(prev => ({
-                              ...prev,
-                              config: { ...prev.config, enabled: e.target.checked }
-                            }))}
+                            onChange={(e) => {
+                              const updated = { ...(dynamicVoiceData.config || {}), enabled: e.target.checked };
+                              queueAutoSaveVoice(updated, true);
+                            }}
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-500"></div>
@@ -1852,10 +1976,10 @@ export default function ClanManager() {
                           label={t('clan_voice_category_label')}
                           description={t('clan_voice_category_desc')}
                           value={dynamicVoiceData.config?.categoryId || ''}
-                          onChange={(val) => setDynamicVoiceData(prev => ({
-                            ...prev,
-                            config: { ...prev.config, categoryId: val }
-                          }))}
+                          onChange={(val) => {
+                            const updated = { ...(dynamicVoiceData.config || {}), categoryId: val };
+                            queueAutoSaveVoice(updated, true);
+                          }}
                           discordChannels={dynamicVoiceData?.channels || discordInfo?.channels || []}
                           typeFilter={4}
                         />
@@ -1864,10 +1988,10 @@ export default function ClanManager() {
                           label={t('clan_voice_generator_label')}
                           description={t('clan_voice_generator_desc')}
                           value={dynamicVoiceData.config?.generatorChannelId || ''}
-                          onChange={(val) => setDynamicVoiceData(prev => ({
-                            ...prev,
-                            config: { ...prev.config, generatorChannelId: val }
-                          }))}
+                          onChange={(val) => {
+                            const updated = { ...(dynamicVoiceData.config || {}), generatorChannelId: val };
+                            queueAutoSaveVoice(updated, true);
+                          }}
                           discordChannels={dynamicVoiceData?.channels || discordInfo?.channels || []}
                           typeFilter={2}
                         />
@@ -1884,10 +2008,14 @@ export default function ClanManager() {
                           <input
                             type="text"
                             value={dynamicVoiceData.config?.template || ''}
-                            onChange={(e) => setDynamicVoiceData(prev => ({
-                              ...prev,
-                              config: { ...prev.config, template: e.target.value }
-                            }))}
+                            onChange={(e) => {
+                              const updated = { ...(dynamicVoiceData.config || {}), template: e.target.value };
+                              queueAutoSaveVoice(updated, false);
+                            }}
+                            onBlur={(e) => {
+                              const updated = { ...(dynamicVoiceData.config || {}), template: e.target.value };
+                              queueAutoSaveVoice(updated, true);
+                            }}
                             placeholder="🔊 Пати {user}"
                             className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
                           />
@@ -1902,10 +2030,10 @@ export default function ClanManager() {
                           </p>
                           <select
                             value={dynamicVoiceData.config?.defaultLimit ?? 0}
-                            onChange={(e) => setDynamicVoiceData(prev => ({
-                              ...prev,
-                              config: { ...prev.config, defaultLimit: parseInt(e.target.value, 10) || 0 }
-                            }))}
+                            onChange={(e) => {
+                              const updated = { ...(dynamicVoiceData.config || {}), defaultLimit: parseInt(e.target.value, 10) || 0 };
+                              queueAutoSaveVoice(updated, true);
+                            }}
                             className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
                           >
                             <option value={0}>0 — {t('clan_voice_unlimited')}</option>
@@ -1922,21 +2050,7 @@ export default function ClanManager() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                        <button
-                          type="submit"
-                          disabled={saveStatus === 'saving'}
-                          className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
-                        >
-                          {saveStatus === 'saving' ? (
-                            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Сохранение...</>
-                          ) : saveStatus === 'success' ? (
-                            <>✓ Сохранено</>
-                          ) : (
-                            'Сохранить настройки войсов'
-                          )}
-                        </button>
-                      </div>
+                      <SaveButton saveStatus={saveStatus} onManualSave={() => flushVoiceSave()} />
                     </form>
 
                     {/* Section 2: Active Temporary Rooms Monitoring */}
@@ -2086,9 +2200,10 @@ export default function ClanManager() {
                     }
                   } catch(e) {}
                   
-                  const updateRConfig = (key, val) => {
+                  const updateRConfig = (key, val, immediate = false) => {
                     const newConfig = { ...rConfig, [key]: val };
-                    setConfig({ ...config, recruitmentConfigJson: JSON.stringify(newConfig) });
+                    const updated = { ...config, recruitmentConfigJson: JSON.stringify(newConfig) };
+                    queueAutoSave(updated, immediate);
                   };
                   
                   return (
@@ -2100,7 +2215,8 @@ export default function ClanManager() {
                           required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={rConfig.link}
-                          onChange={e => updateRConfig('link', e.target.value)}
+                          onChange={e => updateRConfig('link', e.target.value, false)}
+                          onBlur={e => updateRConfig('link', e.target.value, true)}
                           placeholder="https://discord.gg/..."
                         />
                       </div>
@@ -2111,7 +2227,8 @@ export default function ClanManager() {
                           type="text" 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={rConfig.banner}
-                          onChange={e => updateRConfig('banner', e.target.value)}
+                          onChange={e => updateRConfig('banner', e.target.value, false)}
+                          onBlur={e => updateRConfig('banner', e.target.value, true)}
                           placeholder="https://i.imgur.com/..."
                         />
                       </div>
@@ -2123,7 +2240,8 @@ export default function ClanManager() {
                           required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={rConfig.title}
-                          onChange={e => updateRConfig('title', e.target.value)}
+                          onChange={e => updateRConfig('title', e.target.value, false)}
+                          onBlur={e => updateRConfig('title', e.target.value, true)}
                           placeholder="Набор в клан GODS"
                         />
                       </div>
@@ -2134,7 +2252,8 @@ export default function ClanManager() {
                           required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[200px]"
                           value={rConfig.text}
-                          onChange={e => updateRConfig('text', e.target.value)}
+                          onChange={e => updateRConfig('text', e.target.value, false)}
+                          onBlur={e => updateRConfig('text', e.target.value, true)}
                           placeholder="Опишите требования..."
                         ></textarea>
                       </div>
@@ -2142,7 +2261,7 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton saveStatus={saveStatus} />
+                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -2161,20 +2280,23 @@ export default function ClanManager() {
                     }
                   } catch(e) {}
                   
-                  const updateTemplate = (index, key, val) => {
+                  const updateTemplate = (index, key, val, immediate = false) => {
                     const newTemplates = [...wTemplates];
                     newTemplates[index] = { ...newTemplates[index], [key]: val };
-                    setConfig({ ...config, wipeTemplatesJson: JSON.stringify(newTemplates) });
+                    const updated = { ...config, wipeTemplatesJson: JSON.stringify(newTemplates) };
+                    queueAutoSave(updated, immediate);
                   };
 
                   const addTemplate = () => {
                     const newTemplates = [...wTemplates, { name: '', day: 'Четверг', time: '16:00', ip: '', banner: '' }];
-                    setConfig({ ...config, wipeTemplatesJson: JSON.stringify(newTemplates) });
+                    const updated = { ...config, wipeTemplatesJson: JSON.stringify(newTemplates) };
+                    queueAutoSave(updated, true);
                   };
 
                   const removeTemplate = (index) => {
                     const newTemplates = wTemplates.filter((_, i) => i !== index);
-                    setConfig({ ...config, wipeTemplatesJson: JSON.stringify(newTemplates) });
+                    const updated = { ...config, wipeTemplatesJson: JSON.stringify(newTemplates) };
+                    queueAutoSave(updated, true);
                   };
                   
                   return (
@@ -2187,11 +2309,23 @@ export default function ClanManager() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
                             <div>
                               <label className="block text-xs font-medium text-slate-500 mb-1">Название сервера *</label>
-                              <input type="text" required className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.name || ''} onChange={e => updateTemplate(index, 'name', e.target.value)} placeholder="Rustoria Main" />
+                              <input 
+                                type="text" 
+                                required 
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
+                                value={tpl.name || ''} 
+                                onChange={e => updateTemplate(index, 'name', e.target.value, false)} 
+                                onBlur={e => updateTemplate(index, 'name', e.target.value, true)}
+                                placeholder="Rustoria Main" 
+                              />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-500 mb-1">День вайпа</label>
-                              <select className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.day || 'Четверг'} onChange={e => updateTemplate(index, 'day', e.target.value)}>
+                              <select 
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
+                                value={tpl.day || 'Четверг'} 
+                                onChange={e => updateTemplate(index, 'day', e.target.value, true)}
+                              >
                                 <option value="Понедельник">Понедельник</option>
                                 <option value="Вторник">Вторник</option>
                                 <option value="Среда">Среда</option>
@@ -2203,15 +2337,37 @@ export default function ClanManager() {
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-500 mb-1">Время (МСК)</label>
-                              <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.time || ''} onChange={e => updateTemplate(index, 'time', e.target.value)} placeholder="16:00" />
+                              <input 
+                                type="text" 
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
+                                value={tpl.time || ''} 
+                                onChange={e => updateTemplate(index, 'time', e.target.value, false)} 
+                                onBlur={e => updateTemplate(index, 'time', e.target.value, true)}
+                                placeholder="16:00" 
+                              />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-500 mb-1">IP (connect ...) *</label>
-                              <input type="text" required className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.ip || ''} onChange={e => updateTemplate(index, 'ip', e.target.value)} placeholder="connect 127.0.0.1:28015" />
+                              <input 
+                                type="text" 
+                                required 
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
+                                value={tpl.ip || ''} 
+                                onChange={e => updateTemplate(index, 'ip', e.target.value, false)} 
+                                onBlur={e => updateTemplate(index, 'ip', e.target.value, true)}
+                                placeholder="connect 127.0.0.1:28015" 
+                              />
                             </div>
                             <div className="md:col-span-2">
                               <label className="block text-xs font-medium text-slate-500 mb-1">Ссылка на баннер</label>
-                              <input type="text" className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" value={tpl.banner || ''} onChange={e => updateTemplate(index, 'banner', e.target.value)} placeholder="https://i.imgur.com/..." />
+                              <input 
+                                type="text" 
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
+                                value={tpl.banner || ''} 
+                                onChange={e => updateTemplate(index, 'banner', e.target.value, false)} 
+                                onBlur={e => updateTemplate(index, 'banner', e.target.value, true)}
+                                placeholder="https://i.imgur.com/..." 
+                              />
                             </div>
                           </div>
                         </div>
@@ -2225,7 +2381,7 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton saveStatus={saveStatus} />
+                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -2249,9 +2405,10 @@ export default function ClanManager() {
                     }
                   } catch(e) {}
                   
-                  const updateAConfig = (key, val) => {
+                  const updateAConfig = (key, val, immediate = false) => {
                     const newConfig = { ...aConfig, [key]: val };
-                    setConfig({ ...config, adConfigJson: JSON.stringify(newConfig) });
+                    const updated = { ...config, adConfigJson: JSON.stringify(newConfig) };
+                    queueAutoSave(updated, immediate);
                   };
                   
                   return (
@@ -2263,7 +2420,8 @@ export default function ClanManager() {
                           required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={aConfig.title}
-                          onChange={e => updateAConfig('title', e.target.value)}
+                          onChange={e => updateAConfig('title', e.target.value, false)}
+                          onBlur={e => updateAConfig('title', e.target.value, true)}
                           placeholder="Покупка рекламы"
                         />
                       </div>
@@ -2274,7 +2432,8 @@ export default function ClanManager() {
                           required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px]"
                           value={aConfig.text}
-                          onChange={e => updateAConfig('text', e.target.value)}
+                          onChange={e => updateAConfig('text', e.target.value, false)}
+                          onBlur={e => updateAConfig('text', e.target.value, true)}
                           placeholder="Информация о рекламе..."
                         ></textarea>
                       </div>
@@ -2285,7 +2444,8 @@ export default function ClanManager() {
                           type="text" 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={aConfig.priceLink}
-                          onChange={e => updateAConfig('priceLink', e.target.value)}
+                          onChange={e => updateAConfig('priceLink', e.target.value, false)}
+                          onBlur={e => updateAConfig('priceLink', e.target.value, true)}
                           placeholder="https://telegra.ph/..."
                         />
                       </div>
@@ -2296,7 +2456,8 @@ export default function ClanManager() {
                           type="text" 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
                           value={aConfig.banner}
-                          onChange={e => updateAConfig('banner', e.target.value)}
+                          onChange={e => updateAConfig('banner', e.target.value, false)}
+                          onBlur={e => updateAConfig('banner', e.target.value, true)}
                           placeholder="https://i.imgur.com/..."
                         />
                       </div>
@@ -2304,7 +2465,7 @@ export default function ClanManager() {
                   );
                 })()}
                 
-                <SaveButton saveStatus={saveStatus} />
+                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 
@@ -2697,7 +2858,7 @@ export default function ClanManager() {
                     })}
                   </div>
 
-                  <SaveButton saveStatus={saveStatus} />
+                  <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
                 </form>
               );
             })()}
@@ -2738,7 +2899,7 @@ export default function ClanManager() {
               const textChannels = (discordInfo?.channels || []).filter(c => c.type === 0);
               const allRoles = discordInfo?.roles || [];
 
-              const handleUpdateAM = (field, val) => {
+              const handleUpdateAM = (field, val, immediate = true) => {
                 const updated = {
                   ...modCfg,
                   antiMention: {
@@ -2746,12 +2907,12 @@ export default function ClanManager() {
                     [field]: val
                   }
                 };
-                autoSaveConfig({ ...config, moderationConfigJson: JSON.stringify(updated) });
+                queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, immediate);
               };
 
-              const handleUpdateModRoot = (field, val) => {
+              const handleUpdateModRoot = (field, val, immediate = true) => {
                 const updated = { ...modCfg, [field]: val };
-                autoSaveConfig({ ...config, moderationConfigJson: JSON.stringify(updated) });
+                queueAutoSave({ ...config, moderationConfigJson: JSON.stringify(updated) }, immediate);
               };
 
               const handleToggleRoleWhitelist = (roleId) => {
@@ -2759,7 +2920,7 @@ export default function ClanManager() {
                 const idx = current.indexOf(roleId);
                 if (idx === -1) current.push(roleId);
                 else current.splice(idx, 1);
-                handleUpdateAM('ignoreRoles', current);
+                handleUpdateAM('ignoreRoles', current, true);
               };
 
               const handleToggleChannelWhitelist = (chId) => {
@@ -2767,7 +2928,7 @@ export default function ClanManager() {
                 const idx = current.indexOf(chId);
                 if (idx === -1) current.push(chId);
                 else current.splice(idx, 1);
-                handleUpdateAM('ignoreChannels', current);
+                handleUpdateAM('ignoreChannels', current, true);
               };
 
               return (
@@ -2822,7 +2983,8 @@ export default function ClanManager() {
                           min={2}
                           max={50}
                           value={am.maxMentions || 5}
-                          onChange={e => handleUpdateAM('maxMentions', parseInt(e.target.value, 10) || 5)}
+                          onChange={e => handleUpdateAM('maxMentions', parseInt(e.target.value, 10) || 5, false)}
+                          onBlur={e => handleUpdateAM('maxMentions', parseInt(e.target.value, 10) || 5, true)}
                           className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                       </div>
@@ -2839,7 +3001,8 @@ export default function ClanManager() {
                           min={1}
                           max={120}
                           value={am.timeWindowSeconds || 10}
-                          onChange={e => handleUpdateAM('timeWindowSeconds', parseInt(e.target.value, 10) || 10)}
+                          onChange={e => handleUpdateAM('timeWindowSeconds', parseInt(e.target.value, 10) || 10, false)}
+                          onBlur={e => handleUpdateAM('timeWindowSeconds', parseInt(e.target.value, 10) || 10, true)}
                           className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                       </div>
@@ -2945,7 +3108,8 @@ export default function ClanManager() {
                         type="text"
                         value={am.warnMessage || ''}
                         placeholder={t('clan_mod_warn_msg_default')}
-                        onChange={e => handleUpdateAM('warnMessage', e.target.value)}
+                        onChange={e => handleUpdateAM('warnMessage', e.target.value, false)}
+                        onBlur={e => handleUpdateAM('warnMessage', e.target.value, true)}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                       />
                     </div>
@@ -3052,7 +3216,7 @@ export default function ClanManager() {
                     </div>
                   </div>
 
-                  <SaveButton saveStatus={saveStatus} />
+                  <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
                 </form>
               );
             })()}
