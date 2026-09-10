@@ -38,6 +38,12 @@ export const isBotConfigured = (cfg) => {
       }
     } catch (e) {}
   }
+  if (!hasChannels && cfg.loggingConfigJson) {
+    try {
+      const lCfg = typeof cfg.loggingConfigJson === 'string' ? JSON.parse(cfg.loggingConfigJson) : cfg.loggingConfigJson;
+      if (lCfg?.defaultChannelId) hasChannels = true;
+    } catch (e) {}
+  }
 
   return hasRoles || hasChannels;
 };
@@ -1738,7 +1744,6 @@ export default function ClanManager() {
                   
                   const channelsList = [
                     { key: 'ticketsCategory', label: 'Категория для тикетов', desc: 'Здесь бот будет создавать приватные каналы тикетов заявок.', typeFilter: 4 },
-                    { key: 'logs', label: 'Канал логов', desc: 'Сюда бот будет отправлять логи действий, выходов, ошибок.', typeFilter: [0, 2] },
                     { key: 'applications', label: 'Одобренные заявки', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.', typeFilter: [0, 2] },
                     { key: 'leaderboard', label: 'Статистика (Leaderboard)', desc: 'Канал, где публикуется статистика по вайпам и топам.', typeFilter: [0, 2] },
                     { key: 'news', label: 'Новости клана', desc: 'Канал для публикации объявлений и новостей бота.', typeFilter: [0, 2] },
@@ -1796,6 +1801,11 @@ export default function ClanManager() {
                   } catch(e) {}
                   
                   let permissions = cConfig.permissions || {};
+                  let defaultLogChannelId = null;
+                  try {
+                    const l = typeof config.loggingConfigJson === 'string' ? JSON.parse(config.loggingConfigJson) : config.loggingConfigJson;
+                    defaultLogChannelId = l?.defaultChannelId || null;
+                  } catch(e) {}
                   
                   const channelKeys = ['logs', 'applications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
                   const roleKeys = ['trial', 'main', 'caller', 'deputyLeader', 'leader'];
@@ -1809,7 +1819,7 @@ export default function ClanManager() {
                   const togglePermission = (roleKey, channelKey) => {
                     const roleId = roleIdMap[roleKey];
                     if (!roleId) return; // role not configured
-                    const channelId = cConfig[channelKey];
+                    const channelId = cConfig[channelKey] || (channelKey === 'logs' ? defaultLogChannelId : null);
                     if (!channelId) return;
 
                     const newPermissions = { ...permissions };
@@ -1880,7 +1890,7 @@ export default function ClanManager() {
                                   {rName}
                                 </td>
                                 {channelKeys.map(cKey => {
-                                  const cId = cConfig[cKey];
+                                  const cId = cConfig[cKey] || (cKey === 'logs' ? defaultLogChannelId : null);
                                   const isAllowed = isConfigured && cId && permissions[rId]?.includes(cId);
                                   return (
                                     <td key={cKey} className="px-2 py-3 text-center">
