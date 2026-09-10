@@ -7,7 +7,7 @@ import ChannelSelect from '../components/ChannelSelect';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
-  RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X
+  RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -216,6 +216,11 @@ export default function ClanManager() {
   // Bad words input state
   const [newBadWordInput, setNewBadWordInput] = useState('');
 
+  // Applications state (recruitment tab)
+  const [applicationsData, setApplicationsData] = useState([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+  const [appFilter, setAppFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'AUTO_REJECTED'
+
   // --- Centralized Debounced & Throttled Auto-Save Engine ---
   const latestConfigRef = useRef(config);
   latestConfigRef.current = config;
@@ -340,6 +345,11 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_roster') {
           if (!data.error && data.data && data.data.success) {
             setRosterData(data.data);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_applications') {
+          setLoadingApps(false);
+          if (!data.error && data.data && data.data.success) {
+            setApplicationsData(data.data.applications || []);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_stats') {
           if (!data.error && data.data && data.data.success) {
@@ -1222,12 +1232,25 @@ export default function ClanManager() {
     }));
   };
 
+  const fetchApplications = () => {
+    if (!ws || wsStatus !== 'online') return;
+    setLoadingApps(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'get_applications',
+      payload: { action: 'get_applications', limit: 100 }
+    }));
+  };
+
   useEffect(() => {
     if (!ws || wsStatus !== 'online') return;
     if (activeTab === 'general' && config?.discordLink) {
       if (config.discordLink.trim() && config.discordLink.trim() !== lastVerifiedLinkRef.current) {
         verifyInvite(config.discordLink);
       }
+    } else if (activeTab === 'recruitment') {
+      fetchApplications();
     } else if (activeTab === 'roster' && !rosterData) {
       addLog('Fetching roster via proxy');
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_roster', payload: { action: 'get_roster' } }));
@@ -2417,9 +2440,9 @@ export default function ClanManager() {
             )}
 
             {activeTab === 'recruitment' && (
-              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-2xl">
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-5xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                  <UserPlus className="w-5 h-5 mr-2 text-blue-500" />
                   Настройки набора в клан
                 </h3>
                 
@@ -2429,6 +2452,13 @@ export default function ClanManager() {
                     banner: 'https://i.imgur.com/UaMfYMK.png',
                     title: `Набор в клан ${config.name || 'GODS'}`,
                     text: "Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы",
+                    autoRejectEnabled: false,
+                    minAge: 0,
+                    minHours: 0,
+                    rejectBanned: true,
+                    strictSteamCheck: false,
+                    silentAutoReject: true,
+                    autoRejectMessage: ''
                   };
                   try {
                     if (config.recruitmentConfigJson) {
@@ -2443,61 +2473,368 @@ export default function ClanManager() {
                   };
                   
                   return (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Discord сервер (для набора) *</label>
-                        <input 
-                          type="text" 
-                          required
-                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                          value={rConfig.link}
-                          onChange={e => updateRConfig('link', e.target.value, false)}
-                          onBlur={e => updateRConfig('link', e.target.value, true)}
-                          placeholder="https://discord.gg/..."
-                        />
+                    <div className="space-y-6">
+                      {/* Основные параметры панели набора */}
+                      <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
+                        <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Sliders className="w-4 h-4 text-orange-500" />
+                          Панель набора в Discord
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Ссылка на Discord сервер (для набора) *</label>
+                            <input 
+                              type="text" 
+                              required
+                              className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+                              value={rConfig.link}
+                              onChange={e => updateRConfig('link', e.target.value, false)}
+                              onBlur={e => updateRConfig('link', e.target.value, true)}
+                              placeholder="https://discord.gg/..."
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Ссылка на баннер (Изображение)</label>
+                            <input 
+                              type="text" 
+                              className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+                              value={rConfig.banner}
+                              onChange={e => updateRConfig('banner', e.target.value, false)}
+                              onBlur={e => updateRConfig('banner', e.target.value, true)}
+                              placeholder="https://i.imgur.com/..."
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Заголовок Embed-сообщения *</label>
+                          <input 
+                            type="text" 
+                            required
+                            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+                            value={rConfig.title}
+                            onChange={e => updateRConfig('title', e.target.value, false)}
+                            onBlur={e => updateRConfig('title', e.target.value, true)}
+                            placeholder="Набор в клан GODS"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Текст с требованиями (Markdown поддерживается) *</label>
+                          <textarea 
+                            required
+                            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[140px]"
+                            value={rConfig.text}
+                            onChange={e => updateRConfig('text', e.target.value, false)}
+                            onBlur={e => updateRConfig('text', e.target.value, true)}
+                            placeholder="Опишите требования..."
+                          ></textarea>
+                        </div>
                       </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на баннер (Изображение)</label>
-                        <input 
-                          type="text" 
-                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                          value={rConfig.banner}
-                          onChange={e => updateRConfig('banner', e.target.value, false)}
-                          onBlur={e => updateRConfig('banner', e.target.value, true)}
-                          placeholder="https://i.imgur.com/..."
-                        />
+
+                      {/* Автоматическое отклонение заявок (Auto-Reject) */}
+                      <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/40">
+                              <Bot className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                                {t('clan_recruitment_auto_reject_title') || 'Автоматическое отклонение заявок (Auto-Reject)'}
+                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300">
+                                  Smart Filter
+                                </span>
+                              </h4>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {t('clan_recruitment_auto_reject_desc') || 'Бот автоматически проверяет анкеты кандидатов при подаче и отклоняет неподходящие заявки.'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* Toggle Switch */}
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              className="sr-only peer"
+                              checked={!!rConfig.autoRejectEnabled}
+                              onChange={e => updateRConfig('autoRejectEnabled', e.target.checked, true)}
+                            />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-orange-500"></div>
+                          </label>
+                        </div>
+
+                        {/* Settings Container */}
+                        <div className={`space-y-4 pt-2 transition-opacity ${rConfig.autoRejectEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <UserCheck className="w-3.5 h-3.5 text-blue-500" />
+                                {t('clan_recruitment_min_age') || 'Минимальный возраст кандидата'}
+                              </label>
+                              <input 
+                                type="number" 
+                                min="0" 
+                                max="99"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+                                value={rConfig.minAge || ''}
+                                onChange={e => updateRConfig('minAge', e.target.value ? parseInt(e.target.value, 10) : 0, false)}
+                                onBlur={e => updateRConfig('minAge', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
+                                placeholder={t('clan_recruitment_min_age_ph') || 'Например: 18 (0 — без ограничений)'}
+                              />
+                              <p className="text-[11px] text-slate-400 mt-1">Кандидаты младше этого возраста будут отклонены.</p>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-orange-500" />
+                                {t('clan_recruitment_min_hours') || 'Минимальное количество часов в Rust'}
+                              </label>
+                              <input 
+                                type="number" 
+                                min="0" 
+                                step="100"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+                                value={rConfig.minHours || ''}
+                                onChange={e => updateRConfig('minHours', e.target.value ? parseInt(e.target.value, 10) : 0, false)}
+                                onBlur={e => updateRConfig('minHours', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
+                                placeholder={t('clan_recruitment_min_hours_ph') || 'Например: 2000 (0 — без ограничений)'}
+                              />
+                              <p className="text-[11px] text-slate-400 mt-1">Проверяется по верифицированным часам Steam или анкете.</p>
+                            </div>
+                          </div>
+
+                          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+                            <label className="flex items-center space-x-3 cursor-pointer select-none">
+                              <input 
+                                type="checkbox"
+                                className="w-4 h-4 rounded text-orange-500 border-slate-300 dark:border-slate-600 focus:ring-orange-500/50"
+                                checked={rConfig.rejectBanned ?? true}
+                                onChange={e => updateRConfig('rejectBanned', e.target.checked, true)}
+                              />
+                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                {t('clan_recruitment_reject_banned') || 'Автоматически отклонять игроков с VAC/Game блокировками'}
+                              </span>
+                            </label>
+
+                            <label className="flex items-center space-x-3 cursor-pointer select-none">
+                              <input 
+                                type="checkbox"
+                                className="w-4 h-4 rounded text-orange-500 border-slate-300 dark:border-slate-600 focus:ring-orange-500/50"
+                                checked={!!rConfig.strictSteamCheck}
+                                onChange={e => updateRConfig('strictSteamCheck', e.target.checked, true)}
+                              />
+                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                {t('clan_recruitment_strict_steam') || 'Строгая проверка Steam (профиль должен быть открыт для сверки часов)'}
+                              </span>
+                            </label>
+
+                            <label className="flex items-center space-x-3 cursor-pointer select-none">
+                              <input 
+                                type="checkbox"
+                                className="w-4 h-4 rounded text-orange-500 border-slate-300 dark:border-slate-600 focus:ring-orange-500/50"
+                                checked={rConfig.silentAutoReject !== false}
+                                onChange={e => updateRConfig('silentAutoReject', e.target.checked, true)}
+                              />
+                              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                {t('clan_recruitment_silent_reject') || 'Экономить лимит каналов (мгновенный отказ кандидату без создания тикета)'}
+                              </span>
+                            </label>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                              {t('clan_recruitment_reject_msg') || 'Сообщение кандидату при автоматическом отклонении'}
+                            </label>
+                            <textarea 
+                              className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[60px]"
+                              value={rConfig.autoRejectMessage || ''}
+                              onChange={e => updateRConfig('autoRejectMessage', e.target.value, false)}
+                              onBlur={e => updateRConfig('autoRejectMessage', e.target.value, true)}
+                              placeholder={t('clan_recruitment_reject_msg_ph') || 'К сожалению, ваша анкета не соответствует минимальным требованиям клана...'}
+                            ></textarea>
+                          </div>
+                        </div>
                       </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения *</label>
-                        <input 
-                          type="text" 
-                          required
-                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                          value={rConfig.title}
-                          onChange={e => updateRConfig('title', e.target.value, false)}
-                          onBlur={e => updateRConfig('title', e.target.value, true)}
-                          placeholder="Набор в клан GODS"
-                        />
+
+                      {/* Кнопка автосохранения */}
+                      <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
+
+                      {/* Журнал и история заявок в клан */}
+                      <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40">
+                              <ScrollText className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                                {t('clan_recruitment_apps_title') || 'Журнал заявок в клан'}
+                                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                  {applicationsData.length}
+                                </span>
+                              </h4>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {t('clan_recruitment_apps_desc') || 'История всех поступивших заявок: принятые, отклоненные руководством и отфильтрованные ботом.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={fetchApplications}
+                            disabled={loadingApps}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${loadingApps ? 'animate-spin text-orange-500' : ''}`} />
+                            <span>{t('clan_recruitment_apps_refresh') || 'Обновить'}</span>
+                          </button>
+                        </div>
+
+                        {/* Filter Pills */}
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          {[
+                            { id: 'ALL', label: t('clan_recruitment_apps_filter_all') || 'Все', count: applicationsData.length },
+                            { id: 'PENDING', label: t('clan_recruitment_apps_filter_pending') || 'Ожидают', count: applicationsData.filter(a => a.status === 'PENDING').length },
+                            { id: 'ACCEPTED', label: t('clan_recruitment_apps_filter_accepted') || 'Приняты', count: applicationsData.filter(a => a.status === 'ACCEPTED').length },
+                            { id: 'REJECTED', label: t('clan_recruitment_apps_filter_rejected') || 'Отклонены', count: applicationsData.filter(a => a.status === 'REJECTED').length },
+                            { id: 'AUTO_REJECTED', label: t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ', count: applicationsData.filter(a => a.status === 'AUTO_REJECTED').length }
+                          ].map(f => (
+                            <button
+                              key={f.id}
+                              type="button"
+                              onClick={() => setAppFilter(f.id)}
+                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${
+                                appFilter === f.id
+                                  ? 'bg-orange-500 text-white shadow-sm'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                              }`}
+                            >
+                              <span>{f.label}</span>
+                              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                appFilter === f.id ? 'bg-orange-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                              }`}>
+                                {f.count}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Table or Empty state */}
+                        {(() => {
+                          const filtered = applicationsData.filter(a => appFilter === 'ALL' || a.status === appFilter);
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="text-center py-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                                <UserCheck className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  {t('clan_recruitment_apps_empty') || 'Заявок в выбранной категории пока нет.'}
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
+                                <thead className="bg-slate-50 dark:bg-slate-800/70 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                                  <tr>
+                                    <th className="px-4 py-3">{t('clan_recruitment_app_col_candidate') || 'Кандидат'}</th>
+                                    <th className="px-3 py-3">{t('clan_recruitment_app_col_spec') || 'Специализация'}</th>
+                                    <th className="px-3 py-3">{t('clan_recruitment_app_col_age') || 'Возраст'}</th>
+                                    <th className="px-3 py-3">{t('clan_recruitment_app_col_hours') || 'Часы'}</th>
+                                    <th className="px-3 py-3">{t('clan_recruitment_app_col_status') || 'Статус'}</th>
+                                    <th className="px-3 py-3">{t('clan_recruitment_app_col_details') || 'Детали'}</th>
+                                    <th className="px-4 py-3 text-right">{t('clan_recruitment_app_col_date') || 'Дата'}</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                  {filtered.map(app => (
+                                    <tr key={app.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                      <td className="px-4 py-3">
+                                        <div className="flex items-center space-x-2.5">
+                                          {app.avatar ? (
+                                            <img src={app.avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                                          ) : (
+                                            <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-[10px]">
+                                              {(app.username || app.userId).slice(0, 2).toUpperCase()}
+                                            </div>
+                                          )}
+                                          <div>
+                                            <div className="font-semibold text-slate-800 dark:text-slate-200">{app.username || 'Кандидат'}</div>
+                                            <div className="text-[10px] text-slate-400 font-mono">{app.userId}</div>
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
+                                          {app.specialization || 'Общая'}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-3 font-medium text-slate-700 dark:text-slate-300">
+                                        {app.age ? `${app.age} лет` : '—'}
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <div className="flex items-center space-x-1">
+                                          <span className="font-medium text-slate-800 dark:text-slate-200">{app.hours || 0} ч.</span>
+                                          {app.verifiedHours !== null && app.verifiedHours !== undefined && (
+                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-bold" title="Верифицировано в Steam">
+                                              ✓
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        {app.status === 'PENDING' && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
+                                            ⏳ {t('clan_recruitment_app_status_pending') || 'Ожидает'}
+                                          </span>
+                                        )}
+                                        {app.status === 'ACCEPTED' && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
+                                            ✅ {t('clan_recruitment_app_status_accepted') || 'Принята'}
+                                          </span>
+                                        )}
+                                        {app.status === 'REJECTED' && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40">
+                                            ❌ {t('clan_recruitment_app_status_rejected') || 'Отклонена'}
+                                          </span>
+                                        )}
+                                        {app.status === 'AUTO_REJECTED' && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200/60 dark:border-purple-800/40">
+                                            🤖 {t('clan_recruitment_app_status_auto_rejected') || 'Авто-отказ'}
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-3 max-w-[200px] truncate text-[11px]">
+                                        {app.rejectReason ? (
+                                          <span className="text-rose-600 dark:text-rose-400" title={app.rejectReason}>
+                                            {app.rejectReason}
+                                          </span>
+                                        ) : app.reviewedBy ? (
+                                          <span className="text-slate-500">
+                                            Рассмотрел: <span className="font-medium text-slate-700 dark:text-slate-300">{app.reviewedBy}</span>
+                                          </span>
+                                        ) : (
+                                          <span className="text-slate-400">—</span>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-3 text-right font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                                        {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : '—'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })()}
                       </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст с требованиями (Markdown поддерживается) *</label>
-                        <textarea 
-                          required
-                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[200px]"
-                          value={rConfig.text}
-                          onChange={e => updateRConfig('text', e.target.value, false)}
-                          onBlur={e => updateRConfig('text', e.target.value, true)}
-                          placeholder="Опишите требования..."
-                        ></textarea>
-                      </div>
-                    </>
+                    </div>
                   );
                 })()}
-                
-                <SaveButton saveStatus={saveStatus} onManualSave={() => flushSave()} />
               </form>
             )}
 

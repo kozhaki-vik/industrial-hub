@@ -26,7 +26,7 @@
    - [Схема данных Prisma (prisma/schema.prisma)](#43-схема-данных-prisma)
 5. [Потоки данных и протоколы взаимодействия](#5-потоки-данных-и-протоколы-взаимодействия)
 6. [Памятка для ИИ-агента](#6-памятка-для-ии-агента)
-7. [История ключевых изменений (Changelog v2.7.20 – v2.7.48)](#7-история-ключевых-изменений-changelog)
+7. [История ключевых изменений (Changelog v2.7.20 – v2.7.49)](#7-история-ключевых-изменений-changelog)
 8. [Дорожная карта и планы на будущее (Roadmap)](#8-дорожная-карта-и-планы-на-будущее-roadmap)
 
 ---
@@ -382,7 +382,11 @@ repos/
   * Полное отсутствие бэкдоров: все права администрирования строго привязаны к ролям гильдии.
 * **[`src/services/ticketService.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/src/services/ticketService.js):**
   * `showClanAppModal`: нативное всплывающее окно Discord (`ModalBuilder`) с полями возраста, часов в Rust, Steam и опыта.
-  * `handleClanAppModalSubmit`: парсинг SteamID64, проверка дубликатов открытых тикетов, обогащение профиля кандидата данными из Steam & Battlemetrics API (верифицированные часы, баны, последний сервер, аватар), создание приватного канала в категории, выдача прав руководству (Лидер, Зам, Коллер), публикация расширенной карточки анкеты.
+  * `handleClanAppModalSubmit`: парсинг SteamID64, проверка дубликатов открытых тикетов, обогащение профиля кандидата данными из Steam & Battlemetrics API (верифицированные часы, баны, последний сервер, аватар).
+  * **Авто-отклонение заявок (Auto-Reject Screening):** проверка анкеты по заданным критериям (`minAge`, `minHours`, блокировки VAC/Game bans, приватность профиля Steam). При несоответствии заявка получает статус `AUTO_REJECTED` с причиной. В тихом режиме (`silentAutoReject: true`) кандидат получает мгновенное вежливое уведомление в Discord без создания канала тикета, сохраняя лимит каналов сервера (500) и время рекрутеров; событие логируется в аудит-канал.
+  * **Интерактивные кнопки рассмотрения заявок:** в канале тикета кандидатов прикрепляются кнопки «Принять заявку» (`app_accept_<id>`), «Отклонить заявку» (`app_reject_<id>`) и «Закрыть тикет» (`ticket_close`).
+  * `handleAppAccept`: проверка прав рекрутера/руководства, перевод заявки в статус `ACCEPTED`, автоматическая выдача роли клана (`trialRoleId` / `mainRosterRoleId`), деактивация кнопок и логирование решения.
+  * `showRejectModal` & `handleRejectModalSubmit`: нативное модальное окно указания причины отказа, перевод заявки в статус `REJECTED`, уведомление кандидата, деактивация кнопок и отправка записи в аудит-канал.
   * `handleTicketClose`: сбор до 100 последних сообщений, генерация автономного визуального HTML-файла переписки в аутентичном темном стиле Discord Dark (`transcriptGenerator.js`), отправка файла в специальный канал архивов (`channelsConfig.transcripts`) и в аудит-канал логов (`loggingConfig.tickets` / `defaultChannelId`) без дублирования, исключена отправка в ЛС, безопасное удаление канала через 5 секунд.
 * **[`src/utils/transcriptGenerator.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/src/utils/transcriptGenerator.js):**
   * Генератор автономных HTML-страниц транскриптов в палитре Discord Dark (`#313338`, `#1e1f22`).
@@ -415,13 +419,15 @@ repos/
     * `create_discord_invite` / `check_discord_invite`: создание вечных инвайтов и верификация существующих ссылок.
     * `create_log_channel`: создание канала аудита логов в один клик.
     * `create_vote`: создание опросов и голосований за вайп прямо из десктопного приложения.
+    * `get_applications`: получение журнала поданных анкет и заявок из базы данных PostgreSQL с фильтрацией по статусу (`ALL`, `PENDING`, `ACCEPTED`, `REJECTED`, `AUTO_REJECTED`) и сортировкой.
+    * `update_application_status`: ручное обновление статуса заявки из приложения.
     * `factory_reset`: выборочный сброс конфигурации гильдии в базе данных.
 
 ### 4.4. Схемы данных Prisma и масштабирование
 
 * **[`prisma/schema.prisma`](file:///C:/Users/dimav/source/repos/Discord_Hub/prisma/schema.prisma):**
   * Основная production-схема, настроенная на PostgreSQL 18 (`provider = "postgresql"`, `url = env("DATABASE_URL")`).
-  * Модели: `GuildConfig`, `TempVoiceChannel`, `UserStat` (с полем `steamId`), `VoiceSession`, `Application`, `Ticket`, `Vote`, `VoteOption`, `UserVote`.
+  * Модели: `GuildConfig`, `TempVoiceChannel`, `UserStat` (с полем `steamId`), `VoiceSession`, `Application` (с полями `username`, `avatar`, `specialization`, `age`, `hours`, `verifiedHours`, `steamId`, `status`, `rejectReason`, `reviewedBy`, `reviewedAt`, `channelId`, `appliedAt`), `Ticket`, `Vote`, `VoteOption`, `UserVote`.
 * **[`prisma/schema.postgresql.prisma`](file:///C:/Users/dimav/source/repos/Discord_Hub/prisma/schema.postgresql.prisma):**
   * Резервная эталонная схема PostgreSQL с оптимизированными типами, внешними ключами и каскадными связями.
 * **[`scripts/migrate-to-postgres.js`](file:///C:/Users/dimav/source/repos/Discord_Hub/scripts/migrate-to-postgres.js):**
@@ -502,6 +508,24 @@ repos/
 
 ## 7. История ключевых изменений (Changelog)
 
+* **v2.7.49 (Авто-отклонение заявок ботом, интерактивное рассмотрение и журнал анкет):**
+  * **Авто-отклонение нежелательных кандидатов ботом (Auto-Reject Screening):**
+    - Вкладка «Наборы»: добавлена полнофункциональная карточка конфигурации автоматического скрининга кандидатов.
+    - Критерии отсева: минимальный возраст (`minAge`), минимальные часы в Rust (`minHours`), авто-отказ при наличии VAC/Game банов (`rejectBanned`), авто-отказ при скрытом профиле Steam (`strictSteamCheck`).
+    - Тихий режим (`silentAutoReject`): при включении бот моментально сообщает кандидату причину отказа в личном эфемерном сообщении и не засоряет сервер созданием канала тикета (экономия лимита 500 каналов Discord).
+    - Кастомизируемый текст сообщения отказа (`autoRejectMessage`) с поддержкой форматирования.
+    - Заявки, отклоненные автоматикой, сохраняются в базе данных со статусом `AUTO_REJECTED` и подробной причиной отказа, а также отправляются в аудит-канал.
+  * **Интерактивные кнопки рассмотрения заявок в тикетах Discord:**
+    - В каналах тикетов кандидатов добавлены интерактивные кнопки: 🟢 «Принять заявку» (`app_accept_<id>`), 🔴 «Отклонить заявку» (`app_reject_<id>`) и 🔒 «Закрыть тикет» (`ticket_close`).
+    - Принятие заявки (`handleAppAccept`): мгновенно выдает кандидату клановую роль (`trialRoleId` / `mainRosterRoleId`), обновляет статус в PostgreSQL на `ACCEPTED`, блокирует кнопки и отправляет отчет в канал аудита.
+    - Отклонение заявки (`handleRejectModalSubmit`): открывает модальное окно Discord для ввода причины отказа, переводит заявку в статус `REJECTED`, уведомляет кандидата, блокирует кнопки и логирует событие.
+  * **Журнал поданных заявок в десктопном приложении (`ClanManager.jsx`):**
+    - Вкладка «Наборы»: интерактивный журнал заявок с фильтрацией по статусам («Все», «Ожидают», «Приняты», «Отклонены», «Авто-отказ») и кнопкой обновления.
+    - Таблица анкет с отображением аватара, никнейма Discord, специализации, возраста, верифицированных часов Rust, статуса с цветовыми бейджами и подробностей/причины отказа.
+  * **Расширение схемы базы данных PostgreSQL (`schema.prisma`):**
+    - Модель `Application` расширена полями: `username`, `avatar`, `specialization`, `age`, `hours`, `verifiedHours`, `steamId`, `status` (`PENDING`, `ACCEPTED`, `REJECTED`, `AUTO_REJECTED`), `rejectReason`, `reviewedBy`, `reviewedAt`, `channelId`, `appliedAt`.
+  * **Локализация:**
+    - Полная интернационализация всех новых элементов интерфейса, кнопок и модальных окон на 3 языках (`ru`, `en`, `ua`) в `Industrial Hub/src/i18n.js` и `Discord_Hub/src/utils/i18n.js`.
 * **v2.7.48 (Discord Dark HTML Transcripts, Steam & Battlemetrics API & Full PostgreSQL Switch):**
   * **Визуальные HTML-транскрипты в стиле Discord Dark (`transcriptGenerator.js`):**
     - Полный отказ от простых текстовых `.txt` файлов в пользу автономных HTML-страниц с аутентичным темным дизайном Discord Dark (`#313338`, `#1e1f22`).
