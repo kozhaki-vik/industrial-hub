@@ -7,7 +7,7 @@ import ChannelSelect from '../components/ChannelSelect';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
-  RotateCcw, AlertTriangle, ScrollText, ShieldAlert
+  RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -1357,7 +1357,7 @@ export default function ClanManager() {
                           : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
-                      <span>🇷🇺 Русский (RU)</span>
+                      <span>Русский</span>
                       {(config.language || 'ru') === 'ru' && <Check className="w-3.5 h-3.5" />}
                     </button>
                     <button
@@ -1369,7 +1369,7 @@ export default function ClanManager() {
                           : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
-                      <span>🇬🇧 English (EN)</span>
+                      <span>English</span>
                       {config.language === 'en' && <Check className="w-3.5 h-3.5" />}
                     </button>
                   </div>
@@ -2762,29 +2762,39 @@ export default function ClanManager() {
                   </div>
 
                   {/* Bulk Actions Toolbar */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Быстрые действия:</span>
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-slate-50 via-amber-50/20 to-slate-50 dark:from-slate-800/60 dark:via-slate-800/30 dark:to-slate-800/60 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs">
                     <div className="flex items-center gap-2">
+                      <div className="p-1 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-500">
+                        <Zap className="w-4 h-4 fill-amber-500/30 text-amber-500" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 tracking-wide">
+                        {t('clan_logs_quick_actions') || 'Быстрые действия:'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={handleEnableAll}
-                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer"
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700/70 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
                       >
-                        {t('clan_logs_enable_all')}
+                        <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>{t('clan_logs_enable_all')}</span>
                       </button>
                       <button
                         type="button"
                         onClick={handleDisableAll}
-                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer"
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-700/70 text-slate-700 dark:text-slate-200 hover:text-rose-700 dark:hover:text-rose-400 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
                       >
-                        {t('clan_logs_disable_all')}
+                        <Ban className="w-3.5 h-3.5 text-rose-500" />
+                        <span>{t('clan_logs_disable_all')}</span>
                       </button>
                       <button
                         type="button"
                         onClick={handleResetChannelsToDefault}
-                        className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer"
+                        className="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700/70 text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-blue-400 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
                       >
-                        {t('clan_logs_reset_channels')}
+                        <RotateCcw className="w-3.5 h-3.5 text-blue-500" />
+                        <span>{t('clan_logs_reset_channels')}</span>
                       </button>
                     </div>
                   </div>
