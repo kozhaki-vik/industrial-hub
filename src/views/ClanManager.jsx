@@ -1173,15 +1173,15 @@ export default function ClanManager() {
     { id: 'general', label: 'Основное', icon: Settings },
     { id: 'roles', label: 'Роли', icon: Users },
     { id: 'channels', label: 'Каналы', icon: Hash },
-    { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
-    { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
-    { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
-    { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
     { id: 'recruitment', label: 'Наборы', icon: UserPlus },
     { id: 'votes', label: 'Голосования', icon: Vote },
-    { id: 'ads', label: 'Реклама', icon: Megaphone },
+    { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
     { id: 'roster', label: 'Состав', icon: UserCheck },
     { id: 'stats', label: 'Статистика', icon: BarChart3 },
+    { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
+    { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
+    { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
+    { id: 'ads', label: 'Реклама', icon: Megaphone },
   ];
 
 
