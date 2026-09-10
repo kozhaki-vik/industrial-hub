@@ -1,8 +1,8 @@
 {
   "name": "industrial-hub",
   "private": true,
-  "version": "2.7.53",
-    "author": "Kozhaki",
+  "version": "2.7.54",
+  "author": "Kozhaki",
     "description": "Industrial Hub - Ultimate Rust Assistant",
     "type": "module",
     "main": "electron/main.js",

@@ -212,6 +212,7 @@ export default function ClanManager() {
   ]);
   const [isResetting, setIsResetting] = useState(false);
   const [syncModalData, setSyncModalData] = useState(null);
+  const [editingRoomLimit, setEditingRoomLimit] = useState(null); // { channelId, name, limit }
   const hasPromptedRef = useRef(false);
 
   // Invite link verification & creation state
@@ -2489,13 +2490,14 @@ export default function ClanManager() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const newLimit = window.prompt('Новый лимит мест (0 = без лимита):', room.userLimit || 0);
-                                      if (newLimit !== null) {
-                                        handleManageDynamicRoom('set_limit', room.channelId, { limit: parseInt(newLimit, 10) || 0 });
-                                      }
+                                      setEditingRoomLimit({
+                                        channelId: room.channelId,
+                                        name: room.name,
+                                        limit: room.userLimit || 0
+                                      });
                                     }}
                                     className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
-                                    title="Изменить лимит мест"
+                                    title={t('clan_voice_change_limit_title') || 'Изменить лимит мест'}
                                   >
                                     <Sliders className="w-3 h-3" />
                                     <span>{room.userLimit > 0 ? room.userLimit : '∞'}</span>
@@ -4898,6 +4900,78 @@ export default function ClanManager() {
                 className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold cursor-pointer transition-all"
               >
                 {t('clan_sync_close') || 'Закрыть'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic Voice Room Limit Modal */}
+      {editingRoomLimit && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-orange-500" />
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_voice_limit_modal_title') || 'Лимит мест в комнате'}
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingRoomLimit(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 mb-5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {t('clan_voice_limit_modal_desc') || 'Укажите количество мест для комнаты'} <span className="font-semibold text-slate-700 dark:text-slate-300">"{editingRoomLimit.name}"</span> (0 — без ограничений, максимум 99):
+              </p>
+              <div>
+                <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  value={editingRoomLimit.limit}
+                  onChange={e => {
+                    const parsed = parseInt(e.target.value, 10);
+                    const val = isNaN(parsed) ? 0 : Math.max(0, Math.min(99, parsed));
+                    setEditingRoomLimit(prev => ({ ...prev, limit: val }));
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleManageDynamicRoom('set_limit', editingRoomLimit.channelId, { limit: editingRoomLimit.limit });
+                      setEditingRoomLimit(null);
+                    }
+                  }}
+                  autoFocus
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium text-sm outline-none focus:ring-2 focus:ring-blue-500/50"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setEditingRoomLimit(null)}
+                className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              >
+                {t('clan_reset_cancel') || 'Отмена'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleManageDynamicRoom('set_limit', editingRoomLimit.channelId, { limit: editingRoomLimit.limit });
+                  setEditingRoomLimit(null);
+                }}
+                className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer"
+              >
+                {t('clan_voice_limit_apply') || 'Применить'}
               </button>
             </div>
           </div>
