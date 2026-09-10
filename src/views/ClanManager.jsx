@@ -1322,79 +1322,65 @@ export default function ClanManager() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-4 shrink-0">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('clan_manager_title')}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('clan_manager_subtitle')}</p>
-        </div>
+      <div className="flex justify-between items-center mb-3 shrink-0">
         <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            {t('clan_manager_title')}
+          </h2>
+          {config && !isBotConfigured(config) && (
+            <button 
+              type="button"
+              onClick={() => setShowSetupWizard(true)} 
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/80 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shadow-sm animate-pulse"
+              title={t('clan_unconfigured_desc') || 'Для работы бота необходимо привязать роли и каналы в Discord. Нажмите, чтобы открыть мастер настройки.'}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>{t('clan_unconfigured_title') || 'Бот еще не настроен'}</span>
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2.5">
           <button 
             onClick={() => setShowSetupWizard(true)} 
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              config && !isBotConfigured(config)
+                ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 border border-amber-400'
+                : 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700 shadow-sm hover:shadow'
+            }`}
           >
-            <Sparkles className="w-4 h-4 text-blue-500 shrink-0" />
+            <Sparkles className={`w-3.5 h-3.5 shrink-0 ${config && !isBotConfigured(config) ? 'text-white' : 'text-blue-500'}`} />
             <span>{t('clan_wizard_btn')}</span>
           </button>
           <button 
             onClick={() => setShowResetModal(true)} 
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-300 dark:hover:border-amber-700 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-300 dark:hover:border-amber-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
           >
-            <RotateCcw className="w-4 h-4 text-amber-500 shrink-0" />
+            <RotateCcw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             <span>{t('clan_reset_btn') || 'Сброс настроек'}</span>
           </button>
           <button 
             onClick={handleUnlink} 
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-700 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
           >
-            <Unlink className="w-4 h-4 text-red-500 shrink-0" />
+            <Unlink className="w-3.5 h-3.5 text-red-500 shrink-0" />
             <span>{t('clan_unlink_btn')}</span>
           </button>
         </div>
       </div>
-      
-      {config && !isBotConfigured(config) && (
-        <div className="mb-4 shrink-0 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-300">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div>
-              <h4 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">
-                {t('clan_unconfigured_title')}
-              </h4>
-              <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5 leading-relaxed">
-                {t('clan_unconfigured_desc')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-            <button
-              onClick={() => setShowSetupWizard(true)}
-              className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-medium transition-colors shadow-sm flex items-center justify-center gap-1.5"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-              {t('clan_wizard_btn')}
-            </button>
-          </div>
-        </div>
-      )}
       
       {loadingConfig ? (
         <div className="text-slate-500 font-medium">{t('clan_loading')}</div>
       ) : config ? (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0">
           {/* Left Sidebar Navigation */}
-          <div className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-3 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto h-full scrollbar-thin">
-            <div className="hidden md:flex items-center justify-between px-3 py-2 mb-1 shrink-0">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto h-full scrollbar-thin">
+            <div className="hidden md:flex items-center justify-between px-3 py-1.5 mb-1 shrink-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {t('clan_nav_sections') || 'Разделы'}
               </span>
               {saveStatus && (
-                <span className={`text-[11px] font-medium ${saveStatus === 'success' ? 'text-green-500' : saveStatus.startsWith('error') ? 'text-red-500' : 'text-blue-500 animate-pulse'}`}>
+                <span className={`text-[10px] font-medium ${saveStatus === 'success' ? 'text-green-500' : saveStatus.startsWith('error') ? 'text-red-500' : 'text-blue-500 animate-pulse'}`}>
                   {saveStatus === 'success' ? '✓ Сохранено' : saveStatus === 'saving' ? 'Синхронизация...' : 'Ошибка'}
                 </span>
               )}
@@ -1402,18 +1388,24 @@ export default function ClanManager() {
             {tabs.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
+              const isUnconfigured = (tab.id === 'roles' || tab.id === 'channels') && config && !isBotConfigured(config);
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                      : isUnconfigured
+                        ? 'text-amber-700 dark:text-amber-300 bg-amber-50/60 dark:bg-amber-950/30 hover:bg-amber-100/70 dark:hover:bg-amber-900/40'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
-                  {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                  {Icon && <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : isUnconfigured ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />}
                   <span className="truncate">{tab.label}</span>
+                  {isUnconfigured && (
+                    <span className={`ml-auto w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
+                  )}
                 </button>
               );
             })}
