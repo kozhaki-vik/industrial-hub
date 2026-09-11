@@ -2171,76 +2171,70 @@ export default function ClanManager() {
                               className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 hover:border-blue-400/40 dark:hover:border-blue-500/40 transition-all shadow-sm flex flex-col justify-between gap-3"
                             >
                               <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                                      {r.key}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    {boundRoleId ? (
-                                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
-                                        <Check className="w-3 h-3" />
-                                        Привязано
-                                      </span>
-                                    ) : (
-                                      <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
-                                        Не привязано
-                                      </span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteStandardRole(r.key, r.dbKey)}
-                                      className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
-                                      title={t('clan_roles_delete_std') || 'Удалить стандартную роль'}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                                    Название роли (в боте)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                                    value={currentName}
+                                    onChange={e => handleRoleNameChange(r.key, e.target.value, false)}
+                                    onBlur={e => handleRoleNameBlur(r.key, r.dbKey, e.target.value, false)}
+                                    placeholder={r.defaultRu}
+                                  />
                                 </div>
 
-                              <div>
-                                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                  Название роли (в боте)
-                                </label>
-                                <input
-                                  type="text"
-                                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-                                  value={currentName}
-                                  onChange={e => handleRoleNameChange(r.key, e.target.value, false)}
-                                  onBlur={e => handleRoleNameBlur(r.key, r.dbKey, e.target.value, false)}
-                                  placeholder={r.defaultRu}
-                                />
+                                <div>
+                                  <RoleSelect
+                                    label="Роль в Discord"
+                                    description=""
+                                    value={boundRoleId}
+                                    onChange={val => handleSelectDiscordRole(r.key, r.dbKey, val, false)}
+                                    discordRoles={discordInfo?.roles || []}
+                                    rightAction={
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCreateRoleInDiscord(r, false)}
+                                        disabled={isCreatingThis || creatingRoleKey !== null}
+                                        className="px-2.5 py-2 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950/50 border border-slate-300 dark:border-slate-700 hover:border-blue-400 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium transition-all shadow-sm shrink-0 flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                                        title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
+                                      >
+                                        {isCreatingThis ? (
+                                          <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                          <Plus className="w-3.5 h-3.5" />
+                                        )}
+                                        <span className="hidden sm:inline">Создать</span>
+                                      </button>
+                                    }
+                                  />
+                                </div>
                               </div>
 
-                              <div>
-                                <RoleSelect
-                                  label="Роль в Discord"
-                                  description=""
-                                  value={boundRoleId}
-                                  onChange={val => handleSelectDiscordRole(r.key, r.dbKey, val, false)}
-                                  discordRoles={discordInfo?.roles || []}
-                                  rightAction={
-                                    <button
-                                      type="button"
-                                      onClick={() => handleCreateRoleInDiscord(r, false)}
-                                      disabled={isCreatingThis || creatingRoleKey !== null}
-                                      className="px-2.5 py-2 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950/50 border border-slate-300 dark:border-slate-700 hover:border-blue-400 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium transition-all shadow-sm shrink-0 flex items-center gap-1 disabled:opacity-50 cursor-pointer"
-                                      title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
-                                    >
-                                      {isCreatingThis ? (
-                                        <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                      ) : (
-                                        <Plus className="w-3.5 h-3.5" />
-                                      )}
-                                      <span className="hidden sm:inline">Создать</span>
-                                    </button>
-                                  }
-                                />
+                              <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/50 mt-1">
+                                <div>
+                                  {boundRoleId ? (
+                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                                      <Check className="w-3 h-3" />
+                                      Привязано
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
+                                      Не привязано
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteStandardRole(r.key, r.dbKey)}
+                                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
+                                  title={t('clan_roles_delete_std') || 'Удалить стандартную роль'}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
-                          </div>
                         );
                       })}
                     </div>
@@ -2288,35 +2282,6 @@ export default function ClanManager() {
                               className="bg-amber-50/20 dark:bg-amber-950/10 p-4 rounded-2xl border border-amber-200/50 dark:border-amber-800/40 hover:border-amber-400 dark:hover:border-amber-600 transition-all shadow-sm flex flex-col justify-between gap-3"
                             >
                               <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                                      Кастомная роль
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {cr.roleId ? (
-                                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
-                                        <Check className="w-3 h-3" />
-                                        Привязано
-                                      </span>
-                                    ) : (
-                                      <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
-                                        Не привязано
-                                      </span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteCustomRole(cr.id)}
-                                      className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all cursor-pointer"
-                                      title={t('clan_roles_delete_template') || 'Удалить шаблон роли'}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                </div>
-
                                 <div>
                                   <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                                     Название роли (в боте)
@@ -2356,6 +2321,29 @@ export default function ClanManager() {
                                     }
                                   />
                                 </div>
+                              </div>
+
+                              <div className="flex items-center justify-between pt-2 border-t border-amber-200/50 dark:border-amber-800/40 mt-1">
+                                <div>
+                                  {cr.roleId ? (
+                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                                      <Check className="w-3 h-3" />
+                                      Привязано
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
+                                      Не привязано
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCustomRole(cr.id)}
+                                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all cursor-pointer"
+                                  title={t('clan_roles_delete_template') || 'Удалить шаблон роли'}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
                           );
@@ -4578,8 +4566,7 @@ export default function ClanManager() {
                 return Boolean(
                   roleId && (
                     roleId === config?.leaderRoleId ||
-                    roleId === config?.deputyLeaderRoleId ||
-                    roleId === config?.callerRoleId
+                    roleId === config?.deputyLeaderRoleId
                   )
                 );
               };
