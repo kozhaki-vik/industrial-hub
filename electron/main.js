@@ -87,12 +87,6 @@ function createWindow() {
     }
   });
 
-  // Ensure Chromium WebContents immediately gains keyboard focus whenever the window is activated
-  mainWindow.on('focus', () => {
-    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
-      mainWindow.webContents.focus();
-    }
-  });
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
