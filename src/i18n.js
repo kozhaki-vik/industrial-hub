@@ -1,4 +1,4 @@
-import i18n from 'i18next';
+﻿import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 const resources = {
@@ -299,7 +299,7 @@ translation: {
       "clan_voice_generator_label": "Канал-генератор (Join to Create)",
       "clan_voice_generator_desc": "Голосовой канал, при подключении к которому бот создаст новую комнату и переместит туда пользователя.",
       "clan_voice_template_label": "Шаблон названия комнат",
-      "clan_voice_template_desc": "Используйте {user} для подстановки никнейма создателя комнаты (например: 🔊 Пати {user}).",
+      "clan_voice_template_desc": "Используйте {user} для подстановки никнейма создателя комнаты например: 🔊 Пати {user}.",
       "clan_voice_limit_label": "Лимит мест по умолчанию",
       "clan_voice_limit_desc": "Максимальное количество участников в создаваемой комнате (0 — без ограничений).",
       "clan_voice_active_title": "Активные голосовые комнаты",

@@ -73,7 +73,7 @@ export const reportClanErrorToTelegram = (errorTitle, errorDetails) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hwid: localStorage.getItem('hub_hwid') || 'UnknownClient',
-          version: '2.7.56',
+          version: '2.7.57',
           errorStack: fullErrorText
         })
       }).catch(() => {});
@@ -2521,40 +2521,17 @@ export default function ClanManager() {
             )}
 
             {activeTab === 'voice' && (
-              <div className="space-y-8 max-w-5xl">
-                {/* Header banner / info */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-200 dark:border-orange-900/30">
-                  <div className="flex items-start gap-3.5">
-                    <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-md shadow-orange-500/20 shrink-0 mt-0.5">
-                      <Volume2 className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                        {t('clan_voice_title')}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                        {t('clan_voice_desc')}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAutoSetupDynamicVoice}
-                    disabled={voiceActionLoading}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/80 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:border-orange-300 dark:hover:border-orange-700 rounded-xl text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 shrink-0 cursor-pointer disabled:opacity-50"
-                  >
-                    <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
-                    <span>{voiceActionLoading ? 'Создание...' : t('clan_voice_auto_setup_btn')}</span>
-                  </button>
-                </div>
-
-                {/* Section 1: Settings Form */}
+              <div className="space-y-6 max-w-5xl">
                 {loadingVoice || !dynamicVoiceData ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  <div className="flex justify-center items-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+                    <div className="flex flex-col items-center gap-3">
+                      <RefreshCw className="w-7 h-7 animate-spin text-orange-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('clan_loading') || 'Загрузка данных...'}</span>
+                    </div>
                   </div>
                 ) : (
                   <>
+                    {/* Section 1: Settings Form (Join-to-Create) */}
                     <form onSubmit={saveDynamicVoiceConfig} noValidate className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-6">
                       <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                         <div>
@@ -2654,6 +2631,38 @@ export default function ClanManager() {
                         </div>
                       </div>
                     </form>
+
+                    {/* Section 2: Banner with Auto-setup & Title with ? tooltip */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-200 dark:border-orange-900/30">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-md shadow-orange-500/20 shrink-0">
+                          <Volume2 className="w-5 h-5" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                            {t('clan_voice_title')}
+                          </h3>
+                          <div className="group relative inline-flex">
+                            <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold cursor-default text-slate-600 dark:text-slate-300 select-none">
+                              ?
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 p-3 bg-slate-800 text-slate-100 text-xs rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none leading-relaxed">
+                              {t('clan_voice_desc')}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 rotate-45"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAutoSetupDynamicVoice}
+                        disabled={voiceActionLoading}
+                        className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/80 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:border-orange-300 dark:hover:border-orange-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 shrink-0 cursor-pointer disabled:opacity-50"
+                      >
+                        <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
+                        <span>{voiceActionLoading ? 'Создание...' : t('clan_voice_auto_setup_btn')}</span>
+                      </button>
+                    </div>
 
                     {/* Section 2: Active Temporary Rooms Monitoring */}
                     <div className="space-y-4">
