@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const SetupWizard = ({ onClose, onConfirm, onManualSetup }) => {
+const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '' }) => {
   const { t } = useTranslation();
+  const [clanName, setClanName] = useState(initialClanName || '');
+  const [nameError, setNameError] = useState(false);
   const [options, setOptions] = useState({
     createRoles: true,
     createCategory: true,
@@ -11,6 +13,21 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup }) => {
   });
 
   const toggleOption = (key) => setOptions(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const handleConfirm = () => {
+    if (!clanName.trim()) {
+      setNameError(true);
+      return;
+    }
+    setNameError(false);
+    onConfirm({ ...options, clanName: clanName.trim() });
+  };
+
+  const handleManual = () => {
+    if (onManualSetup) {
+      onManualSetup(clanName.trim());
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -38,6 +55,36 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup }) => {
         </div>
         
         <div className="p-6 space-y-4">
+          <div className={`p-4 rounded-xl border transition-all ${
+            nameError 
+              ? 'border-red-400 bg-red-50/60 dark:border-red-800 dark:bg-red-950/30' 
+              : 'border-blue-200 dark:border-blue-800/60 bg-blue-50/40 dark:bg-blue-950/20'
+          }`}>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>{t('clan_wizard_name_label') || 'Название вашего клана'} *</span>
+              {nameError && (
+                <span className="text-red-500 normal-case font-medium text-xs">
+                  {t('clan_name_required') || 'Обязательное поле'}
+                </span>
+              )}
+            </label>
+            <input
+              type="text"
+              required
+              data-required="true"
+              value={clanName}
+              onChange={e => {
+                setClanName(e.target.value);
+                if (e.target.value.trim()) setNameError(false);
+              }}
+              placeholder={t('clan_name_placeholder') || 'Например: TITAN'}
+              className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/50"
+              autoFocus
+            />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+              {t('clan_wizard_name_desc') || 'Укажите название клана. Оно будет синхронизировано в эмбедах набора, сообщениях бота и веб-панелях.'}
+            </p>
+          </div>
           <label className="flex items-start p-4 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
             <div className="flex items-center h-5 mt-1">
               <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" checked={options.createRoles} onChange={() => toggleOption('createRoles')} />
@@ -84,8 +131,8 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup }) => {
             {onManualSetup && (
               <button
                 type="button"
-                onClick={onManualSetup}
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors"
+                onClick={handleManual}
+                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors cursor-pointer"
               >
                 {t('clan_wizard_manual')}
               </button>
@@ -95,14 +142,14 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+              className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
               {t('clan_wizard_cancel')}
             </button>
             <button
               type="button"
-              onClick={() => onConfirm(options)}
-              className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-sm transition-colors"
+              onClick={handleConfirm}
+              className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-sm transition-colors cursor-pointer"
             >
               {t('clan_wizard_submit')}
             </button>

@@ -5,11 +5,12 @@ import SetupWizard from '../components/SetupWizard';
 import RoleSelect from '../components/RoleSelect';
 import ChannelSelect from '../components/ChannelSelect';
 import MemberDossierModal from '../components/MemberDossierModal';
+import TicketTranscriptModal from '../components/TicketTranscriptModal';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
-  BookOpen, Star, Search
+  BookOpen, Star, Search, ExternalLink
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -234,6 +235,8 @@ export default function ClanManager() {
   const [isResetting, setIsResetting] = useState(false);
   const [syncModalData, setSyncModalData] = useState(null);
   const [editingRoomLimit, setEditingRoomLimit] = useState(null); // { channelId, name, limit }
+  const [initialNameInput, setInitialNameInput] = useState('');
+  const [initialNameError, setInitialNameError] = useState(false);
   const hasPromptedRef = useRef(false);
 
   // Invite link verification & creation state
@@ -255,12 +258,15 @@ export default function ClanManager() {
   const [applicationsData, setApplicationsData] = useState([]);
   const [loadingApps, setLoadingApps] = useState(false);
   const [appFilter, setAppFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'AUTO_REJECTED'
+  const [appSearch, setAppSearch] = useState('');
+  const [transcriptModal, setTranscriptModal] = useState({ isOpen: false, loading: false, html: null, app: null, error: null });
 
   // Warning System state
   const [selectedUserForWarns, setSelectedUserForWarns] = useState(null);
   const [userWarningsList, setUserWarningsList] = useState([]);
   const [loadingUserWarnings, setLoadingUserWarnings] = useState(false);
   const [newWarnReason, setNewWarnReason] = useState('');
+  const [warnModerator, setWarnModerator] = useState(() => localStorage.getItem('clan_warn_moderator') || '');
   const [warnActionLoading, setWarnActionLoading] = useState(false);
   const [clanWarnings, setClanWarnings] = useState([]);
   const [loadingClanWarnings, setLoadingClanWarnings] = useState(false);
@@ -361,13 +367,36 @@ export default function ClanManager() {
     }
   };
 
+  const getDefaultModeratorName = () => {
+    const saved = localStorage.getItem('clan_warn_moderator');
+    if (saved && saved.trim()) return saved.trim();
+    if (rosterData?.roster && config?.leaderRoleId) {
+      const leader = rosterData.roster.find(m => m.roles?.includes(config.leaderRoleId));
+      if (leader) return leader.displayName || leader.username;
+    }
+    return '';
+  };
+
   const handleAddWarn = async () => {
     if (!selectedUserForWarns || !newWarnReason.trim()) return;
     setWarnActionLoading(true);
+    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || 'Администратор';
+    localStorage.setItem('clan_warn_moderator', modTag);
+
+    let modMember = null;
+    if (rosterData?.roster) {
+      modMember = rosterData.roster.find(m => 
+        (m.displayName && m.displayName.toLowerCase() === modTag.toLowerCase()) ||
+        (m.username && m.username.toLowerCase() === modTag.toLowerCase())
+      );
+    }
+
     const res = await sendProxyAction('add_warning', {
       userId: selectedUserForWarns.userId,
       userName: selectedUserForWarns.displayName || selectedUserForWarns.username,
-      reason: newWarnReason.trim()
+      reason: newWarnReason.trim(),
+      moderatorTag: modTag,
+      moderatorId: modMember?.userId || modMember?.id || 'DESKTOP_CLIENT'
     });
     setWarnActionLoading(false);
     if (res && res.success) {
@@ -383,7 +412,11 @@ export default function ClanManager() {
   const handleRemoveWarn = async (warningId) => {
     if (!warningId) return;
     setWarnActionLoading(true);
-    const res = await sendProxyAction('remove_warning', { warningId });
+    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || 'Администратор';
+    const res = await sendProxyAction('remove_warning', { 
+      warningId,
+      moderatorTag: modTag
+    });
     setWarnActionLoading(false);
     if (res && res.success) {
       if (selectedUserForWarns) {
@@ -400,7 +433,11 @@ export default function ClanManager() {
     if (!userId) return;
     if (!window.confirm('Снять все активные предупреждения с данного пользователя?')) return;
     setWarnActionLoading(true);
-    const res = await sendProxyAction('clear_warnings', { userId });
+    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || 'Администратор';
+    const res = await sendProxyAction('clear_warnings', { 
+      userId,
+      moderatorTag: modTag
+    });
     setWarnActionLoading(false);
     if (res && res.success) {
       if (selectedUserForWarns) {
@@ -417,6 +454,10 @@ export default function ClanManager() {
     setSelectedUserForWarns(stat);
     setUserWarningsList([]);
     setNewWarnReason('');
+    const defMod = getDefaultModeratorName();
+    if (defMod && !warnModerator) {
+      setWarnModerator(defMod);
+    }
     fetchUserWarnings(stat.userId);
   };
 
@@ -560,7 +601,7 @@ export default function ClanManager() {
             const sanitized = sanitizeClanConfig(fetchedConfig);
             setConfig(sanitized);
             lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
-            if (!hasPromptedRef.current && !isBotConfigured(fetchedConfig)) {
+            if (!hasPromptedRef.current && (!isBotConfigured(fetchedConfig) || !fetchedConfig?.name?.trim())) {
               hasPromptedRef.current = true;
               setShowSetupWizard(true);
             }
@@ -621,6 +662,13 @@ export default function ClanManager() {
           if (!data.error && data.data && data.data.success) {
             setApplicationsData(data.data.applications || []);
           }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_ticket_transcript') {
+          setTranscriptModal(prev => ({
+            ...prev,
+            loading: false,
+            html: data.data?.transcriptHtml || null,
+            error: data.error || (data.data && !data.data.success ? (data.data.error || 'Ошибка загрузки транскрипта') : (!data.data?.transcriptHtml ? 'Транскрипт не найден или еще формируется' : null))
+          }));
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_stats') {
           if (!data.error && data.data && data.data.success) {
             setStatsData(data.data.stats);
@@ -853,7 +901,7 @@ export default function ClanManager() {
   };
 
   const handleUnlink = () => {
-    if (window.confirm('Are you sure you want to unlink your Clan Manager?')) {
+    if (window.confirm(t('clan_unlink_confirm') || 'Are you sure you want to unlink your Clan Manager?')) {
       addLog('Sending unlink request');
       hasPromptedRef.current = false;
       ws.send(JSON.stringify({ type: 'clan', action: 'unlink' }));
@@ -922,17 +970,58 @@ export default function ClanManager() {
     addLog('Generating permanent Discord invite...');
   };
 
+  const handleClanNameChange = (newName, immediate = false) => {
+    let updatedRecruitment = config?.recruitmentConfigJson;
+    try {
+      let r = {};
+      if (config?.recruitmentConfigJson) {
+        r = JSON.parse(config.recruitmentConfigJson);
+      }
+      const oldName = config?.name || '';
+      // If recruitment title was not customized, or was using old name, or was GODS, update it to match new name
+      if (!r.title || r.title === 'Набор в клан GODS' || r.title === 'Набор в клан' || (oldName && r.title === `Набор в клан ${oldName}`) || r.title.includes('GODS')) {
+        r.title = newName ? `Набор в клан ${newName}` : 'Набор в клан';
+        updatedRecruitment = JSON.stringify(r);
+      }
+    } catch (e) {}
+
+    const updated = {
+      ...config,
+      name: newName,
+      recruitmentConfigJson: updatedRecruitment
+    };
+    setConfig(updated);
+    queueAutoSave(updated, immediate);
+  };
+
   const startAutoSetup = (options) => {
     setShowSetupWizard(false);
     setSaveStatus('saving');
     addLog('Запрос автоматической настройки сервера...');
+
+    let updatedConfig = { ...config };
+    if (options?.clanName && options.clanName.trim()) {
+      const clanName = options.clanName.trim();
+      updatedConfig.name = clanName;
+      let r = {};
+      try {
+        if (updatedConfig.recruitmentConfigJson) r = JSON.parse(updatedConfig.recruitmentConfigJson);
+      } catch (e) {}
+      if (!r.title || r.title === 'Набор в клан GODS' || r.title === 'Набор в клан' || r.title.includes('GODS')) {
+        r.title = `Набор в клан ${clanName}`;
+        updatedConfig.recruitmentConfigJson = JSON.stringify(r);
+      }
+      setConfig(updatedConfig);
+      queueAutoSave(updatedConfig, true);
+    }
+
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
       reqId: 'auto_setup',
       payload: {
         action: 'auto_setup',
-        currentConfig: config,
+        currentConfig: updatedConfig,
         setupOptions: options
       }
     }));
@@ -1559,6 +1648,45 @@ export default function ClanManager() {
     }));
   };
 
+  const handleViewTranscript = (app) => {
+    if (!ws || wsStatus !== 'online' || !app) return;
+    setTranscriptModal({
+      isOpen: true,
+      loading: true,
+      html: null,
+      app: app,
+      error: null
+    });
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'get_ticket_transcript',
+      payload: {
+        action: 'get_ticket_transcript',
+        applicationId: app.id,
+        channelId: app.channelId
+      }
+    }));
+  };
+
+  const openExternalUrl = (url) => {
+    if (!url) return;
+    if (window.electronAPI && window.electronAPI.openExternal) {
+      window.electronAPI.openExternal(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const getSteamProfileUrl = (steamId) => {
+    if (!steamId) return null;
+    const raw = String(steamId).trim();
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    if (/^\d{17}$/.test(raw)) return `https://steamcommunity.com/profiles/${raw}`;
+    if (/^[a-zA-Z0-9_-]+$/.test(raw)) return `https://steamcommunity.com/id/${raw}`;
+    return `https://steamcommunity.com/profiles/${raw}`;
+  };
+
   useEffect(() => {
     if (!ws || wsStatus !== 'online') return;
     if (activeTab === 'general' && config?.discordLink) {
@@ -1697,36 +1825,7 @@ export default function ClanManager() {
 
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-3 shrink-0">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            {t('clan_manager_title')}
-          </h2>
-          {config && !isBotConfigured(config) && (
-            <button 
-              type="button"
-              onClick={() => setShowSetupWizard(true)} 
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/80 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shadow-sm animate-pulse"
-              title={t('clan_unconfigured_desc') || 'Для работы бота необходимо привязать роли и каналы в Discord. Нажмите, чтобы открыть мастер настройки.'}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>{t('clan_unconfigured_title') || 'Бот еще не настроен'}</span>
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-2.5">
-          <button 
-            onClick={handleUnlink} 
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
-          >
-            <Unlink className="w-3.5 h-3.5 text-red-500 shrink-0" />
-            <span>{t('clan_unlink_btn')}</span>
-          </button>
-        </div>
-      </div>
-      
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-6xl mx-auto">
       {loadingConfig ? (
         <div className="flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
           <RefreshCw className="w-5 h-5 animate-spin mr-2.5 text-orange-500" />
@@ -1742,10 +1841,23 @@ export default function ClanManager() {
               </span>
               {saveStatus && (
                 <span className={`text-[10px] font-medium ${saveStatus === 'success' ? 'text-green-500' : saveStatus.startsWith('error') ? 'text-red-500' : 'text-blue-500 animate-pulse'}`}>
-                  {saveStatus === 'success' ? '✓ Сохранено' : saveStatus === 'saving' ? 'Синхронизация...' : 'Ошибка'}
+                  {saveStatus === 'success' ? `✓ ${t('clan_saved_success') || 'Сохранено'}` : saveStatus === 'saving' ? (t('clan_roles_syncing') || 'Синхронизация...') : (t('clan_error') || 'Ошибка')}
                 </span>
               )}
             </div>
+
+            {config && !isBotConfigured(config) && (
+              <button 
+                type="button"
+                onClick={() => setShowSetupWizard(true)} 
+                className="hidden md:flex items-center justify-center gap-1.5 px-2.5 py-1.5 mb-2 rounded-xl text-xs font-medium bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/80 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shadow-sm animate-pulse shrink-0"
+                title={t('clan_unconfigured_desc') || 'Для работы бота необходимо привязать роли и каналы в Discord. Нажмите, чтобы открыть мастер настройки.'}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span className="truncate">{t('clan_unconfigured_title') || 'Бот еще не настроен'}</span>
+              </button>
+            )}
             {tabs.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -1776,49 +1888,41 @@ export default function ClanManager() {
           <div className="flex-1 p-6 md:p-8 overflow-y-auto h-full scrollbar-thin">
             
             {activeTab === 'general' && (
-              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-2xl">
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-4xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                   Основные настройки
                 </h3>
                 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       {t('clan_name_label') || 'Название клана'} *
                     </label>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400 select-none">
-                        {t('clan_recruitment_open_title') || 'Набор в клан открыт'}
-                      </span>
-                      <ToggleSwitch
-                        checked={!!config.recruitmentOpen}
-                        onChange={val => {
-                          const updated = { ...config, recruitmentOpen: val };
-                          queueAutoSave(updated, true);
-                        }}
-                        activeColor="blue"
-                      />
-                    </div>
+                    <input 
+                      type="text" 
+                      required
+                      className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white dark:bg-slate-800/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                      value={config?.name ?? ''}
+                      onChange={e => handleClanNameChange(e.target.value, false)}
+                      onBlur={e => handleClanNameChange(e.target.value, true)}
+                      placeholder={t('clan_name_placeholder') || 'Например: TITAN'}
+                    />
                   </div>
-                  <input 
-                    type="text" 
-                    required
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white dark:bg-slate-800/50 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                    value={config?.name ?? ''}
-                    onChange={e => {
-                      const updated = { ...config, name: e.target.value };
-                      queueAutoSave(updated, false);
-                    }}
-                    onBlur={e => {
-                      const val = e.target.value;
-                      if (val !== (config?.name ?? '')) {
-                        const updated = { ...config, name: val };
+
+                  <div className="flex items-center justify-between p-2.5 px-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 h-[42px]">
+                    <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 select-none">
+                      {t('clan_recruitment_open_title') || 'Набор в клан открыт'}
+                    </span>
+                    <ToggleSwitch
+                      checked={!!config.recruitmentOpen}
+                      onChange={val => {
+                        const updated = { ...config, recruitmentOpen: val };
                         queueAutoSave(updated, true);
-                      }
-                    }}
-                    placeholder="Например: GODS"
-                  />
+                      }}
+                      activeColor="blue"
+                    />
+                  </div>
                 </div>
                 
                 <div>
@@ -1907,53 +2011,10 @@ export default function ClanManager() {
                     </div>
                   )}
                 </div>
-                
-                {/* Bot Language Card */}
-                <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                        {t('clan_general_bot_lang_title') || 'Язык Discord бота'}
-                      </span>
-                    </div>
-                    <span className="text-xs uppercase font-mono px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold">
-                      {(config.language || 'ru').toUpperCase()}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t('clan_general_bot_lang_desc') || 'Переключает язык сообщений, кнопок и тикетов бота в Discord, а также последовательно синхронизирует и верифицирует названия ролей на сервере.'}
-                  </p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchBotLanguage('ru')}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border ${
-                        (config.language || 'ru') === 'ru'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20'
-                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <span>Русский</span>
-                      {(config.language || 'ru') === 'ru' && <Check className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchBotLanguage('en')}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border ${
-                        config.language === 'en'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20'
-                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <span>English</span>
-                      {config.language === 'en' && <Check className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
 
-                {/* Actions: Setup Wizard & Factory Reset in 2 columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+
+                {/* Actions: Setup Wizard, Unlink Server, & Factory Reset in 3 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                   {/* Master / Wizard Setup Card */}
                   <div className="p-4 border border-blue-200 dark:border-blue-800/60 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 flex flex-col justify-between gap-3">
                     <div>
@@ -1972,6 +2033,27 @@ export default function ClanManager() {
                     >
                       <Sparkles className="w-3.5 h-3.5 shrink-0" />
                       <span>{t('clan_wizard_btn') || 'Мастер настройки'}</span>
+                    </button>
+                  </div>
+
+                  {/* Unlink Server Card */}
+                  <div className="p-4 border border-red-200 dark:border-red-800/60 rounded-xl bg-red-50/40 dark:bg-red-950/20 flex flex-col justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-red-900 dark:text-red-200 flex items-center gap-1.5">
+                        <Unlink className="w-4 h-4 text-red-500 shrink-0" />
+                        <span>{t('clan_unlink_btn') || 'Отвязать сервер'}</span>
+                      </h4>
+                      <p className="text-xs text-red-700 dark:text-red-300/80 mt-1 leading-relaxed">
+                        {t('clan_unlink_card_desc') || 'Отвязать бота от текущего Discord сервера и сбросить привязку.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUnlink}
+                      className="w-full py-2 px-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Unlink className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t('clan_unlink_btn') || 'Отвязать...'}</span>
                     </button>
                   </div>
 
@@ -2054,26 +2136,6 @@ export default function ClanManager() {
                         <Plus className="w-3.5 h-3.5" />
                         <span>{t('clan_roles_add_custom') || 'Добавить роль'}</span>
                       </button>
-                    </div>
-                  </div>
-
-                  {/* Status Banner */}
-                  <div className="flex items-center justify-between text-xs px-1">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">
-                      Всего ролей: {visibleStandardRoles.length + customRoles.length}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {saveStatus === 'saving' ? (
-                        <span className="text-blue-500 font-medium flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-full border border-blue-200/60 dark:border-blue-800/60">
-                          <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                          {t('clan_roles_syncing') || 'Синхронизация...'}
-                        </span>
-                      ) : (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
-                          <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          {t('clan_roles_auto_saved') || 'Все изменения сохранены'}
-                        </span>
-                      )}
                     </div>
                   </div>
 
@@ -2800,10 +2862,11 @@ export default function ClanManager() {
                 </h3>
                 
                 {(() => {
+                  const defaultRejectMsg = t('clan_recruitment_reject_msg_ph') || 'К сожалению, ваша анкета не соответствует минимальным требованиям клана...';
                   let rConfig = {
                     link: config?.discordLink || '',
                     banner: 'https://i.imgur.com/UaMfYMK.png',
-                    title: `Набор в клан ${config.name || 'GODS'}`,
+                    title: config?.name ? `Набор в клан ${config.name}` : 'Набор в клан',
                     text: "Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы",
                     customLeaderId: '',
                     autoRejectEnabled: false,
@@ -2812,13 +2875,27 @@ export default function ClanManager() {
                     rejectBanned: true,
                     strictSteamCheck: false,
                     silentAutoReject: true,
-                    autoRejectMessage: ''
+                    autoRejectMessage: defaultRejectMsg
                   };
                   try {
                     if (config.recruitmentConfigJson) {
                       rConfig = { ...rConfig, ...JSON.parse(config.recruitmentConfigJson) };
                     }
                   } catch(e) {}
+
+                  // If autoRejectMessage is empty or not set, pre-fill with defaultRejectMsg so it's ready to edit in the field
+                  if (!rConfig.autoRejectMessage || !rConfig.autoRejectMessage.trim()) {
+                    rConfig.autoRejectMessage = defaultRejectMsg;
+                  }
+
+                  // Keep title synchronized with actual clan name if title was old default / GODS
+                  if (config?.name) {
+                    if (!rConfig.title || rConfig.title === 'Набор в клан GODS' || rConfig.title === 'Набор в клан') {
+                      rConfig.title = `Набор в клан ${config.name}`;
+                    } else if (rConfig.title.includes('GODS')) {
+                      rConfig.title = rConfig.title.replace(/\bGODS\b/g, config.name);
+                    }
+                  }
                   
                   const updateRConfig = (key, val, immediate = false) => {
                     const newConfig = { ...rConfig, [key]: val };
@@ -2852,7 +2929,7 @@ export default function ClanManager() {
                           <div>
                             <div className="flex items-center justify-between mb-1.5">
                               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                Ссылка на Discord сервер (для набора) *
+                                {t('clan_recruitment_server_link') || 'Ссылка на сервер для набора'}
                               </label>
                               <button
                                 type="button"
@@ -2944,27 +3021,74 @@ export default function ClanManager() {
 
                           <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                             По умолчанию лидер определяется по назначенной роли Лидера в Discord:{' '}
-                            <strong className="text-slate-700 dark:text-slate-300">
-                              {(() => {
-                                const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
-                                if (leaders.length > 0) {
-                                  return leaders.map(m => m.displayName || m.username).join(', ');
-                                }
-                                return 'Роль не выдана ни одному участнику';
-                              })()}
-                            </strong>
+                            {(() => {
+                              const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
+                              if (leaders.length > 0) {
+                                return (
+                                  <span className="inline-flex items-center gap-1.5 flex-wrap">
+                                    {leaders.map((m, idx) => {
+                                      const leaderId = m.userId || m.id;
+                                      const leaderName = m.displayName || m.username;
+                                      return (
+                                        <span key={leaderId || idx} className="inline-flex items-center gap-1">
+                                          <strong className="text-slate-800 dark:text-slate-200">{leaderName}</strong>
+                                          {leaderId && (
+                                            <button
+                                              type="button"
+                                              onClick={() => updateRConfig('customLeaderId', leaderId, true)}
+                                              className="inline-flex items-center gap-0.5 font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 hover:bg-orange-100 dark:bg-slate-700 dark:hover:bg-orange-950/60 text-slate-700 hover:text-orange-700 dark:text-slate-300 dark:hover:text-orange-300 transition-colors cursor-pointer"
+                                              title="Нажмите, чтобы вставить этот ID в поле"
+                                            >
+                                              <span>(ID: {leaderId})</span>
+                                            </button>
+                                          )}
+                                          {idx < leaders.length - 1 ? ',' : ''}
+                                        </span>
+                                      );
+                                    })}
+                                  </span>
+                                );
+                              }
+                              return <strong className="text-slate-700 dark:text-slate-300">Роль не выдана ни одному участнику</strong>;
+                            })()}
                             . Вы можете принудительно указать Discord ID пользователя:
                           </div>
 
                           <div className="flex gap-2">
                             <input
                               type="text"
-                              className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50"
-                              placeholder="Укажите Discord ID пользователя (например: 718872288000000000)"
+                              className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50 font-mono"
+                              placeholder={
+                                (() => {
+                                  const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
+                                  const firstId = leaders[0]?.userId || leaders[0]?.id;
+                                  return firstId 
+                                    ? `ID лидера (например: ${firstId})` 
+                                    : "Укажите Discord ID пользователя (например: 718872288000000000)";
+                                })()
+                              }
                               value={rConfig.customLeaderId || ''}
                               onChange={e => updateRConfig('customLeaderId', e.target.value, false)}
                               onBlur={e => updateRConfig('customLeaderId', e.target.value, true)}
                             />
+                            {(() => {
+                              const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
+                              const firstId = leaders[0]?.userId || leaders[0]?.id;
+                              if (firstId && (!rConfig.customLeaderId || rConfig.customLeaderId !== firstId)) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateRConfig('customLeaderId', firstId, true)}
+                                    className="px-3 py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/80 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                                    title="Вставить ID лидера по умолчанию"
+                                  >
+                                    <UserCheck className="w-3.5 h-3.5" />
+                                    <span>Вставить ID</span>
+                                  </button>
+                                );
+                              }
+                              return null;
+                            })()}
                             {rConfig.customLeaderId && (
                               <button
                                 type="button"
@@ -2987,7 +3111,7 @@ export default function ClanManager() {
                             value={rConfig.title}
                             onChange={e => updateRConfig('title', e.target.value, false)}
                             onBlur={e => updateRConfig('title', e.target.value, true)}
-                            placeholder="Набор в клан GODS"
+                            placeholder={config?.name ? `Набор в клан ${config.name}` : "Набор в клан"}
                           />
                         </div>
                         
@@ -3012,11 +3136,8 @@ export default function ClanManager() {
                               <Bot className="w-5 h-5" />
                             </div>
                             <div>
-                              <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                                {t('clan_recruitment_auto_reject_title') || 'Автоматическое отклонение заявок (Auto-Reject)'}
-                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300">
-                                  Smart Filter
-                                </span>
+                              <h4 className="text-base font-semibold text-slate-900 dark:text-white">
+                                {t('clan_recruitment_auto_reject_title') || 'Автоматическое отклонение заявок'}
                               </h4>
                               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                 {t('clan_recruitment_auto_reject_desc') || 'Бот автоматически проверяет анкеты кандидатов при подаче и отклоняет неподходящие заявки.'}
@@ -3116,10 +3237,10 @@ export default function ClanManager() {
                             </label>
                             <textarea 
                               className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[60px]"
-                              value={rConfig.autoRejectMessage || ''}
+                              value={rConfig.autoRejectMessage ?? defaultRejectMsg}
                               onChange={e => updateRConfig('autoRejectMessage', e.target.value, false)}
                               onBlur={e => updateRConfig('autoRejectMessage', e.target.value, true)}
-                              placeholder={t('clan_recruitment_reject_msg_ph') || 'К сожалению, ваша анкета не соответствует минимальным требованиям клана...'}
+                              placeholder={defaultRejectMsg}
                             ></textarea>
                           </div>
 
@@ -3192,44 +3313,90 @@ export default function ClanManager() {
                           </button>
                         </div>
 
-                        {/* Filter Pills */}
-                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                          {[
-                            { id: 'ALL', label: t('clan_recruitment_apps_filter_all') || 'Все', count: applicationsData.length },
-                            { id: 'PENDING', label: t('clan_recruitment_apps_filter_pending') || 'Ожидают', count: applicationsData.filter(a => a.status === 'PENDING').length },
-                            { id: 'ACCEPTED', label: t('clan_recruitment_apps_filter_accepted') || 'Приняты', count: applicationsData.filter(a => a.status === 'ACCEPTED').length },
-                            { id: 'REJECTED', label: t('clan_recruitment_apps_filter_rejected') || 'Отклонены', count: applicationsData.filter(a => a.status === 'REJECTED').length },
-                            { id: 'AUTO_REJECTED', label: t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ', count: applicationsData.filter(a => a.status === 'AUTO_REJECTED').length }
-                          ].map(f => (
-                            <button
-                              key={f.id}
-                              type="button"
-                              onClick={() => setAppFilter(f.id)}
-                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${
-                                appFilter === f.id
-                                  ? 'bg-orange-500 text-white shadow-sm'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                              }`}
-                            >
-                              <span>{f.label}</span>
-                              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                                appFilter === f.id ? 'bg-orange-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                              }`}>
-                                {f.count}
-                              </span>
-                            </button>
-                          ))}
+                        {/* Search and Filters */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
+                          {/* Search input */}
+                          <div className="relative flex-1 max-w-sm">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                              type="text"
+                              value={appSearch}
+                              onChange={(e) => setAppSearch(e.target.value)}
+                              placeholder={t('clan_recruitment_app_search_placeholder') || 'Поиск по нику, Discord ID, Steam...'}
+                              className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all"
+                            />
+                            {appSearch && (
+                              <button
+                                type="button"
+                                onClick={() => setAppSearch('')}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                title="Очистить поиск"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Filter Pills */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {[
+                              { id: 'ALL', label: t('clan_recruitment_apps_filter_all') || 'Все', count: applicationsData.length },
+                              { id: 'PENDING', label: t('clan_recruitment_apps_filter_pending') || 'Ожидают', count: applicationsData.filter(a => a.status === 'PENDING').length },
+                              { id: 'ACCEPTED', label: t('clan_recruitment_apps_filter_accepted') || 'Приняты', count: applicationsData.filter(a => a.status === 'ACCEPTED').length },
+                              { id: 'REJECTED', label: t('clan_recruitment_apps_filter_rejected') || 'Отклонены', count: applicationsData.filter(a => a.status === 'REJECTED').length },
+                              { id: 'AUTO_REJECTED', label: t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ', count: applicationsData.filter(a => a.status === 'AUTO_REJECTED').length }
+                            ].map(f => (
+                              <button
+                                key={f.id}
+                                type="button"
+                                onClick={() => setAppFilter(f.id)}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 ${
+                                  appFilter === f.id
+                                    ? 'bg-orange-500 text-white shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
+                              >
+                                <span>{f.label}</span>
+                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                  appFilter === f.id ? 'bg-orange-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                }`}>
+                                  {f.count}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
                         {/* Table or Empty state */}
                         {(() => {
-                          const filtered = applicationsData.filter(a => appFilter === 'ALL' || a.status === appFilter);
+                          const query = (appSearch || '').trim().toLowerCase();
+                          const filtered = applicationsData.filter(a => {
+                            const matchesStatus = appFilter === 'ALL' || a.status === appFilter;
+                            if (!matchesStatus) return false;
+                            if (!query) return true;
+                            const username = (a.username || '').toLowerCase();
+                            const userId = (a.userId || '').toLowerCase();
+                            const steamId = (a.steamId || '').toLowerCase();
+                            const reviewedBy = (a.reviewedBy || '').toLowerCase();
+                            const rejectReason = (a.rejectReason || '').toLowerCase();
+                            const experience = (a.experience || '').toLowerCase();
+                            return username.includes(query) ||
+                                   userId.includes(query) ||
+                                   steamId.includes(query) ||
+                                   reviewedBy.includes(query) ||
+                                   rejectReason.includes(query) ||
+                                   experience.includes(query);
+                          });
+
                           if (filtered.length === 0) {
                             return (
                               <div className="text-center py-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                                 <UserCheck className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                  {t('clan_recruitment_apps_empty') || 'Заявок в выбранной категории пока нет.'}
+                                  {query 
+                                    ? `По запросу «${appSearch}» заявок не найдено.` 
+                                    : (t('clan_recruitment_apps_empty') || 'Заявок в выбранной категории пока нет.')
+                                  }
                                 </p>
                               </div>
                             );
@@ -3241,11 +3408,12 @@ export default function ClanManager() {
                                 <thead className="bg-slate-50 dark:bg-slate-800/70 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                                   <tr>
                                     <th className="px-4 py-3">{t('clan_recruitment_app_col_candidate') || 'Кандидат'}</th>
-                                    <th className="px-3 py-3">{t('clan_recruitment_app_col_spec') || 'Специализация'}</th>
+                                    <th className="px-3 py-3">{t('clan_recruitment_app_col_steam') || 'Steam'}</th>
                                     <th className="px-3 py-3">{t('clan_recruitment_app_col_age') || 'Возраст'}</th>
                                     <th className="px-3 py-3">{t('clan_recruitment_app_col_hours') || 'Часы'}</th>
                                     <th className="px-3 py-3">{t('clan_recruitment_app_col_status') || 'Статус'}</th>
                                     <th className="px-3 py-3">{t('clan_recruitment_app_col_details') || 'Детали'}</th>
+                                    <th className="px-3 py-3 text-center">{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</th>
                                     <th className="px-4 py-3 text-right">{t('clan_recruitment_app_col_date') || 'Дата'}</th>
                                   </tr>
                                 </thead>
@@ -3268,9 +3436,25 @@ export default function ClanManager() {
                                         </div>
                                       </td>
                                       <td className="px-3 py-3">
-                                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
-                                          {app.specialization || 'Общая'}
-                                        </span>
+                                        {(() => {
+                                          const steamUrl = getSteamProfileUrl(app.steamId);
+                                          if (!steamUrl) return <span className="text-slate-400">—</span>;
+                                          const displayId = String(app.steamId).replace(/^https?:\/\/steamcommunity\.com\/(profiles|id)\//i, '').replace(/\/+$/, '');
+                                          return (
+                                            <button
+                                              type="button"
+                                              onClick={() => openExternalUrl(steamUrl)}
+                                              className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-[11px] font-medium group max-w-[120px]"
+                                              title={steamUrl}
+                                            >
+                                              <svg className="w-3 h-3 fill-current shrink-0 opacity-80 group-hover:opacity-100" viewBox="0 0 24 24">
+                                                <path d="M12 0a12 12 0 0 0-12 12c0 5.6 3.86 10.3 9.08 11.63l2.84-4.14a4.42 4.42 0 0 1-.39-.14l-3.9 1.63a7.48 7.48 0 0 1-.84-3.77c0-2.3 1.05-4.36 2.7-5.74L8.7 7.7a7.52 7.52 0 0 1 7.02-1.74l2.45-3.57A12 12 0 0 0 12 0zm3.83 5.96a5.53 5.53 0 0 0-3.32 1.15l3.22 1.34a2.22 2.22 0 1 1-1.35 3.23l-3.26-1.36a5.53 5.53 0 1 0 4.71-4.36zm-6.2 8.65l2.67 1.11a3.02 3.02 0 0 0 1.25-.26l-1.92 2.8a3.03 3.03 0 0 1-2-3.65z"/>
+                                              </svg>
+                                              <span className="truncate">{displayId}</span>
+                                              <ExternalLink className="w-2.5 h-2.5 shrink-0 opacity-60 group-hover:opacity-100" />
+                                            </button>
+                                          );
+                                        })()}
                                       </td>
                                       <td className="px-3 py-3 font-medium text-slate-700 dark:text-slate-300">
                                         {app.age ? `${app.age} лет` : '—'}
@@ -3292,8 +3476,11 @@ export default function ClanManager() {
                                           </span>
                                         )}
                                         {app.status === 'ACCEPTED' && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
-                                            ✅ {t('clan_recruitment_app_status_accepted') || 'Принята'}
+                                          <span 
+                                            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs" 
+                                            title={t('clan_recruitment_app_status_accepted') || 'Принята'}
+                                          >
+                                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                           </span>
                                         )}
                                         {app.status === 'REJECTED' && (
@@ -3307,7 +3494,7 @@ export default function ClanManager() {
                                           </span>
                                         )}
                                       </td>
-                                      <td className="px-3 py-3 max-w-[200px] truncate text-[11px]">
+                                      <td className="px-3 py-3 max-w-[180px] truncate text-[11px]">
                                         {app.rejectReason ? (
                                           <span className="text-rose-600 dark:text-rose-400" title={app.rejectReason}>
                                             {app.rejectReason}
@@ -3319,6 +3506,17 @@ export default function ClanManager() {
                                         ) : (
                                           <span className="text-slate-400">—</span>
                                         )}
+                                      </td>
+                                      <td className="px-3 py-3 text-center">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleViewTranscript(app)}
+                                          className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 dark:hover:text-white border border-slate-200 dark:border-slate-700 transition-all text-[11px] font-medium shadow-2xs group"
+                                          title={t('clan_recruitment_app_view_transcript') || 'Просмотр транскрипта'}
+                                        >
+                                          <ScrollText className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
+                                          <span>{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</span>
+                                        </button>
                                       </td>
                                       <td className="px-4 py-3 text-right font-mono text-[11px] text-slate-500 whitespace-nowrap">
                                         {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : '—'}
@@ -5080,7 +5278,7 @@ export default function ClanManager() {
                                       <td className="px-4 py-2.5 font-mono text-[11px] max-w-xs truncate" title={w.reason}>
                                         {w.reason}
                                       </td>
-                                      <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                                      <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                                         {w.moderatorTag || 'Система'}
                                       </td>
                                       <td className="px-4 py-2.5 text-slate-400">
@@ -5157,13 +5355,87 @@ export default function ClanManager() {
       
       {showSetupWizard && (
         <SetupWizard 
+          initialClanName={config?.name || ''}
           onClose={() => setShowSetupWizard(false)}
           onConfirm={startAutoSetup}
-          onManualSetup={() => {
+          onManualSetup={(enteredName) => {
             setShowSetupWizard(false);
+            if (enteredName && enteredName.trim()) {
+              handleClanNameChange(enteredName.trim(), true);
+            }
             setActiveTab('roles');
           }}
         />
+      )}
+
+      {/* Initial Clan Name Prompt Modal if no clan name is set yet */}
+      {config && (!config.name || !config.name.trim()) && !showSetupWizard && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-blue-50 dark:bg-blue-950/50 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 shrink-0">
+                <Settings className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {t('clan_initial_name_title') || 'Укажите название клана'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('clan_initial_name_subtitle') || 'Синхронизация с ботом в Discord'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+              {t('clan_initial_name_desc') || 'Для корректной работы всех модулей, набора и эмбедов бота в Discord, пожалуйста, укажите название вашего клана:'}
+            </p>
+
+            <form 
+              onSubmit={e => {
+                e.preventDefault();
+                if (!initialNameInput.trim()) {
+                  setInitialNameError(true);
+                  return;
+                }
+                setInitialNameError(false);
+                handleClanNameChange(initialNameInput.trim(), true);
+              }} 
+              noValidate 
+              className="space-y-4"
+            >
+              <div>
+                <input
+                  type="text"
+                  required
+                  data-required="true"
+                  autoFocus
+                  value={initialNameInput}
+                  onChange={e => {
+                    setInitialNameInput(e.target.value);
+                    if (e.target.value.trim()) setInitialNameError(false);
+                  }}
+                  placeholder={t('clan_name_placeholder') || 'Например: TITAN'}
+                  className={`w-full px-3.5 py-2.5 border rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
+                    initialNameError ? 'border-red-400 dark:border-red-800 ring-2 ring-red-500/20' : 'border-slate-300 dark:border-slate-700'
+                  }`}
+                />
+                {initialNameError && (
+                  <p className="text-xs text-red-500 mt-1.5 font-medium">
+                    {t('clan_name_required') || 'Пожалуйста, введите название клана'}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                <span>{t('clan_initial_name_submit') || 'Сохранить и синхронизировать'}</span>
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Role Sync Progress / Verification Modal */}
@@ -5289,15 +5561,15 @@ export default function ClanManager() {
             {/* Checkboxes List */}
             <div className="space-y-2 mb-6">
               {[
-                { id: 'roles', title: t('clan_reset_sec_roles_title') || 'Роли', desc: t('clan_reset_sec_roles_desc') || 'Сброс названий, удаление кастомных ролей, восстановление стандартных ролей, снятие ID' },
-                { id: 'channels', title: t('clan_reset_sec_channels_title') || 'Каналы', desc: t('clan_reset_sec_channels_desc') || 'Сброс привязок категорий и каналов' },
-                { id: 'permissions', title: t('clan_reset_sec_permissions_title') || 'Права доступа', desc: t('clan_reset_sec_permissions_desc') || 'Сброс сохраненных конфигураций прав каналов' },
-                { id: 'voice', title: t('clan_reset_sec_voice_title') || 'Динамический голос', desc: t('clan_reset_sec_voice_desc') || 'Отключение автокомнат, очистка ID генератора и категории' },
-                { id: 'logging', title: t('clan_reset_sec_logging_title') || 'Логирование', desc: t('clan_reset_sec_logging_desc') || 'Сброс всех настроек каналов и событий аудита' },
-                { id: 'moderation', title: t('clan_reset_sec_moderation_title') || 'Модерация', desc: t('clan_reset_sec_moderation_desc') || 'Сброс правил анти-спама и белых списков' },
-                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || 'Набор в клан', desc: t('clan_reset_sec_recruitment_desc') || 'Сброс вопросов анкеты и требований' },
-                { id: 'ads', title: t('clan_reset_sec_ads_title') || 'Объявления', desc: t('clan_reset_sec_ads_desc') || 'Сброс настроек периодических объявлений' },
-                { id: 'general', title: t('clan_reset_sec_general_title') || 'Основные данные', desc: t('clan_reset_sec_general_desc') || 'Сброс названия клана и Discord ссылки' },
+                { id: 'roles', title: t('clan_reset_sec_roles_title') || 'Роли', desc: t('clan_reset_sec_roles_desc') || 'Восстановление стандартных ролей, удаление кастомных ролей и отвязка ID ролей Discord' },
+                { id: 'channels', title: t('clan_reset_sec_channels_title') || 'Каналы', desc: t('clan_reset_sec_channels_desc') || 'Сброс привязок категорий и текстовых каналов (тикеты, заявки, логи)' },
+                { id: 'permissions', title: t('clan_reset_sec_permissions_title') || 'Права доступа', desc: t('clan_reset_sec_permissions_desc') || 'Сброс всех настроек разрешений и правил приватности каналов' },
+                { id: 'voice', title: t('clan_reset_sec_voice_title') || 'Динамические войсы', desc: t('clan_reset_sec_voice_desc') || 'Отключение Join-to-Create, сброс триггер-канала и категории временных комнат' },
+                { id: 'logging', title: t('clan_reset_sec_logging_title') || 'Логирование', desc: t('clan_reset_sec_logging_desc') || 'Сброс настроек каналов логирования и отключение отслеживаемых событий аудита' },
+                { id: 'moderation', title: t('clan_reset_sec_moderation_title') || 'Модерация', desc: t('clan_reset_sec_moderation_desc') || 'Сброс правил анти-спама, фильтрации упоминаний и белых списков' },
+                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || 'Набор в клан', desc: t('clan_reset_sec_recruitment_desc') || 'Сброс требований к возрасту и часам в Rust, параметров авто-отклонений и тикетов' },
+                { id: 'ads', title: t('clan_reset_sec_ads_title') || 'Реклама и партнерство', desc: t('clan_reset_sec_ads_desc') || 'Сброс текста авто-объявлений, интервалов рассылки и привязанных каналов' },
+                { id: 'general', title: t('clan_reset_sec_general_title') || 'Основные настройки', desc: t('clan_reset_sec_general_desc') || 'Сброс названия клана, ссылки Discord и закрытие набора в клан' },
               ].map(sec => {
                 const isChecked = resetSections.includes(sec.id);
                 return (
@@ -5396,27 +5668,76 @@ export default function ClanManager() {
             {/* Content Body */}
             <div className="py-4 space-y-4 overflow-y-auto flex-1 scrollbar-thin">
               {/* Add Warn Form */}
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  {t('clan_warn_add_btn') || 'Выдать предупреждение'}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newWarnReason}
-                    onChange={e => setNewWarnReason(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddWarn(); } }}
-                    placeholder={t('clan_warn_reason_ph') || 'Укажите причину предупреждения...'}
-                    className="flex-1 px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
-                  />
-                  <button
-                    type="button"
-                    disabled={warnActionLoading || !newWarnReason.trim()}
-                    onClick={handleAddWarn}
-                    className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
-                  >
-                    {warnActionLoading ? '...' : (t('clan_warn_add_btn') || 'Выдать')}
-                  </button>
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {t('clan_warn_add_btn') || 'Выдать предупреждение'}
+                  </label>
+                  {(() => {
+                    const leaders = rosterData?.roster?.filter(m => 
+                      m.roles?.includes(config?.leaderRoleId) || 
+                      m.roles?.includes(config?.deputyLeaderRoleId) ||
+                      m.roles?.includes(config?.callerRoleId)
+                    ) || [];
+                    if (leaders.length === 0) return null;
+                    return (
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                        <span className="text-[10px]">Выбрать:</span>
+                        {leaders.slice(0, 3).map(m => {
+                          const name = m.displayName || m.username;
+                          return (
+                            <button
+                              key={m.userId || m.id}
+                              type="button"
+                              onClick={() => setWarnModerator(name)}
+                              className="px-1.5 py-0.5 rounded bg-slate-200/80 dark:bg-slate-700 hover:bg-orange-100 dark:hover:bg-orange-950/60 text-slate-700 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-[10px] font-medium cursor-pointer"
+                              title={`Указать ${name}`}
+                            >
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="sm:col-span-1">
+                    <label className="block text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">
+                      {t('clan_warn_moderator_label') || 'Модератор'}
+                    </label>
+                    <input
+                      type="text"
+                      value={warnModerator}
+                      onChange={e => setWarnModerator(e.target.value)}
+                      placeholder={t('clan_warn_moderator_ph') || 'Ваш ник / Модератор...'}
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">
+                      {t('clan_warn_reason_ph') || 'Причина предупреждения'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newWarnReason}
+                        onChange={e => setNewWarnReason(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddWarn(); } }}
+                        placeholder={t('clan_warn_reason_ph') || 'Укажите причину предупреждения...'}
+                        className="flex-1 px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
+                      />
+                      <button
+                        type="button"
+                        disabled={warnActionLoading || !newWarnReason.trim()}
+                        onClick={handleAddWarn}
+                        className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
+                      >
+                        {warnActionLoading ? '...' : (t('clan_warn_add_btn') || 'Выдать')}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -5468,7 +5789,7 @@ export default function ClanManager() {
                             </span>
                           </div>
                           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            Модератор: {w.moderatorTag || 'Система'} • {new Date(w.createdAt).toLocaleString()}
+                            Модератор: <span className="font-semibold text-slate-800 dark:text-slate-200">{w.moderatorTag || 'Система'}</span> • {new Date(w.createdAt).toLocaleString()}
                           </div>
                         </div>
 
@@ -5595,6 +5916,18 @@ export default function ClanManager() {
           onSearchGlobal={handleGlobalSearchDossier}
           onSendCrossClanMessage={handleSendCrossClanMessage}
           canEdit={true}
+        />
+      )}
+
+      {transcriptModal.isOpen && (
+        <TicketTranscriptModal
+          isOpen={transcriptModal.isOpen}
+          onClose={() => setTranscriptModal(prev => ({ ...prev, isOpen: false, html: null, app: null, error: null }))}
+          loading={transcriptModal.loading}
+          html={transcriptModal.html}
+          app={transcriptModal.app}
+          error={transcriptModal.error}
+          onRefresh={() => transcriptModal.app && handleViewTranscript(transcriptModal.app)}
         />
       )}
     </div>
