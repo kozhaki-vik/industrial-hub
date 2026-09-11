@@ -6386,9 +6386,11 @@ export default function ClanManager() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
             <div className="text-center mb-5">
               {autoSetupModalData.status === 'loading' && (
-                <div className="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-orange-500/20 flex items-center justify-center relative">
-                  <Sparkles className="w-7 h-7 text-orange-500 animate-pulse" />
-                  <div className="absolute inset-0 rounded-2xl border-2 border-orange-500 border-t-transparent animate-spin"></div>
+                <div className="relative w-16 h-16 mx-auto mb-3.5 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin"></div>
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200/80 dark:border-orange-500/30 flex items-center justify-center shadow-inner">
+                    <Sparkles className="w-6 h-6 text-orange-500 animate-pulse" />
+                  </div>
                 </div>
               )}
               {autoSetupModalData.status === 'success' && (
@@ -6403,23 +6405,23 @@ export default function ClanManager() {
               )}
 
               <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                {autoSetupModalData.status === 'loading' && (t('clan_wizard_progress_title') || 'Автоматическая настройка сервера...')}
-                {autoSetupModalData.status === 'success' && (t('clan_wizard_success_title') || 'Настройка успешно завершена!')}
-                {autoSetupModalData.status === 'error' && (t('clan_wizard_error_title') || 'Ошибка настройки сервера')}
+                {autoSetupModalData.status === 'loading' && t('clan_wizard_progress_title', 'Автоматическая настройка сервера...')}
+                {autoSetupModalData.status === 'success' && t('clan_wizard_success_title', 'Настройка успешно завершена!')}
+                {autoSetupModalData.status === 'error' && t('clan_wizard_error_title', 'Ошибка настройки сервера')}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                {autoSetupModalData.status === 'loading' && (t('clan_wizard_progress_desc') || 'Бот связывается с Discord API и создает структуру ролей и каналов. Пожалуйста, подождите...')}
-                {autoSetupModalData.status === 'success' && (t('clan_wizard_success_desc') || 'Все роли, категории и каналы успешно созданы и привязаны к боту.')}
-                {autoSetupModalData.status === 'error' && (autoSetupModalData.error || t('clan_wizard_error_desc') || 'Не удалось завершить автоматическую настройку.')}
+                {autoSetupModalData.status === 'loading' && t('clan_wizard_progress_desc', 'Бот проверяет существующие роли и каналы, связывает похожие и настраивает сервер. Пожалуйста, подождите...')}
+                {autoSetupModalData.status === 'success' && t('clan_wizard_success_desc', 'Все роли, категории и каналы успешно проверены, привязаны и настроены.')}
+                {autoSetupModalData.status === 'error' && (autoSetupModalData.error || t('clan_wizard_error_desc', 'Не удалось завершить автоматическую настройку.'))}
               </p>
             </div>
 
             <div className="space-y-2 mb-5">
               {[
-                { num: 1, label: t('clan_wizard_step_init') || 'Синхронизация профиля и названия клана' },
-                { num: 2, label: t('clan_wizard_step_roles') || 'Создание ролей: Leader, Deputy Leader, Коллер, Основной состав, VIP...' },
-                { num: 3, label: t('clan_wizard_step_channels') || 'Создание категории и каналов (logs, applications, голосовые)' },
-                { num: 4, label: t('clan_wizard_step_perms') || 'Применение базовых прав доступа' }
+                { num: 1, label: t('clan_wizard_step_init', 'Синхронизация профиля и названия клана') },
+                { num: 2, label: t('clan_wizard_step_roles', 'Проверка и привязка ролей клана') },
+                { num: 3, label: t('clan_wizard_step_channels', 'Проверка и привязка категорий и каналов') },
+                { num: 4, label: t('clan_wizard_step_perms', 'Настройка прав доступа к каналам') }
               ].map(s => {
                 const isDone = autoSetupModalData.status === 'success' || (autoSetupModalData.status === 'loading' && s.num < autoSetupModalData.currentStep);
                 const isCurrent = autoSetupModalData.status === 'loading' && s.num === autoSetupModalData.currentStep;
@@ -6459,7 +6461,7 @@ export default function ClanManager() {
                 onClick={() => setAutoSetupModalData(null)}
                 className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
               >
-                Закрыть
+                {t('common_close', 'Закрыть')}
               </button>
             )}
             {autoSetupModalData.status === 'success' && (
@@ -6468,7 +6470,7 @@ export default function ClanManager() {
                 onClick={() => setAutoSetupModalData(null)}
                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
               >
-                Готово
+                {t('common_done', 'Готово')}
               </button>
             )}
           </div>
