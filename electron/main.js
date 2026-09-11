@@ -34,9 +34,11 @@ if (!gotTheLock) {
 } else {
   // We are the primary instance.
   app.on('second-instance', () => {
-    // User requested to close the old instance and start the new one.
-    app.relaunch();
-    app.exit(0);
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
   });
 }
 

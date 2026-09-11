@@ -49,6 +49,10 @@ namespace IndustrialHubLauncher
     {
         private ProgressBar progressBar;
         private Label statusLabel;
+        private Panel smartScreenPanel;
+        private Label smartScreenTitle;
+        private Label smartScreenText;
+        private LinkLabel smartScreenLink;
         private string appDataPath;
         private string installPath;
         private string exeFilePath;
@@ -57,7 +61,7 @@ namespace IndustrialHubLauncher
         public InstallerForm()
         {
             this.Text = "Industrial Hub Installer";
-            this.Size = new Size(420, 160);
+            this.Size = new Size(440, 260);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -73,16 +77,62 @@ namespace IndustrialHubLauncher
 
             statusLabel = new Label();
             statusLabel.Text = "Запуск...";
-            statusLabel.Location = new Point(20, 20);
+            statusLabel.Location = new Point(20, 16);
             statusLabel.AutoSize = true;
-            statusLabel.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            statusLabel.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
             this.Controls.Add(statusLabel);
 
             progressBar = new ProgressBar();
-            progressBar.Location = new Point(20, 60);
-            progressBar.Size = new Size(360, 25);
+            progressBar.Location = new Point(20, 48);
+            progressBar.Size = new Size(385, 24);
             progressBar.Style = ProgressBarStyle.Marquee;
             this.Controls.Add(progressBar);
+
+            // SmartScreen Guidance Box
+            smartScreenPanel = new Panel();
+            smartScreenPanel.Location = new Point(20, 88);
+            smartScreenPanel.Size = new Size(385, 115);
+            smartScreenPanel.BackColor = Color.FromArgb(248, 250, 252);
+            smartScreenPanel.BorderStyle = BorderStyle.FixedSingle;
+            this.Controls.Add(smartScreenPanel);
+
+            smartScreenTitle = new Label();
+            smartScreenTitle.Text = "🛡️ Защита Windows SmartScreen:";
+            smartScreenTitle.Location = new Point(10, 8);
+            smartScreenTitle.AutoSize = true;
+            smartScreenTitle.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, ((byte)(0)));
+            smartScreenTitle.ForeColor = Color.FromArgb(15, 23, 42);
+            smartScreenPanel.Controls.Add(smartScreenTitle);
+
+            smartScreenText = new Label();
+            smartScreenText.Text = "Если Windows покажет синее окно «Защитила ваш ПК»:\n➔ Нажмите «Подробнее» ➔ «Выполнить в любом случае»";
+            smartScreenText.Location = new Point(10, 30);
+            smartScreenText.Size = new Size(365, 42);
+            smartScreenText.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            smartScreenText.ForeColor = Color.FromArgb(51, 65, 85);
+            smartScreenPanel.Controls.Add(smartScreenText);
+
+            smartScreenLink = new LinkLabel();
+            smartScreenLink.Text = "ℹ️ Почему это появляется? (Справка)";
+            smartScreenLink.Location = new Point(10, 80);
+            smartScreenLink.AutoSize = true;
+            smartScreenLink.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            smartScreenLink.LinkColor = Color.FromArgb(234, 88, 12);
+            smartScreenLink.ActiveLinkColor = Color.FromArgb(194, 65, 12);
+            smartScreenLink.LinkClicked += (s, ev) => {
+                MessageBox.Show(
+                    "БЕЗОПАСНОСТЬ И WINDOWS SMARTSCREEN:\n\n" +
+                    "1. Industrial Hub подписан официальным цифровым сертификатом (Kozhaki).\n" +
+                    "2. Microsoft Defender SmartScreen временно отображает предупреждение на новых версиях до тех пор, пока релиз не наберет историю установок в облаке Microsoft.\n" +
+                    "3. Приложение не содержит вредоносного кода, не трогает реестр и не инжектится в игры.\n\n" +
+                    "КАК ЗАПУСТИТЬ:\n" +
+                    "Нажмите ссылку «Подробнее» в левой части синего экрана и затем появившуюся кнопку «Выполнить в любом случае».",
+                    "Справка о безопасности Windows SmartScreen",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+            };
+            smartScreenPanel.Controls.Add(smartScreenLink);
 
             appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "IndustrialHubClient");
             installPath = Path.Combine(appDataPath, "client");
@@ -185,28 +235,7 @@ namespace IndustrialHubLauncher
             string exeUrl = null;
             string foundVersion = null;
 
-            // Strategy 1: GitHub API /releases/latest (stable only)
-            if (string.IsNullOrEmpty(exeUrl))
-            {
-                try
-                {
-                    string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases/latest?t=" + Environment.TickCount;
-                    HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
-                    ghReq.Timeout = 10000;
-                    ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
-                    ghReq.Accept = "application/vnd.github.v3+json";
-
-                    using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
-                    using (StreamReader reader = new StreamReader(ghResp.GetResponseStream()))
-                    {
-                        string json = reader.ReadToEnd();
-                        ParseJsonRelease(json, ref foundVersion, ref exeUrl);
-                    }
-                }
-                catch { }
-            }
-
-            // Strategy 2: Server fallback
+            // Strategy 1: Server authoritative version.json
             if (string.IsNullOrEmpty(exeUrl))
             {
                 try
@@ -234,6 +263,48 @@ namespace IndustrialHubLauncher
                                 }
                             }
                         }
+                    }
+                }
+                catch { }
+            }
+
+            // Strategy 2: GitHub API /releases/latest (stable only)
+            if (string.IsNullOrEmpty(exeUrl))
+            {
+                try
+                {
+                    string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases/latest?t=" + Environment.TickCount;
+                    HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
+                    ghReq.Timeout = 10000;
+                    ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
+                    ghReq.Accept = "application/vnd.github.v3+json";
+
+                    using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
+                    using (StreamReader reader = new StreamReader(ghResp.GetResponseStream()))
+                    {
+                        string json = reader.ReadToEnd();
+                        ParseJsonRelease(json, ref foundVersion, ref exeUrl);
+                    }
+                }
+                catch { }
+            }
+
+            // Strategy 3: GitHub API /releases (first available release)
+            if (string.IsNullOrEmpty(exeUrl))
+            {
+                try
+                {
+                    string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases?t=" + Environment.TickCount;
+                    HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
+                    ghReq.Timeout = 10000;
+                    ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
+                    ghReq.Accept = "application/vnd.github.v3+json";
+
+                    using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
+                    using (StreamReader reader = new StreamReader(ghResp.GetResponseStream()))
+                    {
+                        string json = reader.ReadToEnd();
+                        ParseJsonRelease(json, ref foundVersion, ref exeUrl);
                     }
                 }
                 catch { }
