@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle } from 'lucide-react';
 
-const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '' }) => {
+const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', channelCount = 0 }) => {
   const { t } = useTranslation();
   const [clanName, setClanName] = useState(initialClanName || '');
   const [nameError, setNameError] = useState(false);
@@ -11,6 +12,8 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '' }
     createText: true,
     createVoice: true
   });
+
+  const isEstablished = Number(channelCount) >= 6;
 
   const toggleOption = (key) => setOptions(prev => ({ ...prev, [key]: !prev[key] }));
 
@@ -54,7 +57,34 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '' }
           </p>
         </div>
         
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto scrollbar-thin">
+          {isEstablished && (
+            <div className="p-4 rounded-xl border border-amber-300/80 bg-amber-50/80 dark:border-amber-700/80 dark:bg-amber-950/40 space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                    {t('clan_wizard_established_warning_title') || 'Сервер уже имеет каналы'}
+                  </h4>
+                  <p className="text-xs text-amber-700 dark:text-amber-300/90 mt-1 leading-relaxed">
+                    {t('clan_wizard_established_warning_desc', { count: channelCount }) || `На вашем сервере уже создано ${channelCount} каналов. Мастер автоматической настройки предназначен только для чистых Discord серверов (< 6 каналов). Использование автонастройки может продублировать каналы или нарушить структуру. Рекомендуется настроить роли и каналы вручную.`}
+                  </p>
+                </div>
+              </div>
+              {onManualSetup && (
+                <div className="pt-2 border-t border-amber-200/60 dark:border-amber-800/60 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleManual}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                  >
+                    {t('clan_wizard_btn_manual_recommended') || 'Настроить вручную (Рекомендуется)'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className={`p-4 rounded-xl border transition-all ${
             nameError 
               ? 'border-red-400 bg-red-50/60 dark:border-red-800 dark:bg-red-950/30' 
@@ -149,9 +179,11 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '' }
             <button
               type="button"
               onClick={handleConfirm}
-              className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-sm transition-colors cursor-pointer"
+              className={`px-5 py-2.5 text-sm font-medium text-white rounded-xl shadow-sm transition-colors cursor-pointer ${
+                isEstablished ? 'bg-slate-700 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
             >
-              {t('clan_wizard_submit')}
+              {isEstablished ? (t('clan_wizard_btn_continue_anyway') || 'Всё равно продолжить') : t('clan_wizard_submit')}
             </button>
           </div>
         </div>

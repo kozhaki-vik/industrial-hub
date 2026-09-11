@@ -63,6 +63,88 @@ export const isBotConfigured = (cfg) => {
   return hasRoles || hasChannels;
 };
 
+// --- Typo-tolerant Fuzzy Search Engine (Levenshtein distance) ---
+export function levenshteinDistance(s1, s2) {
+  if (s1 === s2) return 0;
+  if (!s1.length) return s2.length;
+  if (!s2.length) return s1.length;
+
+  const prevRow = Array.from({ length: s2.length + 1 }, (_, i) => i);
+  const currRow = new Array(s2.length + 1);
+
+  for (let i = 0; i < s1.length; i++) {
+    currRow[0] = i + 1;
+    for (let j = 0; j < s2.length; j++) {
+      const cost = s1[i] === s2[j] ? 0 : 1;
+      currRow[j + 1] = Math.min(
+        currRow[j] + 1,       // insertion
+        prevRow[j + 1] + 1,   // deletion
+        prevRow[j] + cost     // substitution
+      );
+    }
+    for (let j = 0; j <= s2.length; j++) {
+      prevRow[j] = currRow[j];
+    }
+  }
+  return currRow[s2.length];
+}
+
+export function fuzzyMatchScore(query, target) {
+  if (!query || !target) return 0;
+  const q = String(query).toLowerCase().trim();
+  const t = String(target).toLowerCase().trim();
+  if (!q || !t) return 0;
+
+  // Exact match gets top score
+  if (t === q) return 100;
+  if (t.includes(q)) return 80 + (q.length / t.length) * 15;
+
+  // Word-by-word fuzzy comparison
+  const qWords = q.split(/\s+/).filter(Boolean);
+  const tWords = t.split(/[\s,./\\()_-]+/).filter(Boolean);
+
+  let totalScore = 0;
+  for (const qw of qWords) {
+    let bestWordScore = 0;
+    for (const tw of tWords) {
+      if (tw === qw) {
+        bestWordScore = Math.max(bestWordScore, 50);
+      } else if (tw.startsWith(qw) || qw.startsWith(tw)) {
+        bestWordScore = Math.max(bestWordScore, 40);
+      } else if (tw.includes(qw)) {
+        bestWordScore = Math.max(bestWordScore, 35);
+      } else {
+        const maxLen = Math.max(qw.length, tw.length);
+        if (maxLen >= 3) {
+          const dist = levenshteinDistance(qw, tw);
+          const allowedDist = maxLen >= 8 ? 3 : maxLen >= 5 ? 2 : 1;
+          if (dist <= allowedDist) {
+            const similarity = 1 - (dist / maxLen);
+            bestWordScore = Math.max(bestWordScore, 20 + similarity * 20);
+          }
+        }
+      }
+    }
+    totalScore += bestWordScore;
+  }
+  return totalScore;
+}
+
+export function getBotSettingSearchScore(item, query) {
+  if (!query || !query.trim()) return 1;
+  const q = query.trim();
+
+  let score = 0;
+  score += fuzzyMatchScore(q, item.title) * 2.0;
+  score += fuzzyMatchScore(q, item.tabName) * 1.5;
+  for (const kw of item.keywords || []) {
+    score += fuzzyMatchScore(q, kw) * 2.2;
+  }
+  score += fuzzyMatchScore(q, item.desc) * 0.8;
+
+  return score;
+}
+
 export const reportClanErrorToTelegram = (errorTitle, errorDetails) => {
   const fullErrorText = `🚨 [Clan Manager Error]\n${errorTitle}\n${errorDetails}`;
   if (window.electronAPI?.app?.reportError) {
@@ -893,6 +975,14 @@ export default function ClanManager() {
             setRecruitmentInviteStatus('invalid');
             setRecruitmentInviteDetails(null);
           }
+        } else if (data.type === 'clan_event') {
+          if (data.event === 'roles_updated' && data.data?.roles) {
+            setDiscordInfo(prev => ({
+              ...(prev || {}),
+              roles: data.data.roles
+            }));
+            addLog('Discord roles auto-updated from server');
+          }
         }
       } catch (err) {}
     };
@@ -1141,18 +1231,18 @@ export default function ClanManager() {
   };
 
   const standardRoles = [
-    { key: 'leader', dbKey: 'leaderRoleId', defaultRu: 'Лидер', defaultEn: 'Leader' },
-    { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultRu: 'Зам. Лидера', defaultEn: 'Co-Leader' },
-    { key: 'caller', dbKey: 'callerRoleId', defaultRu: 'Коллер', defaultEn: 'Coller' },
-    { key: 'main', dbKey: 'mainRosterRoleId', defaultRu: 'Main Состав', defaultEn: 'Main Roster' },
-    { key: 'trial', dbKey: 'trialRoleId', defaultRu: 'Испытательный', defaultEn: 'Trial' },
-    { key: 'farmer', dbKey: 'farmerRoleId', defaultRu: 'Фармер (Ресурсы)', defaultEn: 'Miner / Farmer (Resources)' },
-    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultRu: 'Фермер (Урожай)', defaultEn: 'Farmer (Crops / Plants)' },
-    { key: 'electrician', dbKey: 'electricianRoleId', defaultRu: 'Электрик', defaultEn: 'Electrician' },
-    { key: 'builder', dbKey: 'builderRoleId', defaultRu: 'Билдер', defaultEn: 'Builder' },
-    { key: 'pilot', dbKey: 'pilotRoleId', defaultRu: 'Пилот', defaultEn: 'Pilot' },
-    { key: 'sponsor', dbKey: 'sponsorRoleId', defaultRu: 'Спонсор', defaultEn: 'Sponsor' },
-    { key: 'vip', dbKey: 'vipRoleId', defaultRu: 'VIP', defaultEn: 'VIP' },
+    { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Leader', discordName: 'Лидер', defaultRu: 'Leader', defaultEn: 'Leader' },
+    { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Dep. Leader', discordName: 'Deputy Leader', defaultRu: 'Dep. Leader', defaultEn: 'Deputy Leader' },
+    { key: 'caller', dbKey: 'callerRoleId', defaultName: 'Коллер', discordName: 'Caller', defaultRu: 'Коллер', defaultEn: 'Caller' },
+    { key: 'main', dbKey: 'mainRosterRoleId', defaultName: 'Main Состав', discordName: 'Main Состав', defaultRu: 'Main Состав', defaultEn: 'Main Состав' },
+    { key: 'trial', dbKey: 'trialRoleId', defaultName: 'Испытательный срок', discordName: 'Trial', defaultRu: 'Испытательный срок', defaultEn: 'Trial' },
+    { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Фармер', discordName: 'Фармер', defaultRu: 'Фармер', defaultEn: 'Farmer' },
+    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultName: 'Фермер', discordName: 'Фермер', defaultRu: 'Фермер', defaultEn: 'Plant Farmer' },
+    { key: 'electrician', dbKey: 'electricianRoleId', defaultName: 'Электрик', discordName: 'Электрик', defaultRu: 'Электрик', defaultEn: 'Electrician' },
+    { key: 'builder', dbKey: 'builderRoleId', defaultName: 'Билдер', discordName: 'Билдер', defaultRu: 'Билдер', defaultEn: 'Builder' },
+    { key: 'pilot', dbKey: 'pilotRoleId', defaultName: 'Пилот', discordName: 'Пилот', defaultRu: 'Пилот', defaultEn: 'Pilot' },
+    { key: 'sponsor', dbKey: 'sponsorRoleId', defaultName: 'Спонсор', discordName: 'Спонсор', defaultRu: 'Спонсор', defaultEn: 'Sponsor' },
+    { key: 'vip', dbKey: 'vipRoleId', defaultName: 'VIP', discordName: 'VIP', defaultRu: 'VIP', defaultEn: 'VIP' },
   ];
 
   const handleApplyTemplateLang = (lang) => {
@@ -1320,11 +1410,7 @@ export default function ClanManager() {
     if (isCustom) {
       roleName = r.name || 'Новая роль';
     } else {
-      let roleNames = {};
-      try {
-        if (config.roleNamesJson) roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-      } catch (e) {}
-      roleName = roleNames[r.key] || r.defaultRu;
+      roleName = r.discordName || r.defaultName || 'Новая роль';
     }
 
     ws.send(JSON.stringify({
@@ -2445,15 +2531,11 @@ export default function ClanManager() {
 
   const filteredBotSettings = !botSearchQuery.trim()
     ? botSearchIndex
-    : botSearchIndex.filter(item => {
-        const q = botSearchQuery.toLowerCase().trim();
-        return (
-          item.title.toLowerCase().includes(q) ||
-          item.desc.toLowerCase().includes(q) ||
-          item.tabName.toLowerCase().includes(q) ||
-          item.keywords.some(k => k.toLowerCase().includes(q))
-        );
-      });
+    : botSearchIndex
+        .map(item => ({ item, score: getBotSettingSearchScore(item, botSearchQuery) }))
+        .filter(x => x.score >= 20)
+        .sort((a, b) => b.score - a.score)
+        .map(x => x.item);
 
 
   return (
@@ -2917,7 +2999,7 @@ export default function ClanManager() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {visibleStandardRoles.map(r => {
-                          const currentName = roleNames[r.key] !== undefined ? roleNames[r.key] : r.defaultRu;
+                          const currentName = roleNames[r.key] !== undefined ? roleNames[r.key] : (r.defaultName || r.defaultRu);
                           const boundRoleId = config[r.dbKey] || '';
                           const isCreatingThis = creatingRoleKey === r.key;
 
@@ -2937,7 +3019,7 @@ export default function ClanManager() {
                                     value={currentName}
                                     onChange={e => handleRoleNameChange(r.key, e.target.value, false)}
                                     onBlur={e => handleRoleNameBlur(r.key, r.dbKey, e.target.value, false)}
-                                    placeholder={r.defaultRu}
+                                    placeholder={r.defaultName || r.defaultRu}
                                   />
                                 </div>
 
@@ -6099,6 +6181,7 @@ export default function ClanManager() {
       {showSetupWizard && (
         <SetupWizard 
           initialClanName={config?.name || ''}
+          channelCount={(discordInfo?.channels || []).filter(c => c.type === 0 || c.type === 2).length}
           onClose={() => setShowSetupWizard(false)}
           onConfirm={startAutoSetup}
           onManualSetup={(enteredName) => {
@@ -6380,7 +6463,7 @@ export default function ClanManager() {
       {/* User Warnings Details & Management Modal */}
       {selectedUserForWarns && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-3">
@@ -6409,13 +6492,22 @@ export default function ClanManager() {
             </div>
 
             {/* Content Body */}
-            <div className="py-4 space-y-4 overflow-y-auto flex-1 scrollbar-thin">
+            <div className="py-4 space-y-4 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin">
               {/* Add Warn Form */}
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {t('clan_warn_add_btn') || 'Выдать предупреждение'}
-                  </label>
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex-1 min-w-0">
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">
+                      {t('clan_warn_moderator_label') || 'Модератор'}
+                    </label>
+                    <input
+                      type="text"
+                      value={warnModerator}
+                      onChange={e => setWarnModerator(e.target.value)}
+                      placeholder={t('clan_warn_moderator_ph') || 'Ваш ник / Модератор...'}
+                      className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
+                    />
+                  </div>
                   {(() => {
                     const leaders = rosterData?.roster?.filter(m => 
                       m.roles?.includes(config?.leaderRoleId) || 
@@ -6424,62 +6516,50 @@ export default function ClanManager() {
                     ) || [];
                     if (leaders.length === 0) return null;
                     return (
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                        <span className="text-[10px]">Выбрать:</span>
-                        {leaders.slice(0, 3).map(m => {
-                          const name = m.displayName || m.username;
-                          return (
-                            <button
-                              key={m.userId || m.id}
-                              type="button"
-                              onClick={() => setWarnModerator(name)}
-                              className="px-1.5 py-0.5 rounded bg-slate-200/80 dark:bg-slate-700 hover:bg-orange-100 dark:hover:bg-orange-950/60 text-slate-700 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-[10px] font-medium cursor-pointer"
-                              title={`Указать ${name}`}
-                            >
-                              {name}
-                            </button>
-                          );
-                        })}
+                      <div className="sm:self-end pb-0.5">
+                        <div className="text-[10px] text-slate-400 mb-1">Выбрать лидера:</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {leaders.slice(0, 3).map(m => {
+                            const name = m.displayName || m.username;
+                            return (
+                              <button
+                                key={m.userId || m.id}
+                                type="button"
+                                onClick={() => setWarnModerator(name)}
+                                className="px-2 py-1 rounded-md bg-slate-200/80 dark:bg-slate-700 hover:bg-orange-100 dark:hover:bg-orange-950/60 text-slate-700 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-[10px] font-medium cursor-pointer"
+                                title={`Указать ${name}`}
+                              >
+                                {name}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })()}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="sm:col-span-1">
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">
-                      {t('clan_warn_moderator_label') || 'Модератор'}
-                    </label>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1">
+                    {t('clan_warn_reason_ph') || 'Причина предупреждения'}
+                  </label>
+                  <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      value={warnModerator}
-                      onChange={e => setWarnModerator(e.target.value)}
-                      placeholder={t('clan_warn_moderator_ph') || 'Ваш ник / Модератор...'}
-                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
+                      value={newWarnReason}
+                      onChange={e => setNewWarnReason(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddWarn(); } }}
+                      placeholder={t('clan_warn_reason_ph') || 'Укажите причину предупреждения...'}
+                      className="flex-1 min-w-0 px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
                     />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">
-                      {t('clan_warn_reason_ph') || 'Причина предупреждения'}
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newWarnReason}
-                        onChange={e => setNewWarnReason(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddWarn(); } }}
-                        placeholder={t('clan_warn_reason_ph') || 'Укажите причину предупреждения...'}
-                        className="flex-1 px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500/50"
-                      />
-                      <button
-                        type="button"
-                        disabled={warnActionLoading || !newWarnReason.trim()}
-                        onClick={handleAddWarn}
-                        className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0"
-                      >
-                        {warnActionLoading ? '...' : (t('clan_warn_add_btn') || 'Выдать')}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      disabled={warnActionLoading || !newWarnReason.trim()}
+                      onClick={handleAddWarn}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-sm"
+                    >
+                      {warnActionLoading ? '...' : (t('clan_warn_add_btn') || 'Выдать')}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -6658,6 +6738,15 @@ export default function ClanManager() {
           onSave={handleSaveDossier}
           onSearchGlobal={handleGlobalSearchDossier}
           onSendCrossClanMessage={handleSendCrossClanMessage}
+          userApplications={(applicationsData || []).filter(a => a.userId === selectedProfileForDossier?.userId || a.applicantId === selectedProfileForDossier?.userId)}
+          userVotes={(activeVotes || []).filter(v => {
+            try {
+              const voters = v.votersJson ? JSON.parse(v.votersJson) : [];
+              return voters.some(vt => (typeof vt === 'string' ? vt : vt.userId) === selectedProfileForDossier?.userId);
+            } catch(e) { return false; }
+          })}
+          userWarnings={(clanWarnings || []).filter(w => w.userId === selectedProfileForDossier?.userId)}
+          onViewTranscript={handleViewTranscript}
           canEdit={true}
         />
       )}

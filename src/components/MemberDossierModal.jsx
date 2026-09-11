@@ -1,9 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   X, Star, Shield, ShieldAlert, AlertTriangle, Check, Copy, ExternalLink, 
   Search, Save, User, Clock, Calendar, FileText, Ban, Crosshair, Plane, 
-  Hammer, Pickaxe, Award, CheckCircle2, RefreshCw, RotateCcw, Send, MessageSquare
+  Hammer, Pickaxe, Award, CheckCircle2, RefreshCw, RotateCcw, Send, MessageSquare,
+  ScrollText, Vote
 } from 'lucide-react';
 
 export default function MemberDossierModal({
@@ -13,11 +14,15 @@ export default function MemberDossierModal({
   onSave,
   onSearchGlobal,
   onSendCrossClanMessage,
+  userApplications = [],
+  userVotes = [],
+  userWarnings = [],
+  onViewTranscript,
   canEdit = true
 }) {
   const { t } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState('dossier'); // 'dossier' | 'history'
+  const [activeTab, setActiveTab] = useState('dossier'); // 'dossier' | 'activity' | 'history'
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLeaderId, setCopiedLeaderId] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -358,11 +363,11 @@ export default function MemberDossierModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 px-6 bg-white dark:bg-slate-900 shrink-0 gap-6">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 px-6 bg-white dark:bg-slate-900 shrink-0 gap-6 overflow-x-auto scrollbar-thin">
           <button
             type="button"
             onClick={() => setActiveTab('dossier')}
-            className={`py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 cursor-pointer ${
+            className={`py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 cursor-pointer whitespace-nowrap ${
               activeTab === 'dossier'
                 ? 'border-orange-500 text-orange-600 dark:text-orange-400'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -372,8 +377,25 @@ export default function MemberDossierModal({
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab('activity')}
+            className={`py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'activity'
+                ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <ScrollText className="w-3.5 h-3.5" />
+            <span>{t('clan_dossier_tab_tickets') || 'Тикеты и активность'}</span>
+            {(userApplications.length > 0 || userVotes.length > 0) && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                {userApplications.length + userVotes.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('history')}
-            className={`py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 cursor-pointer flex items-center gap-1.5 ${
+            className={`py-3 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'history'
                 ? 'border-orange-500 text-orange-600 dark:text-orange-400'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -688,6 +710,166 @@ export default function MemberDossierModal({
                 </div>
               )}
             </form>
+          )}
+
+          {activeTab === 'activity' && (
+            <div className="space-y-6">
+              {/* Section 1: Tickets & Applications */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                    <ScrollText className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Заявки и тикеты в клан ({userApplications.length})</span>
+                  </h4>
+                </div>
+
+                {userApplications.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                    {t('clan_dossier_no_tickets') || 'У пользователя нет поданных заявок или открытых тикетов.'}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {userApplications.map((app) => {
+                      const appliedDate = app.appliedAt ? new Date(app.appliedAt).toLocaleString() : '—';
+                      const statusColor = app.status === 'ACCEPTED' 
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                        : app.status === 'REJECTED' || app.status === 'AUTO_REJECTED'
+                        ? 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800'
+                        : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+                      
+                      return (
+                        <div
+                          key={app.id}
+                          className="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-xs text-slate-900 dark:text-white">
+                                Заявка #{app.id?.slice(0, 8) || 'Ticket'}
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
+                                {app.status || 'PENDING'}
+                              </span>
+                              <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {appliedDate}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                              {app.age && <span>Возраст: <strong>{app.age}</strong></span>}
+                              {app.hours && <span>Часы: <strong>{app.hours} ч.</strong></span>}
+                              {app.exp && <span className="truncate max-w-xs">Опыт: {app.exp}</span>}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onViewTranscript) {
+                                  onViewTranscript(app);
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-400 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                            >
+                              <ScrollText className="w-3.5 h-3.5 text-orange-500" />
+                              <span>{t('clan_dossier_view_transcript') || 'Транскрипт тикета'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Section 2: Voting Participation */}
+              <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                    <Vote className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{t('clan_dossier_votes_history') || 'Участие в голосованиях'} ({userVotes.length})</span>
+                  </h4>
+                </div>
+
+                {userVotes.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                    {t('clan_dossier_no_votes') || 'Пользователь не участвовал в недавних голосованиях.'}
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {userVotes.map((v, idx) => {
+                      let myChoice = null;
+                      try {
+                        const voters = v.votersJson ? JSON.parse(v.votersJson) : [];
+                        const found = voters.find(vt => vt.userId === profile.userId || vt === profile.userId);
+                        if (found && typeof found === 'object') myChoice = found.choice || found.option;
+                      } catch (e) {}
+
+                      return (
+                        <div
+                          key={v.id || idx}
+                          className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-semibold text-slate-900 dark:text-white truncate">
+                              {v.title || v.question || 'Клановое голосование'}
+                            </div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">
+                              Статус: <span className={v.active !== false ? 'text-emerald-500' : 'text-slate-400'}>{v.active !== false ? 'Активно' : 'Завершено'}</span>
+                              {v.createdAt && ` • ${new Date(v.createdAt).toLocaleDateString()}`}
+                            </div>
+                          </div>
+                          {myChoice !== null && (
+                            <span className="px-2 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800 text-[11px] shrink-0">
+                              Выбор: {myChoice}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Section 3: Warnings list */}
+              {userWarnings.length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                    <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Предупреждения пользователя ({userWarnings.length})</span>
+                  </h4>
+                  <div className="space-y-2">
+                    {userWarnings.map(w => (
+                      <div
+                        key={w.id}
+                        className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-3 ${
+                          w.active
+                            ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60'
+                            : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-70'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-medium text-slate-800 dark:text-slate-200">
+                            {w.reason}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            Модератор: {w.moderatorTag} • {new Date(w.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold shrink-0 ${
+                          w.active
+                            ? 'bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        }`}>
+                          {w.active ? 'Активен' : 'Снят'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {activeTab === 'history' && (

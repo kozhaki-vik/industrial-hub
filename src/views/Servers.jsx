@@ -97,11 +97,11 @@ export default function Servers() {
           return (
             <div 
               key={server.id} 
-              className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between hover:border-orange-500/30 transition-all group"
+              className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between hover:border-orange-500/30 transition-all group"
             >
               <div>
-                <div className="flex items-start justify-between gap-3 mb-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-orange-500 shrink-0">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-orange-500 shrink-0">
                     <IconComponent className="w-4 h-4" />
                   </div>
                   <span className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm ${
@@ -109,25 +109,25 @@ export default function Servers() {
                       ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60'
                       : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60'
                   }`}>
-                    <Clock className="w-3.5 h-3.5 animate-pulse" />
+                    <Clock className="w-3 h-3 animate-pulse" />
                     {server.status}
                   </span>
                 </div>
 
-                <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 mb-1.5">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 mb-1">
                   {server.name}
                 </h3>
                 
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-3 sm:mb-4 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2.5 leading-relaxed">
                   {server.desc}
                 </p>
 
                 {/* Feature Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-3 sm:mb-4">
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
                   {server.tags.map((tag, idx) => (
                     <span 
                       key={idx}
-                      className="text-[11px] font-medium px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                      className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                     >
                       {tag}
                     </span>
@@ -136,17 +136,17 @@ export default function Servers() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                 <button 
                   disabled={true}
-                  className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs sm:text-sm bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-medium text-xs bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700"
                 >
                   <Clock className="w-3.5 h-3.5" />
                   {t('servers_btn_in_dev')}
                 </button>
                 <button 
                   onClick={handleCopy}
-                  className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-sm cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-sm cursor-pointer"
                   title={t('servers_ip_coming_soon')}
                 >
                   IP
