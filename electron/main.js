@@ -78,12 +78,20 @@ function createWindow() {
   });
   mainWindow.setMenu(null); // Completely removes the top menu
 
-  // Since show is true, we don't strictly need this, but we can keep center() logic
+  // Focus both window and webContents on ready-to-show
   mainWindow.once('ready-to-show', () => {
     mainWindow.center();
-    mainWindow.setAlwaysOnTop(true);
     mainWindow.focus();
-    mainWindow.setAlwaysOnTop(false);
+    if (mainWindow.webContents) {
+      mainWindow.webContents.focus();
+    }
+  });
+
+  // Ensure Chromium WebContents immediately gains keyboard focus whenever the window is activated
+  mainWindow.on('focus', () => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+      mainWindow.webContents.focus();
+    }
   });
 
   if (isDev) {
@@ -324,7 +332,7 @@ app.whenReady().then(async () => {
     try {
       if (process.platform !== 'win32') return null;
       
-      const regResult = child_process.execSync('reg query "HKCU\\Software\\Valve\\Steam" /v SteamPath').toString();
+      const regResult = child_process.execSync('reg query "HKCU\\Software\\Valve\\Steam" /v SteamPath', { windowsHide: true }).toString();
       const match = regResult.match(/SteamPath\s+REG_SZ\s+(.*)/i);
       if (!match || !match[1]) return null;
 
@@ -422,66 +430,75 @@ app.whenReady().then(async () => {
     } catch {}
   }, 5000);
 
+  let cachedHardwareInfo = null;
+
   ipcMain.handle('diagnostics:getHardwareInfo', async () => {
-    const cpus = os.cpus();
-    let gpuName = 'Unknown';
-    let osName = '';
-    try {
-      const psResult = await new Promise((resolve) => {
-        child_process.exec(
-          'powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).Caption; (Get-CimInstance Win32_VideoController).Name"',
-          { timeout: 3000 },
-          (error, stdout) => {
-            if (error || !stdout.trim()) resolve({ os: '', gpu: '' });
-            else {
-              const lines = stdout.trim().split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-              resolve({
-                os: lines[0] || '',
-                gpu: lines[1] || ''
-              });
-            }
-          }
-        );
-      });
-      if (psResult.gpu) gpuName = psResult.gpu;
-      if (psResult.os) osName = psResult.os.replace(/^Майкрософт\s+/i, '').replace(/^Microsoft\s+/i, '').trim();
-    } catch (e) {
-      console.error(e);
-    }
-
-    if (!osName) {
-      if (process.platform === 'win32') {
-        const build = parseInt((os.release() || '').split('.')[2], 10);
-        if (!isNaN(build)) {
-          if (build >= 22000) osName = 'Windows 11';
-          else if (build >= 10240) osName = 'Windows 10';
-          else if (build >= 9600) osName = 'Windows 8.1';
-          else if (build >= 9200) osName = 'Windows 8';
-          else if (build >= 7600) osName = 'Windows 7';
-          else osName = 'Windows';
-        } else {
-          osName = 'Windows';
-        }
-      } else if (process.platform === 'darwin') {
-        osName = 'macOS';
-      } else if (process.platform === 'linux') {
-        osName = 'Linux';
-      } else {
-        osName = os.platform();
-      }
-    }
-
     const currentSessionSec = Math.floor((Date.now() - sessionStartTime) / 1000);
+
+    if (!cachedHardwareInfo) {
+      const cpus = os.cpus();
+      let gpuName = 'Unknown';
+      let osName = '';
+      try {
+        const psResult = await new Promise((resolve) => {
+          child_process.exec(
+            'powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).Caption; (Get-CimInstance Win32_VideoController).Name"',
+            { timeout: 3000, windowsHide: true },
+            (error, stdout) => {
+              if (error || !stdout.trim()) resolve({ os: '', gpu: '' });
+              else {
+                const lines = stdout.trim().split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                resolve({
+                  os: lines[0] || '',
+                  gpu: lines[1] || ''
+                });
+              }
+            }
+          );
+        });
+        if (psResult.gpu) gpuName = psResult.gpu;
+        if (psResult.os) osName = psResult.os.replace(/^Майкрософт\s+/i, '').replace(/^Microsoft\s+/i, '').trim();
+      } catch (e) {
+        console.error(e);
+      }
+
+      if (!osName) {
+        if (process.platform === 'win32') {
+          const build = parseInt((os.release() || '').split('.')[2], 10);
+          if (!isNaN(build)) {
+            if (build >= 22000) osName = 'Windows 11';
+            else if (build >= 10240) osName = 'Windows 10';
+            else if (build >= 9600) osName = 'Windows 8.1';
+            else if (build >= 9200) osName = 'Windows 8';
+            else if (build >= 7600) osName = 'Windows 7';
+            else osName = 'Windows';
+          } else {
+            osName = 'Windows';
+          }
+        } else if (process.platform === 'darwin') {
+          osName = 'macOS';
+        } else if (process.platform === 'linux') {
+          osName = 'Linux';
+        } else {
+          osName = os.platform();
+        }
+      }
+
+      cachedHardwareInfo = {
+        pcName: os.hostname(),
+        platform: os.platform(),
+        osName,
+        release: os.release(),
+        arch: os.arch(),
+        cpu: cpus.length > 0 ? cpus[0].model : 'Unknown',
+        gpu: gpuName,
+        cores: cpus.length,
+        ramTotal: Math.round(os.totalmem() / (1024 * 1024 * 1024))
+      };
+    }
+
     return {
-      pcName: os.hostname(),
-      platform: os.platform(),
-      osName,
-      release: os.release(),
-      arch: os.arch(),
-      cpu: cpus.length > 0 ? cpus[0].model : 'Unknown',
-      gpu: gpuName,
-      cores: cpus.length,
-      ramTotal: Math.round(os.totalmem() / (1024 * 1024 * 1024)),
+      ...cachedHardwareInfo,
       ramFree: Math.round(os.freemem() / (1024 * 1024 * 1024)),
       appUptime: Math.floor(process.uptime()),
       totalAppUptime: totalUptimeBase + currentSessionSec,
@@ -642,7 +659,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('config:isRustRunning', () => {
     return new Promise((resolve) => {
-      child_process.exec('tasklist', (err, stdout) => {
+      child_process.exec('tasklist /FI "IMAGENAME eq rustclient.exe" /NH', { windowsHide: true }, (err, stdout) => {
         if (err) {
           console.error('Error checking processes:', err);
           return resolve(false);
@@ -687,7 +704,7 @@ app.whenReady().then(async () => {
     return new Promise((resolve) => {
       if (process.platform !== 'win32') return resolve([]);
       const helperPath = getNativeHelperPath();
-      child_process.execFile(helperPath, ['displays'], (error, stdout) => {
+      child_process.execFile(helperPath, ['displays'], { windowsHide: true }, (error, stdout) => {
         try {
           const text = stdout.trim();
           if (!text) return resolve([]);
@@ -707,7 +724,7 @@ app.whenReady().then(async () => {
     if (!deviceName) deviceName = "\\\\.\\DISPLAY1";
     try {
       const helperPath = getNativeHelperPath();
-      child_process.execFile(helperPath, ['gamma', brightnessLevel.toString(), deviceName], (err) => {
+      child_process.execFile(helperPath, ['gamma', brightnessLevel.toString(), deviceName], { windowsHide: true }, (err) => {
         if (err) console.error('Error setting gamma via helper:', err);
       });
     } catch (err) {
@@ -730,7 +747,8 @@ app.whenReady().then(async () => {
     try {
       const helperPath = getNativeHelperPath();
       currentHookProcess = child_process.spawn(helperPath, ['hook', vkCode.toString()], {
-        stdio: ['ignore', 'pipe', 'pipe']
+        stdio: ['ignore', 'pipe', 'pipe'],
+        windowsHide: true
       });
 
       currentHookProcess.stdout.on('data', (data) => {
@@ -943,7 +961,8 @@ app.whenReady().then(async () => {
       ], {
         detached: true,
         stdio: 'ignore',
-        cwd: newAppDir
+        cwd: newAppDir,
+        windowsHide: true
       });
       child.unref();
 
@@ -955,6 +974,17 @@ app.whenReady().then(async () => {
       event.sender.send('update-progress', { status: 'error', error: err.message });
       return { success: false, error: err.message };
     }
+  });
+
+  ipcMain.handle('app:focusWindow', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.focus();
+      if (mainWindow.webContents) {
+        mainWindow.webContents.focus();
+      }
+      return true;
+    }
+    return false;
   });
 
   ipcMain.handle('app:reportError', (event, errorDetails) => {

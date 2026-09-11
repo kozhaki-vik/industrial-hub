@@ -312,7 +312,7 @@ export default function ClanManager() {
   const [creatingLogChannel, setCreatingLogChannel] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetSections, setResetSections] = useState([
-    'roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'logging', 'moderation', 'general'
+    'roles', 'channels', 'permissions', 'voice', 'recruitment', 'applications', 'ads', 'logging', 'moderation', 'general'
   ]);
   const [isResetting, setIsResetting] = useState(false);
   const [syncModalData, setSyncModalData] = useState(null);
@@ -320,6 +320,22 @@ export default function ClanManager() {
   const [initialNameInput, setInitialNameInput] = useState('');
   const [initialNameError, setInitialNameError] = useState(false);
   const hasPromptedRef = useRef(false);
+  const initialClanNameInputRef = useRef(null);
+
+  useEffect(() => {
+    const isModalOpen = Boolean(config && (!config.name || !config.name.trim()) && !showSetupWizard);
+    if (isModalOpen) {
+      const timer = setTimeout(() => {
+        if (initialClanNameInputRef.current) {
+          initialClanNameInputRef.current.focus();
+        }
+        if (window.electronAPI?.app?.focusWindow) {
+          window.electronAPI.app.focusWindow();
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [config, showSetupWizard]);
 
   // Invite link verification & creation state
   const [inviteStatus, setInviteStatus] = useState(null); // 'checking' | 'valid' | 'invalid' | null
@@ -867,11 +883,28 @@ export default function ClanManager() {
             if (data.data.config) {
               setConfig(sanitizeClanConfig(data.data.config));
             }
+            const resetSecs = data.data.resetSections || [];
+            if (resetSecs.length === 0 || resetSecs.includes('recruitment') || resetSecs.includes('applications')) {
+              setApplicationsData([]);
+              fetchApplications();
+            }
+            if (resetSecs.length === 0 || resetSecs.includes('roles')) {
+              fetchRoster();
+              fetchDossiers();
+            }
             fetchDiscordInfo();
             setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 3000);
           } else {
             setError(data.error || (data.data && data.data.error));
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'clear_applications') {
+          setLoadingApps(false);
+          if (!data.error && data.data && data.data.success) {
+            setApplicationsData([]);
+            addLog(t('clan_recruitment_apps_cleared_log') || 'Журнал заявок в клан успешно очищен');
+          } else {
+            setError(data.error || (data.data && data.data.error) || 'Ошибка очистки журнала заявок');
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'create_log_channel') {
           setCreatingLogChannel(false);
@@ -1231,18 +1264,18 @@ export default function ClanManager() {
   };
 
   const standardRoles = [
-    { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Leader', discordName: 'Лидер', defaultRu: 'Leader', defaultEn: 'Leader' },
-    { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Dep. Leader', discordName: 'Deputy Leader', defaultRu: 'Dep. Leader', defaultEn: 'Deputy Leader' },
-    { key: 'caller', dbKey: 'callerRoleId', defaultName: 'Коллер', discordName: 'Caller', defaultRu: 'Коллер', defaultEn: 'Caller' },
-    { key: 'main', dbKey: 'mainRosterRoleId', defaultName: 'Main Состав', discordName: 'Main Состав', defaultRu: 'Main Состав', defaultEn: 'Main Состав' },
-    { key: 'trial', dbKey: 'trialRoleId', defaultName: 'Испытательный срок', discordName: 'Trial', defaultRu: 'Испытательный срок', defaultEn: 'Trial' },
-    { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Фармер', discordName: 'Фармер', defaultRu: 'Фармер', defaultEn: 'Farmer' },
-    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultName: 'Фермер', discordName: 'Фермер', defaultRu: 'Фермер', defaultEn: 'Plant Farmer' },
-    { key: 'electrician', dbKey: 'electricianRoleId', defaultName: 'Электрик', discordName: 'Электрик', defaultRu: 'Электрик', defaultEn: 'Electrician' },
-    { key: 'builder', dbKey: 'builderRoleId', defaultName: 'Билдер', discordName: 'Билдер', defaultRu: 'Билдер', defaultEn: 'Builder' },
-    { key: 'pilot', dbKey: 'pilotRoleId', defaultName: 'Пилот', discordName: 'Пилот', defaultRu: 'Пилот', defaultEn: 'Pilot' },
-    { key: 'sponsor', dbKey: 'sponsorRoleId', defaultName: 'Спонсор', discordName: 'Спонсор', defaultRu: 'Спонсор', defaultEn: 'Sponsor' },
-    { key: 'vip', dbKey: 'vipRoleId', defaultName: 'VIP', discordName: 'VIP', defaultRu: 'VIP', defaultEn: 'VIP' },
+    { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Leader', defaultRu: 'Лидер', defaultEn: 'Leader', defaultUa: 'Лідер' },
+    { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Deputy Leader', defaultRu: 'Зам. Лидера', defaultEn: 'Deputy Leader', defaultUa: 'Заст. Лідера' },
+    { key: 'caller', dbKey: 'callerRoleId', defaultName: 'Coller', defaultRu: 'Коллер', defaultEn: 'Coller', defaultUa: 'Коллер' },
+    { key: 'main', dbKey: 'mainRosterRoleId', defaultName: 'Main', defaultRu: 'Main Состав', defaultEn: 'Main Roster', defaultUa: 'Main Склад' },
+    { key: 'trial', dbKey: 'trialRoleId', defaultName: 'Trial', defaultRu: 'Испытательный', defaultEn: 'Trial', defaultUa: 'Випробувальний' },
+    { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Farmer (Resources)', defaultRu: 'Фармер (Ресурсы)', defaultEn: 'Farmer (Resources)', defaultUa: 'Фармер (Ресурси)' },
+    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultName: 'Farmer (Crops)', defaultRu: 'Фермер (Урожай)', defaultEn: 'Farmer (Crops / Plants)', defaultUa: 'Фермер (Врожай)' },
+    { key: 'electrician', dbKey: 'electricianRoleId', defaultName: 'Electrician', defaultRu: 'Электрик', defaultEn: 'Electrician', defaultUa: 'Електрик' },
+    { key: 'builder', dbKey: 'builderRoleId', defaultName: 'Builder', defaultRu: 'Билдер', defaultEn: 'Builder', defaultUa: 'Білдер' },
+    { key: 'pilot', dbKey: 'pilotRoleId', defaultName: 'Pilot', defaultRu: 'Пилот', defaultEn: 'Pilot', defaultUa: 'Пілот' },
+    { key: 'sponsor', dbKey: 'sponsorRoleId', defaultName: 'Sponsor', defaultRu: 'Спонсор', defaultEn: 'Sponsor', defaultUa: 'Спонсор' },
+    { key: 'vip', dbKey: 'vipRoleId', defaultName: 'VIP', defaultRu: 'VIP', defaultEn: 'VIP', defaultUa: 'VIP' },
   ];
 
   const handleApplyTemplateLang = (lang) => {
@@ -1253,7 +1286,7 @@ export default function ClanManager() {
     } catch (e) {}
 
     standardRoles.forEach(r => {
-      roleNames[r.key] = lang === 'en' ? r.defaultEn : r.defaultRu;
+      roleNames[r.key] = lang === 'en' ? r.defaultEn : (lang === 'ua' ? r.defaultUa : r.defaultRu);
     });
 
     const updatedConfig = {
@@ -1289,28 +1322,9 @@ export default function ClanManager() {
     if (!config) return;
     const trimmed = (currentName || '').trim();
 
-    // No-op guard: if name didn't change, do not auto-save or rename in Discord
-    if (isCustom) {
-      let customRoles = [];
-      try {
-        if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
-      } catch (e) {}
-      const cur = customRoles.find(r => r.id === customId);
-      if (!cur || (cur.name || '').trim() === trimmed) {
-        return;
-      }
-    } else {
-      let roleNames = {};
-      try {
-        if (config.roleNamesJson) roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-      } catch (e) {}
-      const curName = (roleNames[key] || '').trim();
-      if (curName === trimmed) {
-        return;
-      }
-    }
-
     let updatedConfig = { ...config };
+    let roleId = null;
+
     if (isCustom) {
       let customRoles = [];
       try {
@@ -1320,6 +1334,7 @@ export default function ClanManager() {
       if (idx !== -1) {
         customRoles[idx].name = currentName;
         updatedConfig.customRolesJson = JSON.stringify(customRoles);
+        roleId = customRoles[idx].roleId;
       }
     } else {
       let roleNames = {};
@@ -1328,20 +1343,10 @@ export default function ClanManager() {
       } catch (e) {}
       roleNames[key] = currentName;
       updatedConfig.roleNamesJson = JSON.stringify(roleNames);
+      roleId = updatedConfig[dbKey];
     }
 
     autoSaveConfig(updatedConfig);
-
-    const roleId = isCustom
-      ? (() => {
-          try {
-            const list = updatedConfig.customRolesJson ? JSON.parse(updatedConfig.customRolesJson) : [];
-            return list.find(r => r.id === customId)?.roleId;
-          } catch (e) {
-            return null;
-          }
-        })()
-      : updatedConfig[dbKey];
 
     if (roleId && trimmed.length > 0) {
       const discordRole = discordInfo?.roles?.find(r => r.id === roleId);
@@ -1349,6 +1354,7 @@ export default function ClanManager() {
         return;
       }
 
+      addLog(`Синхронизация названия роли в Discord: ${trimmed}...`);
       ws.send(JSON.stringify({
         type: 'clan',
         action: 'proxy',
@@ -1401,18 +1407,44 @@ export default function ClanManager() {
     }
   };
 
-  const handleCreateRoleInDiscord = (r, isCustom = false) => {
+  const handleCreateRoleInDiscord = (r, isCustom = false, nameOverride = '') => {
     if (!ws || wsStatus !== 'online') return;
     const roleIdentifier = isCustom ? r.id : r.key;
     setCreatingRoleKey(roleIdentifier);
     
-    let roleName = '';
-    if (isCustom) {
-      roleName = r.name || 'Новая роль';
-    } else {
-      roleName = r.discordName || r.defaultName || 'Новая роль';
+    let roleName = (nameOverride || '').trim();
+    if (!roleName) {
+      if (isCustom) {
+        roleName = (r.name || '').trim() || 'Новая роль';
+      } else {
+        let roleNames = {};
+        try {
+          if (config?.roleNamesJson) {
+            roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
+          }
+        } catch (e) {}
+        const fromConfig = roleNames[r.key];
+        roleName = (fromConfig !== undefined ? fromConfig : (r.defaultName || r.defaultRu || '')).trim() || 'Новая роль';
+      }
     }
 
+    const roleColors = {
+      leaderRoleId: '#ef4444',
+      deputyLeaderRoleId: '#f97316',
+      callerRoleId: '#eab308',
+      mainRosterRoleId: '#22c55e',
+      trialRoleId: '#06b6d4',
+      vipRoleId: '#a855f7',
+      farmerRoleId: '#84cc16',
+      plantFarmerRoleId: '#10b981',
+      electricianRoleId: '#3b82f6',
+      builderRoleId: '#6366f1',
+      pilotRoleId: '#0ea5e9',
+      sponsorRoleId: '#ec4899'
+    };
+    const roleColor = isCustom ? '#3b82f6' : (roleColors[r.dbKey] || '#3b82f6');
+
+    addLog(`Создание роли в Discord: "${roleName}"...`);
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
@@ -1420,8 +1452,9 @@ export default function ClanManager() {
       payload: {
         action: 'create_single_role',
         name: roleName,
-        color: '#3b82f6',
+        color: roleColor,
         roleKey: isCustom ? null : r.dbKey,
+        roleShortKey: isCustom ? null : r.key,
         isCustom,
         customRoleId: isCustom ? r.id : null
       }
@@ -1511,7 +1544,7 @@ export default function ClanManager() {
 
     const newRoleNames = { ...currentRoleNames };
     standardRoles.forEach(r => {
-      newRoleNames[r.key] = targetLang === 'en' ? r.defaultEn : r.defaultRu;
+      newRoleNames[r.key] = targetLang === 'en' ? r.defaultEn : (targetLang === 'ua' ? r.defaultUa : r.defaultRu);
     });
 
     const boundRolesToRename = standardRoles.filter(r => {
@@ -1544,7 +1577,7 @@ export default function ClanManager() {
 
     for (let i = 0; i < boundRolesToRename.length; i++) {
       const roleItem = boundRolesToRename[i];
-      const targetRoleName = targetLang === 'en' ? roleItem.defaultEn : roleItem.defaultRu;
+      const targetRoleName = targetLang === 'en' ? roleItem.defaultEn : (targetLang === 'ua' ? roleItem.defaultUa : roleItem.defaultRu);
 
       setSyncModalData(prev => ({
         ...prev,
@@ -1756,6 +1789,18 @@ export default function ClanManager() {
       action: 'proxy',
       reqId: 'get_applications',
       payload: { action: 'get_applications', limit: 100 }
+    }));
+  };
+
+  const handleClearApplications = () => {
+    if (!ws || wsStatus !== 'online') return;
+    if (!window.confirm(t('clan_recruitment_apps_clear_confirm') || 'Вы действительно хотите полностью очистить весь журнал заявок в клан? Все записи будут безвозвратно удалены.')) return;
+    setLoadingApps(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'clear_applications',
+      payload: { action: 'clear_applications' }
     }));
   };
 
@@ -2850,6 +2895,47 @@ export default function ClanManager() {
                   )}
                 </div>
 
+                {/* Bot Language Selector Card */}
+                <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/70 dark:bg-slate-800/40">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-blue-500 shrink-0" />
+                        <span className="text-sm font-semibold text-slate-800 dark:text-white">
+                          {t('clan_bot_language_title') || 'Язык бота в Discord'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {t('clan_bot_language_desc') || 'Язык интерфейса тикетов, анкет, логов и шаблонов ролей на сервере Discord.'}
+                      </p>
+                    </div>
+
+                    <div className="inline-flex p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xs shrink-0 self-start sm:self-auto">
+                      {[
+                        { code: 'ru', label: 'RU', title: 'Русский' },
+                        { code: 'en', label: 'EN', title: 'English' },
+                        { code: 'ua', label: 'UA', title: 'Українська' }
+                      ].map(lang => {
+                        const isCurrent = (config?.language || 'ru') === lang.code;
+                        return (
+                          <button
+                            key={lang.code}
+                            type="button"
+                            onClick={() => handleSwitchBotLanguage(lang.code)}
+                            title={lang.title}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                              isCurrent
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            {lang.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
 
                 {/* Actions: Setup Wizard, Unlink Server, & Factory Reset in 3 columns */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -3019,6 +3105,7 @@ export default function ClanManager() {
                                     value={currentName}
                                     onChange={e => handleRoleNameChange(r.key, e.target.value, false)}
                                     onBlur={e => handleRoleNameBlur(r.key, r.dbKey, e.target.value, false)}
+                                    onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
                                     placeholder={r.defaultName || r.defaultRu}
                                   />
                                 </div>
@@ -3033,7 +3120,7 @@ export default function ClanManager() {
                                     rightAction={
                                       <button
                                         type="button"
-                                        onClick={() => handleCreateRoleInDiscord(r, false)}
+                                        onClick={() => handleCreateRoleInDiscord(r, false, currentName)}
                                         disabled={isCreatingThis || creatingRoleKey !== null}
                                         className="px-2.5 py-2 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950/50 border border-slate-300 dark:border-slate-700 hover:border-blue-400 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium transition-all shadow-sm shrink-0 flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                                         title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
@@ -3130,6 +3217,7 @@ export default function ClanManager() {
                                     value={cr.name || ''}
                                     onChange={e => handleRoleNameChange(cr.key, e.target.value, true, cr.id)}
                                     onBlur={e => handleRoleNameBlur(cr.key, null, e.target.value, true, cr.id)}
+                                    onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
                                     placeholder="Новая роль"
                                   />
                                 </div>
@@ -3144,7 +3232,7 @@ export default function ClanManager() {
                                     rightAction={
                                       <button
                                         type="button"
-                                        onClick={() => handleCreateRoleInDiscord(cr, true)}
+                                        onClick={() => handleCreateRoleInDiscord(cr, true, cr.name)}
                                         disabled={isCreatingThis || creatingRoleKey !== null}
                                         className="px-2.5 py-2 bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/50 border border-slate-300 dark:border-slate-700 hover:border-amber-400 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-medium transition-all shadow-sm shrink-0 flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                                         title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
@@ -4128,15 +4216,27 @@ export default function ClanManager() {
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={fetchApplications}
-                            disabled={loadingApps}
-                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
-                          >
-                            <RefreshCw className={`w-3.5 h-3.5 ${loadingApps ? 'animate-spin text-orange-500' : ''}`} />
-                            <span>{t('clan_recruitment_apps_refresh') || 'Обновить'}</span>
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              type="button"
+                              onClick={fetchApplications}
+                              disabled={loadingApps}
+                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${loadingApps ? 'animate-spin text-orange-500' : ''}`} />
+                              <span>{t('clan_recruitment_apps_refresh') || 'Обновить'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleClearApplications}
+                              disabled={loadingApps || applicationsData.length === 0}
+                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/20 rounded-xl text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                              title={t('clan_recruitment_apps_clear') || 'Очистить журнал'}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                              <span>{t('clan_recruitment_apps_clear') || 'Очистить журнал'}</span>
+                            </button>
+                          </div>
                         </div>
 
                         {/* Search and Filters */}
@@ -6231,6 +6331,7 @@ export default function ClanManager() {
             >
               <div>
                 <input
+                  ref={initialClanNameInputRef}
                   type="text"
                   required
                   data-required="true"
@@ -6334,14 +6435,14 @@ export default function ClanManager() {
       {/* Selective Factory Reset Modal */}
       {showResetModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-3 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-amber-100 dark:bg-amber-950/50 rounded-xl text-amber-600 dark:text-amber-400">
                   <RotateCcw className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
                     {t('clan_reset_modal_title') || 'Сброс к заводским настройкам'}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -6361,14 +6462,14 @@ export default function ClanManager() {
             </div>
 
             {/* Select All / Deselect All */}
-            <div className="flex items-center justify-between mb-3 text-xs">
+            <div className="flex items-center justify-between mb-2.5 text-xs shrink-0">
               <span className="text-slate-500 dark:text-slate-400 font-medium">
                 {t('clan_reset_select_sections') || 'Разделы для сброса:'}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setResetSections(['roles', 'channels', 'permissions', 'voice', 'recruitment', 'ads', 'logging', 'moderation', 'general'])}
+                  onClick={() => setResetSections(['roles', 'channels', 'permissions', 'voice', 'recruitment', 'applications', 'ads', 'logging', 'moderation', 'general'])}
                   className="text-blue-600 dark:text-blue-400 hover:underline font-medium cursor-pointer"
                 >
                   {t('clan_reset_select_all') || 'Выбрать все'}
@@ -6385,7 +6486,7 @@ export default function ClanManager() {
             </div>
 
             {/* Checkboxes List */}
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mb-4 overflow-y-auto flex-1 min-h-0 pr-1.5 scrollbar-thin">
               {[
                 { id: 'roles', title: t('clan_reset_sec_roles_title') || 'Роли', desc: t('clan_reset_sec_roles_desc') || 'Восстановление стандартных ролей, удаление кастомных ролей и отвязка ID ролей Discord' },
                 { id: 'channels', title: t('clan_reset_sec_channels_title') || 'Каналы', desc: t('clan_reset_sec_channels_desc') || 'Сброс привязок категорий и текстовых каналов (тикеты, заявки, логи)' },
@@ -6393,7 +6494,8 @@ export default function ClanManager() {
                 { id: 'voice', title: t('clan_reset_sec_voice_title') || 'Динамические войсы', desc: t('clan_reset_sec_voice_desc') || 'Отключение Join-to-Create, сброс триггер-канала и категории временных комнат' },
                 { id: 'logging', title: t('clan_reset_sec_logging_title') || 'Логирование', desc: t('clan_reset_sec_logging_desc') || 'Сброс настроек каналов логирования и отключение отслеживаемых событий аудита' },
                 { id: 'moderation', title: t('clan_reset_sec_moderation_title') || 'Модерация', desc: t('clan_reset_sec_moderation_desc') || 'Сброс правил анти-спама, фильтрации упоминаний и белых списков' },
-                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || 'Набор в клан', desc: t('clan_reset_sec_recruitment_desc') || 'Сброс требований к возрасту и часам в Rust, параметров авто-отклонений и тикетов' },
+                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || 'Набор в клан', desc: t('clan_reset_sec_recruitment_desc') || 'Сброс требований к возрасту и часам в Rust, параметров авто-отклонений, тикетов и очистка заявок' },
+                { id: 'applications', title: t('clan_reset_sec_applications_title') || 'Журнал заявок', desc: t('clan_reset_sec_applications_desc') || 'Очистка всех поданных анкет, истории рассмотрения заявок и архива тикетов' },
                 { id: 'ads', title: t('clan_reset_sec_ads_title') || 'Реклама и партнерство', desc: t('clan_reset_sec_ads_desc') || 'Сброс текста авто-объявлений, интервалов рассылки и привязанных каналов' },
                 { id: 'general', title: t('clan_reset_sec_general_title') || 'Основные настройки', desc: t('clan_reset_sec_general_desc') || 'Сброс названия клана, ссылки Discord и закрытие набора в клан' },
               ].map(sec => {
@@ -6401,7 +6503,7 @@ export default function ClanManager() {
                 return (
                   <label
                     key={sec.id}
-                    className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                    className={`flex items-start gap-3 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
                       isChecked
                         ? 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/60'
                         : 'bg-slate-50/60 dark:bg-slate-800/30 border-slate-200 dark:border-slate-800 opacity-80 hover:opacity-100'
@@ -6428,7 +6530,7 @@ export default function ClanManager() {
               })}
             </div>
 
-            <div className="flex items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowResetModal(false)}
