@@ -64,7 +64,7 @@ app.disableHardwareAcceleration();
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
-    height: 800,
+    height: 840,
     show: true, // Show instantly
     backgroundColor: '#0f172a', // Match slate-950
     autoHideMenuBar: true, // Remove the top menu (File, Edit, View, Window)

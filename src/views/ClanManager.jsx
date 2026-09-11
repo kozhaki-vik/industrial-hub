@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import SetupWizard from '../components/SetupWizard';
 import RoleSelect from '../components/RoleSelect';
 import ChannelSelect from '../components/ChannelSelect';
+import MemberDossierModal from '../components/MemberDossierModal';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
-  RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter
+  RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
+  BookOpen, Star, Search
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -58,6 +60,25 @@ export const isBotConfigured = (cfg) => {
   }
 
   return hasRoles || hasChannels;
+};
+
+export const reportClanErrorToTelegram = (errorTitle, errorDetails) => {
+  const fullErrorText = `🚨 [Clan Manager Error]\n${errorTitle}\n${errorDetails}`;
+  if (window.electronAPI?.app?.reportError) {
+    window.electronAPI.app.reportError(fullErrorText).catch(() => {});
+  } else {
+    try {
+      fetch('https://industrial-hub.duckdns.org/api/crash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hwid: localStorage.getItem('hub_hwid') || 'UnknownClient',
+          version: '2.7.55',
+          errorStack: fullErrorText
+        })
+      }).catch(() => {});
+    } catch {}
+  }
 };
 
 const sanitizeClanConfig = (cfg) => {
@@ -244,6 +265,19 @@ export default function ClanManager() {
   const [clanWarnings, setClanWarnings] = useState([]);
   const [loadingClanWarnings, setLoadingClanWarnings] = useState(false);
 
+  // Member Dossier & Archive state
+  const [dossiersData, setDossiersData] = useState([]);
+  const [loadingDossiers, setLoadingDossiers] = useState(false);
+  const [dossierFilter, setDossierFilter] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'LEFT' | 'KICKED' | 'BLACKLISTED'
+  const [dossierSearch, setDossierSearch] = useState('');
+  const [selectedProfileForDossier, setSelectedProfileForDossier] = useState(null);
+
+  // Recruitment Invite verification & creation state
+  const [recruitmentInviteStatus, setRecruitmentInviteStatus] = useState(null); // 'checking' | 'valid' | 'invalid' | null
+  const [recruitmentInviteDetails, setRecruitmentInviteDetails] = useState(null);
+  const [creatingRecruitmentInvite, setCreatingRecruitmentInvite] = useState(false);
+  const [checkingRecruitmentInvite, setCheckingRecruitmentInvite] = useState(false);
+
   // --- Centralized Debounced & Throttled Auto-Save Engine ---
   const latestConfigRef = useRef(config);
   latestConfigRef.current = config;
@@ -386,6 +420,93 @@ export default function ClanManager() {
     fetchUserWarnings(stat.userId);
   };
 
+  const fetchDossiers = (filterStatus = 'ALL', search = '') => {
+    if (!ws || wsStatus !== 'online') return;
+    setLoadingDossiers(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'get_member_dossiers',
+      payload: {
+        action: 'get_member_dossiers',
+        status: filterStatus || 'ALL',
+        search: search || ''
+      }
+    }));
+  };
+
+  const handleSaveDossier = (userId, updates) => {
+    return sendProxyAction('update_member_dossier', {
+      action: 'update_member_dossier',
+      userId,
+      updates
+    }).then(res => {
+      if (res && res.success && res.dossier) {
+        setDossiersData(prev => {
+          const idx = prev.findIndex(d => d.userId === res.dossier.userId);
+          if (idx !== -1) {
+            const copy = [...prev];
+            copy[idx] = res.dossier;
+            return copy;
+          }
+          return [res.dossier, ...prev];
+        });
+        setSelectedProfileForDossier(res.dossier);
+      }
+      return res;
+    });
+  };
+
+  const handleGlobalSearchDossier = (query) => {
+    return sendProxyAction('search_member_history', {
+      action: 'search_member_history',
+      query
+    });
+  };
+
+  const handleSendCrossClanMessage = (targetUserId, toGuildId, content) => {
+    return sendProxyAction('send_cross_clan_message', {
+      action: 'send_cross_clan_message',
+      targetUserId,
+      toGuildId,
+      content
+    });
+  };
+
+  const verifyRecruitmentInvite = (link) => {
+    const trimmed = (link || '').trim();
+    if (!trimmed || !ws || wsStatus !== 'online') {
+      setRecruitmentInviteStatus(null);
+      setRecruitmentInviteDetails(null);
+      return;
+    }
+    setCheckingRecruitmentInvite(true);
+    setRecruitmentInviteStatus('checking');
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'check_recruitment_invite',
+      payload: {
+        action: 'check_discord_invite',
+        inviteUrl: trimmed
+      }
+    }));
+  };
+
+  const handleCreateRecruitmentInvite = () => {
+    if (!ws || wsStatus !== 'online' || creatingRecruitmentInvite) return;
+    setCreatingRecruitmentInvite(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'create_recruitment_invite',
+      payload: {
+        action: 'create_discord_invite'
+      }
+    }));
+    addLog('Generating recruitment Discord invite...');
+  };
+
   useEffect(() => {
     if (!ws || wsStatus !== 'online') {
       addLog(t('clan_waiting'));
@@ -424,10 +545,18 @@ export default function ClanManager() {
           hasPromptedRef.current = false;
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_config') {
           setLoadingConfig(false);
-          if (data.error) {
-            setError(data.error);
+          const configError = data.error || (data.data && !data.data.success ? data.data.error : null);
+          const fetchedConfig = data.data?.config;
+
+          if (configError) {
+            setError(configError);
+            reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${configError}\nGuild ID: ${guildId || 'Unknown'}`);
+          } else if (!fetchedConfig) {
+            const emptyError = 'Empty or invalid configuration returned from bot/server';
+            setError(emptyError);
+            reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${emptyError}\nGuild ID: ${guildId || 'Unknown'}`);
           } else {
-            const fetchedConfig = data.data.config;
+            setError(null);
             const sanitized = sanitizeClanConfig(fetchedConfig);
             setConfig(sanitized);
             lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
@@ -653,6 +782,44 @@ export default function ClanManager() {
             setInviteStatus('invalid');
             setInviteDetails(null);
           }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_member_dossiers') {
+          setLoadingDossiers(false);
+          if (!data.error && data.data && data.data.success) {
+            setDossiersData(data.data.dossiers || []);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'create_recruitment_invite') {
+          setCreatingRecruitmentInvite(false);
+          if (!data.error && data.data && data.data.success) {
+            const newUrl = data.data.inviteUrl;
+            setConfig(prev => {
+              if (!prev) return prev;
+              let currentRConfig = {};
+              try { if (prev.recruitmentConfigJson) currentRConfig = JSON.parse(prev.recruitmentConfigJson); } catch(e) {}
+              const newRConfig = { ...currentRConfig, link: newUrl };
+              const updated = { ...prev, recruitmentConfigJson: JSON.stringify(newRConfig) };
+              lastSavedConfigRef.current = JSON.parse(JSON.stringify(updated));
+              return updated;
+            });
+            setRecruitmentInviteStatus('valid');
+            setRecruitmentInviteDetails(data.data.invite || null);
+            addLog(`Recruitment invite created: ${newUrl}`);
+          } else {
+            setError(data.error || (data.data && data.data.error) || 'Failed to create recruitment invite');
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'check_recruitment_invite') {
+          setCheckingRecruitmentInvite(false);
+          if (!data.error && data.data) {
+            if (data.data.valid) {
+              setRecruitmentInviteStatus('valid');
+              setRecruitmentInviteDetails(data.data.invite || null);
+            } else {
+              setRecruitmentInviteStatus('invalid');
+              setRecruitmentInviteDetails(null);
+            }
+          } else {
+            setRecruitmentInviteStatus('invalid');
+            setRecruitmentInviteDetails(null);
+          }
         }
       } catch (err) {}
     };
@@ -694,7 +861,13 @@ export default function ClanManager() {
   };
 
   const fetchConfig = () => {
+    if (!ws || wsStatus !== 'online') {
+      setError(t('clan_connecting') || 'Подключение к серверу...');
+      setLoadingConfig(false);
+      return;
+    }
     setLoadingConfig(true);
+    setError(null);
     addLog('Fetching config via proxy');
     ws.send(JSON.stringify({ 
       type: 'clan', 
@@ -1394,6 +1567,20 @@ export default function ClanManager() {
       }
     } else if (activeTab === 'recruitment') {
       fetchApplications();
+      if (config?.recruitmentConfigJson) {
+        try {
+          const rc = JSON.parse(config.recruitmentConfigJson);
+          const linkToCheck = rc.link || config.discordLink;
+          if (linkToCheck) verifyRecruitmentInvite(linkToCheck);
+        } catch (e) {}
+      } else if (config?.discordLink) {
+        verifyRecruitmentInvite(config.discordLink);
+      }
+      if (!rosterData) {
+        ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_roster', payload: { action: 'get_roster' } }));
+      }
+    } else if (activeTab === 'dossier') {
+      fetchDossiers(dossierFilter, dossierSearch);
     } else if (activeTab === 'roster' && !rosterData) {
       addLog('Fetching roster via proxy');
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_roster', payload: { action: 'get_roster' } }));
@@ -1499,6 +1686,7 @@ export default function ClanManager() {
     { id: 'recruitment', label: 'Наборы', icon: UserPlus },
     { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
     { id: 'roster', label: 'Состав', icon: UserCheck },
+    { id: 'dossier', label: t('clan_tab_dossier') || 'Досье и архив', icon: BookOpen },
     { id: 'stats', label: 'Статистика', icon: BarChart3 },
     { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
     { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
@@ -1558,7 +1746,10 @@ export default function ClanManager() {
       </div>
       
       {loadingConfig ? (
-        <div className="text-slate-500 font-medium">{t('clan_loading')}</div>
+        <div className="flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
+          <RefreshCw className="w-5 h-5 animate-spin mr-2.5 text-orange-500" />
+          <span className="font-medium text-sm">{t('clan_loading')}</span>
+        </div>
       ) : config ? (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0">
           {/* Left Sidebar Navigation */}
@@ -2575,10 +2766,11 @@ export default function ClanManager() {
                 
                 {(() => {
                   let rConfig = {
-                    link: 'https://discord.gg/vPEAxjCBRC',
+                    link: config?.discordLink || '',
                     banner: 'https://i.imgur.com/UaMfYMK.png',
                     title: `Набор в клан ${config.name || 'GODS'}`,
                     text: "Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы",
+                    customLeaderId: '',
                     autoRejectEnabled: false,
                     minAge: 0,
                     minHours: 0,
@@ -2623,16 +2815,64 @@ export default function ClanManager() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Ссылка на Discord сервер (для набора) *</label>
-                            <input 
-                              type="text" 
-                              required
-                              className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
-                              value={rConfig.link}
-                              onChange={e => updateRConfig('link', e.target.value, false)}
-                              onBlur={e => updateRConfig('link', e.target.value, true)}
-                              placeholder="https://discord.gg/..."
-                            />
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                Ссылка на Discord сервер (для набора) *
+                              </label>
+                              <button
+                                type="button"
+                                onClick={handleCreateRecruitmentInvite}
+                                disabled={creatingRecruitmentInvite}
+                                title="Создать новую постоянную ссылку через бота и вставить в поле"
+                                className="text-[11px] font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 flex items-center gap-1 cursor-pointer transition-colors"
+                              >
+                                <RefreshCw className={`w-3 h-3 ${creatingRecruitmentInvite ? 'animate-spin' : ''}`} />
+                                <span>{t('clan_recruitment_link_refresh_btn') || 'Сгенерировать ссылку'}</span>
+                              </button>
+                            </div>
+                            <div className="relative">
+                              <input 
+                                type="text" 
+                                required
+                                className={`w-full px-4 py-2 border rounded-xl dark:bg-slate-800/50 dark:text-white focus:ring-2 outline-none transition-shadow text-sm ${
+                                  recruitmentInviteStatus === 'invalid'
+                                    ? 'border-red-400 dark:border-red-500/60 focus:ring-red-500/40'
+                                    : recruitmentInviteStatus === 'valid'
+                                    ? 'border-emerald-400 dark:border-emerald-500/60 focus:ring-emerald-500/40'
+                                    : 'border-slate-200 dark:border-slate-700 focus:ring-orange-500/50'
+                                }`}
+                                value={rConfig.link ?? (config?.discordLink ?? '')}
+                                onChange={e => updateRConfig('link', e.target.value, false)}
+                                onBlur={e => {
+                                  const val = e.target.value;
+                                  updateRConfig('link', val, true);
+                                  if (val.trim()) {
+                                    verifyRecruitmentInvite(val);
+                                  } else {
+                                    setRecruitmentInviteStatus(null);
+                                  }
+                                }}
+                                placeholder="https://discord.gg/..."
+                              />
+                              {checkingRecruitmentInvite && (
+                                <div className="absolute right-3 top-2.5 flex items-center gap-1.5 text-xs text-slate-400">
+                                  <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                              )}
+                            </div>
+
+                            {recruitmentInviteStatus === 'valid' && (
+                              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                <Check className="w-3.5 h-3.5 shrink-0" />
+                                <span>{t('clan_recruitment_link_valid') || 'Ссылка активна'}</span>
+                              </div>
+                            )}
+                            {recruitmentInviteStatus === 'invalid' && (
+                              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-red-600 dark:text-red-400 font-medium">
+                                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                <span>{t('clan_recruitment_link_invalid') || 'Ссылка недействительна или была удалена в Discord'}</span>
+                              </div>
+                            )}
                           </div>
                           
                           <div>
@@ -2645,6 +2885,61 @@ export default function ClanManager() {
                               onBlur={e => updateRConfig('banner', e.target.value, true)}
                               placeholder="https://i.imgur.com/..."
                             />
+                          </div>
+                        </div>
+
+                        {/* Лидер клана в embed */}
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                              <UserCheck className="w-3.5 h-3.5 text-orange-500" />
+                              Лидер клана (в embed-сообщении набора)
+                            </label>
+                            {rConfig.customLeaderId && (
+                              <button
+                                type="button"
+                                onClick={() => updateRConfig('customLeaderId', '', true)}
+                                className="text-[11px] text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 transition-colors cursor-pointer"
+                              >
+                                <X className="w-3 h-3" />
+                                <span>Стереть (вернуть авто-определение)</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            По умолчанию лидер определяется по назначенной роли Лидера в Discord:{' '}
+                            <strong className="text-slate-700 dark:text-slate-300">
+                              {(() => {
+                                const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
+                                if (leaders.length > 0) {
+                                  return leaders.map(m => m.displayName || m.username).join(', ');
+                                }
+                                return 'Роль не выдана ни одному участнику';
+                              })()}
+                            </strong>
+                            . Вы можете принудительно указать Discord ID пользователя:
+                          </div>
+
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50"
+                              placeholder="Укажите Discord ID пользователя (например: 718872288000000000)"
+                              value={rConfig.customLeaderId || ''}
+                              onChange={e => updateRConfig('customLeaderId', e.target.value, false)}
+                              onBlur={e => updateRConfig('customLeaderId', e.target.value, true)}
+                            />
+                            {rConfig.customLeaderId && (
+                              <button
+                                type="button"
+                                onClick={() => updateRConfig('customLeaderId', '', true)}
+                                className="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                                title="Стереть"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </div>
                         
@@ -3237,29 +3532,283 @@ export default function ClanManager() {
                           if (rosterData.roleNamesJson) roleNamesMap = JSON.parse(rosterData.roleNamesJson);
                         } catch(e) {}
                         
+                        const mId = member.userId || member.id;
                         return (
-                          <div key={member.userId} className="flex items-center p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <img src={member.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-12 h-12 rounded-full mr-4 shadow-sm" />
-                            <div className="flex-1 overflow-hidden">
-                              <div className="font-medium text-slate-900 dark:text-white truncate">{member.displayName}</div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{member.username}</div>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {member.roles.map(rId => {
-                                  // Find internal role key matching this ID
-                                  const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'].find(k => config[k] === rId);
-                                  if (roleKey) {
-                                    const shortKey = roleKey.replace('RoleId', ''); // e.g. leader
-                                    const roleName = roleNamesMap[shortKey] || shortKey;
-                                    return <span key={rId} className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md">{roleName}</span>
-                                  }
-                                  return null;
-                                })}
+                          <div key={mId} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700 gap-3">
+                            <div className="flex items-center overflow-hidden flex-1">
+                              <img src={member.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-12 h-12 rounded-full mr-4 shadow-sm shrink-0 object-cover" />
+                              <div className="flex-1 overflow-hidden">
+                                <div className="font-medium text-slate-900 dark:text-white truncate">{member.displayName}</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{member.username}</div>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {member.roles.map(rId => {
+                                    // Find internal role key matching this ID
+                                    const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'].find(k => config[k] === rId);
+                                    if (roleKey) {
+                                      const shortKey = roleKey.replace('RoleId', ''); // e.g. leader
+                                      const roleName = roleNamesMap[shortKey] || shortKey;
+                                      return <span key={rId} className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md">{roleName}</span>
+                                    }
+                                    return null;
+                                  })}
+                                  {(() => {
+                                    const dos = dossiersData?.find(d => d.userId === mId);
+                                    if (!dos) return null;
+                                    if (dos.cheaterStatus === 'CONFIRMED' || (dos.cheaterReport && !dos.cheaterStatus)) {
+                                      return (
+                                        <span key="cheater" className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-md border border-red-200 dark:border-red-800">
+                                          🚨 {t('clan_dossier_badge_cheater_confirmed') || '100% Читер'}
+                                        </span>
+                                      );
+                                    }
+                                    if (dos.cheaterStatus === 'SUSPICION') {
+                                      return (
+                                        <span key="suspicion" className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-md border border-amber-200 dark:border-amber-800">
+                                          ⚠️ {t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}
+                                        </span>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                </div>
                               </div>
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const existing = dossiersData?.find(d => d.userId === mId);
+                                const profileToOpen = existing || {
+                                  userId: mId,
+                                  username: member.displayName || member.username,
+                                  avatar: member.avatarUrl,
+                                  status: 'ACTIVE'
+                                };
+                                setSelectedProfileForDossier(profileToOpen);
+                              }}
+                              className="p-2 text-slate-400 hover:text-orange-500 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                              title="Открыть личное дело / Досье"
+                            >
+                              <BookOpen className="w-4 h-4" />
+                            </button>
                           </div>
                         );
                       })
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'dossier' && (
+              <div className="space-y-6 max-w-5xl">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-orange-500" />
+                      <span>{t('clan_dossier_title') || 'Личные дела и архив (Досье)'}</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {t('clan_dossier_desc') || 'База данных участников клана, оценки навыков, заметки офицеров и архив бывших соклановцев'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => fetchDossiers(dossierFilter, dossierSearch)}
+                      className="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingDossiers ? 'animate-spin text-orange-500' : ''}`} />
+                      <span>{t('common_refresh') || 'Обновить'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filters & Search Toolbar */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 rounded-2xl">
+                  {/* Status filter pills */}
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                    {[
+                      { id: 'ALL', label: t('clan_dossier_filter_all') || 'Все' },
+                      { id: 'ACTIVE', label: t('clan_dossier_filter_active') || 'В клане' },
+                      { id: 'LEFT', label: t('clan_dossier_filter_left') || 'Вышли' },
+                      { id: 'KICKED', label: t('clan_dossier_filter_kicked') || 'Исключены' },
+                      { id: 'BLACKLISTED', label: t('clan_dossier_filter_blacklisted') || 'ЧС' },
+                    ].map(f => {
+                      const isSel = dossierFilter === f.id;
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => {
+                            setDossierFilter(f.id);
+                            fetchDossiers(f.id, dossierSearch);
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                            isSel
+                              ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/20'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Search input */}
+                  <div className="relative md:w-72">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={dossierSearch}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setDossierSearch(val);
+                        fetchDossiers(dossierFilter, val);
+                      }}
+                      placeholder={t('clan_dossier_search_placeholder') || 'Поиск по нику, ID или Steam...'}
+                      className="w-full pl-9 pr-8 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                    />
+                    {dossierSearch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDossierSearch('');
+                          fetchDossiers(dossierFilter, '');
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dossier Cards Grid */}
+                {loadingDossiers && (!dossiersData || dossiersData.length === 0) ? (
+                  <div className="flex justify-center items-center py-16">
+                    <div className="flex flex-col items-center gap-3">
+                      <RefreshCw className="w-7 h-7 animate-spin text-orange-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('clan_loading') || 'Загрузка данных...'}</span>
+                    </div>
+                  </div>
+                ) : !dossiersData || dossiersData.length === 0 ? (
+                  <div className="bg-slate-50/60 dark:bg-slate-800/20 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center">
+                    <BookOpen className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      {t('clan_dossier_empty_title') || 'Личные дела не найдены'}
+                    </h4>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+                      {t('clan_dossier_empty_desc') || 'При принятии кандидатов их анкеты и данные автоматически сохраняются сюда. Вы также можете открыть досье любого соклановца из вкладки "Состав".'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {dossiersData.map(dossier => {
+                      const st = dossier.status || 'ACTIVE';
+                      const statusColor = 
+                        st === 'ACTIVE' 
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-200 dark:border-green-800' 
+                          : st === 'LEFT' 
+                            ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700' 
+                            : st === 'KICKED' 
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800' 
+                              : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200 dark:border-purple-800';
+
+                      const statusLabel = 
+                        st === 'ACTIVE' ? (t('clan_dossier_status_active') || 'В клане') : 
+                        st === 'LEFT' ? (t('clan_dossier_status_left') || 'Вышел') : 
+                        st === 'KICKED' ? (t('clan_dossier_status_kicked') || 'Исключен') : 
+                        (t('clan_dossier_status_blacklisted') || 'В черном списке');
+
+                      return (
+                        <div 
+                          key={dossier.id || dossier.userId} 
+                          className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/80 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3 group"
+                        >
+                          <div>
+                            {/* Card Top: Avatar & Name */}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <img 
+                                  src={dossier.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'} 
+                                  alt="" 
+                                  className="w-11 h-11 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-700 shadow-sm" 
+                                />
+                                <div className="overflow-hidden">
+                                  <div className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                                    {dossier.username || dossier.userId}
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 font-mono truncate">
+                                    ID: {dossier.userId}
+                                  </div>
+                                </div>
+                              </div>
+                              <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border uppercase tracking-wider shrink-0 ${statusColor}`}>
+                                {statusLabel}
+                              </span>
+                            </div>
+
+                            {/* Tags & Badges */}
+                            <div className="flex flex-wrap items-center gap-1.5 mt-3">
+                              {(dossier.verifiedHours || dossier.hoursInRust) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-[11px] font-medium border border-blue-200 dark:border-blue-900/50">
+                                  <Clock className="w-3 h-3 text-blue-500" />
+                                  <span>{dossier.verifiedHours ? `${dossier.verifiedHours} ч.` : `${dossier.hoursInRust} ч.`}</span>
+                                </span>
+                              )}
+
+                              {dossier.age && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium">
+                                  {dossier.age} лет
+                                </span>
+                              )}
+
+                              {Number(dossier.overallRating) > 0 && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-[11px] font-semibold border border-amber-200 dark:border-amber-900/50">
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                  <span>{dossier.overallRating}/5</span>
+                                </span>
+                              )}
+
+                              {(dossier.cheaterStatus === 'CONFIRMED' || (dossier.cheaterReport && !dossier.cheaterStatus)) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[10px] font-bold border border-red-200 dark:border-red-800">
+                                  <AlertTriangle className="w-3 h-3 text-red-500" />
+                                  <span>{t('clan_dossier_badge_cheater_confirmed') || '100% Читер'}</span>
+                                </span>
+                              )}
+                              {dossier.cheaterStatus === 'SUSPICION' && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
+                                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                                  <span>{t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Notes preview */}
+                            {dossier.notes && (
+                              <p className="mt-2.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 italic bg-slate-50 dark:bg-slate-800/40 p-2 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                                "{dossier.notes}"
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Action button */}
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedProfileForDossier(dossier)}
+                              className="w-full py-1.5 px-3 bg-slate-100 hover:bg-orange-500 text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-orange-500 dark:text-slate-300 dark:hover:text-white rounded-xl text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                            >
+                              <BookOpen className="w-3.5 h-3.5" />
+                              <span>{t('clan_dossier_open_btn') || 'Открыть досье'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -4542,8 +5091,32 @@ export default function ClanManager() {
           </div>
         </div>
       ) : (
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl font-medium border border-red-100 dark:border-red-900/50">
-          {t('clan_failed')}
+        <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-6 rounded-2xl font-medium border border-red-200 dark:border-red-900/50 flex flex-col items-center justify-center text-center gap-3">
+          <AlertTriangle className="w-8 h-8 text-red-500 shrink-0" />
+          <div className="space-y-1">
+            <h3 className="font-bold text-base text-red-700 dark:text-red-300">
+              {t('clan_failed')}
+            </h3>
+            {error && (
+              <p className="text-xs text-red-500 dark:text-red-400/80 font-mono max-w-md">
+                {error === 'Not linked or bot offline' 
+                  ? (t('clan_err_bot_offline') || 'Бот не в сети или сервер не привязан. Убедитесь, что бот запущен.')
+                  : error}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              fetchConfig();
+              fetchDiscordInfo();
+            }}
+            className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>{t('clan_retry') || 'Повторить попытку'}</span>
+          </button>
         </div>
       )}
       
@@ -4976,6 +5549,18 @@ export default function ClanManager() {
             </div>
           </div>
         </div>
+      )}
+
+      {selectedProfileForDossier && (
+        <MemberDossierModal
+          isOpen={Boolean(selectedProfileForDossier)}
+          onClose={() => setSelectedProfileForDossier(null)}
+          profile={selectedProfileForDossier}
+          onSave={handleSaveDossier}
+          onSearchGlobal={handleGlobalSearchDossier}
+          onSendCrossClanMessage={handleSendCrossClanMessage}
+          canEdit={true}
+        />
       )}
     </div>
   );
