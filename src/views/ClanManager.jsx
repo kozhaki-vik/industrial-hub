@@ -73,7 +73,7 @@ export const reportClanErrorToTelegram = (errorTitle, errorDetails) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hwid: localStorage.getItem('hub_hwid') || 'UnknownClient',
-          version: '2.7.55',
+          version: '2.7.56',
           errorStack: fullErrorText
         })
       }).catch(() => {});
@@ -1686,7 +1686,7 @@ export default function ClanManager() {
     { id: 'recruitment', label: 'Наборы', icon: UserPlus },
     { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
     { id: 'roster', label: 'Состав', icon: UserCheck },
-    { id: 'dossier', label: t('clan_tab_dossier') || 'Досье и архив', icon: BookOpen },
+    { id: 'dossier', label: t('clan_tab_dossier') || 'Досье', icon: BookOpen },
     { id: 'stats', label: 'Статистика', icon: BarChart3 },
     { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
     { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
@@ -1717,24 +1717,6 @@ export default function ClanManager() {
           )}
         </div>
         <div className="flex items-center gap-2.5">
-          <button 
-            onClick={() => setShowSetupWizard(true)} 
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-              config && !isBotConfigured(config)
-                ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 border border-amber-400'
-                : 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700 shadow-sm hover:shadow'
-            }`}
-          >
-            <Sparkles className={`w-3.5 h-3.5 shrink-0 ${config && !isBotConfigured(config) ? 'text-white' : 'text-blue-500'}`} />
-            <span>{t('clan_wizard_btn')}</span>
-          </button>
-          <button 
-            onClick={() => setShowResetModal(true)} 
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-300 dark:hover:border-amber-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span>{t('clan_reset_btn') || 'Сброс настроек'}</span>
-          </button>
           <button 
             onClick={handleUnlink} 
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
@@ -1801,7 +1783,24 @@ export default function ClanManager() {
                 </h3>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Название клана *</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {t('clan_name_label') || 'Название клана'} *
+                    </label>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400 select-none">
+                        {t('clan_recruitment_open_title') || 'Набор в клан открыт'}
+                      </span>
+                      <ToggleSwitch
+                        checked={!!config.recruitmentOpen}
+                        onChange={val => {
+                          const updated = { ...config, recruitmentOpen: val };
+                          queueAutoSave(updated, true);
+                        }}
+                        activeColor="blue"
+                      />
+                    </div>
+                  </div>
                   <input 
                     type="text" 
                     required
@@ -1953,43 +1952,49 @@ export default function ClanManager() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 select-none">
-                      {t('clan_recruitment_open_title') || 'Набор в клан открыт'}
+                {/* Actions: Setup Wizard & Factory Reset in 2 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  {/* Master / Wizard Setup Card */}
+                  <div className="p-4 border border-blue-200 dark:border-blue-800/60 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 flex flex-col justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-blue-500 shrink-0" />
+                        <span>{t('clan_wizard_btn') || 'Мастер настройки'}</span>
+                      </h4>
+                      <p className="text-xs text-blue-700 dark:text-blue-300/80 mt-1 leading-relaxed">
+                        {t('clan_wizard_card_desc') || 'Пошаговый мастер автоматической инициализации ролей, каналов и базовых правил бота.'}
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {t('clan_recruitment_open_hint') || 'Позволяет кандидатам подавать заявки через Discord'}
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowSetupWizard(true)}
+                      className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t('clan_wizard_btn') || 'Мастер настройки'}</span>
+                    </button>
                   </div>
-                  <ToggleSwitch
-                    checked={!!config.recruitmentOpen}
-                    onChange={val => {
-                      const updated = { ...config, recruitmentOpen: val };
-                      queueAutoSave(updated, true);
-                    }}
-                    activeColor="blue"
-                  />
-                </div>
 
-                {/* Factory Reset Section */}
-                <div className="p-4 border border-amber-200 dark:border-amber-800/60 rounded-xl bg-amber-50/40 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                      <RotateCcw className="w-4 h-4 text-amber-500" />
-                      {t('clan_reset_btn') || 'Сброс настроек бота'}
-                    </h4>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                      {t('clan_reset_general_card_desc') || 'Выборочно вернуть роли, каналы, права или весь бот к исходному заводскому состоянию.'}
-                    </p>
+                  {/* Factory Reset Card */}
+                  <div className="p-4 border border-amber-200 dark:border-amber-800/60 rounded-xl bg-amber-50/40 dark:bg-amber-950/20 flex flex-col justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                        <RotateCcw className="w-4 h-4 text-amber-500 shrink-0" />
+                        <span>{t('clan_reset_btn') || 'Сброс настроек'}</span>
+                      </h4>
+                      <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                        {t('clan_reset_general_card_desc') || 'Выборочно вернуть роли, каналы, права или весь бот к исходному заводскому состоянию.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowResetModal(true)}
+                      className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t('clan_reset_btn') || 'Сбросить...'}</span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowResetModal(true)}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0 cursor-pointer"
-                  >
-                    {t('clan_reset_btn') || 'Сбросить...'}
-                  </button>
                 </div>
               </form>
             )}
@@ -2387,13 +2392,32 @@ export default function ClanManager() {
                   } catch(e) {}
                   
                   const channelKeys = ['logs', 'applications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
-                  const roleKeys = ['trial', 'main', 'caller', 'deputyLeader', 'leader'];
-                  const sideRoles = ['farmer', 'electrician', 'builder', 'pilot', 'vip'];
-                  const allRoles = [...roleKeys, ...sideRoles];
+                  
+                  const matrixHierarchyRoles = [
+                    { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: 'Испытательный' },
+                    { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: 'Main Состав' },
+                    { key: 'caller', dbKey: 'callerRoleId', nameKey: 'caller', defaultName: 'Коллер' },
+                    { key: 'deputy', dbKey: 'deputyLeaderRoleId', nameKey: 'deputy', defaultName: 'Зам. Лидера' },
+                    { key: 'leader', dbKey: 'leaderRoleId', nameKey: 'leader', defaultName: 'Лидер' }
+                  ];
+
+                  const matrixSideRoles = [
+                    { key: 'farmer', dbKey: 'farmerRoleId', nameKey: 'farmer', defaultName: 'Фармер (Ресурсы)' },
+                    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', nameKey: 'plantFarmer', defaultName: 'Фермер (Урожай)' },
+                    { key: 'electrician', dbKey: 'electricianRoleId', nameKey: 'electrician', defaultName: 'Электрик' },
+                    { key: 'builder', dbKey: 'builderRoleId', nameKey: 'builder', defaultName: 'Билдер' },
+                    { key: 'pilot', dbKey: 'pilotRoleId', nameKey: 'pilot', defaultName: 'Пилот' },
+                    { key: 'sponsor', dbKey: 'sponsorRoleId', nameKey: 'sponsor', defaultName: 'Спонсор' },
+                    { key: 'vip', dbKey: 'vipRoleId', nameKey: 'vip', defaultName: 'VIP' }
+                  ];
+
+                  const allMatrixRoles = [...matrixHierarchyRoles, ...matrixSideRoles];
                   
                   // Helper mapping to actual discord role IDs
                   const roleIdMap = {};
-                  allRoles.forEach(r => roleIdMap[r] = config[r + 'RoleId']);
+                  allMatrixRoles.forEach(r => {
+                    roleIdMap[r.key] = config[r.dbKey];
+                  });
                   
                   const togglePermission = (roleKey, channelKey) => {
                     const roleId = roleIdMap[roleKey];
@@ -2408,11 +2432,11 @@ export default function ClanManager() {
                     if (isGranting) {
                       currentSet.add(channelId);
                       
-                      // Auto-inherit for higher roles
-                      const roleIndex = roleKeys.indexOf(roleKey);
+                      // Auto-inherit for higher hierarchy roles
+                      const roleIndex = matrixHierarchyRoles.findIndex(r => r.key === roleKey);
                       if (roleIndex !== -1) {
-                        for (let i = roleIndex + 1; i < roleKeys.length; i++) {
-                          const higherRoleId = roleIdMap[roleKeys[i]];
+                        for (let i = roleIndex + 1; i < matrixHierarchyRoles.length; i++) {
+                          const higherRoleId = roleIdMap[matrixHierarchyRoles[i].key];
                           if (higherRoleId) {
                             if (!newPermissions[higherRoleId]) newPermissions[higherRoleId] = [];
                             const hSet = new Set(newPermissions[higherRoleId]);
@@ -2448,25 +2472,27 @@ export default function ClanManager() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                          {allRoles.map((rKey, idx) => {
+                          {allMatrixRoles.map((rDef, idx) => {
+                            const rKey = rDef.key;
                             const rId = roleIdMap[rKey];
                             const isConfigured = !!rId;
                             
-                            // Find name from roleNamesJson
-                            let rName = rKey;
+                            // Find name from roleNamesJson or fallback to defaultName
+                            let rName = rDef.defaultName;
                             try {
                               if (config.roleNamesJson) {
-                                const names = JSON.parse(config.roleNamesJson);
-                                if (names[rKey]) rName = names[rKey];
+                                const names = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
+                                if (names[rDef.nameKey]) rName = names[rDef.nameKey];
+                                else if (names[rKey]) rName = names[rKey];
                               }
                             } catch(e) {}
                             
                             return (
-                              <tr key={rKey} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 ${idx === roleKeys.length ? 'border-t-2 border-slate-200 dark:border-slate-700' : ''}`}>
+                              <tr key={rKey} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 ${idx === matrixHierarchyRoles.length ? 'border-t-2 border-slate-200 dark:border-slate-700' : ''}`}>
                                 <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center">
-                                  {!isConfigured && <span className="w-2 h-2 rounded-full bg-red-400 mr-2" title="Роль не привязана к Discord"></span>}
-                                  {isConfigured && <span className="w-2 h-2 rounded-full bg-green-400 mr-2"></span>}
-                                  {rName}
+                                  {!isConfigured && <span className="w-2 h-2 rounded-full bg-red-400 mr-2 shrink-0" title="Роль не привязана к Discord"></span>}
+                                  {isConfigured && <span className="w-2 h-2 rounded-full bg-green-400 mr-2 shrink-0"></span>}
+                                  <span className="truncate">{rName}</span>
                                 </td>
                                 {channelKeys.map(cKey => {
                                   const cId = cConfig[cKey] || (cKey === 'logs' ? defaultLogChannelId : null);
@@ -2476,7 +2502,7 @@ export default function ClanManager() {
                                       <input 
                                         type="checkbox"
                                         disabled={!isConfigured || !cId}
-                                        checked={isAllowed}
+                                        checked={Boolean(isAllowed)}
                                         onChange={() => togglePermission(rKey, cKey)}
                                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                       />
@@ -3557,7 +3583,7 @@ export default function ClanManager() {
                                     if (dos.cheaterStatus === 'CONFIRMED' || (dos.cheaterReport && !dos.cheaterStatus)) {
                                       return (
                                         <span key="cheater" className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-md border border-red-200 dark:border-red-800">
-                                          🚨 {t('clan_dossier_badge_cheater_confirmed') || '100% Читер'}
+                                          🚨 {t('clan_dossier_badge_cheater_confirmed') || 'Читер'}
                                         </span>
                                       );
                                     }
@@ -3607,7 +3633,7 @@ export default function ClanManager() {
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <BookOpen className="w-5 h-5 text-orange-500" />
-                      <span>{t('clan_dossier_title') || 'Личные дела и архив (Досье)'}</span>
+                      <span>{t('clan_dossier_title') || 'Досье'}</span>
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       {t('clan_dossier_desc') || 'База данных участников клана, оценки навыков, заметки офицеров и архив бывших соклановцев'}
@@ -3776,7 +3802,7 @@ export default function ClanManager() {
                               {(dossier.cheaterStatus === 'CONFIRMED' || (dossier.cheaterReport && !dossier.cheaterStatus)) && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[10px] font-bold border border-red-200 dark:border-red-800">
                                   <AlertTriangle className="w-3 h-3 text-red-500" />
-                                  <span>{t('clan_dossier_badge_cheater_confirmed') || '100% Читер'}</span>
+                                  <span>{t('clan_dossier_badge_cheater_confirmed') || 'Читер'}</span>
                                 </span>
                               )}
                               {dossier.cheaterStatus === 'SUSPICION' && (

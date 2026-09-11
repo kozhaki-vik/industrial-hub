@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   X, Star, Shield, ShieldAlert, AlertTriangle, Check, Copy, ExternalLink, 
@@ -317,7 +317,7 @@ export default function MemberDossierModal({
                 {getStatusBadge(status)}
                 {cheaterStatus === 'CONFIRMED' && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-600 text-white shadow-sm flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3" /> 100% Читер
+                    <ShieldAlert className="w-3 h-3" /> Читер
                   </span>
                 )}
                 {cheaterStatus === 'SUSPICION' && (
@@ -614,7 +614,7 @@ export default function MemberDossierModal({
                             : 'text-slate-500 hover:text-red-600 dark:hover:text-red-400'
                         }`}
                       >
-                        🚨 100% Читер
+                        🚨 Читер
                       </button>
                     </div>
                   </div>
@@ -666,7 +666,7 @@ export default function MemberDossierModal({
                           )}
                         </div>
                         <span className="text-[10px] text-slate-400 mt-1 block">
-                          Разрешена строго одна проверенная веб-ссылка на видеозапись или скриншот на хостинге.
+                          Веб-ссылка на видеозапись или скриншот на хостинге.
                         </span>
                       </div>
                     </div>
