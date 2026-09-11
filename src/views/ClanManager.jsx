@@ -166,11 +166,29 @@ export const reportClanErrorToTelegram = (errorTitle, errorDetails) => {
 
 const sanitizeClanConfig = (cfg) => {
   if (!cfg) return cfg;
-  return {
+  const sanitized = {
     ...cfg,
     name: cfg.name ?? '',
     discordLink: cfg.discordLink ?? ''
   };
+
+  if (sanitized.roleNamesJson) {
+    try {
+      const roleNames = typeof sanitized.roleNamesJson === 'string' ? JSON.parse(sanitized.roleNamesJson) : { ...sanitized.roleNamesJson };
+      let changed = false;
+      for (const [k, v] of Object.entries(roleNames)) {
+        if (typeof v === 'string' && (v.toLowerCase() === 'clan manager' || v.toLowerCase().includes('clan manager'))) {
+          delete roleNames[k];
+          changed = true;
+        }
+      }
+      if (changed) {
+        sanitized.roleNamesJson = JSON.stringify(roleNames);
+      }
+    } catch (e) {}
+  }
+
+  return sanitized;
 };
 
 function SaveButton() {
@@ -1584,7 +1602,7 @@ export default function ClanManager() {
           }
         } catch (e) {}
         const fromConfig = roleNames[r.key];
-        roleName = (fromConfig !== undefined ? fromConfig : (r.defaultName || r.defaultRu || '')).trim() || 'Новая роль';
+        roleName = (fromConfig !== undefined && !fromConfig.toLowerCase().includes('clan manager') ? fromConfig : (r.defaultName || r.defaultRu || '')).trim() || 'Новая роль';
       }
     }
 
@@ -3089,7 +3107,8 @@ export default function ClanManager() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {visibleStandardRoles.map(r => {
-                          const currentName = roleNames[r.key] !== undefined ? roleNames[r.key] : (r.defaultName || r.defaultRu);
+                          const rawName = roleNames[r.key];
+                          const currentName = (rawName !== undefined && !rawName.toLowerCase().includes('clan manager')) ? rawName : (r.defaultName || r.defaultRu);
                           const boundRoleId = config[r.dbKey] || '';
                           const isCreatingThis = creatingRoleKey === r.key;
 
