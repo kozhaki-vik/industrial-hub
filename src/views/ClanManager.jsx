@@ -284,6 +284,31 @@ export default function ClanManager() {
   const [creatingRecruitmentInvite, setCreatingRecruitmentInvite] = useState(false);
   const [checkingRecruitmentInvite, setCheckingRecruitmentInvite] = useState(false);
 
+  // Bot Settings Search state
+  const [botSearchQuery, setBotSearchQuery] = useState('');
+  const prevTabBeforeSearch = useRef('general');
+
+  const handleBotSearchChange = (query) => {
+    setBotSearchQuery(query);
+    if (query.trim().length > 0) {
+      if (activeTab !== 'search') {
+        prevTabBeforeSearch.current = activeTab;
+        setActiveTab('search');
+      }
+    } else {
+      if (activeTab === 'search') {
+        setActiveTab(prevTabBeforeSearch.current || 'general');
+      }
+    }
+  };
+
+  const handleBotSearchClear = () => {
+    setBotSearchQuery('');
+    if (activeTab === 'search') {
+      setActiveTab(prevTabBeforeSearch.current || 'general');
+    }
+  };
+
   // --- Centralized Debounced & Throttled Auto-Save Engine ---
   const latestConfigRef = useRef(config);
   latestConfigRef.current = config;
@@ -1823,6 +1848,613 @@ export default function ClanManager() {
     { id: 'votes', label: 'Голосования', icon: Vote },
   ];
 
+  const botSearchIndex = [
+    // General
+    {
+      id: 'clan_name',
+      tabId: 'general',
+      tabName: t('clan_tab_general') || 'Основное',
+      tabIcon: Settings,
+      title: t('clan_name_label') || 'Название клана',
+      desc: 'Отображение названия клана в эмбедах, логах, карточках и приветствиях бота',
+      keywords: ['название', 'имя', 'клан', 'тег', 'name', 'clan', 'title', 'tag']
+    },
+    {
+      id: 'recruitment_open',
+      tabId: 'general',
+      tabName: t('clan_tab_general') || 'Основное',
+      tabIcon: Settings,
+      title: t('clan_recruitment_open_title') || 'Набор в клан открыт',
+      desc: 'Быстрый переключатель статуса приема новых заявок в клан',
+      keywords: ['набор', 'статус', 'прием', 'открыт', 'закрыт', 'recruitment', 'open', 'status']
+    },
+    {
+      id: 'discord_link',
+      tabId: 'general',
+      tabName: t('clan_tab_general') || 'Основное',
+      tabIcon: Settings,
+      title: t('clan_discord_link_title') || 'Ссылка-приглашение Discord',
+      desc: 'Постоянная ссылка для приглашения участников на Discord сервер клана',
+      keywords: ['инвайт', 'ссылка', 'дискорд', 'приглашение', 'invite', 'discord', 'url', 'link']
+    },
+    {
+      id: 'setup_wizard',
+      tabId: 'general',
+      tabName: t('clan_tab_general') || 'Основное',
+      tabIcon: Settings,
+      title: 'Мастер быстрой настройки (Setup Wizard)',
+      desc: 'Пошаговый мастер первичной привязки обязательных ролей и каналов',
+      keywords: ['мастер', 'визард', 'настройка', 'быстрая', 'wizard', 'setup', 'помощник', 'автонастройка']
+    },
+    {
+      id: 'reset_config',
+      tabId: 'general',
+      tabName: t('clan_tab_general') || 'Основное',
+      tabIcon: Settings,
+      title: 'Сброс настроек бота',
+      desc: 'Выборочный или полный сброс сохраненной конфигурации бота',
+      keywords: ['сброс', 'очистить', 'удалить', 'reset', 'clear', 'default']
+    },
+
+    // Roles
+    {
+      id: 'role_leader',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Лидер клана (Leader)',
+      desc: 'Главная административная роль главы клана с максимальными правами и иммунитетом',
+      keywords: ['лидер', 'глава', 'leader', 'основатель', 'роль', 'главный', 'руководитель']
+    },
+    {
+      id: 'role_deputy',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Заместитель лидера (Deputy Leader)',
+      desc: 'Роль соруководителя и правой руки лидера клана',
+      keywords: ['заместитель', 'зам', 'deputy', 'соруководитель', 'помощник']
+    },
+    {
+      id: 'role_caller',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Коллер (Coller / Caller)',
+      desc: 'Командующий рейдами, тактическими операциями и боевыми вылазками',
+      keywords: ['коллер', 'рейд', 'caller', 'coller', 'координатор', 'тактик']
+    },
+    {
+      id: 'role_main_roster',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Основной состав (Main Roster)',
+      desc: 'Полноправные и постоянные участники клана',
+      keywords: ['состав', 'основа', 'основной', 'main', 'roster', 'мембер']
+    },
+    {
+      id: 'role_trial',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Испытательный срок / Новобранец (Trial)',
+      desc: 'Временный статус для новичков, недавно принятых в клан',
+      keywords: ['новобранец', 'испытательный', 'триал', 'новичок', 'trial', 'recruit']
+    },
+    {
+      id: 'role_farmer',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Фармер ресурсов (Miner / Farmer)',
+      desc: 'Добытчик серы, камня, металла и древесины',
+      keywords: ['фармер', 'руда', 'сера', 'камень', 'дерево', 'miner', 'farmer', 'ресурсы']
+    },
+    {
+      id: 'role_plant_farmer',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Фермер урожая (Farmer Crops/Plants)',
+      desc: 'Специалист по фермам конопли, ягод, клонированию и чаю',
+      keywords: ['фермер', 'трава', 'конопля', 'ягоды', 'чай', 'урожай', 'растения', 'клоны', 'plant']
+    },
+    {
+      id: 'role_electrician',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Электрик / Промышленник (Electrician)',
+      desc: 'Инженер по автоматизации, конвейерам и электросхемам',
+      keywords: ['электрик', 'электрика', 'схемы', 'конвейер', 'инженер', 'electrician']
+    },
+    {
+      id: 'role_builder',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Строитель / Билдер (Builder)',
+      desc: 'Проектировщик клановых баз, бункеров и турельных вышек',
+      keywords: ['строитель', 'билдер', 'база', 'бункер', 'постройка', 'builder']
+    },
+    {
+      id: 'role_pilot',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Пилот (Pilot)',
+      desc: 'Управление коптерами, транспортировка команды и лута',
+      keywords: ['пилот', 'коптер', 'вертолет', 'полеты', 'pilot']
+    },
+    {
+      id: 'role_sponsor',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: Спонсор (Sponsor)',
+      desc: 'Участники, поддерживающие развитие клана и клановые ресурсы',
+      keywords: ['спонсор', 'донат', 'поддержка', 'sponsor', 'vip']
+    },
+    {
+      id: 'role_vip',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Роль: VIP участник',
+      desc: 'Особый статус привилегированного участника сервера',
+      keywords: ['вип', 'vip', 'привилегия', 'особый']
+    },
+    {
+      id: 'role_templates',
+      tabId: 'roles',
+      tabName: 'Роли',
+      tabIcon: Users,
+      title: 'Шаблоны ролей и создание в Discord',
+      desc: 'Автоматическое создание недостающих ролей с готовыми цветами и правами',
+      keywords: ['создать роль', 'шаблон', 'автосоздание', 'цвет', 'create role', 'template']
+    },
+
+    // Channels
+    {
+      id: 'channel_tickets_category',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Категория для тикетов заявок',
+      desc: 'Discord категория, в которой бот автоматически создает приватные каналы тикетов',
+      keywords: ['тикеты', 'категория', 'заявки', 'tickets', 'category', 'приватные']
+    },
+    {
+      id: 'channel_logs',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал системных логов и аудита',
+      desc: 'Канал для отправки всех событий сервера, модерации и клана',
+      keywords: ['логи', 'аудит', 'журнал', 'logs', 'audit', 'события', 'канал логов']
+    },
+    {
+      id: 'channel_applications',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал входящих анкет кандидатов',
+      desc: 'Канал, куда бот присылает новые анкеты кандидатов',
+      keywords: ['анкеты', 'заявки', 'кандидаты', 'applications', 'форма']
+    },
+    {
+      id: 'channel_auto_rejected',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал скрытых авто-отказов (Silent Reject)',
+      desc: 'Лог отклоненных заявок при включенном режиме тихого отказа',
+      keywords: ['автоотказ', 'скрытый', 'отклонено', 'auto rejected', 'тихий отказ']
+    },
+    {
+      id: 'channel_rejected',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал отклоненных заявок',
+      desc: 'Архив всех отклоненных анкет с указанием причины отказа',
+      keywords: ['отклоненные', 'отказ', 'rejected', 'архив заявок']
+    },
+    {
+      id: 'channel_transcripts',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал HTML-транскриптов тикетов',
+      desc: 'Куда бот отправляет интерактивные HTML-истории закрытых тикетов',
+      keywords: ['транскрипт', 'история тикета', 'html', 'transcripts', 'архив тикетов']
+    },
+    {
+      id: 'channel_leaderboard',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал таблицы лидеров клана',
+      desc: 'Канал для автоматической публикации топа активности бойцов',
+      keywords: ['таблица лидеров', 'топ', 'рейтинг', 'лидерборд', 'leaderboard', 'активность']
+    },
+    {
+      id: 'channel_news',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал новостей клана',
+      desc: 'Канал для публикации важных клановых объявлений и новостей',
+      keywords: ['новости', 'объявления', 'анонсы', 'news', 'инфо']
+    },
+    {
+      id: 'channel_votes',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал клановых голосований',
+      desc: 'Канал для проведения голосований и принятия коллективных решений',
+      keywords: ['голосование', 'опрос', 'выборы', 'votes', 'poll']
+    },
+    {
+      id: 'channel_ads',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал рекламы и серверов',
+      desc: 'Канал для публикации анонсов вайпов серверов и рекламы',
+      keywords: ['реклама', 'анонсы', 'вайп', 'ads', 'промо']
+    },
+    {
+      id: 'channel_roster',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Канал состава клана (Roster)',
+      desc: 'Канал с авто-обновляемым эмбедом всех бойцов и их ролей',
+      keywords: ['состав', 'ростер', 'список бойцов', 'roster', 'мемберы']
+    },
+    {
+      id: 'channel_waiting_room',
+      tabId: 'channels',
+      tabName: 'Каналы',
+      tabIcon: Hash,
+      title: 'Комната ожидания собеседования (Waiting Room)',
+      desc: 'Голосовой канал, в котором кандидаты ожидают офицеров',
+      keywords: ['комната ожидания', 'ожидание', 'собеседование', 'waiting room', 'интервью']
+    },
+
+    // Recruitment
+    {
+      id: 'recruitment_min_age',
+      tabId: 'recruitment',
+      tabName: 'Наборы',
+      tabIcon: UserPlus,
+      title: 'Минимальный возраст кандидата',
+      desc: 'Автоматическая проверка возраста кандидата по анкете с авто-отклонением',
+      keywords: ['возраст', 'лет', 'минимальный возраст', 'age', 'min age', 'критерии']
+    },
+    {
+      id: 'recruitment_min_hours',
+      tabId: 'recruitment',
+      tabName: 'Наборы',
+      tabIcon: UserPlus,
+      title: 'Минимальные часы в Rust',
+      desc: 'Порог часов в игре, авто-суммирование со всех указанных профилей Steam',
+      keywords: ['часы', 'опыт', 'наиграно', 'hours', 'min hours', 'раст', 'rust hours']
+    },
+    {
+      id: 'recruitment_silent_reject',
+      tabId: 'recruitment',
+      tabName: 'Наборы',
+      tabIcon: UserPlus,
+      title: 'Тихий авто-отказ (Silent Auto-Reject)',
+      desc: 'Не создавать тикет при отказе по критериям, отправляя карточку офицерам в лог',
+      keywords: ['тихий отказ', 'скрытый отказ', 'silent reject', 'автоотказ', 'тикет']
+    },
+    {
+      id: 'recruitment_steam_check',
+      tabId: 'recruitment',
+      tabName: 'Наборы',
+      tabIcon: UserPlus,
+      title: 'Проверка Steam API и VAC-банов',
+      desc: 'Автоматическая валидация профилей кандидатов через Steam Web API',
+      keywords: ['стим', 'steam', 'vac', 'бан', 'вак', 'блокировка', 'steamid']
+    },
+    {
+      id: 'recruitment_battlemetrics',
+      tabId: 'recruitment',
+      tabName: 'Наборы',
+      tabIcon: UserPlus,
+      title: 'Интеграция с Battlemetrics',
+      desc: 'Проверка активности игрока на серверах Rust через Battlemetrics API',
+      keywords: ['баттлметрикс', 'батлметрикс', 'battlemetrics', 'сервера', 'bm']
+    },
+    {
+      id: 'recruitment_vac_days',
+      tabId: 'recruitment',
+      tabName: 'Наборы',
+      tabIcon: UserPlus,
+      title: 'Максимум дней с последнего VAC-бана',
+      desc: 'Порог давности игровых блокировок Steam для допуска кандидатов',
+      keywords: ['vac дни', 'дней с бана', 'давность бана', 'читер', 'vac days']
+    },
+
+    // Permissions
+    {
+      id: 'perm_roster',
+      tabId: 'permissions',
+      tabName: 'Права Доступа',
+      tabIcon: ShieldCheck,
+      title: 'Права: Просмотр состава клана',
+      desc: 'Настройка ролей, которым разрешен просмотр закрытого списка бойцов',
+      keywords: ['права состав', 'доступ', 'permissions', 'roster perm']
+    },
+    {
+      id: 'perm_votes',
+      tabId: 'permissions',
+      tabName: 'Права Доступа',
+      tabIcon: ShieldCheck,
+      title: 'Права: Запуск голосований',
+      desc: 'Роли, имеющие право инициировать новые опросы и голосования',
+      keywords: ['права голосование', 'создание опросов', 'poll perm', 'vote perm']
+    },
+    {
+      id: 'perm_ads',
+      tabId: 'permissions',
+      tabName: 'Права Доступа',
+      tabIcon: ShieldCheck,
+      title: 'Права: Рассылка рекламы',
+      desc: 'Роли, которым разрешено отправлять и настраивать рекламные анонсы',
+      keywords: ['права реклама', 'анонсы', 'ads perm']
+    },
+    {
+      id: 'perm_voice',
+      tabId: 'permissions',
+      tabName: 'Права Доступа',
+      tabIcon: ShieldCheck,
+      title: 'Права: Управление войсами',
+      desc: 'Права на блокировку, переименование и кик из комнат динамических войсов',
+      keywords: ['права войс', 'управление комнатой', 'voice perm']
+    },
+    {
+      id: 'perm_moderation',
+      tabId: 'permissions',
+      tabName: 'Права Доступа',
+      tabIcon: ShieldCheck,
+      title: 'Права: Выдача варнов и модерация',
+      desc: 'Роли, уполномоченные выдавать предупреждения и модерировать участников',
+      keywords: ['права модерация', 'варны', 'наказания', 'warn perm']
+    },
+
+    // Roster
+    {
+      id: 'roster_view',
+      tabId: 'roster',
+      tabName: 'Состав',
+      tabIcon: UserCheck,
+      title: 'Состав клана и управление бойцами',
+      desc: 'Таблица участников клана с указанием Discord-ролей и никнеймов',
+      keywords: ['состав', 'список', 'участники', 'бойцы', 'ростер', 'roster']
+    },
+    {
+      id: 'roster_sync_btn',
+      tabId: 'roster',
+      tabName: 'Состав',
+      tabIcon: UserCheck,
+      title: 'Синхронизация состава с сервером Discord',
+      desc: 'Принудительное обновление актуального списка участников клана',
+      keywords: ['синхронизация', 'обновить', 'sync', 'roster sync']
+    },
+
+    // Dossier
+    {
+      id: 'dossier_members',
+      tabId: 'dossier',
+      tabName: t('clan_tab_dossier') || 'Досье',
+      tabIcon: BookOpen,
+      title: 'Личные досье и архив бойцов',
+      desc: 'Персональные карточки бойцов с историей, заметками офицеров и статусом',
+      keywords: ['досье', 'карточка', 'заметки', 'характеристика', 'dossier', 'боец', 'архив']
+    },
+    {
+      id: 'dossier_blacklist',
+      tabId: 'dossier',
+      tabName: t('clan_tab_dossier') || 'Досье',
+      tabIcon: BookOpen,
+      title: 'Черный список игроков (Blacklist)',
+      desc: 'Внесение недобросовестных игроков, читеров или нарушителей в клановый бан-лист',
+      keywords: ['черный список', 'чс', 'банлист', 'предатели', 'blacklist']
+    },
+
+    // Stats
+    {
+      id: 'stats_voice_time',
+      tabId: 'stats',
+      tabName: 'Статистика',
+      tabIcon: BarChart3,
+      title: 'Голосовая активность участников (Voice Time)',
+      desc: 'Счетчик времени участников в голосовых каналах Discord',
+      keywords: ['войс статистика', 'время в войсе', 'онлайн', 'voice time', 'стата']
+    },
+    {
+      id: 'stats_messages_count',
+      tabId: 'stats',
+      tabName: 'Статистика',
+      tabIcon: BarChart3,
+      title: 'Текстовая активность (Сообщения)',
+      desc: 'Количество сообщений, отправленных каждым участником на сервере',
+      keywords: ['сообщения', 'активность чата', 'текст', 'messages', 'chat']
+    },
+    {
+      id: 'stats_warns_status',
+      tabId: 'stats',
+      tabName: 'Статистика',
+      tabIcon: BarChart3,
+      title: 'Статус предупреждений (Варны в статистике)',
+      desc: 'Быстрый просмотр и управление варнами конкретного участника из таблицы',
+      keywords: ['варны в статистике', 'просмотр варнов', 'warn modal']
+    },
+
+    // Moderation
+    {
+      id: 'mod_warn_system',
+      tabId: 'moderation',
+      tabName: t('clan_tab_moderation') || 'Модерация',
+      tabIcon: ShieldAlert,
+      title: 'Клановая система предупреждений (Clan Warnings)',
+      desc: 'Выдача, снятие и прозрачный журнал варнов с фиксацией модератора',
+      keywords: ['варн', 'предупреждение', 'warn', 'система варнов', 'наказание', 'штраф']
+    },
+    {
+      id: 'mod_warn_limit_val',
+      tabId: 'moderation',
+      tabName: t('clan_tab_moderation') || 'Модерация',
+      tabIcon: ShieldAlert,
+      title: 'Порог предупреждений до наказания (3, 4 или 5)',
+      desc: 'Количество варнов, при достижении которого бот автоматически наказывает нарушителя',
+      keywords: ['порог варнов', 'лимит', '3 варна', 'threshold', 'warn limit']
+    },
+    {
+      id: 'mod_auto_action',
+      tabId: 'moderation',
+      tabName: t('clan_tab_moderation') || 'Модерация',
+      tabIcon: ShieldAlert,
+      title: 'Автоматическое наказание (Таймаут, Кик, Бан)',
+      desc: 'Выбор санкции при превышении лимита варнов: Таймаут (1ч, 1д, 1нед), Кик или Бан',
+      keywords: ['таймаут', 'кик', 'бан', 'действие', 'action', 'timeout', 'kick', 'ban']
+    },
+    {
+      id: 'mod_bad_words_list',
+      tabId: 'moderation',
+      tabName: t('clan_tab_moderation') || 'Модерация',
+      tabIcon: ShieldAlert,
+      title: 'Черный список слов (Bad Words Blacklist)',
+      desc: 'Автоматическое удаление нецензурной лексики, оскорблений и запрещенных фраз',
+      keywords: ['мат', 'слова', 'запрещенные слова', 'фильтр мата', 'черный список', 'bad words', 'цензура']
+    },
+    {
+      id: 'mod_anti_mention_prot',
+      tabId: 'moderation',
+      tabName: t('clan_tab_moderation') || 'Модерация',
+      tabIcon: ShieldAlert,
+      title: 'Защита от спама упоминаниями (Anti-Mention)',
+      desc: 'Предотвращение массового спама @everyone, @here и пинга ролей',
+      keywords: ['упоминания', 'спам', 'анти-спам', 'everyone', 'here', 'anti mention', 'пинг']
+    },
+    {
+      id: 'mod_exempt_roles_list',
+      tabId: 'moderation',
+      tabName: t('clan_tab_moderation') || 'Модерация',
+      tabIcon: ShieldAlert,
+      title: 'Белый список исключений из модерации (Exempt)',
+      desc: 'Роли, на которые не распространяются автоматические фильтры и санкции',
+      keywords: ['белый список', 'исключения', 'иммунитет', 'exempt', 'whitelist']
+    },
+
+    // Logs
+    {
+      id: 'logs_mod_events',
+      tabId: 'logs',
+      tabName: t('clan_tab_logs') || 'Логирование',
+      tabIcon: ScrollText,
+      title: 'Логи модерации и наказаний',
+      desc: 'Аудит выдачи варнов, таймаутов, мутов, киков и банов',
+      keywords: ['логи модерации', 'журнал наказаний', 'warn logs']
+    },
+    {
+      id: 'logs_voice_events',
+      tabId: 'logs',
+      tabName: t('clan_tab_logs') || 'Логирование',
+      tabIcon: ScrollText,
+      title: 'Логи голосовых каналов',
+      desc: 'Отслеживание подключений, выходов, перемещений и серверных мутов',
+      keywords: ['логи войса', 'кто заходил', 'voice logs']
+    },
+    {
+      id: 'logs_message_events',
+      tabId: 'logs',
+      tabName: t('clan_tab_logs') || 'Логирование',
+      tabIcon: ScrollText,
+      title: 'Логи сообщений',
+      desc: 'Запись удаленных и отредактированных сообщений на сервере',
+      keywords: ['логи сообщений', 'удаленные сообщения', 'message logs']
+    },
+    {
+      id: 'logs_antiraid_events',
+      tabId: 'logs',
+      tabName: t('clan_tab_logs') || 'Логирование',
+      tabIcon: ScrollText,
+      title: 'Anti-Raid мониторинг',
+      desc: 'Оповещения при подозрительных массовых входах и рейдах на Discord сервер',
+      keywords: ['антирейд', 'рейд', 'anti-raid', 'атака', 'защита']
+    },
+
+    // Dynamic Voice
+    {
+      id: 'voice_master_channel',
+      tabId: 'voice',
+      tabName: t('clan_tab_voice') || 'Динамические войсы',
+      tabIcon: Volume2,
+      title: 'Мастер-канал создания войсов («Нажми для создания»)',
+      desc: 'Голосовой канал, при заходе в который бот мгновенно создает новую комнату',
+      keywords: ['динамические войсы', 'создание войса', 'нажми для создания', 'voice create', 'комната']
+    },
+    {
+      id: 'voice_room_limits',
+      tabId: 'voice',
+      tabName: t('clan_tab_voice') || 'Динамические войсы',
+      tabIcon: Volume2,
+      title: 'Настройка лимита участников комнат',
+      desc: 'Установка ограничения слотов пользователей для динамических каналов',
+      keywords: ['лимит войса', 'ограничение людей', 'слоты', 'room limit']
+    },
+    {
+      id: 'voice_active_rooms',
+      tabId: 'voice',
+      tabName: t('clan_tab_voice') || 'Динамические войсы',
+      tabIcon: Volume2,
+      title: 'Активные голосовые комнаты',
+      desc: 'Управление текущими комнатами: мут, кик, переименование, закрытие',
+      keywords: ['активные комнаты', 'управление войсом', 'кикнуть из войса', 'lock room']
+    },
+
+    // Ads
+    {
+      id: 'ads_publication',
+      tabId: 'ads',
+      tabName: 'Реклама',
+      tabIcon: Megaphone,
+      title: 'Автоматическая публикация рекламы',
+      desc: 'Периодическая рассылка анонсов вайпов серверов и наборов в клан',
+      keywords: ['реклама', 'авторассылка', 'анонсы', 'ads', 'промо']
+    },
+
+    // Votes
+    {
+      id: 'votes_manager',
+      tabId: 'votes',
+      tabName: 'Голосования',
+      tabIcon: Vote,
+      title: 'Клановые голосования и опросы',
+      desc: 'Создание голосований с таймерами и автоматическим подведением итогов',
+      keywords: ['голосование', 'опрос', 'выборы', 'votes', 'poll']
+    }
+  ];
+
+  const filteredBotSettings = !botSearchQuery.trim()
+    ? botSearchIndex
+    : botSearchIndex.filter(item => {
+        const q = botSearchQuery.toLowerCase().trim();
+        return (
+          item.title.toLowerCase().includes(q) ||
+          item.desc.toLowerCase().includes(q) ||
+          item.tabName.toLowerCase().includes(q) ||
+          item.keywords.some(k => k.toLowerCase().includes(q))
+        );
+      });
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-6xl mx-auto">
@@ -1844,6 +2476,40 @@ export default function ClanManager() {
                   {saveStatus === 'success' ? `✓ ${t('clan_saved_success') || 'Сохранено'}` : saveStatus === 'saving' ? (t('clan_roles_syncing') || 'Синхронизация...') : (t('clan_error') || 'Ошибка')}
                 </span>
               )}
+            </div>
+
+            {/* Search Input above tabs */}
+            <div className="mb-1.5 px-1 shrink-0 w-44 md:w-auto">
+              <div className="relative">
+                <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${activeTab === 'search' ? 'text-blue-500' : 'text-slate-400'}`} />
+                <input
+                  type="text"
+                  value={botSearchQuery}
+                  onChange={e => handleBotSearchChange(e.target.value)}
+                  onFocus={() => {
+                    if (botSearchQuery.trim() && activeTab !== 'search') {
+                      prevTabBeforeSearch.current = activeTab;
+                      setActiveTab('search');
+                    }
+                  }}
+                  placeholder={t('clan_search_placeholder') || 'Поиск настроек...'}
+                  className={`w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border transition-all ${
+                    activeTab === 'search'
+                      ? 'border-blue-500 ring-2 ring-blue-500/20 text-slate-900 dark:text-white font-medium'
+                      : 'border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
+                  } placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30`}
+                />
+                {botSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={handleBotSearchClear}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                    title={t('clan_search_clear') || 'Очистить'}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {config && !isBotConfigured(config) && (
@@ -1887,6 +2553,96 @@ export default function ClanManager() {
           {/* Tab Content */}
           <div className="flex-1 p-6 md:p-8 overflow-y-auto h-full scrollbar-thin">
             
+            {activeTab === 'search' && (
+              <div className="space-y-6 max-w-4xl animate-main-fade-in">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Search className="w-5 h-5 text-blue-500" />
+                      {t('clan_search_results_title') || 'Результаты поиска настроек'}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {filteredBotSettings.length > 0 
+                        ? `${t('clan_search_found') || 'Найдено настроек'}: ${filteredBotSettings.length} ${botSearchQuery ? `по запросу «${botSearchQuery}»` : ''}`
+                        : (t('clan_search_no_results') || 'Ничего не найдено')}
+                    </p>
+                  </div>
+                  {botSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={handleBotSearchClear}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors shadow-sm cursor-pointer"
+                    >
+                      {t('clan_search_clear') || 'Очистить поиск'}
+                    </button>
+                  )}
+                </div>
+
+                {!botSearchQuery.trim() ? (
+                  <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                    <Search className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      {t('clan_search_hint_title') || 'Введите запрос для быстрого поиска'}
+                    </h4>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto">
+                      {t('clan_search_hint_desc') || 'Ищите по ролям (лидер, коллер, фармер), каналам (логи, тикеты), модерации (варны, спам, мат), войсам и правам.'}
+                    </p>
+                  </div>
+                ) : filteredBotSettings.length === 0 ? (
+                  <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                    <Filter className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      {t('clan_search_not_found_title') || 'По вашему запросу ничего не найдено'}
+                    </h4>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto">
+                      {t('clan_search_not_found_desc') || 'Попробуйте изменить формулировку, например: «роли», «варн», «стим», «канал», «войс» или «логи».'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {filteredBotSettings.map((item) => {
+                      const TabIcon = item.tabIcon;
+                      return (
+                        <div
+                          key={item.id}
+                          className="p-4 rounded-xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 hover:border-blue-500/40 hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+                        >
+                          <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                              <TabIcon className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                                  {item.title}
+                                </span>
+                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                  {item.tabName}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                {item.desc}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(item.tabId);
+                            }}
+                            className="w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-blue-600 dark:bg-slate-800 dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
+                          >
+                            <span>{t('clan_search_open_tab') || 'Перейти к разделу'}</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'general' && (
               <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-4xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
