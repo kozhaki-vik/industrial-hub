@@ -319,23 +319,22 @@ export default function ClanManager() {
   const [editingRoomLimit, setEditingRoomLimit] = useState(null); // { channelId, name, limit }
   const [initialNameInput, setInitialNameInput] = useState('');
   const [initialNameError, setInitialNameError] = useState(false);
+  const [initialNameDismissed, setInitialNameDismissed] = useState(false);
   const hasPromptedRef = useRef(false);
   const initialClanNameInputRef = useRef(null);
 
+  const isInitialNameModalOpen = Boolean(config && (!config.name || !config.name.trim()) && !showSetupWizard && !initialNameDismissed);
+
   useEffect(() => {
-    const isModalOpen = Boolean(config && (!config.name || !config.name.trim()) && !showSetupWizard);
-    if (isModalOpen) {
+    if (isInitialNameModalOpen) {
       const timer = setTimeout(() => {
         if (initialClanNameInputRef.current) {
           initialClanNameInputRef.current.focus();
         }
-        if (window.electronAPI?.app?.focusWindow) {
-          window.electronAPI.app.focusWindow();
-        }
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [config, showSetupWizard]);
+  }, [isInitialNameModalOpen]);
 
   // Invite link verification & creation state
   const [inviteStatus, setInviteStatus] = useState(null); // 'checking' | 'valid' | 'invalid' | null
@@ -884,6 +883,10 @@ export default function ClanManager() {
               setConfig(sanitizeClanConfig(data.data.config));
             }
             const resetSecs = data.data.resetSections || [];
+            if (resetSecs.length === 0 || resetSecs.includes('general')) {
+              setInitialNameDismissed(false);
+              setInitialNameInput('');
+            }
             if (resetSecs.length === 0 || resetSecs.includes('recruitment') || resetSecs.includes('applications')) {
               setApplicationsData([]);
               fetchApplications();
@@ -6295,10 +6298,26 @@ export default function ClanManager() {
       )}
 
       {/* Initial Clan Name Prompt Modal if no clan name is set yet */}
-      {config && (!config.name || !config.name.trim()) && !showSetupWizard && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 mb-4">
+      {isInitialNameModalOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setInitialNameDismissed(true);
+            }
+          }}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200 relative">
+            <button
+              type="button"
+              onClick={() => setInitialNameDismissed(true)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              title={t('clan_modal_close') || 'Закрыть'}
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4 pr-8">
               <div className="p-2.5 bg-blue-50 dark:bg-blue-950/50 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 shrink-0">
                 <Settings className="w-5 h-5" />
               </div>
@@ -6325,6 +6344,7 @@ export default function ClanManager() {
                 }
                 setInitialNameError(false);
                 handleClanNameChange(initialNameInput.trim(), true);
+                setInitialNameDismissed(true);
               }} 
               noValidate 
               className="space-y-4"
@@ -6353,13 +6373,37 @@ export default function ClanManager() {
                 )}
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Check className="w-4 h-4" />
-                <span>{t('clan_initial_name_submit') || 'Сохранить и синхронизировать'}</span>
-              </button>
+              <div className="flex flex-col gap-2 pt-1">
+                <button
+                  type="submit"
+                  className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{t('clan_initial_name_submit') || 'Сохранить и синхронизировать'}</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInitialNameDismissed(true);
+                      setShowSetupWizard(true);
+                    }}
+                    className="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{t('clan_wizard_btn') || 'Мастер настройки'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setInitialNameDismissed(true)}
+                    className="py-2 px-4 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-semibold transition-all cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                  >
+                    <span>{t('clan_modal_later') || 'Позже'}</span>
+                  </button>
+                </div>
+              </div>
             </form>
           </div>
         </div>

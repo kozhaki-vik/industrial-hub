@@ -64,28 +64,6 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    // Ensure window and webContents gain OS focus whenever an input or editable field is clicked
-    const handlePointerDown = (e) => {
-      const target = e.target;
-      if (
-        target &&
-        (target.tagName === 'INPUT' ||
-         target.tagName === 'TEXTAREA' ||
-         target.isContentEditable ||
-         target.closest?.('input, textarea, [contenteditable="true"]'))
-      ) {
-        if (window.electronAPI?.app?.focusWindow) {
-          window.electronAPI.app.focusWindow();
-        }
-      }
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown, true);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true);
-    };
-  }, []);
 
   const handleSplashComplete = async () => {
     setIsStarting(false);

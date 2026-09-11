@@ -978,9 +978,8 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('app:focusWindow', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.focus();
-      if (mainWindow.webContents) {
-        mainWindow.webContents.focus();
+      if (!mainWindow.isFocused()) {
+        mainWindow.focus();
       }
       return true;
     }
