@@ -121,7 +121,9 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', 
             </div>
             <div className="ml-3 text-sm">
               <span className="font-medium text-slate-900 dark:text-white">{t('clan_wizard_roles')}</span>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">{t('clan_wizard_roles_desc')}</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-1">
+                {t('clan_wizard_roles_desc') || 'Создает роли Leader, Deputy Leader, Коллер, Основной состав, Испытательный срок, VIP с базовыми цветами.'}
+              </p>
             </div>
           </label>
 

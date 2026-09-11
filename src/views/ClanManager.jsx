@@ -8,7 +8,7 @@ import MemberDossierModal from '../components/MemberDossierModal';
 import TicketTranscriptModal from '../components/TicketTranscriptModal';
 import { 
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
-  Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Globe, Check,
+  Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
   BookOpen, Star, Search, ExternalLink
 } from 'lucide-react';
@@ -459,7 +459,11 @@ export default function ClanManager() {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [checkingInvite, setCheckingInvite] = useState(false);
   const lastVerifiedLinkRef = useRef('');
+  const lastVerifiedRecruitmentLinkRef = useRef('');
   const lastSavedConfigRef = useRef(null);
+
+  // Auto-setup progress modal state
+  const [autoSetupModalData, setAutoSetupModalData] = useState(null); // { isOpen, status: 'loading' | 'success' | 'error', currentStep, error, clanName }
 
   // Stats interactive sorting state
   const [statsSortField, setStatsSortField] = useState('voiceTime');
@@ -542,6 +546,18 @@ export default function ClanManager() {
       if (voiceSaveTimerRef.current) clearTimeout(voiceSaveTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!autoSetupModalData || autoSetupModalData.status !== 'loading') return;
+    const interval = setInterval(() => {
+      setAutoSetupModalData(prev => {
+        if (!prev || prev.status !== 'loading') return prev;
+        const nextStep = prev.currentStep < 4 ? prev.currentStep + 1 : 4;
+        return { ...prev, currentStep: nextStep };
+      });
+    }, 1100);
+    return () => clearInterval(interval);
+  }, [autoSetupModalData?.status]);
 
   const addLog = (msg) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -758,8 +774,20 @@ export default function ClanManager() {
     if (!trimmed || !ws || wsStatus !== 'online') {
       setRecruitmentInviteStatus(null);
       setRecruitmentInviteDetails(null);
+      lastVerifiedRecruitmentLinkRef.current = '';
       return;
     }
+    // If main invite was already verified for this exact link, sync immediately
+    if (lastVerifiedLinkRef.current === trimmed && inviteStatus) {
+      setRecruitmentInviteStatus(inviteStatus);
+      setRecruitmentInviteDetails(inviteDetails);
+      lastVerifiedRecruitmentLinkRef.current = trimmed;
+      return;
+    }
+    if (lastVerifiedRecruitmentLinkRef.current === trimmed && recruitmentInviteStatus) {
+      return;
+    }
+    lastVerifiedRecruitmentLinkRef.current = trimmed;
     setCheckingRecruitmentInvite(true);
     setRecruitmentInviteStatus('checking');
     ws.send(JSON.stringify({
@@ -872,8 +900,10 @@ export default function ClanManager() {
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'auto_setup') {
           if (data.error || (data.data && data.data.error)) {
-            setError(data.error || data.data.error);
-            setSaveStatus(`error: ${data.error || data.data.error}`);
+            const err = data.error || data.data.error;
+            setError(err);
+            setSaveStatus(`error: ${err}`);
+            setAutoSetupModalData(prev => prev ? { ...prev, status: 'error', error: err } : null);
           } else {
             setSaveStatus('success');
             if (data.data.discordInfo) setDiscordInfo(data.data.discordInfo);
@@ -882,7 +912,11 @@ export default function ClanManager() {
               setConfig(sanitized);
               lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
             }
-            setTimeout(() => setSaveStatus(null), 3000);
+            setAutoSetupModalData(prev => prev ? { ...prev, status: 'success', currentStep: 4 } : null);
+            setTimeout(() => {
+              setAutoSetupModalData(null);
+              setSaveStatus(null);
+            }, 2500);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'sync_permissions') {
           if (data.error || (data.data && data.data.error)) {
@@ -1078,16 +1112,21 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'check_discord_invite') {
           setCheckingInvite(false);
           if (!data.error && data.data) {
-            if (data.data.valid) {
-              setInviteStatus('valid');
-              setInviteDetails(data.data.invite || null);
-            } else {
-              setInviteStatus('invalid');
-              setInviteDetails(null);
+            const isValid = Boolean(data.data.valid);
+            const status = isValid ? 'valid' : 'invalid';
+            const details = data.data.invite || data.data || null;
+            setInviteStatus(status);
+            setInviteDetails(isValid ? details : null);
+
+            const curCfg = latestConfigRef.current;
+            let rcLink = '';
+            try { if (curCfg?.recruitmentConfigJson) rcLink = JSON.parse(curCfg.recruitmentConfigJson)?.link; } catch(e) {}
+            const currentRecLink = (rcLink || curCfg?.discordLink || '').trim();
+            if (currentRecLink && currentRecLink === lastVerifiedLinkRef.current) {
+              setRecruitmentInviteStatus(status);
+              setRecruitmentInviteDetails(isValid ? details : null);
+              lastVerifiedRecruitmentLinkRef.current = lastVerifiedLinkRef.current;
             }
-          } else {
-            setInviteStatus('invalid');
-            setInviteDetails(null);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_member_dossiers') {
           setLoadingDossiers(false);
@@ -1108,7 +1147,8 @@ export default function ClanManager() {
               return updated;
             });
             setRecruitmentInviteStatus('valid');
-            setRecruitmentInviteDetails(data.data.invite || null);
+            setRecruitmentInviteDetails(data.data.invite || data.data || null);
+            lastVerifiedRecruitmentLinkRef.current = newUrl;
             addLog(`Recruitment invite created: ${newUrl}`);
           } else {
             setError(data.error || (data.data && data.data.error) || 'Failed to create recruitment invite');
@@ -1116,16 +1156,18 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'check_recruitment_invite') {
           setCheckingRecruitmentInvite(false);
           if (!data.error && data.data) {
-            if (data.data.valid) {
-              setRecruitmentInviteStatus('valid');
-              setRecruitmentInviteDetails(data.data.invite || null);
-            } else {
-              setRecruitmentInviteStatus('invalid');
-              setRecruitmentInviteDetails(null);
+            const isValid = Boolean(data.data.valid);
+            const status = isValid ? 'valid' : 'invalid';
+            const details = data.data.invite || data.data || null;
+            setRecruitmentInviteStatus(status);
+            setRecruitmentInviteDetails(isValid ? details : null);
+
+            const mainLink = (latestConfigRef.current?.discordLink || '').trim();
+            if (mainLink && mainLink === lastVerifiedRecruitmentLinkRef.current) {
+              setInviteStatus(status);
+              setInviteDetails(isValid ? details : null);
+              lastVerifiedLinkRef.current = lastVerifiedRecruitmentLinkRef.current;
             }
-          } else {
-            setRecruitmentInviteStatus('invalid');
-            setRecruitmentInviteDetails(null);
           }
         } else if (data.type === 'clan_event') {
           if (data.event === 'roles_updated' && data.data?.roles) {
@@ -1209,6 +1251,16 @@ export default function ClanManager() {
       lastVerifiedLinkRef.current = '';
       return;
     }
+    // If recruitment invite was already verified for this exact link, sync immediately
+    if (lastVerifiedRecruitmentLinkRef.current === trimmed && recruitmentInviteStatus) {
+      setInviteStatus(recruitmentInviteStatus);
+      setInviteDetails(recruitmentInviteDetails);
+      lastVerifiedLinkRef.current = trimmed;
+      return;
+    }
+    if (lastVerifiedLinkRef.current === trimmed && inviteStatus) {
+      return;
+    }
     setCheckingInvite(true);
     setInviteStatus('checking');
     lastVerifiedLinkRef.current = trimmed;
@@ -1263,6 +1315,13 @@ export default function ClanManager() {
 
   const startAutoSetup = (options) => {
     setShowSetupWizard(false);
+    setAutoSetupModalData({
+      isOpen: true,
+      status: 'loading',
+      currentStep: 1,
+      clanName: options?.clanName || config?.name || '',
+      error: null
+    });
     setSaveStatus('saving');
     addLog('Запрос автоматической настройки сервера...');
 
@@ -1383,41 +1442,19 @@ export default function ClanManager() {
   };
 
   const standardRoles = [
-    { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Leader', defaultRu: 'Лидер', defaultEn: 'Leader', defaultUa: 'Лідер' },
-    { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Deputy Leader', defaultRu: 'Зам. Лидера', defaultEn: 'Deputy Leader', defaultUa: 'Заст. Лідера' },
+    { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Leader', defaultRu: 'Leader', defaultEn: 'Leader', defaultUa: 'Leader' },
+    { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Deputy Leader', defaultRu: 'Deputy Leader', defaultEn: 'Deputy Leader', defaultUa: 'Deputy Leader' },
     { key: 'caller', dbKey: 'callerRoleId', defaultName: 'Коллер', defaultRu: 'Коллер', defaultEn: 'Коллер', defaultUa: 'Коллер' },
     { key: 'main', dbKey: 'mainRosterRoleId', defaultName: 'Основной состав', defaultRu: 'Основной состав', defaultEn: 'Основной состав', defaultUa: 'Основной состав' },
     { key: 'trial', dbKey: 'trialRoleId', defaultName: 'Испытательный срок', defaultRu: 'Испытательный срок', defaultEn: 'Испытательный срок', defaultUa: 'Испытательный срок' },
-    { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Фармер (Ресурсы)', defaultRu: 'Фармер (Ресурсы)', defaultEn: 'Фармер (Ресурсы)', defaultUa: 'Фармер (Ресурсы)' },
-    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultName: 'Фермер (Урожай)', defaultRu: 'Фермер (Урожай)', defaultEn: 'Фермер (Урожай)', defaultUa: 'Фермер (Урожай)' },
+    { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Фармер', defaultRu: 'Фармер', defaultEn: 'Фармер', defaultUa: 'Фармер' },
+    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultName: 'Фермер', defaultRu: 'Фермер', defaultEn: 'Фермер', defaultUa: 'Фермер' },
     { key: 'electrician', dbKey: 'electricianRoleId', defaultName: 'Электрик', defaultRu: 'Электрик', defaultEn: 'Электрик', defaultUa: 'Электрик' },
     { key: 'builder', dbKey: 'builderRoleId', defaultName: 'Билдер', defaultRu: 'Билдер', defaultEn: 'Билдер', defaultUa: 'Билдер' },
     { key: 'pilot', dbKey: 'pilotRoleId', defaultName: 'Пилот', defaultRu: 'Пилот', defaultEn: 'Пилот', defaultUa: 'Пилот' },
     { key: 'sponsor', dbKey: 'sponsorRoleId', defaultName: 'Спонсор', defaultRu: 'Спонсор', defaultEn: 'Спонсор', defaultUa: 'Спонсор' },
     { key: 'vip', dbKey: 'vipRoleId', defaultName: 'VIP', defaultRu: 'VIP', defaultEn: 'VIP', defaultUa: 'VIP' },
   ];
-
-  const handleApplyTemplateLang = (lang) => {
-    if (!config) return;
-    let roleNames = {};
-    try {
-      if (config.roleNamesJson) roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-    } catch (e) {}
-
-    standardRoles.forEach(r => {
-      if (r.key === 'leader' || r.key === 'deputy') {
-        roleNames[r.key] = lang === 'en' ? r.defaultEn : (lang === 'ua' ? r.defaultUa : r.defaultRu);
-      } else {
-        roleNames[r.key] = r.defaultRu;
-      }
-    });
-
-    const updatedConfig = {
-      ...config,
-      roleNamesJson: JSON.stringify(roleNames)
-    };
-    autoSaveConfig(updatedConfig);
-  };
 
   const handleRoleNameChange = (key, val, isCustom, customId) => {
     if (!config) return;
@@ -1656,127 +1693,7 @@ export default function ClanManager() {
     autoSaveConfig(updatedConfig);
   };
 
-  const handleSwitchBotLanguage = async (targetLang) => {
-    if (!config || (config.language || 'ru') === targetLang) return;
-    if (!ws || wsStatus !== 'online') return;
 
-    let currentRoleNames = {};
-    try {
-      if (config.roleNamesJson) currentRoleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-    } catch (e) {}
-
-    const newRoleNames = { ...currentRoleNames };
-    standardRoles.forEach(r => {
-      if (r.key === 'leader' || r.key === 'deputy') {
-        newRoleNames[r.key] = targetLang === 'en' ? r.defaultEn : (targetLang === 'ua' ? r.defaultUa : r.defaultRu);
-      } else {
-        newRoleNames[r.key] = r.defaultRu;
-      }
-    });
-
-    const boundRolesToRename = standardRoles.filter(r => {
-      const boundId = config[r.dbKey];
-      return boundId && boundId.trim().length > 0;
-    });
-
-    const updatedConfig = {
-      ...config,
-      language: targetLang,
-      roleNamesJson: JSON.stringify(newRoleNames)
-    };
-
-    if (boundRolesToRename.length === 0) {
-      autoSaveConfig(updatedConfig);
-      return;
-    }
-
-    setSyncModalData({
-      isOpen: true,
-      currentStep: 0,
-      totalSteps: boundRolesToRename.length,
-      currentRoleName: '',
-      isFailed: false,
-      errorText: '',
-      failedRoleName: ''
-    });
-
-    let anyFailed = false;
-
-    for (let i = 0; i < boundRolesToRename.length; i++) {
-      const roleItem = boundRolesToRename[i];
-      const targetRoleName = targetLang === 'en' ? roleItem.defaultEn : (targetLang === 'ua' ? roleItem.defaultUa : roleItem.defaultRu);
-
-      setSyncModalData(prev => ({
-        ...prev,
-        currentStep: i + 1,
-        currentRoleName: targetRoleName
-      }));
-
-      const result = await new Promise((resolve) => {
-        const reqId = `sync_role_${Date.now()}_${i}`;
-        const timeout = setTimeout(() => {
-          cleanup();
-          resolve({ success: false, error: 'Timeout waiting for Discord response' });
-        }, 15000);
-
-        const onMsg = (event) => {
-          try {
-            const msg = JSON.parse(event.data);
-            if (msg.type === 'clan_proxy_res' && msg.reqId === reqId) {
-              cleanup();
-              resolve(msg.data || msg);
-            }
-          } catch (e) {}
-        };
-
-        const cleanup = () => {
-          clearTimeout(timeout);
-          ws.removeEventListener('message', onMsg);
-        };
-
-        ws.addEventListener('message', onMsg);
-        ws.send(JSON.stringify({
-          type: 'clan',
-          action: 'proxy',
-          reqId,
-          payload: {
-            action: 'sync_single_role_verified',
-            roleId: config[roleItem.dbKey],
-            newName: targetRoleName,
-            roleKey: roleItem.key
-          }
-        }));
-      });
-
-      if (!result.success) {
-        anyFailed = true;
-        const errDesc = result.error || 'Failed to rename role';
-        if (window.electronAPI?.app?.reportError) {
-          window.electronAPI.app.reportError(`[RoleSync Error] Failed to rename role "${targetRoleName}" (${config[roleItem.dbKey]}): ${errDesc}`);
-        }
-        setSyncModalData(prev => ({
-          ...prev,
-          isFailed: true,
-          failedRoleName: targetRoleName,
-          errorText: errDesc
-        }));
-        break;
-      } else {
-        if (result.roles) {
-          setDiscordInfo(prev => ({ roles: result.roles, channels: prev?.channels || [] }));
-        }
-      }
-    }
-
-    autoSaveConfig(updatedConfig);
-    fetchDiscordInfo();
-
-    if (!anyFailed) {
-      setTimeout(() => {
-        setSyncModalData(null);
-      }, 1200);
-    }
-  };
 
   const handleExecuteFactoryReset = () => {
     if (!resetSections || resetSections.length === 0) return;
@@ -3022,47 +2939,7 @@ export default function ClanManager() {
                   )}
                 </div>
 
-                {/* Bot Language Selector Card */}
-                <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/70 dark:bg-slate-800/40">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-blue-500 shrink-0" />
-                        <span className="text-sm font-semibold text-slate-800 dark:text-white">
-                          {t('clan_bot_language_title') || 'Язык бота в Discord'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {t('clan_bot_language_desc') || 'Язык интерфейса тикетов, анкет, логов и шаблонов ролей на сервере Discord.'}
-                      </p>
-                    </div>
 
-                    <div className="inline-flex p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xs shrink-0 self-start sm:self-auto">
-                      {[
-                        { code: 'ru', label: 'RU', title: 'Русский' },
-                        { code: 'en', label: 'EN', title: 'English' },
-                        { code: 'ua', label: 'UA', title: 'Українська' }
-                      ].map(lang => {
-                        const isCurrent = (config?.language || 'ru') === lang.code;
-                        return (
-                          <button
-                            key={lang.code}
-                            type="button"
-                            onClick={() => handleSwitchBotLanguage(lang.code)}
-                            title={lang.title}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                              isCurrent
-                                ? 'bg-blue-600 text-white shadow-xs'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            {lang.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
 
                 {/* Actions: Setup Wizard, Unlink Server, & Factory Reset in 3 columns */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -3497,16 +3374,16 @@ export default function ClanManager() {
                   const channelKeys = ['logs', 'applications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
                   
                   const matrixHierarchyRoles = [
-                    { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: 'Испытательный' },
-                    { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: 'Main Состав' },
+                    { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: 'Испытательный срок' },
+                    { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: 'Основной состав' },
                     { key: 'caller', dbKey: 'callerRoleId', nameKey: 'caller', defaultName: 'Коллер' },
-                    { key: 'deputy', dbKey: 'deputyLeaderRoleId', nameKey: 'deputy', defaultName: 'Зам. Лидера' },
-                    { key: 'leader', dbKey: 'leaderRoleId', nameKey: 'leader', defaultName: 'Лидер' }
+                    { key: 'deputy', dbKey: 'deputyLeaderRoleId', nameKey: 'deputy', defaultName: 'Deputy Leader' },
+                    { key: 'leader', dbKey: 'leaderRoleId', nameKey: 'leader', defaultName: 'Leader' }
                   ];
 
                   const matrixSideRoles = [
-                    { key: 'farmer', dbKey: 'farmerRoleId', nameKey: 'farmer', defaultName: 'Фармер (Ресурсы)' },
-                    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', nameKey: 'plantFarmer', defaultName: 'Фермер (Урожай)' },
+                    { key: 'farmer', dbKey: 'farmerRoleId', nameKey: 'farmer', defaultName: 'Фармер' },
+                    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', nameKey: 'plantFarmer', defaultName: 'Фермер' },
                     { key: 'electrician', dbKey: 'electricianRoleId', nameKey: 'electrician', defaultName: 'Электрик' },
                     { key: 'builder', dbKey: 'builderRoleId', nameKey: 'builder', defaultName: 'Билдер' },
                     { key: 'pilot', dbKey: 'pilotRoleId', nameKey: 'pilot', defaultName: 'Пилот' },
@@ -6498,6 +6375,101 @@ export default function ClanManager() {
                   {t('clan_sync_close') || 'Закрыть'}
                 </button>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Auto-setup Progress Modal */}
+      {autoSetupModalData && autoSetupModalData.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center mb-5">
+              {autoSetupModalData.status === 'loading' && (
+                <div className="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-orange-500/20 flex items-center justify-center relative">
+                  <Sparkles className="w-7 h-7 text-orange-500 animate-pulse" />
+                  <div className="absolute inset-0 rounded-2xl border-2 border-orange-500 border-t-transparent animate-spin"></div>
+                </div>
+              )}
+              {autoSetupModalData.status === 'success' && (
+                <div className="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <Check className="w-8 h-8" />
+                </div>
+              )}
+              {autoSetupModalData.status === 'error' && (
+                <div className="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-red-100 dark:bg-red-950/50 flex items-center justify-center text-red-600 dark:text-red-400">
+                  <AlertTriangle className="w-8 h-8" />
+                </div>
+              )}
+
+              <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                {autoSetupModalData.status === 'loading' && (t('clan_wizard_progress_title') || 'Автоматическая настройка сервера...')}
+                {autoSetupModalData.status === 'success' && (t('clan_wizard_success_title') || 'Настройка успешно завершена!')}
+                {autoSetupModalData.status === 'error' && (t('clan_wizard_error_title') || 'Ошибка настройки сервера')}
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                {autoSetupModalData.status === 'loading' && (t('clan_wizard_progress_desc') || 'Бот связывается с Discord API и создает структуру ролей и каналов. Пожалуйста, подождите...')}
+                {autoSetupModalData.status === 'success' && (t('clan_wizard_success_desc') || 'Все роли, категории и каналы успешно созданы и привязаны к боту.')}
+                {autoSetupModalData.status === 'error' && (autoSetupModalData.error || t('clan_wizard_error_desc') || 'Не удалось завершить автоматическую настройку.')}
+              </p>
+            </div>
+
+            <div className="space-y-2 mb-5">
+              {[
+                { num: 1, label: t('clan_wizard_step_init') || 'Синхронизация профиля и названия клана' },
+                { num: 2, label: t('clan_wizard_step_roles') || 'Создание ролей: Leader, Deputy Leader, Коллер, Основной состав, VIP...' },
+                { num: 3, label: t('clan_wizard_step_channels') || 'Создание категории и каналов (logs, applications, голосовые)' },
+                { num: 4, label: t('clan_wizard_step_perms') || 'Применение базовых прав доступа' }
+              ].map(s => {
+                const isDone = autoSetupModalData.status === 'success' || (autoSetupModalData.status === 'loading' && s.num < autoSetupModalData.currentStep);
+                const isCurrent = autoSetupModalData.status === 'loading' && s.num === autoSetupModalData.currentStep;
+                return (
+                  <div 
+                    key={s.num}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl text-xs transition-all ${
+                      isDone 
+                        ? 'bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 font-medium'
+                        : isCurrent
+                        ? 'bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800/60'
+                        : 'bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500'
+                    }`}
+                  >
+                    <div className="shrink-0">
+                      {isDone ? (
+                        <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">
+                          ✓
+                        </div>
+                      ) : isCurrent ? (
+                        <div className="w-5 h-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center text-[10px] font-bold">
+                          {s.num}
+                        </div>
+                      )}
+                    </div>
+                    <span className="truncate">{s.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {autoSetupModalData.status === 'error' && (
+              <button
+                type="button"
+                onClick={() => setAutoSetupModalData(null)}
+                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+              >
+                Закрыть
+              </button>
+            )}
+            {autoSetupModalData.status === 'success' && (
+              <button
+                type="button"
+                onClick={() => setAutoSetupModalData(null)}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+              >
+                Готово
+              </button>
             )}
           </div>
         </div>
