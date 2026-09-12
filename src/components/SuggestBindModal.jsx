@@ -45,7 +45,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in">
       <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Предложить свой бинд</h3>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">{t('suggest_bind_title', 'Предложить свой бинд')}</h3>
           <button 
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
@@ -84,7 +84,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
                 <input 
                   value={bindCommand}
                   onChange={(e) => setBindCommand(e.target.value)}
-                  placeholder='Например: bind [key] "kill"'
+                  placeholder={t('suggest_bind_code_ph', 'Например: bind [key] "kill"')}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-slate-100 mb-4"
                   required
                 />
@@ -94,7 +94,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
                 <textarea 
                   value={bindDescription}
                   onChange={(e) => setBindDescription(e.target.value)}
-                  placeholder="Например: Самоубийство"
+                  placeholder={t('suggest_bind_desc_ph', 'Например: Самоубийство')}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 resize-none h-24 text-slate-900 dark:text-slate-100"
                   required
                 />

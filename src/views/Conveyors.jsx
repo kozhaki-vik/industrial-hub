@@ -207,7 +207,7 @@ export default function Conveyors() {
         <div className="ml-auto flex gap-3">
           <button 
             onClick={() => setIsRestoreModalOpen(true)}
-            title="Восстановить стандартные шаблоны"
+            title={t('conveyors_restore_title', 'Восстановить стандартные шаблоны')}
             className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-orange-500 dark:hover:text-orange-500 rounded-lg transition-colors shadow-sm"
           >
             <RefreshCw className="w-5 h-5" />

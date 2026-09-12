@@ -165,7 +165,7 @@ export default function DiscordMessagePreview({
           </span>
           <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-[#4e5058]" />
           <span className="hidden sm:inline-block text-xs text-[#949ba4] truncate font-normal">
-            {tabTitle ? `${tabTitle} • Предпросмотр в реальном времени` : 'Предпросмотр сообщения бота'}
+            {tabTitle ? `${tabTitle} • Предпросмотр в реальном времени` : t('preview_bot_msg', 'Предпросмотр сообщения бота')}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -178,7 +178,7 @@ export default function DiscordMessagePreview({
               type="button"
               onClick={onClose}
               className="p-1 rounded text-[#949ba4] hover:text-[#f2f3f5] hover:bg-[#35373c] transition-colors cursor-pointer ml-1"
-              title="Закрыть предпросмотр"
+              title={t('preview_close', 'Закрыть предпросмотр')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -200,7 +200,7 @@ export default function DiscordMessagePreview({
                   : 'bg-[#313338] text-[#949ba4] hover:text-[#f2f3f5] hover:bg-[#35373c]'
               }`}
             >
-              {tpl.name || `Шаблон #${tIdx + 1}`}
+              {tpl.name || `\${t('preview_template', 'Шаблон #')}\${tIdx + 1}`}
             </button>
           ))}
         </div>

@@ -535,7 +535,7 @@ export default function Settings() {
                   )}
                 </button>
                 {status !== 'online' && (
-                  <p className="text-xs text-red-500 text-center mt-1">Нет подключения к серверу</p>
+                  <p className="text-xs text-red-500 text-center mt-1">{t('settings_no_connection', 'Нет подключения к серверу')}</p>
                 )}
               </form>
             )}

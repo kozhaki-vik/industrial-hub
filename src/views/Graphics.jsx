@@ -35,7 +35,7 @@ export default function Graphics() {
     }
     
     // Create auto-backup with preset name
-    const presetLabel = preset === 'Custom' ? 'Свои настройки' : preset;
+    const presetLabel = preset === 'Custom' ? t('graphics_custom_preset', 'Свои настройки') : preset;
     await createGraphicsBackup(`${t('graphics_auto_backup')} (${presetLabel})`);
     
     let result;

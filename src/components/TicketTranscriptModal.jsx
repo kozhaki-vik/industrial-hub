@@ -118,7 +118,7 @@ export default function TicketTranscriptModal({
                     type="button"
                     onClick={handleCopyId}
                     className="inline-flex items-center space-x-1 font-mono hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                    title="Скопировать Discord ID"
+                    title={t('copy_discord_id', 'Скопировать Discord ID')}
                   >
                     <span>ID: {app.userId}</span>
                     {copiedId ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 opacity-60" />}

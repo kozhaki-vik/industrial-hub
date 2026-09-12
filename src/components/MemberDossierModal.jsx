@@ -130,7 +130,7 @@ export default function MemberDossierModal({
 
     if (cheaterStatus !== 'NONE') {
       if (!cheaterReason.trim()) {
-        setSaveError('Укажите причину, почему считаете игрока читером / подозреваемым.');
+        setSaveError(t('dossier_err_reason', 'Укажите причину, почему считаете игрока читером / подозреваемым.'));
         return;
       }
       if (cheaterProofUrl.trim() && !isValidHttpUrl(cheaterProofUrl.trim())) {
@@ -167,7 +167,7 @@ export default function MemberDossierModal({
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
     } catch (err) {
-      setSaveError(err.message || 'Ошибка сохранения');
+      setSaveError(err.message || t('dossier_err_save', 'Ошибка сохранения'));
     } finally {
       setSaving(false);
     }
@@ -189,10 +189,10 @@ export default function MemberDossierModal({
           setSelectedTargetGuildId(otherGuildIds[0]);
         }
       } else {
-        setGlobalSearchError(res?.error || 'Ничего не найдено');
+        setGlobalSearchError(res?.error || t('dossier_err_not_found', 'Ничего не найдено'));
       }
     } catch (err) {
-      setGlobalSearchError(err.message || 'Ошибка поиска по глобальной базе');
+      setGlobalSearchError(err.message || t('dossier_err_global_search', 'Ошибка поиска по глобальной базе'));
     } finally {
       setSearchingGlobal(false);
     }
@@ -264,7 +264,7 @@ export default function MemberDossierModal({
               className={`p-1 transition-transform hover:scale-110 cursor-pointer disabled:cursor-default ${
                 star <= value ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-200'
               }`}
-              title={value === star ? 'Нажмите, чтобы снять оценку' : `${star}/5`}
+              title={value === star ? t('dossier_unrate', 'Нажмите, чтобы снять оценку') : `${star}/5`}
             >
               <Star className="w-4 h-4 fill-current" />
             </button>
@@ -277,7 +277,7 @@ export default function MemberDossierModal({
               type="button"
               onClick={() => onChange(0)}
               className="ml-1 p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-              title="Убрать оценку (сбросить в 0)"
+              title={t('dossier_reset_rate', 'Убрать оценку (сбросить в 0)')}
             >
               <RotateCcw className="w-3 h-3" />
             </button>
@@ -290,7 +290,7 @@ export default function MemberDossierModal({
   const getStatusBadge = (st) => {
     switch (st) {
       case 'ACTIVE':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/60">В клане</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/60">{t('dossier_in_clan', 'В клане')}</span>;
       case 'LEFT':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700/60">Вышел (Архив)</span>;
       case 'KICKED':

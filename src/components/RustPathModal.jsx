@@ -116,10 +116,10 @@ export default function RustPathModal({ isOpen, onClose }) {
             <button
               onClick={handleBrowse}
               className="px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium text-sm flex items-center gap-1.5 transition-colors"
-              title="Выбрать папку"
+              title={t('dev_open_folder', 'Выбрать папку')}
             >
               <FolderOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Обзор</span>
+              <span className="hidden sm:inline">{t('rust_path_browse', 'Обзор')}</span>
             </button>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function RustPathModal({ isOpen, onClose }) {
             className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4 text-orange-500" />
-            <span>Автоопределение</span>
+            <span>{t('rust_path_auto', 'Автоопределение')}</span>
           </button>
 
           <div className="sm:ml-auto flex gap-2 w-full sm:w-auto">

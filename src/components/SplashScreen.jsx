@@ -108,7 +108,7 @@ export default function SplashScreen({ onComplete }) {
           {progressData && progressData.status !== 'success' && progressData.status !== 'error' && (
             <div className="w-full flex flex-col gap-2">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-slate-500">Загрузка обновления...</span>
+                <span className="text-slate-500">{t('splash_downloading', 'Загрузка обновления...')}</span>
                 <span className="text-slate-700 dark:text-slate-300">
                   {progressData.totalBytes ? Math.round((progressData.downloadedBytes / progressData.totalBytes) * 100) : 0}%
                 </span>

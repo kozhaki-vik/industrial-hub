@@ -229,22 +229,22 @@ export default function Developer() {
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 mb-4 break-all">
             <div className="flex items-start gap-2">
-              <button onClick={() => window.electronAPI?.shell?.openPath(rustPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title="Открыть папку">
+              <button onClick={() => window.electronAPI?.shell?.openPath(rustPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title={t('dev_open_folder', 'Открыть папку')}>
                 <FolderOpen className="w-4 h-4 mt-0.5" />
               </button>
               <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_path_rust')} </span> {rustPath}</p>
             </div>
             <div className="flex items-start gap-2">
-              <button onClick={() => window.electronAPI?.shell?.openPath(appPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title="Открыть папку">
+              <button onClick={() => window.electronAPI?.shell?.openPath(appPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title={t('dev_open_folder', 'Открыть папку')}>
                 <FolderOpen className="w-4 h-4 mt-0.5" />
               </button>
               <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_path_app')} </span> {appPath}</p>
             </div>
             <div className="flex items-start gap-2">
-              <button onClick={() => window.electronAPI?.shell?.openPath(appDataPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title="Открыть папку">
+              <button onClick={() => window.electronAPI?.shell?.openPath(appDataPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title={t('dev_open_folder', 'Открыть папку')}>
                 <FolderOpen className="w-4 h-4 mt-0.5" />
               </button>
-              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">Данные приложения (Настройки, Аналитика): </span> {appDataPath}</p>
+              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_app_data', 'Данные приложения (Настройки, Аналитика):')} </span> {appDataPath}</p>
             </div>
           </div>
           <button onClick={runIntegrity} className="mb-4 w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors">
@@ -285,7 +285,7 @@ export default function Developer() {
                 ) : rustIntegrity ? (
                   <>
                     <div className={`font-bold ${rustIntegrity.status === 'ok' ? 'text-green-500' : 'text-red-500'}`}>
-                      Статус: {rustIntegrity.status === 'ok' ? t('dev_status_ok_all') : t('dev_status_fail_missing')}
+                      {t('dev_status_word', 'Статус: ')}{rustIntegrity.status === 'ok' ? t('dev_status_ok_all') : t('dev_status_fail_missing')}
                     </div>
                     {rustIntegrity.details?.map((d, i) => (
                       <div key={i} className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
@@ -378,8 +378,8 @@ export default function Developer() {
             <button onClick={() => setShouldCrash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors hover:bg-red-200 dark:hover:bg-red-900/40">
               <AlertTriangle className="w-4 h-4" /> {t('dev_trigger_error')}
             </button>
-            <button onClick={() => { if(window.confirm('Сбросить данные до заводских настроек? Программа будет перезапущена.')) factoryReset(); }} className="flex items-center justify-center gap-2 w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/30">
-              <RefreshCw className="w-4 h-4" /> Сбросить настройки (Factory Reset)
+            <button onClick={() => { if(window.confirm(t('dev_factory_reset_confirm', 'Сбросить данные до заводских настроек? Программа будет перезапущена.'))) factoryReset(); }} className="flex items-center justify-center gap-2 w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/30">
+              <RefreshCw className="w-4 h-4" /> {t('dev_factory_reset_btn', 'Сбросить настройки (Factory Reset)')}
             </button>
           </div>
 
