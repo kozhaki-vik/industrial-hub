@@ -1,7 +1,7 @@
 {
   "name": "industrial-hub",
   "private": true,
-  "version": "2.7.85",
+  "version": "2.7.86",
   "author": "Kozhaki",
   "description": "Industrial Hub - Ultimate Rust Assistant",
   "type": "module",

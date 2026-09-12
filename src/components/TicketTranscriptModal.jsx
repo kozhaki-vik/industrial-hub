@@ -201,7 +201,7 @@ export default function TicketTranscriptModal({
                   onClick={onRefresh}
                   className="px-4 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-colors mt-2"
                 >
-                  Попробовать снова
+                  {t('common_retry', 'Попробовать снова')}
                 </button>
               )}
             </div>

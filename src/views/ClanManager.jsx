@@ -679,7 +679,7 @@ export default function ClanManager() {
   const handleAddWarn = async () => {
     if (!selectedUserForWarns || !newWarnReason.trim()) return;
     setWarnActionLoading(true);
-    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || 'Администратор';
+    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || t('clan_mod_admin', 'Администратор');
     localStorage.setItem('clan_warn_moderator', modTag);
 
     let modMember = null;
@@ -711,7 +711,7 @@ export default function ClanManager() {
   const handleRemoveWarn = async (warningId) => {
     if (!warningId) return;
     setWarnActionLoading(true);
-    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || 'Администратор';
+    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || t('clan_mod_admin', 'Администратор');
     const res = await sendProxyAction('remove_warning', { 
       warningId,
       moderatorTag: modTag
@@ -732,7 +732,7 @@ export default function ClanManager() {
     if (!userId) return;
     if (!window.confirm(t('msg_warn_clear_confirm', 'Снять все активные предупреждения с данного пользователя?'))) return;
     setWarnActionLoading(true);
-    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || 'Администратор';
+    const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || t('clan_mod_admin', 'Администратор');
     const res = await sendProxyAction('clear_warnings', { 
       userId,
       moderatorTag: modTag
@@ -1009,7 +1009,7 @@ export default function ClanManager() {
           setLoadingVoice(false);
           if (!data.error && data.data && data.data.success) {
             setDynamicVoiceData({
-              config: data.data.config || { enabled: false, categoryId: '', generatorChannelId: '', template: '🔊 Пати {user}', defaultLimit: 0 },
+              config: data.data.config || { enabled: false, categoryId: '', generatorChannelId: '', template: `🔊 ${t('clan_voice_party_tpl', 'Пати')} {user}`, defaultLimit: 0 },
               activeRooms: data.data.activeRooms || [],
               channels: data.data.channels || []
             });
@@ -1388,7 +1388,7 @@ export default function ClanManager() {
         if (updatedConfig.recruitmentConfigJson) r = JSON.parse(updatedConfig.recruitmentConfigJson);
       } catch (e) {}
       if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || r.title.includes('GODS')) {
-        r.title = `Набор в клан ${clanName}`;
+        r.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${clanName}`;
         updatedConfig.recruitmentConfigJson = JSON.stringify(r);
       }
       setConfig(updatedConfig);
@@ -1531,16 +1531,16 @@ export default function ClanManager() {
   const standardRoles = [
     { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Leader', defaultRu: 'Leader', defaultEn: 'Leader', defaultUa: 'Leader' },
     { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Deputy Leader', defaultRu: 'Deputy Leader', defaultEn: 'Deputy Leader', defaultUa: 'Deputy Leader' },
-    { key: 'caller', dbKey: 'callerRoleId', defaultName: 'Коллер', defaultRu: 'Коллер', defaultEn: 'Коллер', defaultUa: 'Коллер' },
-    { key: 'recruiter', dbKey: 'recruiterRoleId', defaultName: 'Рекрутер', defaultRu: 'Рекрутер', defaultEn: 'Рекрутер', defaultUa: 'Рекрутер' },
-    { key: 'main', dbKey: 'mainRosterRoleId', defaultName: 'Основной состав', defaultRu: 'Основной состав', defaultEn: 'Основной состав', defaultUa: 'Основной состав' },
-    { key: 'trial', dbKey: 'trialRoleId', defaultName: 'Испытательный срок', defaultRu: 'Испытательный срок', defaultEn: 'Испытательный срок', defaultUa: 'Испытательный срок' },
-    { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Фармер', defaultRu: 'Фармер', defaultEn: 'Фармер', defaultUa: 'Фармер' },
-    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultName: 'Фермер', defaultRu: 'Фермер', defaultEn: 'Фермер', defaultUa: 'Фермер' },
-    { key: 'electrician', dbKey: 'electricianRoleId', defaultName: 'Электрик', defaultRu: 'Электрик', defaultEn: 'Электрик', defaultUa: 'Электрик' },
-    { key: 'builder', dbKey: 'builderRoleId', defaultName: 'Билдер', defaultRu: 'Билдер', defaultEn: 'Билдер', defaultUa: 'Билдер' },
-    { key: 'pilot', dbKey: 'pilotRoleId', defaultName: 'Пилот', defaultRu: 'Пилот', defaultEn: 'Пилот', defaultUa: 'Пилот' },
-    { key: 'sponsor', dbKey: 'sponsorRoleId', defaultName: 'Спонсор', defaultRu: 'Спонсор', defaultEn: 'Спонсор', defaultUa: 'Спонсор' },
+    { key: 'caller', dbKey: 'callerRoleId', defaultName: t('clan_role_caller', 'Коллер'), defaultRu: 'Коллер', defaultEn: 'Caller', defaultUa: 'Колер' },
+    { key: 'recruiter', dbKey: 'recruiterRoleId', defaultName: t('clan_role_recruiter', 'Рекрутер'), defaultRu: 'Рекрутер', defaultEn: 'Recruiter', defaultUa: 'Рекрутер' },
+    { key: 'main', dbKey: 'mainRosterRoleId', defaultName: t('clan_role_main', 'Основной состав'), defaultRu: 'Основной состав', defaultEn: 'Main Roster', defaultUa: 'Основний склад' },
+    { key: 'trial', dbKey: 'trialRoleId', defaultName: t('clan_role_trial', 'Испытательный срок'), defaultRu: 'Испытательный срок', defaultEn: 'Trial', defaultUa: 'Випробувальний термін' },
+    { key: 'farmer', dbKey: 'farmerRoleId', defaultName: t('clan_role_farmer', 'Фармер'), defaultRu: 'Фармер', defaultEn: 'Miner / Farmer', defaultUa: 'Фармер' },
+    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', defaultName: t('clan_role_plant_farmer', 'Фермер'), defaultRu: 'Фермер', defaultEn: 'Plant Farmer', defaultUa: 'Фермер' },
+    { key: 'electrician', dbKey: 'electricianRoleId', defaultName: t('clan_role_electrician', 'Электрик'), defaultRu: 'Электрик', defaultEn: 'Electrician', defaultUa: 'Електрик' },
+    { key: 'builder', dbKey: 'builderRoleId', defaultName: t('clan_role_builder', 'Билдер'), defaultRu: 'Билдер', defaultEn: 'Builder', defaultUa: 'Білдер' },
+    { key: 'pilot', dbKey: 'pilotRoleId', defaultName: t('clan_role_pilot', 'Пилот'), defaultRu: 'Пилот', defaultEn: 'Pilot', defaultUa: 'Пілот' },
+    { key: 'sponsor', dbKey: 'sponsorRoleId', defaultName: t('clan_role_sponsor', 'Спонсор'), defaultRu: 'Спонсор', defaultEn: 'Sponsor', defaultUa: 'Спонсор' },
     { key: 'vip', dbKey: 'vipRoleId', defaultName: 'VIP', defaultRu: 'VIP', defaultEn: 'VIP', defaultUa: 'VIP' },
   ];
 
@@ -1996,7 +1996,7 @@ export default function ClanManager() {
       reqId: 'create_log_channel',
       payload: {
         action: 'create_log_channel',
-        name: '📜・логи-сервера'
+        name: t('clan_default_log_channel_name', '📜・логи-сервера')
       }
     }));
   };
@@ -2828,7 +2828,7 @@ export default function ClanManager() {
 
       if (config?.name) {
         if (!rConfig.title || rConfig.title === t('clan_rec_gods', 'Набор в клан GODS') || rConfig.title === t('clan_rec_base', 'Набор в клан')) {
-          rConfig.title = `Набор в клан ${config.name}`;
+          rConfig.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}`;
         } else if (rConfig.title.includes('GODS')) {
           rConfig.title = rConfig.title.replace(/\bGODS\b/g, config.name);
         }
@@ -2839,7 +2839,7 @@ export default function ClanManager() {
       const firstLeader = leaders[0];
       const leaderDisplay = rConfig.customLeaderId 
         ? `<@${rConfig.customLeaderId}>` 
-        : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : '@Лидер');
+        : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : `@${t('clan_role_leader', 'Лидер')}`);
 
       const appChannel = discordInfo?.channels?.find(c => c.id === cConfig.applications);
       const channelName = appChannel ? appChannel.name : t('clan_default_rec_ch', 'набор-в-клан');
@@ -2848,7 +2848,7 @@ export default function ClanManager() {
         tabTitle: t('clan_auto_v2_1018', t('clan_rec_base', 'Набор в клан')),
         channelName,
         embed: {
-          title: `ССЫЛКА НА ДС -> ${inviteLink}`,
+          title: `${t('clan_ds_link_prefix', 'ССЫЛКА НА ДС ->')} ${inviteLink}`,
           color: '#5865f2',
           description: `\`\`\`ansi\n${rConfig.title || t('clan_rec_base', 'Набор в клан')}\n\n${rConfig.text || 'Требования...'}\n\`\`\`\n# Лидер: ${leaderDisplay}`,
           banner: rConfig.banner
@@ -2890,10 +2890,10 @@ export default function ClanManager() {
           description: `**Сервер:** ${activeTpl.name || t('clan_tba', 'TBA')}\n**День:** ${activeTpl.day || t('clan_thursday', 'Четверг')}\n**Время:** ${activeTpl.time || '16:00'}\n**Подключение (IP):** \`${activeTpl.ip || 'connect 127.0.0.1:28015'}\`\n\nОтметьтесь, пожалуйста, о вашем присутствии на вайпе!`,
           banner: activeTpl.banner,
           fields: [
-            { name: '🟢 Буду вовремя', value: '0 голосов', inline: true },
-            { name: '🟡 Опоздаю', value: '0 голосов', inline: true },
-            { name: '🟠 Завтра', value: '0 голосов', inline: true },
-            { name: '🔴 Не буду', value: '0 голосов', inline: true }
+            { name: t('clan_poll_opt_on_time', '🟢 Буду вовремя'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
+            { name: t('clan_poll_opt_late', '🟡 Опоздаю'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
+            { name: t('clan_poll_opt_tomorrow', '🟠 Завтра'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
+            { name: t('clan_poll_opt_absent', '🔴 Не буду'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true }
           ],
           footer: t('clan_auto_v2_1021', 'Голосование за вайп')
         },
@@ -2928,7 +2928,7 @@ export default function ClanManager() {
         embed: {
           title: aConfig.title || t('clan_ads_buy', 'Покупка рекламы'),
           color: '#2ecc71',
-          description: aConfig.text ? `**${aConfig.text}**` : '**Размещение рекламы/партнерства на платных/взаимных условиях, актуальная информация по кнопкам ниже.**',
+          description: aConfig.text ? `**${aConfig.text}**` : `**${t('clan_ads_default_text', 'Размещение рекламы/партнерства на платных/взаимных условиях, актуальная информация по кнопкам ниже.')}**`,
           banner: aConfig.banner
         },
         buttons: [
@@ -3244,7 +3244,7 @@ export default function ClanManager() {
                       <Check className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {t('clan_discord_link_valid') || 'Ссылка активна'}
-                        {inviteDetails?.serverName ? ` (${inviteDetails.serverName}${inviteDetails.memberCount ? ` • ${inviteDetails.memberCount} уч.` : ''})` : ''}
+                        {inviteDetails?.serverName ? ` (${inviteDetails.serverName}${inviteDetails.memberCount ? ` • ${inviteDetails.memberCount} ${t('clan_members_short', 'уч.')}` : ''})` : ''}
                       </span>
                     </div>
                   )}
@@ -3416,7 +3416,7 @@ export default function ClanManager() {
                   {/* Standard Roles Section */}
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
-                      Стандартные роли ({visibleStandardRoles.length})
+                      {t('clan_standard_roles_count', 'Стандартные роли')} ({visibleStandardRoles.length})
                     </div>
                     {visibleStandardRoles.length === 0 ? (
                       <div className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center bg-slate-50/50 dark:bg-slate-950/20">
@@ -3530,7 +3530,7 @@ export default function ClanManager() {
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
-                        Кастомные роли ({customRoles.length})
+                        {t('clan_custom_roles_count', 'Кастомные роли')} ({customRoles.length})
                       </div>
                       <button
                         type="button"
@@ -3767,33 +3767,33 @@ export default function ClanManager() {
                   const channelKeys = ['ticketsCategory', 'applications', 'logs', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
                   
                   const channelLabels = {
-                    ticketsCategory: 'Тикеты',
-                    applications: 'Заявки',
+                    ticketsCategory: t('clan_perm_tickets', 'Тикеты'),
+                    applications: t('clan_perm_applications', 'Заявки'),
                     logs: 'logs',
                     leaderboard: 'leaderboard',
-                    news: 'Новости',
-                    votes: 'Голосования',
-                    ads: 'Реклама',
-                    roster: 'Состав'
+                    news: t('clan_perm_news', 'Новости'),
+                    votes: t('clan_perm_votes', 'Голосования'),
+                    ads: t('clan_perm_ads', 'Реклама'),
+                    roster: t('clan_perm_roster', 'Состав')
                   };
 
                   const matrixHierarchyRoles = [
                     { key: 'leader', dbKey: 'leaderRoleId', nameKey: 'leader', defaultName: 'Leader' },
                     { key: 'deputy', dbKey: 'deputyLeaderRoleId', nameKey: 'deputy', defaultName: 'Deputy Leader' },
-                    { key: 'caller', dbKey: 'callerRoleId', nameKey: 'caller', defaultName: 'Коллер' },
-                    { key: 'recruiter', dbKey: 'recruiterRoleId', nameKey: 'recruiter', defaultName: 'Рекрутер' },
-                    { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: 'Основной состав' },
-                    { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: 'Испытательный срок' }
+                    { key: 'caller', dbKey: 'callerRoleId', nameKey: 'caller', defaultName: t('clan_role_caller', 'Коллер') },
+                    { key: 'recruiter', dbKey: 'recruiterRoleId', nameKey: 'recruiter', defaultName: t('clan_role_recruiter', 'Рекрутер') },
+                    { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: t('clan_role_main', 'Основной состав') },
+                    { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: t('clan_role_trial', 'Испытательный срок') }
                   ];
 
                   const matrixSideRoles = [
                     { key: 'vip', dbKey: 'vipRoleId', nameKey: 'vip', defaultName: 'VIP' },
-                    { key: 'builder', dbKey: 'builderRoleId', nameKey: 'builder', defaultName: 'Билдер' },
-                    { key: 'electrician', dbKey: 'electricianRoleId', nameKey: 'electrician', defaultName: 'Электрик' },
-                    { key: 'pilot', dbKey: 'pilotRoleId', nameKey: 'pilot', defaultName: 'Пилот' },
-                    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', nameKey: 'plantFarmer', defaultName: 'Фермер' },
-                    { key: 'farmer', dbKey: 'farmerRoleId', nameKey: 'farmer', defaultName: 'Фармер' },
-                    { key: 'sponsor', dbKey: 'sponsorRoleId', nameKey: 'sponsor', defaultName: 'Спонсор' }
+                    { key: 'builder', dbKey: 'builderRoleId', nameKey: 'builder', defaultName: t('clan_role_builder', 'Билдер') },
+                    { key: 'electrician', dbKey: 'electricianRoleId', nameKey: 'electrician', defaultName: t('clan_role_electrician', 'Электрик') },
+                    { key: 'pilot', dbKey: 'pilotRoleId', nameKey: 'pilot', defaultName: t('clan_role_pilot', 'Пилот') },
+                    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', nameKey: 'plantFarmer', defaultName: t('clan_role_plant_farmer', 'Фермер') },
+                    { key: 'farmer', dbKey: 'farmerRoleId', nameKey: 'farmer', defaultName: t('clan_role_farmer', 'Фармер') },
+                    { key: 'sponsor', dbKey: 'sponsorRoleId', nameKey: 'sponsor', defaultName: t('clan_role_sponsor', 'Спонсор') }
                   ];
 
                   let customRoles = [];
@@ -3809,7 +3809,7 @@ export default function ClanManager() {
                     dbKey: null,
                     roleId: cr.roleId,
                     nameKey: cr.key || cr.id,
-                    defaultName: cr.name || 'Кастомная роль',
+                    defaultName: cr.name || t('clan_custom_role_default', 'Кастомная роль'),
                     isCustom: true,
                     color: cr.color
                   }));
@@ -3955,7 +3955,7 @@ export default function ClanManager() {
                           {matrixCustomRoles.length > 0 && (
                             <tr className="bg-slate-50/80 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                               <td colSpan={channelKeys.length + 1} className="px-4 py-1.5 border-t border-slate-200 dark:border-slate-700">
-                                Кастомные роли ({matrixCustomRoles.length})
+                                {t('clan_custom_roles_count', 'Кастомные роли')} ({matrixCustomRoles.length})
                               </td>
                             </tr>
                           )}
@@ -4194,7 +4194,7 @@ export default function ClanManager() {
                               {/* Members list */}
                               <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex justify-between">
-                                  <span>Участники ({room.members?.length || 0}{room.userLimit > 0 ? ` / ${room.userLimit}` : ''}):</span>
+                                  <span>{t('clan_room_members', 'Участники')} ({room.members?.length || 0}{room.userLimit > 0 ? ` / ${room.userLimit}` : ''}):</span>
                                 </div>
                                 <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                                   {room.members?.map(m => (
@@ -4294,7 +4294,7 @@ export default function ClanManager() {
                   // Keep title synchronized with actual clan name if title was old default / GODS
                   if (config?.name) {
                     if (!rConfig.title || rConfig.title === t('clan_rec_gods', 'Набор в клан GODS') || rConfig.title === t('clan_rec_base', 'Набор в клан')) {
-                      rConfig.title = `Набор в клан ${config.name}`;
+                      rConfig.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}`;
                     } else if (rConfig.title.includes('GODS')) {
                       rConfig.title = rConfig.title.replace(/\bGODS\b/g, config.name);
                     }
@@ -4324,7 +4324,7 @@ export default function ClanManager() {
                   const firstLeader = leaders[0];
                   const leaderDisplay = rConfig.customLeaderId 
                     ? `<@${rConfig.customLeaderId}>` 
-                    : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : '@Лидер');
+                    : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : `@${t('clan_role_leader', 'Лидер')}`);
 
                   const appChannel = discordInfo?.channels?.find(c => c.id === cConfig.applications);
                   const channelName = appChannel ? appChannel.name : t('clan_default_rec_ch', 'набор-в-клан');
@@ -4433,7 +4433,7 @@ export default function ClanManager() {
                           </div>
 
                           <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                            По умолчанию лидер определяется по назначенной роли Лидера в Discord:{' '}
+                            {t('clan_leader_auto_desc', 'По умолчанию лидер определяется по назначенной роли Лидера в Discord:')}{' '}
                             {(() => {
                               const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
                               if (leaders.length > 0) {
@@ -4464,7 +4464,7 @@ export default function ClanManager() {
                               }
                               return <strong className="text-slate-700 dark:text-slate-300">{t('clan_auto_46', 'Роль не выдана ни одному участнику')}</strong>;
                             })()}
-                            . Вы можете принудительно указать Discord ID пользователя:
+                            {t('clan_leader_manual_desc', '. Вы можете принудительно указать Discord ID пользователя:')}
                           </div>
 
                           <div className="flex gap-2">
@@ -4524,7 +4524,7 @@ export default function ClanManager() {
                             value={rConfig.title}
                             onChange={e => updateRConfig('title', e.target.value, false)}
                             onBlur={e => updateRConfig('title', e.target.value, true)}
-                            placeholder={config?.name ? `Набор в клан ${config.name}` : "Набор в клан"}
+                            placeholder={config?.name ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}` : t('clan_recruit_default_title', "Набор в клан")}
                           />
                         </div>
                         
@@ -5475,13 +5475,13 @@ export default function ClanManager() {
                               {(dossier.verifiedHours || dossier.hoursInRust) && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-[11px] font-medium border border-blue-200 dark:border-blue-900/50">
                                   <Clock className="w-3 h-3 text-blue-500" />
-                                  <span>{dossier.verifiedHours ? `${dossier.verifiedHours} ч.` : `${dossier.hoursInRust} ч.`}</span>
+                                  <span>{dossier.verifiedHours ? `${dossier.verifiedHours} ${t('clan_hours_short', 'ч.')}` : `${dossier.hoursInRust} ${t('clan_hours_short', 'ч.')}`}</span>
                                 </span>
                               )}
 
                               {dossier.age && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium">
-                                  {dossier.age} лет
+                                  {dossier.age} {t('clan_years', 'лет')}
                                 </span>
                               )}
 
@@ -5978,7 +5978,7 @@ export default function ClanManager() {
                                       className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                       <option value="">
-                                        {defaultChName ? `(По умолч.: #${defaultChName})` : '(По умолчанию)'}
+                                        {defaultChName ? `(${t('clan_by_default_prefix', 'По умолч.:')} #${defaultChName})` : `(${t('clan_by_default', 'По умолчанию')})`}
                                       </option>
                                       {textChannels.map(ch => (
                                         <option key={ch.id} value={ch.id}>#️⃣ {ch.name}</option>
@@ -7197,7 +7197,7 @@ export default function ClanManager() {
                   <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>{selectedUserForWarns.displayName}</span>
                     <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                      ⚠️ {userWarningsList.filter(w => w.active).length} активных
+                      ⚠️ {userWarningsList.filter(w => w.active).length} {t('clan_active_warns_count', 'активных')}
                     </span>
                   </div>
                   <div className="text-xs text-slate-500">@{selectedUserForWarns.username} • ID: {selectedUserForWarns.userId}</div>
@@ -7248,7 +7248,7 @@ export default function ClanManager() {
                                 type="button"
                                 onClick={() => setWarnModerator(name)}
                                 className="px-2 py-1 rounded-md bg-slate-200/80 dark:bg-slate-700 hover:bg-orange-100 dark:hover:bg-orange-950/60 text-slate-700 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-[10px] font-medium cursor-pointer"
-                                title={`Указать ${name}`}
+                                title={`${t('clan_specify', 'Указать')} ${name}`}
                               >
                                 {name}
                               </button>
@@ -7289,7 +7289,7 @@ export default function ClanManager() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    История варнов ({userWarningsList.length})
+                    {t('clan_warns_history_title', 'История варнов')} ({userWarningsList.length})
                   </span>
                   {userWarningsList.some(w => w.active) && (
                     <button

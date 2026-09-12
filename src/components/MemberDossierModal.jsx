@@ -134,7 +134,7 @@ export default function MemberDossierModal({
         return;
       }
       if (cheaterProofUrl.trim() && !isValidHttpUrl(cheaterProofUrl.trim())) {
-        setSaveError('Ссылка на доказательства должна быть корректным веб-адресом (начинаться с https:// или http://).');
+        setSaveError(t('dossier_err_proof_url', 'Ссылка на доказательства должна быть корректным веб-адресом (начинаться с https:// или http://).'));
         return;
       }
     }
@@ -218,10 +218,10 @@ export default function MemberDossierModal({
           }));
         }
       } else {
-        alert(res?.error || 'Не удалось отправить сообщение');
+        alert(res?.error || t('dossier_err_send_msg_fail', 'Не удалось отправить сообщение'));
       }
     } catch (err) {
-      alert(err.message || 'Ошибка отправки сообщения лидеру');
+      alert(err.message || t('dossier_err_send_msg_lead', 'Ошибка отправки сообщения лидеру'));
     } finally {
       setSendingLeaderMessage(false);
     }
@@ -413,7 +413,7 @@ export default function MemberDossierModal({
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-blue-500" />{t('dossier_steam_accounts', 'Steam Аккаунты кандидата')}</h4>
                   {steamAccounts.length === 0 ? (
-                    <div className="text-xs text-slate-400 italic">Steam не привязан или не указан в анкете</div>
+                    <div className="text-xs text-slate-400 italic">{t('dossier_steam_unlinked', 'Steam не привязан или не указан в анкете')}</div>
                   ) : (
                     <div className="space-y-2">
                       {steamAccounts.map((acc, idx) => (
@@ -423,7 +423,7 @@ export default function MemberDossierModal({
                               {acc.name || acc.steamId}
                             </div>
                             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                              Часы Rust: <span className="font-semibold text-orange-600 dark:text-orange-400">{acc.rustHours !== null && acc.rustHours !== undefined ? `${acc.rustHours} ч.` : 'Скрыты'}</span>
+                              {t('dossier_rust_hours_label', 'Часы Rust:')} <span className="font-semibold text-orange-600 dark:text-orange-400">{acc.rustHours !== null && acc.rustHours !== undefined ? `${acc.rustHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_hours_hidden', 'Скрыты')}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -455,13 +455,13 @@ export default function MemberDossierModal({
 
                   {/* Claimed vs Verified hours summary */}
                   <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Заявлено в анкете:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.claimedHours ? `${profile.claimedHours} ч.` : 'Не указано'}</span>
+                    <span className="text-slate-500">{t('dossier_claimed_in_app', 'Заявлено в анкете:')}</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.claimedHours ? `${profile.claimedHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_not_specified', 'Не указано')}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Подтверждено Steam API:</span>
+                    <span className="text-slate-500">{t('dossier_verified_steam_api', 'Подтверждено Steam API:')}</span>
                     <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                      {profile.verifiedHours !== null && profile.verifiedHours !== undefined ? `${profile.verifiedHours} ч.` : 'Профиль скрыт'}
+                      {profile.verifiedHours !== null && profile.verifiedHours !== undefined ? `${profile.verifiedHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_profile_hidden', 'Профиль скрыт')}
                     </span>
                   </div>
                 </div>
@@ -470,16 +470,16 @@ export default function MemberDossierModal({
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3 flex flex-col">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-orange-500" />
-                    Данные из анкеты
+                    {t('dossier_app_data', 'Данные из анкеты')}
                   </h4>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Возраст:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.age ? `${profile.age} лет` : 'Не указан'}</span>
+                    <span className="text-slate-500">{t('dossier_age_label', 'Возраст:')}</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.age ? `${profile.age} ${t('clan_years', 'лет')}` : t('dossier_not_specified_m', 'Не указан')}</span>
                   </div>
                   <div className="flex-1 flex flex-col text-xs space-y-1">
-                    <span className="text-slate-500 font-medium">Опыт / Прайм-тайм / О себе:</span>
+                    <span className="text-slate-500 font-medium">{t('dossier_exp_label', 'Опыт / Прайм-тайм / О себе:')}</span>
                     <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 text-xs leading-relaxed flex-1 overflow-y-auto max-h-[120px] whitespace-pre-line">
-                      {profile.experience || 'Не заполнено'}
+                      {profile.experience || t('dossier_not_filled', 'Не заполнено')}
                     </div>
                   </div>
                 </div>
@@ -490,20 +490,20 @@ export default function MemberDossierModal({
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                     <Award className="w-4 h-4 text-amber-500" />
-                    Оценка навыков участника (1 – 5 звёзд)
+                    {t('dossier_skill_rating_title', 'Оценка навыков участника (1 – 5 звёзд)')}
                   </h4>
-                  <span className="text-xs text-slate-400">Нажмите на звезду для изменения</span>
+                  <span className="text-xs text-slate-400">{t('dossier_click_star_hint', 'Нажмите на звезду для изменения')}</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {renderStarRating(shootingRating, setShootingRating, 'Стрельба (PvP)', Crosshair)}
-                  {renderStarRating(flyingRating, setFlyingRating, 'Пилотирование (Коптер/Scrap)', Plane)}
-                  {renderStarRating(buildingRating, setBuildingRating, 'Строительство (Билдинг)', Hammer)}
-                  {renderStarRating(farmingRating, setFarmingRating, 'Фарм (Ресурсы/Компоненты)', Pickaxe)}
+                  {renderStarRating(shootingRating, setShootingRating, t('dossier_skill_pvp', 'Стрельба (PvP)'), Crosshair)}
+                  {renderStarRating(flyingRating, setFlyingRating, t('dossier_skill_pilot', 'Пилотирование (Коптер/Scrap)'), Plane)}
+                  {renderStarRating(buildingRating, setBuildingRating, t('dossier_skill_build', 'Строительство (Билдинг)'), Hammer)}
+                  {renderStarRating(farmingRating, setFarmingRating, t('dossier_skill_farm', 'Фарм (Ресурсы/Компоненты)'), Pickaxe)}
                 </div>
 
                 <div className="pt-2">
-                  {renderStarRating(overallRating, setOverallRating, '⭐ Общая оценка бойца', Star)}
+                  {renderStarRating(overallRating, setOverallRating, t('dossier_skill_overall', '⭐ Общая оценка бойца'), Star)}
                 </div>
               </div>
 
@@ -511,13 +511,13 @@ export default function MemberDossierModal({
               <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-blue-500" />
-                  Заметки офицеров / Личное дело
+                  {t('dossier_officer_notes', 'Заметки офицеров / Личное дело')}
                 </label>
                 <textarea
                   disabled={!canEdit}
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  placeholder="Опишите поведение игрока, пунктуальность, участие в рейдах, нарушения или достижения..."
+                  placeholder={t('dossier_officer_notes_ph', 'Опишите поведение игрока, пунктуальность, участие в рейдах, нарушения или достижения...')}
                   className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50 min-h-[90px]"
                 />
               </div>
@@ -526,7 +526,7 @@ export default function MemberDossierModal({
               <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5 text-orange-500" />
-                  Статус участника и дисциплина
+                  {t('dossier_status_discipline', 'Статус участника и дисциплина')}
                 </h4>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -561,7 +561,7 @@ export default function MemberDossierModal({
                 {status !== 'ACTIVE' && (
                   <div>
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {status === 'BLACKLISTED' ? 'Причина занесения в Черный Список *' : 'Причина выхода / исключения'}
+                      {status === 'BLACKLISTED' ? t('dossier_blacklist_reason_label', 'Причина занесения в Черный Список *') : t('dossier_leave_reason_label', 'Причина выхода / исключения')}
                     </label>
                     <input
                       type="text"
@@ -575,7 +575,7 @@ export default function MemberDossierModal({
                           setStatusReason(e.target.value);
                         }
                       }}
-                      placeholder={status === 'BLACKLISTED' ? 'Например: Токсичность, оскорбление клана, слив баз...' : 'Причина...'}
+                      placeholder={status === 'BLACKLISTED' ? t('dossier_blacklist_reason_ph', 'Например: Токсичность, оскорбление клана, слив баз...') : t('dossier_leave_reason_ph', 'Причина...')}
                       className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50"
                     />
                   </div>
@@ -587,8 +587,8 @@ export default function MemberDossierModal({
                     <div className="flex items-center gap-2">
                       <ShieldAlert className={`w-4 h-4 shrink-0 ${cheaterStatus === 'CONFIRMED' ? 'text-red-500' : cheaterStatus === 'SUSPICION' ? 'text-amber-500' : 'text-slate-400'}`} />
                       <div>
-                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">Проверка на читы и софт</div>
-                        <div className="text-[11px] text-slate-500">Подозрение или подтвержденный читер с фиксацией доказательств</div>
+                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{t('dossier_anticheat_title', 'Проверка на читы и софт')}</div>
+                        <div className="text-[11px] text-slate-500">{t('dossier_anticheat_desc', 'Подозрение или подтвержденный читер с фиксацией доказательств')}</div>
                       </div>
                     </div>
                     
@@ -604,7 +604,7 @@ export default function MemberDossierModal({
                             : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                         }`}
                       >
-                        Чист
+                        {t('dossier_cheater_none', 'Чист')}
                       </button>
                       <button
                         type="button"
@@ -616,7 +616,7 @@ export default function MemberDossierModal({
                             : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
                         }`}
                       >
-                        ⚠️ Подозрение
+                        ⚠️ {t('dossier_cheater_suspicion', 'Подозрение')}
                       </button>
                       <button
                         type="button"
@@ -628,7 +628,7 @@ export default function MemberDossierModal({
                             : 'text-slate-500 hover:text-red-600 dark:hover:text-red-400'
                         }`}
                       >
-                        🚨 Читер
+                        🚨 {t('dossier_cheater_confirmed', 'Читер')}
                       </button>
                     </div>
                   </div>
@@ -638,21 +638,21 @@ export default function MemberDossierModal({
                     <div className="p-3.5 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 space-y-3 animate-in fade-in duration-150">
                       <div>
                         <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
-                          Почему считаете читером *
+                          {t('dossier_why_cheater', 'Почему считаете читером *')}
                         </label>
                         <textarea
                           rows={2}
                           disabled={!canEdit}
                           value={cheaterReason}
                           onChange={e => setCheaterReason(e.target.value)}
-                          placeholder="Опишите подозрительные моменты: неестественный трекинг, стрельба сквозь текстуры, префайры без инфы..."
+                          placeholder={t('dossier_why_cheater_ph', 'Опишите подозрительные моменты: неестественный трекинг, стрельба сквозь текстуры, префайры без инфы...')}
                           className="w-full px-3 py-2 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 resize-none"
                         />
                       </div>
 
                       <div>
                         <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
-                          Ссылка на доказательства (одна ссылка) *
+                          {t('dossier_proof_url_label', 'Ссылка на доказательства (одна ссылка) *')}
                         </label>
                         <div className="flex items-center gap-2">
                           <input
@@ -663,7 +663,7 @@ export default function MemberDossierModal({
                               setCheaterProofUrl(e.target.value);
                               setProofUrlError(null);
                             }}
-                            placeholder="https://youtu.be/... или https://medal.tv/..."
+                            placeholder={t('dossier_proof_url_ph', 'https://youtu.be/... или https://medal.tv/...')}
                             className="flex-1 px-3 py-2 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 font-mono"
                           />
                           {cheaterProofUrl && isValidHttpUrl(cheaterProofUrl) && (
@@ -672,15 +672,15 @@ export default function MemberDossierModal({
                               target="_blank"
                               rel="noreferrer"
                               className="px-2.5 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
-                              title="Проверить ссылку"
+                              title={t('dossier_verify_link', 'Проверить ссылку')}
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
-                              <span>Открыть</span>
+                              <span>{t('common_open', 'Открыть')}</span>
                             </a>
                           )}
                         </div>
                         <span className="text-[10px] text-slate-400 mt-1 block">
-                          Веб-ссылка на видеозапись или скриншот на хостинге.
+                          {t('dossier_proof_url_hint', 'Веб-ссылка на видеозапись или скриншот на хостинге.')}
                         </span>
                       </div>
                     </div>
@@ -698,7 +698,7 @@ export default function MemberDossierModal({
               {saveSuccess && (
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Досье успешно обновлено!</span>
+                  <span>{t('dossier_saved_success', 'Досье успешно обновлено!')}</span>
                 </div>
               )}
             </form>
@@ -711,7 +711,7 @@ export default function MemberDossierModal({
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                     <ScrollText className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Заявки и тикеты в клан ({userApplications.length})</span>
+                    <span>{t('dossier_tickets_title', 'Заявки и тикеты в клан')} ({userApplications.length})</span>
                   </h4>
                 </div>
 
@@ -737,7 +737,7 @@ export default function MemberDossierModal({
                           <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-semibold text-xs text-slate-900 dark:text-white">
-                                Заявка #{app.id?.slice(0, 8) || 'Ticket'}
+                                {t('dossier_app_ticket_prefix', 'Заявка')} #{app.id?.slice(0, 8) || 'Ticket'}
                               </span>
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
                                 {app.status || 'PENDING'}
@@ -748,9 +748,9 @@ export default function MemberDossierModal({
                               </span>
                             </div>
                             <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300">
-                              {app.age && <span>Возраст: <strong>{app.age}</strong></span>}
-                              {app.hours && <span>Часы: <strong>{app.hours} ч.</strong></span>}
-                              {app.exp && <span className="truncate max-w-xs">Опыт: {app.exp}</span>}
+                              {app.age && <span>{t('dossier_age_label', 'Возраст:')} <strong>{app.age}</strong></span>}
+                              {app.hours && <span>{t('clan_hours', 'Часы:')} <strong>{app.hours} {t('clan_hours_short', 'ч.')}</strong></span>}
+                              {app.exp && <span className="truncate max-w-xs">{t('dossier_exp_short', 'Опыт:')} {app.exp}</span>}
                             </div>
                           </div>
 
@@ -805,16 +805,16 @@ export default function MemberDossierModal({
                         >
                           <div className="min-w-0">
                             <div className="font-semibold text-slate-900 dark:text-white truncate">
-                              {v.title || v.question || 'Клановое голосование'}
+                              {v.title || v.question || t('clan_default_poll_title', 'Клановое голосование')}
                             </div>
                             <div className="text-[11px] text-slate-400 mt-0.5">
-                              Статус: <span className={v.active !== false ? 'text-emerald-500' : 'text-slate-400'}>{v.active !== false ? 'Активно' : 'Завершено'}</span>
+                              {t('clan_status_label', 'Статус:')} <span className={v.active !== false ? 'text-emerald-500' : 'text-slate-400'}>{v.active !== false ? t('clan_poll_active', 'Активно') : t('clan_poll_closed', 'Завершено')}</span>
                               {v.createdAt && ` • ${new Date(v.createdAt).toLocaleDateString()}`}
                             </div>
                           </div>
                           {myChoice !== null && (
                             <span className="px-2 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800 text-[11px] shrink-0">
-                              Выбор: {myChoice}
+                              {t('dossier_vote_choice', 'Выбор:')} {myChoice}
                             </span>
                           )}
                         </div>
@@ -829,7 +829,7 @@ export default function MemberDossierModal({
                 <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                     <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Предупреждения пользователя ({userWarnings.length})</span>
+                    <span>{t('dossier_user_warnings', 'Предупреждения пользователя')} ({userWarnings.length})</span>
                   </h4>
                   <div className="space-y-2">
                     {userWarnings.map(w => (
@@ -846,7 +846,7 @@ export default function MemberDossierModal({
                             {w.reason}
                           </div>
                           <div className="text-[10px] text-slate-400 mt-0.5">
-                            Модератор: {w.moderatorTag} • {new Date(w.createdAt).toLocaleDateString()}
+                            {t('clan_moderator', 'Модератор:')} {w.moderatorTag} • {new Date(w.createdAt).toLocaleDateString()}
                           </div>
                         </div>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold shrink-0 ${
@@ -854,7 +854,7 @@ export default function MemberDossierModal({
                             ? 'bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300'
                             : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                         }`}>
-                          {w.active ? 'Активен' : 'Снят'}
+                          {w.active ? t('clan_warn_active', 'Активен') : t('clan_warn_inactive', 'Снят')}
                         </span>
                       </div>
                     ))}
@@ -869,10 +869,10 @@ export default function MemberDossierModal({
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Глобальная проверка по базе всех кланов Industrial Hub
+                    {t('dossier_global_search_title', 'Глобальная проверка по базе всех кланов Industrial Hub')}
                   </h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    <span>Поиск по Discord ID: <strong className="text-slate-800 dark:text-slate-200">{profile.userId}</strong> и Steam ID: <strong className="text-slate-800 dark:text-slate-200">{profile.steamId || 'Не указан'}</strong></span>
+                    <span>{t('dossier_search_discord_id', 'Поиск по Discord ID:')} <strong className="text-slate-800 dark:text-slate-200">{profile.userId}</strong> {t('dossier_and_steam_id', 'и Steam ID:')} <strong className="text-slate-800 dark:text-slate-200">{profile.steamId || t('dossier_not_specified_m', 'Не указан')}</strong></span>
                   </p>
                 </div>
                 <button
@@ -884,12 +884,12 @@ export default function MemberDossierModal({
                   {searchingGlobal ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Поиск...</span>
+                      <span>{t('common_searching', 'Поиск...')}</span>
                     </>
                   ) : (
                     <>
                       <Search className="w-3.5 h-3.5" />
-                      <span>Начать поиск</span>
+                      <span>{t('dossier_start_search', 'Начать поиск')}</span>
                     </>
                   )}
                 </button>
@@ -908,10 +908,10 @@ export default function MemberDossierModal({
                     <div className="p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-700/80 shadow-sm space-y-2.5 animate-in slide-in-from-top-2">
                       <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200 font-bold text-xs uppercase tracking-wide">
                         <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0" />
-                        <span>⚠️ ОБНАРУЖЕН МУЛЬТИКЛАН / РАСХОЖДЕНИЯ В ДАННЫХ</span>
+                        <span>{t('dossier_multiclan_warning_title', '⚠️ ОБНАРУЖЕН МУЛЬТИКЛАН / РАСХОЖДЕНИЯ В ДАННЫХ')}</span>
                       </div>
                       <p className="text-xs text-amber-700 dark:text-amber-300">
-                        Данный игрок одновременно числится на нескольких серверах кланов или указал противоречивую информацию о себе (часы, возраст). Рекомендуется связаться с лидерами других кланов.
+                        {t('dossier_multiclan_warning_desc', 'Данный игрок одновременно числится на нескольких серверах кланов или указал противоречивую информацию о себе (часы, возраст). Рекомендуется связаться с лидерами других кланов.')}
                       </p>
                       {globalData.conflicts && globalData.conflicts.length > 0 && (
                         <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-amber-200/80 dark:border-amber-800/60 text-xs space-y-1">
@@ -927,12 +927,12 @@ export default function MemberDossierModal({
                   )}
 
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center justify-between">
-                    <span>Найдено записей на серверах: {globalData.profiles?.length || 0}</span>
+                    <span>{t('dossier_records_found', 'Найдено записей на серверах:')} {globalData.profiles?.length || 0}</span>
                   </div>
 
                   {(!globalData.profiles || globalData.profiles.length === 0) ? (
                     <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                      Записей в других кланах не найдено. Пользователь не состоял в других кланах или у него чистая история.
+                      {t('dossier_no_other_clans', 'Записей в других кланах не найдено. Пользователь не состоял в других кланах или у него чистая история.')}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -949,21 +949,21 @@ export default function MemberDossierModal({
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-                                <span className="text-sm">{rec.guild?.name || `Сервер ID: ${rec.guildId}`}</span>
+                                <span className="text-sm">{rec.guild?.name || `${t('clan_server_id_prefix', 'Сервер ID:')} ${rec.guildId}`}</span>
                                 {getStatusBadge(rec.status)}
                                 {rec.cheaterStatus === 'CONFIRMED' && (
                                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">
-                                    🚨 ЧИТЕР
+                                    🚨 {t('dossier_cheater', 'ЧИТЕР')}
                                   </span>
                                 )}
                                 {rec.cheaterStatus === 'SUSPICION' && (
                                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white">
-                                    ⚠️ ПОДОЗРЕНИЕ
+                                    ⚠️ {t('dossier_suspicion_upper', 'ПОДОЗРЕНИЕ')}
                                   </span>
                                 )}
                               </div>
                               <span className="text-[11px] text-slate-400">
-                                Обновлено: {new Date(rec.updatedAt).toLocaleDateString()}
+                                {t('dossier_updated_date', 'Обновлено:')} {new Date(rec.updatedAt).toLocaleDateString()}
                               </span>
                             </div>
 
@@ -971,19 +971,19 @@ export default function MemberDossierModal({
                             <div className="flex flex-wrap gap-2 text-[11px]">
                               {rec.age && (
                                 <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
-                                  Возраст: {rec.age} лет
+                                  {t('dossier_age_label', 'Возраст:')} {rec.age} {t('clan_years', 'лет')}
                                 </span>
                               )}
                               {(rec.claimedHours || rec.verifiedHours) && (
                                 <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-medium">
-                                  Часы Rust: {rec.verifiedHours ? `${rec.verifiedHours} ч. (проверено)` : `${rec.claimedHours} ч. (заявлено)`}
+                                  {t('dossier_rust_hours_label', 'Часы Rust:')} {rec.verifiedHours ? `${rec.verifiedHours} ${t('clan_hours_short', 'ч.')} (${t('dossier_verified', 'проверено')})` : `${rec.claimedHours} ${t('clan_hours_short', 'ч.')} (${t('dossier_claimed', 'заявлено')})`}
                                 </span>
                               )}
                             </div>
 
                             {rec.cheaterReason && (
                               <div className="p-2 rounded bg-red-100/90 dark:bg-red-900/40 text-red-800 dark:text-red-200 text-[11px] space-y-1">
-                                <div><strong>Причина отметки читера:</strong> {rec.cheaterReason}</div>
+                                <div><strong>{t('dossier_cheater_reason_label', 'Причина отметки читера:')}</strong> {rec.cheaterReason}</div>
                                 {rec.cheaterProofUrl && (
                                   <div>
                                     <a
@@ -992,7 +992,7 @@ export default function MemberDossierModal({
                                       rel="noreferrer"
                                       className="text-red-700 dark:text-red-300 underline font-semibold flex items-center gap-1"
                                     >
-                                      <span>Доказательства: {rec.cheaterProofUrl}</span>
+                                      <span>{t('dossier_proofs_label', 'Доказательства:')} {rec.cheaterProofUrl}</span>
                                       <ExternalLink className="w-3 h-3" />
                                     </a>
                                   </div>
@@ -1002,13 +1002,13 @@ export default function MemberDossierModal({
 
                             {rec.blacklistReason && (
                               <div className="p-2 rounded bg-red-100/80 dark:bg-red-900/30 text-red-800 dark:text-red-300 text-[11px]">
-                                <strong>Причина ЧС:</strong> {rec.blacklistReason}
+                                <strong>{t('dossier_blacklist_reason_short', 'Причина ЧС:')}</strong> {rec.blacklistReason}
                               </div>
                             )}
 
                             {rec.notes && (
                               <div className="text-[11px] text-slate-600 dark:text-slate-300">
-                                <strong>Заметки офицеров:</strong> {rec.notes}
+                                <strong>{t('dossier_officer_notes_short', 'Заметки офицеров:')}</strong> {rec.notes}
                               </div>
                             )}
 
@@ -1023,7 +1023,7 @@ export default function MemberDossierModal({
                                   />
                                   <div className="overflow-hidden">
                                     <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                                      Лидер: {guildLeader.leaderDisplayName || guildLeader.leaderTag}
+                                      {t('clan_leader_title', 'Лидер:')} {guildLeader.leaderDisplayName || guildLeader.leaderTag}
                                     </div>
                                     <div className="text-[10px] text-slate-400 font-mono truncate">
                                       ID: {guildLeader.leaderId}
@@ -1035,10 +1035,10 @@ export default function MemberDossierModal({
                                     type="button"
                                     onClick={() => handleCopyText(guildLeader.leaderId, `leader_${rec.guildId}`)}
                                     className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                                    title="Скопировать Discord ID лидера"
+                                    title={t('dossier_copy_leader_id', 'Скопировать Discord ID лидера')}
                                   >
                                     {copiedLeaderId === `leader_${rec.guildId}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                                    <span>Копировать ID</span>
+                                    <span>{t('common_copy_id', 'Копировать ID')}</span>
                                   </button>
                                   {guildLeader.leaderId && (
                                     <a
@@ -1046,7 +1046,7 @@ export default function MemberDossierModal({
                                       target="_blank"
                                       rel="noreferrer"
                                       className="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                                      title="Открыть профиль в Discord"
+                                      title={t('dossier_open_discord_profile', 'Открыть профиль в Discord')}
                                     >
                                       <ExternalLink className="w-3 h-3" />
                                       <span>Discord</span>
@@ -1066,9 +1066,9 @@ export default function MemberDossierModal({
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                         <MessageSquare className="w-4 h-4 text-blue-500" />
-                        Связь между лидерами кланов по этому игроку
+                        {t('dossier_leader_chat_title', 'Связь между лидерами кланов по этому игроку')}
                       </h4>
-                      <span className="text-[10px] text-slate-400">Прямой чат в Industrial Hub</span>
+                      <span className="text-[10px] text-slate-400">{t('dossier_direct_hub_chat', 'Прямой чат в Industrial Hub')}</span>
                     </div>
 
                     {/* Messages Thread */}
@@ -1086,7 +1086,7 @@ export default function MemberDossierModal({
                       </div>
                     ) : (
                       <div className="text-[11px] text-slate-400 italic text-center py-2">
-                        Сообщений между лидерами по этому игроку пока нет. Напишите, чтобы связаться.
+                        {t('dossier_no_leader_messages', 'Сообщений между лидерами по этому игроку пока нет. Напишите, чтобы связаться.')}
                       </div>
                     )}
 
@@ -1097,7 +1097,7 @@ export default function MemberDossierModal({
                           type="text"
                           value={leaderMessageText}
                           onChange={e => setLeaderMessageText(e.target.value)}
-                          placeholder="Напишите сообщение лидеру другого клана..."
+                          placeholder={t('dossier_lead_msg_ph', 'Напишите сообщение лидеру другого клана...')}
                           className="flex-1 px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500/50"
                         />
                         <button
@@ -1106,13 +1106,13 @@ export default function MemberDossierModal({
                           className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shrink-0"
                         >
                           <Send className="w-3.5 h-3.5" />
-                          <span>{sendingLeaderMessage ? 'Отправка...' : 'Отправить'}</span>
+                          <span>{sendingLeaderMessage ? t('common_sending', 'Отправка...') : t('common_send', 'Отправить')}</span>
                         </button>
                       </div>
                       {leaderMessageSuccess && (
                         <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" />
-                          <span>Сообщение успешно доставлено и сохранено!</span>
+                          <span>{t('dossier_msg_sent_success', 'Сообщение успешно доставлено и сохранено!')}</span>
                         </div>
                       )}
                     </form>
@@ -1130,7 +1130,7 @@ export default function MemberDossierModal({
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
           >
-            Закрыть
+            {t('common_close', 'Закрыть')}
           </button>
 
           {canEdit && activeTab === 'dossier' && (
@@ -1143,12 +1143,12 @@ export default function MemberDossierModal({
               {saving ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Сохранение...</span>
+                  <span>{t('common_saving', 'Сохранение...')}</span>
                 </>
               ) : (
                 <>
                   <Save className="w-3.5 h-3.5" />
-                  <span>Сохранить изменения</span>
+                  <span>{t('common_save_changes', 'Сохранить изменения')}</span>
                 </>
               )}
             </button>

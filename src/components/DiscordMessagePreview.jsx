@@ -137,7 +137,7 @@ function renderDiscordMarkdown(text) {
 }
 
 export default function DiscordMessagePreview({
-  channelName = 'набор-в-клан',
+  channelName = 'recruitment',
   botName = 'Clan Manager',
   botAvatar = null,
   embed = {},
@@ -167,7 +167,7 @@ export default function DiscordMessagePreview({
           </span>
           <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-[#4e5058]" />
           <span className="hidden sm:inline-block text-xs text-[#949ba4] truncate font-normal">
-            {tabTitle ? `${tabTitle} • Предпросмотр в реальном времени` : t('preview_bot_msg', 'Предпросмотр сообщения бота')}
+            {tabTitle ? `${tabTitle} • ${t('preview_realtime', 'Предпросмотр в реальном времени')}` : t('preview_bot_msg', 'Предпросмотр сообщения бота')}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
