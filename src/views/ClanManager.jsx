@@ -439,6 +439,7 @@ function InitialClanNameModal({ isOpen, onClose, onSave, onOpenWizard, t }) {
 
 export default function ClanManager() {
   const { t } = useTranslation();
+  const loggingEventGroups = getLoggingEventGroups(t);
   const { ws, status: wsStatus } = useNetwork();
   const [status, setStatus] = useState('checking');
   const [guildId, setGuildId] = useState(null);

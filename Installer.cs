@@ -235,66 +235,12 @@ namespace IndustrialHubLauncher
             string exeUrl = null;
             string foundVersion = null;
 
-            // Strategy 1: Server authoritative version.json
-            if (string.IsNullOrEmpty(exeUrl))
-            {
-                try
-                {
-                    string serverUrl = "https://industrial-hub.duckdns.org/version.json?t=" + Environment.TickCount;
-                    HttpWebRequest srvReq = (HttpWebRequest)WebRequest.Create(serverUrl);
-                    srvReq.Timeout = 8000;
-                    srvReq.UserAgent = "IndustrialHub-Installer";
-
-                    using (HttpWebResponse srvResp = (HttpWebResponse)srvReq.GetResponse())
-                    using (StreamReader reader = new StreamReader(srvResp.GetResponseStream()))
-                    {
-                        string srvJson = reader.ReadToEnd();
-                        int vIdx = srvJson.IndexOf("\"version\":");
-                        if (vIdx != -1)
-                        {
-                            int q1 = srvJson.IndexOf('\"', vIdx + 10);
-                            int q2 = srvJson.IndexOf('\"', q1 + 1);
-                            if (q1 != -1 && q2 != -1)
-                            {
-                                foundVersion = srvJson.Substring(q1 + 1, q2 - q1 - 1).Trim().Replace("v", "");
-                                if (!string.IsNullOrEmpty(foundVersion))
-                                {
-                                    exeUrl = string.Format("https://github.com/kozhaki-vik/industrial-hub-releases/releases/download/v{0}/Industrial.Hub.{0}.exe", foundVersion);
-                                }
-                            }
-                        }
-                    }
-                }
-                catch { }
-            }
-
-            // Strategy 2: GitHub API /releases/latest (stable only)
+            // Strategy 1: GitHub API /releases/latest (stable only)
             if (string.IsNullOrEmpty(exeUrl))
             {
                 try
                 {
                     string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases/latest?t=" + Environment.TickCount;
-                    HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
-                    ghReq.Timeout = 10000;
-                    ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
-                    ghReq.Accept = "application/vnd.github.v3+json";
-
-                    using (HttpWebResponse ghResp = (HttpWebResponse)ghReq.GetResponse())
-                    using (StreamReader reader = new StreamReader(ghResp.GetResponseStream()))
-                    {
-                        string json = reader.ReadToEnd();
-                        ParseJsonRelease(json, ref foundVersion, ref exeUrl);
-                    }
-                }
-                catch { }
-            }
-
-            // Strategy 3: GitHub API /releases (first available release)
-            if (string.IsNullOrEmpty(exeUrl))
-            {
-                try
-                {
-                    string apiUrl = "https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases?t=" + Environment.TickCount;
                     HttpWebRequest ghReq = (HttpWebRequest)WebRequest.Create(apiUrl);
                     ghReq.Timeout = 10000;
                     ghReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) IndustrialHub-Installer";
@@ -322,7 +268,7 @@ namespace IndustrialHubLauncher
             else
             {
                 this.Invoke((MethodInvoker)delegate {
-                    MessageBox.Show("Не удалось получить ссылку на актуальную версию.\nПожалуйста, проверьте подключение к интернету или попробуйте позже.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Не удалось получить ссылку на стабильную версию.\nПожалуйста, проверьте подключение к интернету или попробуйте позже.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Application.Exit();
                 });
             }
