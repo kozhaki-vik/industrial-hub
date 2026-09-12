@@ -14,12 +14,11 @@ const reportToBackend = (errorText) => {
 };
 
 window.addEventListener('error', (event) => {
-  // Capture unhandled JS errors (and resource load errors if target is not window)
-  if (event.target && (event.target.tagName === 'IMG' || event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
-    // Resource load error (e.g., img, script)
+  // Capture critical resource load errors (scripts, stylesheets)
+  if (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
     const src = event.target.src || event.target.href || event.target.tagName;
     reportToBackend(`Resource load error: Failed to load ${src}`);
-  } else {
+  } else if (!event.target || event.target === window) {
     // JS error
     const msg = event.error ? (event.error.stack || event.error.message) : event.message;
     reportToBackend(`Uncaught UI Error: ${msg}`);

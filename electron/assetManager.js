@@ -33,20 +33,28 @@ export class AssetManager {
     }
   }
 
-  downloadBuffer(url) {
-    return new Promise((resolve, reject) => {
-      https.get(url, { headers: { 'User-Agent': 'Industrial-Hub-Client' } }, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          return resolve(this.downloadBuffer(res.headers.location));
-        }
-        if (res.statusCode !== 200) {
-          return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
-        }
-        const chunks = [];
-        res.on('data', c => chunks.push(c));
-        res.on('end', () => resolve(Buffer.concat(chunks)));
-      }).on('error', reject);
-    });
+  async downloadBuffer(url) {
+    try {
+      const res = await net.fetch(url, { headers: { 'User-Agent': 'Industrial-Hub-Client' } });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} for ${url}`);
+      }
+      return Buffer.from(await res.arrayBuffer());
+    } catch (err) {
+      return new Promise((resolve, reject) => {
+        https.get(url, { headers: { 'User-Agent': 'Industrial-Hub-Client' } }, (res) => {
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            return resolve(this.downloadBuffer(res.headers.location));
+          }
+          if (res.statusCode !== 200) {
+            return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
+          }
+          const chunks = [];
+          res.on('data', c => chunks.push(c));
+          res.on('end', () => resolve(Buffer.concat(chunks)));
+        }).on('error', reject);
+      });
+    }
   }
 
   async syncAssets(onProgress = () => {}) {
@@ -158,7 +166,7 @@ export class AssetManager {
     }
   }
 
-  handleProtocolRequest(request) {
+  async handleProtocolRequest(request) {
     try {
       const parsed = new URL(request.url);
       const fileName = path.basename(decodeURIComponent(parsed.pathname));
@@ -169,8 +177,25 @@ export class AssetManager {
       if (fs.existsSync(localPath)) {
         return net.fetch(pathToFileURL(localPath).toString());
       }
+
+      // Fallback: If not yet cached locally, fetch on demand from remote repository
+      const remoteUrl = `${ASSETS_BASE_URL}/${encodeURIComponent(fileName)}`;
+      const remoteRes = await net.fetch(remoteUrl);
+      if (remoteRes.ok) {
+        remoteRes.clone().arrayBuffer().then(buf => {
+          try {
+            this.ensureDir(this.cacheDir);
+            const tempPath = `${localPath}.tmp.${Date.now()}.${Math.random().toString(36).slice(2, 6)}`;
+            fs.writeFileSync(tempPath, Buffer.from(buf));
+            fs.renameSync(tempPath, localPath);
+          } catch {}
+        }).catch(() => {});
+        return remoteRes;
+      }
+
       return new Response('Not found', { status: 404 });
-    } catch {
+    } catch (err) {
+      console.error('[AssetManager] Protocol request error:', err);
       return new Response('Error', { status: 500 });
     }
   }

@@ -298,7 +298,7 @@ app.whenReady().then(async () => {
         console.warn('[AssetManager] Background sync warning:', err.message);
       });
     }
-  }, 4000);
+  }, 1000);
 
   flushCrashQueue();
   setInterval(flushCrashQueue, 60000);
