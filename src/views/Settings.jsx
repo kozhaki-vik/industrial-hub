@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, RefreshCw } from 'lucide-react';
+import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, RefreshCw, Sparkles } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,6 @@ import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 import kozhakiAvatar from '../assets/team/kozhaki.jpg';
 import kaktusAvatar from '../assets/team/kaktus.png';
 import pc6Avatar from '../assets/team/pc6.jpg';
-import sponsorAvatar from '../assets/team/sponsor.jpg';
 
 const UaFlag = ({ className }) => (
   <svg viewBox="0 0 24 16" className={`rounded-sm overflow-hidden ${className}`} xmlns="http://www.w3.org/2000/svg">
@@ -372,8 +371,8 @@ export default function Settings() {
               >
                 <div className="absolute -inset-[100%] bg-[conic-gradient(from_0deg,transparent_0_160deg,#f97316_180deg,transparent_180deg_340deg,#f97316_360deg)] animate-[spin_3s_linear_infinite] opacity-50 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex gap-4 items-center text-left bg-slate-50 dark:bg-slate-950 p-4 rounded-[10px] w-full h-full hover:bg-orange-50 dark:hover:bg-slate-900 transition-colors">
-                  <div className="w-14 h-14 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 shadow-sm border border-slate-300 dark:border-slate-600 group-hover:border-orange-500 transition-colors z-10">
-                    <img src={sponsorAvatar} alt={t('settings_sponsor_btn')} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                  <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-950/60 flex items-center justify-center shrink-0 shadow-sm border border-orange-200 dark:border-orange-800/60 group-hover:border-orange-500 group-hover:scale-105 transition-all z-10">
+                    <Sparkles className="w-7 h-7 text-orange-500 group-hover:text-orange-600 transition-colors" />
                   </div>
                   <div className="z-10">
                     <h4 className="text-base font-bold text-slate-700 dark:text-slate-300 group-hover:text-orange-500 transition-colors">{t('settings_sponsor_btn')}</h4>
