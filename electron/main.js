@@ -257,7 +257,57 @@ app.on('render-process-gone', (event, webContents, details) => {
 });
 
 app.whenReady().then(async () => {
-  assetManager = new AssetManager(app.getPath('userData'));
+  const getClientDir = () => {
+    try {
+      const appPath = getRealAppPath();
+      const parentDir = path.resolve(appPath, '..');
+      if (path.basename(appPath).startsWith('app-') && path.basename(parentDir).toLowerCase() === 'client') {
+        return parentDir;
+      }
+    } catch (e) {}
+
+    const appData = process.env.APPDATA || (process.platform === 'win32' ? path.join(os.homedir(), 'AppData', 'Roaming') : app.getPath('userData'));
+    return path.join(appData, 'IndustrialHubClient', 'client');
+  };
+
+  const clientDir = getClientDir();
+  const itemsDir = path.join(clientDir, 'items');
+
+  // Auto-migrate from legacy cache if present and target is empty
+  try {
+    const legacyCache = path.join(app.getPath('userData'), 'cache', 'items');
+    if (fs.existsSync(legacyCache) && legacyCache !== itemsDir) {
+      if (!fs.existsSync(itemsDir) || fs.readdirSync(itemsDir).length === 0) {
+        fs.mkdirSync(itemsDir, { recursive: true });
+        for (const f of fs.readdirSync(legacyCache)) {
+          if (/\.(png|jpg|webp)$/i.test(f)) {
+            fs.copyFileSync(path.join(legacyCache, f), path.join(itemsDir, f));
+          }
+        }
+        console.log('[AssetManager] Migrated items from legacy cache to', itemsDir);
+      }
+    }
+  } catch (e) {}
+
+  // Pre-seed cache from local assets/items if available and itemsDir is empty
+  try {
+    const devItemsDir = path.join(__dirname, '../src/assets/items');
+    if (fs.existsSync(devItemsDir)) {
+      if (!fs.existsSync(itemsDir) || fs.readdirSync(itemsDir).length === 0) {
+        fs.mkdirSync(itemsDir, { recursive: true });
+        for (const f of fs.readdirSync(devItemsDir)) {
+          if (/\.(png|jpg|webp)$/i.test(f)) {
+            fs.copyFileSync(path.join(devItemsDir, f), path.join(itemsDir, f));
+          }
+        }
+        console.log('[AssetManager] Pre-seeded cache from local assets/items to', itemsDir);
+      }
+    }
+  } catch (e) {
+    console.warn('[AssetManager] Pre-seed error:', e);
+  }
+
+  assetManager = new AssetManager(itemsDir);
   protocol.handle('hub-asset', (req) => assetManager.handleProtocolRequest(req));
 
   ipcMain.handle('assets:sync', async () => {
@@ -267,25 +317,6 @@ app.whenReady().then(async () => {
       }
     });
   });
-
-  // Pre-seed cache from local assets/items if available and cache is empty
-  try {
-    const devItemsDir = path.join(__dirname, '../src/assets/items');
-    const targetCache = path.join(app.getPath('userData'), 'cache', 'items');
-    if (fs.existsSync(devItemsDir)) {
-      if (!fs.existsSync(targetCache) || fs.readdirSync(targetCache).length === 0) {
-        fs.mkdirSync(targetCache, { recursive: true });
-        for (const f of fs.readdirSync(devItemsDir)) {
-          if (/\.(png|jpg|webp)$/i.test(f)) {
-            fs.copyFileSync(path.join(devItemsDir, f), path.join(targetCache, f));
-          }
-        }
-        console.log('[AssetManager] Pre-seeded cache from local assets/items');
-      }
-    }
-  } catch (e) {
-    console.warn('[AssetManager] Pre-seed error:', e);
-  }
 
   // Trigger background asset sync after startup
   setTimeout(() => {

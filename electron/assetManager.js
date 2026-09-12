@@ -12,8 +12,10 @@ const MANIFEST_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAM
 const ASSETS_BASE_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/items`;
 
 export class AssetManager {
-  constructor(userDataPath) {
-    this.cacheDir = path.join(userDataPath, 'cache', 'items');
+  constructor(targetDir) {
+    this.cacheDir = path.basename(targetDir).toLowerCase() === 'items'
+      ? targetDir
+      : path.join(targetDir, 'items');
     this.isSyncing = false;
     this.ensureDir(this.cacheDir);
   }
