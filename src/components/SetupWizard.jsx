@@ -122,7 +122,7 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', 
             <div className="ml-3 text-sm">
               <span className="font-medium text-slate-900 dark:text-white">{t('clan_wizard_roles', 'Базовые роли')}</span>
               <p className="text-slate-500 dark:text-slate-400 mt-1">
-                {t('clan_wizard_roles_desc', 'Проверяет существующие роли и привязывает их, либо создает недостающие: Leader, Deputy Leader, Коллер, Основной состав, Испытательный срок, VIP с базовыми цветами.')}
+                {t('clan_wizard_roles_desc', 'Проверяет существующие роли и привязывает их, либо создает недостающие: Leader, Deputy Leader, Коллер, Рекрутер, Основной состав, Испытательный срок, VIP с базовыми цветами.')}
               </p>
             </div>
           </label>

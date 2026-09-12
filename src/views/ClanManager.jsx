@@ -10,7 +10,7 @@ import {
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
-  BookOpen, Star, Search, ExternalLink
+  BookOpen, Star, Search, ExternalLink, Archive
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -31,6 +31,7 @@ export const isBotConfigured = (cfg) => {
     'leaderRoleId',
     'deputyLeaderRoleId',
     'callerRoleId',
+    'recruiterRoleId',
     'mainRosterRoleId',
     'trialRoleId',
     'farmerRoleId',
@@ -1377,7 +1378,40 @@ export default function ClanManager() {
     try { if (config.channelsConfigJson) channelsConfig = JSON.parse(config.channelsConfigJson); } catch (e) {}
     
     // permissions structure stored in channelsConfig.permissions
-    const permissions = channelsConfig.permissions || {};
+    const permissions = { ...(channelsConfig.permissions || {}) };
+
+    let defaultLogChannelId = null;
+    try {
+      const l = typeof config.loggingConfigJson === 'string' ? JSON.parse(config.loggingConfigJson) : config.loggingConfigJson;
+      defaultLogChannelId = l?.defaultChannelId || null;
+    } catch (e) {}
+
+    const getChannelId = (cKey) => channelsConfig[cKey] || (cKey === 'logs' ? defaultLogChannelId : null);
+
+    const defaultRoleChannelKeys = {
+      leader: ['ticketsCategory', 'applications', 'logs', 'leaderboard', 'news', 'votes', 'ads', 'roster'],
+      deputy: ['ticketsCategory', 'applications', 'logs', 'leaderboard', 'news', 'votes', 'ads', 'roster'],
+      caller: ['news', 'votes'],
+      recruiter: ['ticketsCategory', 'applications']
+    };
+
+    const roleMap = {
+      leader: config.leaderRoleId,
+      deputy: config.deputyLeaderRoleId,
+      caller: config.callerRoleId,
+      recruiter: config.recruiterRoleId
+    };
+
+    for (const [rKey, rId] of Object.entries(roleMap)) {
+      if (rId && permissions[rId] === undefined) {
+        const defKeys = defaultRoleChannelKeys[rKey] || [];
+        permissions[rId] = defKeys.map(getChannelId).filter(Boolean);
+      }
+    }
+
+    channelsConfig.permissions = permissions;
+    const updated = { ...config, channelsConfigJson: JSON.stringify(channelsConfig) };
+    queueAutoSave(updated, true);
     
     ws.send(JSON.stringify({
       type: 'clan',
@@ -1463,6 +1497,7 @@ export default function ClanManager() {
     { key: 'leader', dbKey: 'leaderRoleId', defaultName: 'Leader', defaultRu: 'Leader', defaultEn: 'Leader', defaultUa: 'Leader' },
     { key: 'deputy', dbKey: 'deputyLeaderRoleId', defaultName: 'Deputy Leader', defaultRu: 'Deputy Leader', defaultEn: 'Deputy Leader', defaultUa: 'Deputy Leader' },
     { key: 'caller', dbKey: 'callerRoleId', defaultName: 'Коллер', defaultRu: 'Коллер', defaultEn: 'Коллер', defaultUa: 'Коллер' },
+    { key: 'recruiter', dbKey: 'recruiterRoleId', defaultName: 'Рекрутер', defaultRu: 'Рекрутер', defaultEn: 'Рекрутер', defaultUa: 'Рекрутер' },
     { key: 'main', dbKey: 'mainRosterRoleId', defaultName: 'Основной состав', defaultRu: 'Основной состав', defaultEn: 'Основной состав', defaultUa: 'Основной состав' },
     { key: 'trial', dbKey: 'trialRoleId', defaultName: 'Испытательный срок', defaultRu: 'Испытательный срок', defaultEn: 'Испытательный срок', defaultUa: 'Испытательный срок' },
     { key: 'farmer', dbKey: 'farmerRoleId', defaultName: 'Фармер', defaultRu: 'Фармер', defaultEn: 'Фармер', defaultUa: 'Фармер' },
@@ -1610,6 +1645,7 @@ export default function ClanManager() {
       leaderRoleId: '#ef4444',
       deputyLeaderRoleId: '#f97316',
       callerRoleId: '#eab308',
+      recruiterRoleId: '#8b5cf6',
       mainRosterRoleId: '#22c55e',
       trialRoleId: '#06b6d4',
       vipRoleId: '#a855f7',
@@ -2033,12 +2069,12 @@ export default function ClanManager() {
     { id: 'votes', label: 'Голосования', icon: Vote },
     { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
     { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
-    { id: 'dossier', label: t('clan_tab_dossier') || 'Досье', icon: BookOpen },
-    { id: 'roster', label: 'Состав', icon: UserCheck },
-    { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
-    { id: 'ads', label: 'Реклама', icon: Megaphone },
     { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
+    { id: 'roster', label: 'Состав', icon: UserCheck },
+    { id: 'dossier', label: t('clan_tab_archive') || 'Архив', icon: Archive },
     { id: 'stats', label: 'Статистика', icon: BarChart3 },
+    { id: 'ads', label: 'Реклама', icon: Megaphone },
+    { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
   ];
 
   const botSearchIndex = [
@@ -2445,17 +2481,17 @@ export default function ClanManager() {
     {
       id: 'dossier_members',
       tabId: 'dossier',
-      tabName: t('clan_tab_dossier') || 'Досье',
-      tabIcon: BookOpen,
-      title: 'Личные досье и архив бойцов',
+      tabName: t('clan_tab_archive') || 'Архив',
+      tabIcon: Archive,
+      title: 'Архив и личные карточки бойцов',
       desc: 'Персональные карточки бойцов с историей, заметками офицеров и статусом',
       keywords: ['досье', 'карточка', 'заметки', 'характеристика', 'dossier', 'боец', 'архив']
     },
     {
       id: 'dossier_blacklist',
       tabId: 'dossier',
-      tabName: t('clan_tab_dossier') || 'Досье',
-      tabIcon: BookOpen,
+      tabName: t('clan_tab_archive') || 'Архив',
+      tabIcon: Archive,
       title: 'Черный список игроков (Blacklist)',
       desc: 'Внесение недобросовестных игроков, читеров или нарушителей в клановый бан-лист',
       keywords: ['черный список', 'чс', 'банлист', 'предатели', 'blacklist']
@@ -3390,11 +3426,23 @@ export default function ClanManager() {
                     defaultLogChannelId = l?.defaultChannelId || null;
                   } catch(e) {}
                   
-                  const channelKeys = ['logs', 'applications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
+                  const channelKeys = ['ticketsCategory', 'applications', 'logs', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
                   
+                  const channelLabels = {
+                    ticketsCategory: 'Тикеты',
+                    applications: 'Заявки',
+                    logs: 'logs',
+                    leaderboard: 'leaderboard',
+                    news: 'Новости',
+                    votes: 'Голосования',
+                    ads: 'Реклама',
+                    roster: 'Состав'
+                  };
+
                   const matrixHierarchyRoles = [
                     { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: 'Испытательный срок' },
                     { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: 'Основной состав' },
+                    { key: 'recruiter', dbKey: 'recruiterRoleId', nameKey: 'recruiter', defaultName: 'Рекрутер' },
                     { key: 'caller', dbKey: 'callerRoleId', nameKey: 'caller', defaultName: 'Коллер' },
                     { key: 'deputy', dbKey: 'deputyLeaderRoleId', nameKey: 'deputy', defaultName: 'Deputy Leader' },
                     { key: 'leader', dbKey: 'leaderRoleId', nameKey: 'leader', defaultName: 'Leader' }
@@ -3417,37 +3465,44 @@ export default function ClanManager() {
                   allMatrixRoles.forEach(r => {
                     roleIdMap[r.key] = config[r.dbKey];
                   });
+
+                  const getChannelId = (cKey) => {
+                    return cConfig[cKey] || (cKey === 'logs' ? defaultLogChannelId : null);
+                  };
+
+                  const defaultRoleChannels = {
+                    leader: ['ticketsCategory', 'applications', 'logs', 'leaderboard', 'news', 'votes', 'ads', 'roster'],
+                    deputy: ['ticketsCategory', 'applications', 'logs', 'leaderboard', 'news', 'votes', 'ads', 'roster'],
+                    caller: ['news', 'votes'],
+                    recruiter: ['ticketsCategory', 'applications']
+                  };
+
+                  const getRoleEffectiveAllowedIds = (rKey, rId) => {
+                    if (!rId) return [];
+                    if (Array.isArray(permissions[rId])) {
+                      return permissions[rId];
+                    }
+                    const defKeys = defaultRoleChannels[rKey] || [];
+                    return defKeys.map(getChannelId).filter(Boolean);
+                  };
                   
                   const togglePermission = (roleKey, channelKey) => {
                     const roleId = roleIdMap[roleKey];
                     if (!roleId) return; // role not configured
-                    const channelId = cConfig[channelKey] || (channelKey === 'logs' ? defaultLogChannelId : null);
+                    const channelId = getChannelId(channelKey);
                     if (!channelId) return;
 
-                    const newPermissions = { ...permissions };
-                    const currentSet = new Set(newPermissions[roleId] || []);
+                    const effectiveIds = getRoleEffectiveAllowedIds(roleKey, roleId);
+                    const currentSet = new Set(effectiveIds);
                     const isGranting = !currentSet.has(channelId);
 
                     if (isGranting) {
                       currentSet.add(channelId);
-                      
-                      // Auto-inherit for higher hierarchy roles
-                      const roleIndex = matrixHierarchyRoles.findIndex(r => r.key === roleKey);
-                      if (roleIndex !== -1) {
-                        for (let i = roleIndex + 1; i < matrixHierarchyRoles.length; i++) {
-                          const higherRoleId = roleIdMap[matrixHierarchyRoles[i].key];
-                          if (higherRoleId) {
-                            if (!newPermissions[higherRoleId]) newPermissions[higherRoleId] = [];
-                            const hSet = new Set(newPermissions[higherRoleId]);
-                            hSet.add(channelId);
-                            newPermissions[higherRoleId] = Array.from(hSet);
-                          }
-                        }
-                      }
                     } else {
                       currentSet.delete(channelId);
                     }
-                    
+
+                    const newPermissions = { ...permissions };
                     newPermissions[roleId] = Array.from(currentSet);
                     
                     const newConfig = { ...cConfig, permissions: newPermissions };
@@ -3462,9 +3517,9 @@ export default function ClanManager() {
                           <tr>
                             <th className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Роль</th>
                             {channelKeys.map(cKey => (
-                              <th key={cKey} className="px-2 py-3 text-center font-medium text-slate-600 dark:text-slate-400 capitalize">
-                                <div className="writing-mode-vertical sm:writing-mode-horizontal truncate max-w-[80px]" title={cKey}>
-                                  {cKey}
+                              <th key={cKey} className="px-2 py-3 text-center font-medium text-slate-600 dark:text-slate-400">
+                                <div className="truncate max-w-[85px] mx-auto text-xs" title={channelLabels[cKey] || cKey}>
+                                  {channelLabels[cKey] || cKey}
                                 </div>
                               </th>
                             ))}
@@ -3486,6 +3541,8 @@ export default function ClanManager() {
                               }
                             } catch(e) {}
                             
+                            const roleEffectiveIds = getRoleEffectiveAllowedIds(rKey, rId);
+
                             return (
                               <tr key={rKey} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 ${idx === matrixHierarchyRoles.length ? 'border-t-2 border-slate-200 dark:border-slate-700' : ''}`}>
                                 <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center">
@@ -3494,8 +3551,8 @@ export default function ClanManager() {
                                   <span className="truncate">{rName}</span>
                                 </td>
                                 {channelKeys.map(cKey => {
-                                  const cId = cConfig[cKey] || (cKey === 'logs' ? defaultLogChannelId : null);
-                                  const isAllowed = isConfigured && cId && permissions[rId]?.includes(cId);
+                                  const cId = getChannelId(cKey);
+                                  const isAllowed = isConfigured && cId && roleEffectiveIds.includes(cId);
                                   return (
                                     <td key={cKey} className="px-2 py-3 text-center">
                                       <input 
@@ -4725,7 +4782,7 @@ export default function ClanManager() {
                                 <div className="flex flex-wrap gap-1 mt-1">
                                   {member.roles.map(rId => {
                                     // Find internal role key matching this ID
-                                    const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'].find(k => config[k] === rId);
+                                    const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'].find(k => config[k] === rId);
                                     if (roleKey) {
                                       const shortKey = roleKey.replace('RoleId', ''); // e.g. leader
                                       const roleName = roleNamesMap[shortKey] || shortKey;
@@ -4769,9 +4826,9 @@ export default function ClanManager() {
                                 setSelectedProfileForDossier(profileToOpen);
                               }}
                               className="p-2 text-slate-400 hover:text-orange-500 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
-                              title="Открыть личное дело / Досье"
+                              title="Открыть личное дело / Архив"
                             >
-                              <BookOpen className="w-4 h-4" />
+                              <Archive className="w-4 h-4" />
                             </button>
                           </div>
                         );
@@ -4788,11 +4845,11 @@ export default function ClanManager() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-orange-500" />
-                      <span>{t('clan_dossier_title') || 'Досье'}</span>
+                      <Archive className="w-5 h-5 text-orange-500" />
+                      <span>{t('clan_dossier_title') || 'Архив'}</span>
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {t('clan_dossier_desc') || 'База данных участников клана, оценки навыков, заметки офицеров и архив бывших соклановцев'}
+                      {t('clan_dossier_desc') || 'База данных участников клана, оценки навыков, заметки офицеров и архив соклановцев'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -4878,12 +4935,12 @@ export default function ClanManager() {
                   </div>
                 ) : !dossiersData || dossiersData.length === 0 ? (
                   <div className="bg-slate-50/60 dark:bg-slate-800/20 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center">
-                    <BookOpen className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                    <Archive className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                     <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      {t('clan_dossier_empty_title') || 'Личные дела не найдены'}
+                      {t('clan_dossier_empty_title') || 'Архив пуст'}
                     </h4>
                     <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
-                      {t('clan_dossier_empty_desc') || 'При принятии кандидатов их анкеты и данные автоматически сохраняются сюда. Вы также можете открыть досье любого соклановца из вкладки "Состав".'}
+                      {t('clan_dossier_empty_desc') || 'При принятии кандидатов их анкеты и данные автоматически сохраняются в архив. Вы также можете открыть карточку любого соклановца из вкладки "Состав".'}
                     </p>
                   </div>
                 ) : (
@@ -4984,8 +5041,8 @@ export default function ClanManager() {
                               onClick={() => setSelectedProfileForDossier(dossier)}
                               className="w-full py-1.5 px-3 bg-slate-100 hover:bg-orange-500 text-slate-700 hover:text-white dark:bg-slate-800 dark:hover:bg-orange-500 dark:text-slate-300 dark:hover:text-white rounded-xl text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                             >
-                              <BookOpen className="w-3.5 h-3.5" />
-                              <span>{t('clan_dossier_open_btn') || 'Открыть досье'}</span>
+                              <Archive className="w-3.5 h-3.5" />
+                              <span>{t('clan_dossier_open_btn') || 'Открыть карточку'}</span>
                             </button>
                           </div>
                         </div>
