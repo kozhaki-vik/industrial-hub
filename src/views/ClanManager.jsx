@@ -2949,7 +2949,7 @@ export default function ClanManager() {
   const isCompanionWindowVisible = isFullScreenWindow && showDiscordLivePreview && Boolean(previewData);
 
   return (
-    <div className={`flex items-start justify-center gap-6 h-[calc(100vh-8rem)] w-full mx-auto transition-all duration-300 ${isCompanionWindowVisible ? 'max-w-[1720px]' : 'max-w-6xl'}`}>
+    <div className={`flex items-start justify-center gap-6 h-[calc(100vh-8rem)] w-full mx-auto animate-main-fade-in ${isCompanionWindowVisible ? 'max-w-[1720px]' : 'max-w-6xl'}`}>
       {loadingConfig ? (
         <div className="w-full flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
           <RefreshCw className="w-5 h-5 animate-spin mr-2.5 text-orange-500" />
@@ -6810,7 +6810,7 @@ export default function ClanManager() {
 
         {/* Discord Companion Window (Additional window on wide/fullscreen display) */}
         {isCompanionWindowVisible && previewData && (
-          <aside className="w-[430px] 2xl:w-[470px] shrink-0 h-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col min-h-0 animate-in fade-in slide-in-from-right-4 duration-200">
+          <aside className="w-[430px] 2xl:w-[470px] shrink-0 h-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col min-h-0">
             {/* Window Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
