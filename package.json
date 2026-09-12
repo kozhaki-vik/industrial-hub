@@ -1,7 +1,7 @@
 {
   "name": "industrial-hub",
   "private": true,
-  "version": "2.7.88",
+  "version": "2.7.89",
   "author": "Kozhaki",
   "description": "Industrial Hub - Ultimate Rust Assistant",
   "type": "module",
@@ -15,16 +15,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hello-pangea/dnd": "^18.0.1",
-    "electron-store": "^11.0.2",
-    "i18next": "^26.3.6",
-    "lucide-react": "^1.28.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-i18next": "^17.0.11",
-    "react-router-dom": "^7.18.2"
+    "electron-store": "^11.0.2"
   },
   "devDependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -34,8 +28,14 @@
     "cross-env": "^10.1.0",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
+    "i18next": "^26.3.6",
+    "lucide-react": "^1.28.0",
     "oxlint": "^1.75.0",
     "postcss": "^8.5.25",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.11",
+    "react-router-dom": "^7.18.2",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0",
     "wait-on": "^9.1.0"
