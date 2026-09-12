@@ -255,53 +255,53 @@ const loggingEventGroups = [
     title: () => t('members_title'),
     icon: Users,
     events: [
-      { key: 'member_join', title: () => t('member_join'), desc: 'Оповещение о входе нового участника на сервер' },
-      { key: 'member_leave', title: 'Выход участника', desc: 'Участник покинул сервер по собственному желанию' },
-      { key: 'member_kick', title: 'Кик участника', desc: 'Участник был кикнут модератором (с указанием автора и причины)' },
-      { key: 'member_ban', title: 'Бан участника', desc: 'Блокировка участника на сервере' },
-      { key: 'member_unban', title: 'Разбан участника', desc: 'Снятие бана с участника' },
-      { key: 'nickname_change', title: 'Смена никнейма', desc: 'Изменение локального никнейма участника на сервере' },
+      { key: 'member_join', title: () => t('member_join'), desc: t('clan_auto_170', 'Оповещение о входе нового участника на сервер') },
+      { key: 'member_leave', title: t('log_ev_member_leave_title', 'Выход участника'), desc: t('log_ev_member_leave_desc', 'Участник покинул сервер по собственному желанию') },
+      { key: 'member_kick', title: t('log_ev_member_kick_title', 'Кик участника'), desc: t('log_ev_member_kick_desc', 'Участник был кикнут модератором (с указанием автора и причины)') },
+      { key: 'member_ban', title: t('log_ev_member_ban_title', 'Бан участника'), desc: t('log_ev_member_ban_desc', 'Блокировка участника на сервере') },
+      { key: 'member_unban', title: t('log_ev_member_unban_title', 'Разбан участника'), desc: t('log_ev_member_unban_desc', 'Снятие бана с участника') },
+      { key: 'nickname_change', title: t('log_ev_nickname_change_title', 'Смена никнейма'), desc: t('log_ev_nickname_change_desc', 'Изменение локального никнейма участника на сервере') },
     ]
   },
   {
     id: 'messages',
-    title: 'Сообщения',
+    title: t('log_ev_messages_cat', 'Сообщения'),
     icon: Hash,
     events: [
-      { key: 'message_delete', title: 'Удаление сообщения', desc: 'Логирование удаленного текста, автора и канала' },
-      { key: 'message_edit', title: 'Редактирование сообщения', desc: 'Логирование старого и нового текста сообщения' },
+      { key: 'message_delete', title: t('log_ev_message_delete_title', 'Удаление сообщения'), desc: t('log_ev_message_delete_desc', 'Логирование удаленного текста, автора и канала') },
+      { key: 'message_edit', title: t('log_ev_message_edit_title', 'Редактирование сообщения'), desc: t('log_ev_message_edit_desc', 'Логирование старого и нового текста сообщения') },
     ]
   },
   {
     id: 'roles',
-    title: 'Роли',
+    title: t('clan_auto_115', 'Роли'),
     icon: ShieldCheck,
     events: [
-      { key: 'member_role_update', title: 'Выдача и снятие ролей', desc: 'Логирование изменений ролей у участников' },
-      { key: 'role_create', title: 'Создание роли', desc: 'Создание новой роли на сервере' },
-      { key: 'role_update', title: 'Изменение роли', desc: 'Изменение названия, цвета или разрешений роли' },
-      { key: 'role_delete', title: 'Удаление роли', desc: 'Удаление роли с сервера' },
+      { key: 'member_role_update', title: t('log_ev_member_role_update_title', 'Выдача и снятие ролей'), desc: t('log_ev_member_role_update_desc', 'Логирование изменений ролей у участников') },
+      { key: 'role_create', title: t('log_ev_role_create_title', 'Создание роли'), desc: t('log_ev_role_create_desc', 'Создание новой роли на сервере') },
+      { key: 'role_update', title: t('log_ev_role_update_title', 'Изменение роли'), desc: t('log_ev_role_update_desc', 'Изменение названия, цвета или разрешений роли') },
+      { key: 'role_delete', title: t('log_ev_role_delete_title', 'Удаление роли'), desc: t('log_ev_role_delete_desc', 'Удаление роли с сервера') },
     ]
   },
   {
     id: 'channels',
-    title: 'Каналы',
+    title: t('clan_auto_116', 'Каналы'),
     icon: Sliders,
     events: [
-      { key: 'channel_create', title: 'Создание канала', desc: 'Создание текстового/голосового канала или категории' },
-      { key: 'channel_update', title: 'Изменение канала', desc: 'Изменение названия, темы или прав доступа канала' },
-      { key: 'channel_delete', title: 'Удаление канала', desc: 'Удаление канала или категории' },
+      { key: 'channel_create', title: t('log_ev_channel_create_title', 'Создание канала'), desc: t('log_ev_channel_create_desc', 'Создание текстового/голосового канала или категории') },
+      { key: 'channel_update', title: t('log_ev_channel_update_title', 'Изменение канала'), desc: t('log_ev_channel_update_desc', 'Изменение названия, темы или прав доступа канала') },
+      { key: 'channel_delete', title: t('log_ev_channel_delete_title', 'Удаление канала'), desc: t('log_ev_channel_delete_desc', 'Удаление канала или категории') },
     ]
   },
   {
     id: 'voice',
-    title: 'Голосовые каналы',
+    title: t('log_ev_voice_cat', 'Голосовые каналы'),
     icon: Volume2,
     events: [
-      { key: 'voice_join', title: 'Вход в голосовой канал', desc: 'Участник подключился к голосовому каналу' },
-      { key: 'voice_leave', title: 'Выход из голосового канала', desc: 'Участник отключился от голосового канала' },
-      { key: 'voice_move', title: 'Перемещение между войсами', desc: 'Переход участника из одного голосового канала в другой' },
-      { key: 'voice_mute_deaf', title: 'Серверный мут / глушение', desc: 'Включение/отключение серверного мута микрофона или наушников' },
+      { key: 'voice_join', title: t('log_ev_voice_join_title', 'Вход в голосовой канал'), desc: t('log_ev_voice_join_desc', 'Участник подключился к голосовому каналу') },
+      { key: 'voice_leave', title: t('log_ev_voice_leave_title', 'Выход из голосового канала'), desc: t('log_ev_voice_leave_desc', 'Участник отключился от голосового канала') },
+      { key: 'voice_move', title: t('log_ev_voice_move_title', 'Перемещение между войсами'), desc: t('log_ev_voice_move_desc', 'Переход участника из одного голосового канала в другой') },
+      { key: 'voice_mute_deaf', title: t('log_ev_voice_mute_deaf_title', 'Серверный мут / глушение'), desc: t('log_ev_voice_mute_deaf_desc', 'Включение/отключение серверного мута микрофона или наушников') },
     ]
   }
 ];
@@ -615,7 +615,7 @@ export default function ClanManager() {
       const reqId = `${action}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       const timeout = setTimeout(() => {
         cleanup();
-        resolve({ success: false, error: 'Таймаут ожидания ответа бота' });
+        resolve({ success: false, error: t('msg_timeout_bot', 'Таймаут ожидания ответа бота') });
       }, 15000);
 
       const onMsg = (event) => {
@@ -703,7 +703,7 @@ export default function ClanManager() {
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
       if (activeTab === 'moderation') fetchClanWarnings();
     } else {
-      setError(res?.error || 'Не удалось выдать предупреждение');
+      setError(res?.error || t('msg_warn_issue_failed', 'Не удалось выдать предупреждение'));
     }
   };
 
@@ -723,13 +723,13 @@ export default function ClanManager() {
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
       if (activeTab === 'moderation') fetchClanWarnings();
     } else {
-      setError(res?.error || 'Не удалось снять предупреждение');
+      setError(res?.error || t('msg_warn_remove_failed', 'Не удалось снять предупреждение'));
     }
   };
 
   const handleClearUserWarns = async (userId) => {
     if (!userId) return;
-    if (!window.confirm('Снять все активные предупреждения с данного пользователя?')) return;
+    if (!window.confirm(t('msg_warn_clear_confirm', 'Снять все активные предупреждения с данного пользователя?'))) return;
     setWarnActionLoading(true);
     const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || 'Администратор';
     const res = await sendProxyAction('clear_warnings', { 
@@ -744,7 +744,7 @@ export default function ClanManager() {
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
       if (activeTab === 'moderation') fetchClanWarnings();
     } else {
-      setError(res?.error || 'Не удалось очистить предупреждения');
+      setError(res?.error || t('msg_warn_clear_failed', 'Не удалось очистить предупреждения'));
     }
   };
 
@@ -983,7 +983,7 @@ export default function ClanManager() {
             ...prev,
             loading: false,
             html: data.data?.transcriptHtml || null,
-            error: data.error || (data.data && !data.data.success ? (data.data.error || 'Ошибка загрузки транскрипта') : (!data.data?.transcriptHtml ? 'Транскрипт не найден или еще формируется' : null))
+            error: data.error || (data.data && !data.data.success ? (data.data.error || t('msg_transcript_error', 'Ошибка загрузки транскрипта')) : (!data.data?.transcriptHtml ? t('msg_transcript_not_found', 'Транскрипт не найден или еще формируется') : null))
           }));
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_stats') {
           if (!data.error && data.data && data.data.success) {
@@ -1100,17 +1100,17 @@ export default function ClanManager() {
             setApplicationsData([]);
             addLog(t('clan_recruitment_apps_cleared_log') || 'Журнал заявок в клан успешно очищен');
           } else {
-            setError(data.error || (data.data && data.data.error) || 'Ошибка очистки журнала заявок');
+            setError(data.error || (data.data && data.data.error) || t('msg_logs_clear_error', 'Ошибка очистки журнала заявок'));
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'move_roles_up') {
           setMovingRoles(false);
           if (!data.error && data.data && data.data.success) {
-            addLog(`Успешно перемещено ролей вверх в Discord: ${data.data.movedCount}`);
+            addLog(`${t('log_roles_moved_success', 'Успешно перемещено ролей вверх в Discord: ')}${data.data.movedCount}`);
             if (data.data.roles) {
               setDiscordInfo(prev => ({ ...(prev || {}), roles: data.data.roles }));
             }
           } else {
-            setError(data.error || (data.data && data.data.error) || 'Ошибка перемещения ролей в Discord');
+            setError(data.error || (data.data && data.data.error) || t('msg_roles_move_error', 'Ошибка перемещения ролей в Discord'));
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'create_log_channel') {
           setCreatingLogChannel(false);
@@ -1351,8 +1351,8 @@ export default function ClanManager() {
       }
       const oldName = config?.name || '';
       // If recruitment title was not customized, or was using old name, or was GODS, update it to match new name
-      if (!r.title || r.title === 'Набор в клан GODS' || r.title === 'Набор в клан' || (oldName && r.title === `Набор в клан ${oldName}`) || r.title.includes('GODS')) {
-        r.title = newName ? `Набор в клан ${newName}` : 'Набор в клан';
+      if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || (oldName && r.title === `Набор в клан ${oldName}`) || r.title.includes('GODS')) {
+        r.title = newName ? `Набор в клан ${newName}` : t('clan_rec_base', 'Набор в клан');
         updatedRecruitment = JSON.stringify(r);
       }
     } catch (e) {}
@@ -1376,7 +1376,7 @@ export default function ClanManager() {
       error: null
     });
     setSaveStatus('saving');
-    addLog('Запрос автоматической настройки сервера...');
+    addLog(t('log_auto_setup_server', 'Запрос автоматической настройки сервера...'));
 
     let updatedConfig = { ...config };
     if (options?.clanName && options.clanName.trim()) {
@@ -1386,7 +1386,7 @@ export default function ClanManager() {
       try {
         if (updatedConfig.recruitmentConfigJson) r = JSON.parse(updatedConfig.recruitmentConfigJson);
       } catch (e) {}
-      if (!r.title || r.title === 'Набор в клан GODS' || r.title === 'Набор в клан' || r.title.includes('GODS')) {
+      if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || r.title.includes('GODS')) {
         r.title = `Набор в клан ${clanName}`;
         updatedConfig.recruitmentConfigJson = JSON.stringify(r);
       }
@@ -1456,7 +1456,7 @@ export default function ClanManager() {
         permissions
       }
     }));
-    addLog('Синхронизация прав доступа с Discord...');
+    addLog(t('log_sync_perms', 'Синхронизация прав доступа с Discord...'));
   };
   
   const flushSave = () => {
@@ -1601,7 +1601,7 @@ export default function ClanManager() {
         return;
       }
 
-      addLog(`Синхронизация названия роли в Discord: ${trimmed}...`);
+      addLog(`${t('log_role_sync_name', 'Синхронизация названия роли в Discord: ')}${trimmed}...`);
       ws.send(JSON.stringify({
         type: 'clan',
         action: 'proxy',
@@ -1662,7 +1662,7 @@ export default function ClanManager() {
     let roleName = (nameOverride || '').trim();
     if (!roleName) {
       if (isCustom) {
-        roleName = (r.name || '').trim() || 'Новая роль';
+        roleName = (r.name || '').trim() || t('role_new_default', 'Новая роль');
       } else {
         let roleNames = {};
         try {
@@ -1671,7 +1671,7 @@ export default function ClanManager() {
           }
         } catch (e) {}
         const fromConfig = roleNames[r.key];
-        roleName = (fromConfig !== undefined && !fromConfig.toLowerCase().includes('clan manager') ? fromConfig : (r.defaultName || r.defaultRu || '')).trim() || 'Новая роль';
+        roleName = (fromConfig !== undefined && !fromConfig.toLowerCase().includes('clan manager') ? fromConfig : (r.defaultName || r.defaultRu || '')).trim() || t('role_new_default', 'Новая роль');
       }
     }
 
@@ -1692,7 +1692,7 @@ export default function ClanManager() {
     };
     const roleColor = isCustom ? '#3b82f6' : (roleColors[r.dbKey] || '#3b82f6');
 
-    addLog(`Создание роли в Discord: "${roleName}"...`);
+    addLog(`${t('log_role_create', 'Создание роли в Discord: ')}"${roleName}"...`);
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
@@ -1720,7 +1720,7 @@ export default function ClanManager() {
     const newRole = {
       id: newId,
       key: newId,
-      name: 'Новая роль',
+      name: t('role_new_default', 'Новая роль'),
       roleId: ''
     };
     customRoles.push(newRole);
@@ -1852,16 +1852,16 @@ export default function ClanManager() {
     autoSaveConfig(updatedConfig, true);
 
     if (newRolesCount > 0 || updatedCount > 0) {
-      addLog(`Синхронизировано ролей с Discord: +${newRolesCount} новых, ${updatedCount} обновлено`);
+      addLog(`${t('log_roles_synced', 'Синхронизировано ролей с Discord: +')}${newRolesCount} ${t('log_roles_synced_new', 'новых, ')}${updatedCount} ${t('log_roles_synced_updated', 'обновлено')}`);
     } else {
-      addLog('Все роли из Discord уже синхронизированы в кастомные роли');
+      addLog(t('log_roles_all_synced', 'Все роли из Discord уже синхронизированы в кастомные роли'));
     }
   };
 
   const handleMoveRolesUp = () => {
     if (!ws || wsStatus !== 'online') return;
     setMovingRoles(true);
-    addLog('Перемещение созданных и клановых ролей вверх в Discord...');
+    addLog(t('log_roles_move_up', 'Перемещение созданных и клановых ролей вверх в Discord...'));
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
@@ -1875,7 +1875,7 @@ export default function ClanManager() {
     if (!window.confirm(t('clan_reset_confirm_prompt') || 'Вы уверены, что хотите сбросить выбранные разделы к заводским настройкам?')) return;
 
     setIsResetting(true);
-    addLog(`Запуск выборочного сброса к заводским настройкам: ${resetSections.join(', ')}`);
+    addLog(`${t('log_reset_start', 'Запуск выборочного сброса к заводским настройкам: ')}${resetSections.join(', ')}`);
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
@@ -1960,7 +1960,7 @@ export default function ClanManager() {
 
   const handleAutoSetupDynamicVoice = () => {
     setVoiceActionLoading(true);
-    addLog('Запрос автоматической настройки динамических войсов...');
+    addLog(t('log_auto_setup_voices', 'Запрос автоматической настройки динамических войсов...'));
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
@@ -1988,7 +1988,7 @@ export default function ClanManager() {
   const handleCreateDiscordLogChannel = () => {
     if (!ws || wsStatus !== 'online') return;
     setCreatingLogChannel(true);
-    addLog('Создание канала логов в Discord...');
+    addLog(t('log_create_log_channel', 'Создание канала логов в Discord...'));
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
@@ -2183,18 +2183,18 @@ export default function ClanManager() {
   }
 
   const tabs = [
-    { id: 'general', label: 'Основное', icon: Settings },
-    { id: 'roles', label: 'Роли', icon: Users },
-    { id: 'channels', label: 'Каналы', icon: Hash },
-    { id: 'recruitment', label: 'Наборы', icon: UserPlus },
-    { id: 'votes', label: 'Голосования', icon: Vote },
+    { id: 'general', label: t('clan_tab_general', 'Основное'), icon: Settings },
+    { id: 'roles', label: t('clan_tab_roles', 'Роли'), icon: Users },
+    { id: 'channels', label: t('clan_tab_channels', 'Каналы'), icon: Hash },
+    { id: 'recruitment', label: t('clan_tab_recruitment', 'Наборы'), icon: UserPlus },
+    { id: 'votes', label: t('clan_tab_votes', 'Голосования'), icon: Vote },
     { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
     { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
-    { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
-    { id: 'roster', label: 'Состав', icon: UserCheck },
+    { id: 'permissions', label: t('clan_tab_permissions', 'Права Доступа'), icon: ShieldCheck },
+    { id: 'roster', label: t('clan_tab_roster', 'Состав'), icon: UserCheck },
     { id: 'dossier', label: t('clan_tab_archive') || 'Архив', icon: Archive },
-    { id: 'stats', label: 'Статистика', icon: BarChart3 },
-    { id: 'ads', label: 'Реклама', icon: Megaphone },
+    { id: 'stats', label: t('clan_tab_stats', 'Статистика'), icon: BarChart3 },
+    { id: 'ads', label: t('clan_tab_ads', 'Реклама'), icon: Megaphone },
     { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
   ];
 
@@ -2206,7 +2206,7 @@ export default function ClanManager() {
       tabName: t('clan_tab_general') || 'Основное',
       tabIcon: Settings,
       title: t('clan_name_label') || 'Название клана',
-      desc: 'Отображение названия клана в эмбедах, логах, карточках и приветствиях бота',
+      desc: t('sidx_clan_name_desc', 'Отображение названия клана в эмбедах, логах, карточках и приветствиях бота'),
       keywords: ['название', 'имя', 'клан', 'тег', 'name', 'clan', 'title', 'tag']
     },
     {
@@ -2215,7 +2215,7 @@ export default function ClanManager() {
       tabName: t('clan_tab_general') || 'Основное',
       tabIcon: Settings,
       title: t('clan_recruitment_open_title') || 'Набор в клан открыт',
-      desc: 'Быстрый переключатель статуса приема новых заявок в клан',
+      desc: t('sidx_recruitment_open_desc', 'Быстрый переключатель статуса приема новых заявок в клан'),
       keywords: ['набор', 'статус', 'прием', 'открыт', 'закрыт', 'recruitment', 'open', 'status']
     },
     {
@@ -2224,7 +2224,7 @@ export default function ClanManager() {
       tabName: t('clan_tab_general') || 'Основное',
       tabIcon: Settings,
       title: t('clan_discord_link_title') || 'Ссылка-приглашение Discord',
-      desc: 'Постоянная ссылка для приглашения участников на Discord сервер клана',
+      desc: t('sidx_invite_url_desc', 'Постоянная ссылка для приглашения участников на Discord сервер клана'),
       keywords: ['инвайт', 'ссылка', 'дискорд', 'приглашение', 'invite', 'discord', 'url', 'link']
     },
     {
@@ -2232,8 +2232,8 @@ export default function ClanManager() {
       tabId: 'general',
       tabName: t('clan_tab_general') || 'Основное',
       tabIcon: Settings,
-      title: 'Мастер быстрой настройки (Setup Wizard)',
-      desc: 'Пошаговый мастер первичной привязки обязательных ролей и каналов',
+      title: t('sidx_setup_wizard_title', 'Мастер быстрой настройки (Setup Wizard)'),
+      desc: t('sidx_setup_wizard_desc', 'Пошаговый мастер первичной привязки обязательных ролей и каналов'),
       keywords: ['мастер', 'визард', 'настройка', 'быстрая', 'wizard', 'setup', 'помощник', 'автонастройка']
     },
     {
@@ -2241,8 +2241,8 @@ export default function ClanManager() {
       tabId: 'general',
       tabName: t('clan_tab_general') || 'Основное',
       tabIcon: Settings,
-      title: 'Сброс настроек бота',
-      desc: 'Выборочный или полный сброс сохраненной конфигурации бота',
+      title: t('sidx_reset_bot_title', 'Сброс настроек бота'),
+      desc: t('sidx_reset_bot_desc', 'Выборочный или полный сброс сохраненной конфигурации бота'),
       keywords: ['сброс', 'очистить', 'удалить', 'reset', 'clear', 'default']
     },
 
@@ -2250,118 +2250,118 @@ export default function ClanManager() {
     {
       id: 'role_leader',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Лидер клана (Leader)',
-      desc: 'Главная административная роль главы клана с максимальными правами и иммунитетом',
+      title: t('sidx_role_leader_title', 'Роль: Лидер клана (Leader)'),
+      desc: t('sidx_role_leader_desc', 'Главная административная роль главы клана с максимальными правами и иммунитетом'),
       keywords: ['лидер', 'глава', 'leader', 'основатель', 'роль', 'главный', 'руководитель']
     },
     {
       id: 'role_deputy',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Заместитель лидера (Deputy Leader)',
-      desc: 'Роль соруководителя и правой руки лидера клана',
+      title: t('sidx_role_deputy_title', 'Роль: Заместитель лидера (Deputy Leader)'),
+      desc: t('sidx_role_deputy_desc', 'Роль соруководителя и правой руки лидера клана'),
       keywords: ['заместитель', 'зам', 'deputy', 'соруководитель', 'помощник']
     },
     {
       id: 'role_caller',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Коллер (Coller / Caller)',
-      desc: 'Командующий рейдами, тактическими операциями и боевыми вылазками',
+      title: t('sidx_role_caller_title', 'Роль: Коллер (Coller / Caller)'),
+      desc: t('sidx_role_caller_desc', 'Командующий рейдами, тактическими операциями и боевыми вылазками'),
       keywords: ['коллер', 'рейд', 'caller', 'coller', 'координатор', 'тактик']
     },
     {
       id: 'role_main_roster',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Основной состав (Main Roster)',
-      desc: 'Полноправные и постоянные участники клана',
+      title: t('sidx_role_main_title', 'Роль: Основной состав (Main Roster)'),
+      desc: t('sidx_role_main_desc', 'Полноправные и постоянные участники клана'),
       keywords: ['состав', 'основа', 'основной', 'main', 'roster', 'мембер']
     },
     {
       id: 'role_trial',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Испытательный срок / Новобранец (Trial)',
-      desc: 'Временный статус для новичков, недавно принятых в клан',
+      title: t('sidx_role_trial_title', 'Роль: Испытательный срок / Новобранец (Trial)'),
+      desc: t('sidx_role_trial_desc', 'Временный статус для новичков, недавно принятых в клан'),
       keywords: ['новобранец', 'испытательный', 'триал', 'новичок', 'trial', 'recruit']
     },
     {
       id: 'role_farmer',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Фармер ресурсов (Miner / Farmer)',
-      desc: 'Добытчик серы, камня, металла и древесины',
+      title: t('sidx_role_farmer_title', 'Роль: Фармер ресурсов (Miner / Farmer)'),
+      desc: t('sidx_role_farmer_desc', 'Добытчик серы, камня, металла и древесины'),
       keywords: ['фармер', 'руда', 'сера', 'камень', 'дерево', 'miner', 'farmer', 'ресурсы']
     },
     {
       id: 'role_plant_farmer',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Фермер урожая (Farmer Crops/Plants)',
-      desc: 'Специалист по фермам конопли, ягод, клонированию и чаю',
+      title: t('sidx_role_plant_title', 'Роль: Фермер урожая (Farmer Crops/Plants)'),
+      desc: t('sidx_role_plant_desc', 'Специалист по фермам конопли, ягод, клонированию и чаю'),
       keywords: ['фермер', 'трава', 'конопля', 'ягоды', 'чай', 'урожай', 'растения', 'клоны', 'plant']
     },
     {
       id: 'role_electrician',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Электрик / Промышленник (Electrician)',
-      desc: 'Инженер по автоматизации, конвейерам и электросхемам',
+      title: t('clan_auto_117', 'Роль: Электрик / Промышленник (Electrician)'),
+      desc: t('clan_auto_171', 'Инженер по автоматизации, конвейерам и электросхемам'),
       keywords: ['электрик', 'электрика', 'схемы', 'конвейер', 'инженер', 'electrician']
     },
     {
       id: 'role_builder',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Строитель / Билдер (Builder)',
-      desc: 'Проектировщик клановых баз, бункеров и турельных вышек',
+      title: t('clan_auto_118', 'Роль: Строитель / Билдер (Builder)'),
+      desc: t('clan_auto_172', 'Проектировщик клановых баз, бункеров и турельных вышек'),
       keywords: ['строитель', 'билдер', 'база', 'бункер', 'постройка', 'builder']
     },
     {
       id: 'role_pilot',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Пилот (Pilot)',
-      desc: 'Управление коптерами, транспортировка команды и лута',
+      title: t('clan_auto_119', 'Роль: Пилот (Pilot)'),
+      desc: t('clan_auto_173', 'Управление коптерами, транспортировка команды и лута'),
       keywords: ['пилот', 'коптер', 'вертолет', 'полеты', 'pilot']
     },
     {
       id: 'role_sponsor',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: Спонсор (Sponsor)',
-      desc: 'Участники, поддерживающие развитие клана и клановые ресурсы',
+      title: t('clan_auto_120', 'Роль: Спонсор (Sponsor)'),
+      desc: t('clan_auto_174', 'Участники, поддерживающие развитие клана и клановые ресурсы'),
       keywords: ['спонсор', 'донат', 'поддержка', 'sponsor', 'vip']
     },
     {
       id: 'role_vip',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Роль: VIP участник',
-      desc: 'Особый статус привилегированного участника сервера',
+      title: t('clan_auto_121', 'Роль: VIP участник'),
+      desc: t('clan_auto_175', 'Особый статус привилегированного участника сервера'),
       keywords: ['вип', 'vip', 'привилегия', 'особый']
     },
     {
       id: 'role_templates',
       tabId: 'roles',
-      tabName: 'Роли',
+      tabName: t('clan_tab_roles', 'Роли'),
       tabIcon: Users,
-      title: 'Шаблоны ролей и создание в Discord',
-      desc: 'Автоматическое создание недостающих ролей с готовыми цветами и правами',
+      title: t('clan_auto_122', 'Шаблоны ролей и создание в Discord'),
+      desc: t('clan_auto_176', 'Автоматическое создание недостающих ролей с готовыми цветами и правами'),
       keywords: ['создать роль', 'шаблон', 'автосоздание', 'цвет', 'create role', 'template']
     },
 
@@ -2369,109 +2369,109 @@ export default function ClanManager() {
     {
       id: 'channel_tickets_category',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_236', 'Каналы'),
       tabIcon: Hash,
-      title: 'Категория для тикетов заявок',
-      desc: 'Discord категория, в которой бот автоматически создает приватные каналы тикетов',
+      title: t('clan_auto_123', 'Категория для тикетов заявок'),
+      desc: t('clan_auto_177', 'Discord категория, в которой бот автоматически создает приватные каналы тикетов'),
       keywords: ['тикеты', 'категория', 'заявки', 'tickets', 'category', 'приватные']
     },
     {
       id: 'channel_logs',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_237', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал системных логов и аудита',
-      desc: 'Канал для отправки всех событий сервера, модерации и клана',
+      title: t('clan_auto_124', 'Канал системных логов и аудита'),
+      desc: t('clan_auto_178', 'Канал для отправки всех событий сервера, модерации и клана'),
       keywords: ['логи', 'аудит', 'журнал', 'logs', 'audit', 'события', 'канал логов']
     },
     {
       id: 'channel_applications',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_238', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал входящих анкет кандидатов',
-      desc: 'Канал, куда бот присылает новые анкеты кандидатов',
+      title: t('clan_auto_125', 'Канал входящих анкет кандидатов'),
+      desc: t('clan_auto_179', 'Канал, куда бот присылает новые анкеты кандидатов'),
       keywords: ['анкеты', 'заявки', 'кандидаты', 'applications', 'форма']
     },
     {
       id: 'channel_auto_rejected',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_239', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал скрытых авто-отказов (Silent Reject)',
-      desc: 'Лог отклоненных заявок при включенном режиме тихого отказа',
+      title: t('clan_auto_126', 'Канал скрытых авто-отказов (Silent Reject)'),
+      desc: t('clan_auto_180', 'Лог отклоненных заявок при включенном режиме тихого отказа'),
       keywords: ['автоотказ', 'скрытый', 'отклонено', 'auto rejected', 'тихий отказ']
     },
     {
       id: 'channel_rejected',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_240', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал отклоненных заявок',
-      desc: 'Архив всех отклоненных анкет с указанием причины отказа',
+      title: t('clan_auto_127', 'Канал отклоненных заявок'),
+      desc: t('clan_auto_181', 'Архив всех отклоненных анкет с указанием причины отказа'),
       keywords: ['отклоненные', 'отказ', 'rejected', 'архив заявок']
     },
     {
       id: 'channel_transcripts',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_241', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал HTML-транскриптов тикетов',
-      desc: 'Куда бот отправляет интерактивные HTML-истории закрытых тикетов',
+      title: t('clan_auto_128', 'Канал HTML-транскриптов тикетов'),
+      desc: t('clan_auto_182', 'Куда бот отправляет интерактивные HTML-истории закрытых тикетов'),
       keywords: ['транскрипт', 'история тикета', 'html', 'transcripts', 'архив тикетов']
     },
     {
       id: 'channel_leaderboard',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_242', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал таблицы лидеров клана',
-      desc: 'Канал для автоматической публикации топа активности бойцов',
+      title: t('clan_auto_129', 'Канал таблицы лидеров клана'),
+      desc: t('clan_auto_183', 'Канал для автоматической публикации топа активности бойцов'),
       keywords: ['таблица лидеров', 'топ', 'рейтинг', 'лидерборд', 'leaderboard', 'активность']
     },
     {
       id: 'channel_news',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_243', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал новостей клана',
-      desc: 'Канал для публикации важных клановых объявлений и новостей',
+      title: t('clan_auto_130', 'Канал новостей клана'),
+      desc: t('clan_auto_184', 'Канал для публикации важных клановых объявлений и новостей'),
       keywords: ['новости', 'объявления', 'анонсы', 'news', 'инфо']
     },
     {
       id: 'channel_votes',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_244', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал клановых голосований',
-      desc: 'Канал для проведения голосований и принятия коллективных решений',
+      title: t('clan_auto_131', 'Канал клановых голосований'),
+      desc: t('clan_auto_185', 'Канал для проведения голосований и принятия коллективных решений'),
       keywords: ['голосование', 'опрос', 'выборы', 'votes', 'poll']
     },
     {
       id: 'channel_ads',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_245', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал рекламы и серверов',
-      desc: 'Канал для публикации анонсов вайпов серверов и рекламы',
-      keywords: ['реклама', 'анонсы', 'вайп', 'ads', 'промо']
+      title: t('clan_auto_132', 'Канал рекламы и серверов'),
+      desc: t('clan_auto_186', 'Канал для публикации анонсов вайпов серверов и рекламы'),
+      keywords: [t('clan_default_ads_ch', 'реклама'), 'анонсы', 'вайп', 'ads', 'промо']
     },
     {
       id: 'channel_roster',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_246', 'Каналы'),
       tabIcon: Hash,
-      title: 'Канал состава клана (Roster)',
-      desc: 'Канал с авто-обновляемым эмбедом всех бойцов и их ролей',
+      title: t('clan_auto_133', 'Канал состава клана (Roster)'),
+      desc: t('clan_auto_187', 'Канал с авто-обновляемым эмбедом всех бойцов и их ролей'),
       keywords: ['состав', 'ростер', 'список бойцов', 'roster', 'мемберы']
     },
     {
       id: 'channel_waiting_room',
       tabId: 'channels',
-      tabName: 'Каналы',
+      tabName: t('clan_auto_247', 'Каналы'),
       tabIcon: Hash,
-      title: 'Комната ожидания собеседования (Waiting Room)',
-      desc: 'Голосовой канал, в котором кандидаты ожидают офицеров',
+      title: t('clan_auto_134', 'Комната ожидания собеседования (Waiting Room)'),
+      desc: t('clan_auto_188', 'Голосовой канал, в котором кандидаты ожидают офицеров'),
       keywords: ['комната ожидания', 'ожидание', 'собеседование', 'waiting room', 'интервью']
     },
 
@@ -2479,55 +2479,55 @@ export default function ClanManager() {
     {
       id: 'recruitment_min_age',
       tabId: 'recruitment',
-      tabName: 'Наборы',
+      tabName: t('clan_auto_248', 'Наборы'),
       tabIcon: UserPlus,
-      title: 'Минимальный возраст кандидата',
-      desc: 'Автоматическая проверка возраста кандидата по анкете с авто-отклонением',
+      title: t('clan_auto_135', 'Минимальный возраст кандидата'),
+      desc: t('clan_auto_189', 'Автоматическая проверка возраста кандидата по анкете с авто-отклонением'),
       keywords: ['возраст', 'лет', 'минимальный возраст', 'age', 'min age', 'критерии']
     },
     {
       id: 'recruitment_min_hours',
       tabId: 'recruitment',
-      tabName: 'Наборы',
+      tabName: t('clan_auto_249', 'Наборы'),
       tabIcon: UserPlus,
-      title: 'Минимальные часы в Rust',
-      desc: 'Порог часов в игре, авто-суммирование со всех указанных профилей Steam',
+      title: t('clan_auto_136', 'Минимальные часы в Rust'),
+      desc: t('clan_auto_190', 'Порог часов в игре, авто-суммирование со всех указанных профилей Steam'),
       keywords: ['часы', 'опыт', 'наиграно', 'hours', 'min hours', 'раст', 'rust hours']
     },
     {
       id: 'recruitment_silent_reject',
       tabId: 'recruitment',
-      tabName: 'Наборы',
+      tabName: t('clan_auto_250', 'Наборы'),
       tabIcon: UserPlus,
-      title: 'Тихий авто-отказ (Silent Auto-Reject)',
-      desc: 'Не создавать тикет при отказе по критериям, отправляя карточку офицерам в лог',
+      title: t('clan_auto_137', 'Тихий авто-отказ (Silent Auto-Reject)'),
+      desc: t('clan_auto_191', 'Не создавать тикет при отказе по критериям, отправляя карточку офицерам в лог'),
       keywords: ['тихий отказ', 'скрытый отказ', 'silent reject', 'автоотказ', 'тикет']
     },
     {
       id: 'recruitment_steam_check',
       tabId: 'recruitment',
-      tabName: 'Наборы',
+      tabName: t('clan_auto_251', 'Наборы'),
       tabIcon: UserPlus,
-      title: 'Проверка Steam API и VAC-банов',
-      desc: 'Автоматическая валидация профилей кандидатов через Steam Web API',
+      title: t('clan_auto_138', 'Проверка Steam API и VAC-банов'),
+      desc: t('clan_auto_192', 'Автоматическая валидация профилей кандидатов через Steam Web API'),
       keywords: ['стим', 'steam', 'vac', 'бан', 'вак', 'блокировка', 'steamid']
     },
     {
       id: 'recruitment_battlemetrics',
       tabId: 'recruitment',
-      tabName: 'Наборы',
+      tabName: t('clan_auto_252', 'Наборы'),
       tabIcon: UserPlus,
-      title: 'Интеграция с Battlemetrics',
-      desc: 'Проверка активности игрока на серверах Rust через Battlemetrics API',
+      title: t('clan_auto_139', 'Интеграция с Battlemetrics'),
+      desc: t('clan_auto_193', 'Проверка активности игрока на серверах Rust через Battlemetrics API'),
       keywords: ['баттлметрикс', 'батлметрикс', 'battlemetrics', 'сервера', 'bm']
     },
     {
       id: 'recruitment_vac_days',
       tabId: 'recruitment',
-      tabName: 'Наборы',
+      tabName: t('clan_auto_253', 'Наборы'),
       tabIcon: UserPlus,
-      title: 'Максимум дней с последнего VAC-бана',
-      desc: 'Порог давности игровых блокировок Steam для допуска кандидатов',
+      title: t('clan_auto_140', 'Максимум дней с последнего VAC-бана'),
+      desc: t('clan_auto_194', 'Порог давности игровых блокировок Steam для допуска кандидатов'),
       keywords: ['vac дни', 'дней с бана', 'давность бана', 'читер', 'vac days']
     },
 
@@ -2535,46 +2535,46 @@ export default function ClanManager() {
     {
       id: 'perm_roster',
       tabId: 'permissions',
-      tabName: 'Права Доступа',
+      tabName: t('clan_auto_254', 'Права Доступа'),
       tabIcon: ShieldCheck,
-      title: 'Права: Просмотр состава клана',
-      desc: 'Настройка ролей, которым разрешен просмотр закрытого списка бойцов',
+      title: t('clan_auto_141', 'Права: Просмотр состава клана'),
+      desc: t('clan_auto_195', 'Настройка ролей, которым разрешен просмотр закрытого списка бойцов'),
       keywords: ['права состав', 'доступ', 'permissions', 'roster perm']
     },
     {
       id: 'perm_votes',
       tabId: 'permissions',
-      tabName: 'Права Доступа',
+      tabName: t('clan_auto_255', 'Права Доступа'),
       tabIcon: ShieldCheck,
-      title: 'Права: Запуск голосований',
-      desc: 'Роли, имеющие право инициировать новые опросы и голосования',
+      title: t('clan_auto_142', 'Права: Запуск голосований'),
+      desc: t('clan_auto_196', 'Роли, имеющие право инициировать новые опросы и голосования'),
       keywords: ['права голосование', 'создание опросов', 'poll perm', 'vote perm']
     },
     {
       id: 'perm_ads',
       tabId: 'permissions',
-      tabName: 'Права Доступа',
+      tabName: t('clan_auto_256', 'Права Доступа'),
       tabIcon: ShieldCheck,
-      title: 'Права: Рассылка рекламы',
-      desc: 'Роли, которым разрешено отправлять и настраивать рекламные анонсы',
+      title: t('clan_auto_143', 'Права: Рассылка рекламы'),
+      desc: t('clan_auto_197', 'Роли, которым разрешено отправлять и настраивать рекламные анонсы'),
       keywords: ['права реклама', 'анонсы', 'ads perm']
     },
     {
       id: 'perm_voice',
       tabId: 'permissions',
-      tabName: 'Права Доступа',
+      tabName: t('clan_auto_257', 'Права Доступа'),
       tabIcon: ShieldCheck,
-      title: 'Права: Управление войсами',
-      desc: 'Права на блокировку, переименование и кик из комнат динамических войсов',
+      title: t('clan_auto_144', 'Права: Управление войсами'),
+      desc: t('clan_auto_198', 'Права на блокировку, переименование и кик из комнат динамических войсов'),
       keywords: ['права войс', 'управление комнатой', 'voice perm']
     },
     {
       id: 'perm_moderation',
       tabId: 'permissions',
-      tabName: 'Права Доступа',
+      tabName: t('clan_auto_258', 'Права Доступа'),
       tabIcon: ShieldCheck,
-      title: 'Права: Выдача варнов и модерация',
-      desc: 'Роли, уполномоченные выдавать предупреждения и модерировать участников',
+      title: t('clan_auto_145', 'Права: Выдача варнов и модерация'),
+      desc: t('clan_auto_199', 'Роли, уполномоченные выдавать предупреждения и модерировать участников'),
       keywords: ['права модерация', 'варны', 'наказания', 'warn perm']
     },
 
@@ -2582,19 +2582,19 @@ export default function ClanManager() {
     {
       id: 'roster_view',
       tabId: 'roster',
-      tabName: 'Состав',
+      tabName: t('clan_auto_259', 'Состав'),
       tabIcon: UserCheck,
-      title: 'Состав клана и управление бойцами',
-      desc: 'Таблица участников клана с указанием Discord-ролей и никнеймов',
+      title: t('clan_auto_146', 'Состав клана и управление бойцами'),
+      desc: t('clan_auto_200', 'Таблица участников клана с указанием Discord-ролей и никнеймов'),
       keywords: ['состав', 'список', 'участники', 'бойцы', 'ростер', 'roster']
     },
     {
       id: 'roster_sync_btn',
       tabId: 'roster',
-      tabName: 'Состав',
+      tabName: t('clan_auto_260', 'Состав'),
       tabIcon: UserCheck,
-      title: 'Синхронизация состава с сервером Discord',
-      desc: 'Принудительное обновление актуального списка участников клана',
+      title: t('clan_auto_147', 'Синхронизация состава с сервером Discord'),
+      desc: t('clan_auto_201', 'Принудительное обновление актуального списка участников клана'),
       keywords: ['синхронизация', 'обновить', 'sync', 'roster sync']
     },
 
@@ -2604,8 +2604,8 @@ export default function ClanManager() {
       tabId: 'dossier',
       tabName: t('clan_tab_archive') || 'Архив',
       tabIcon: Archive,
-      title: 'Архив и личные карточки бойцов',
-      desc: 'Персональные карточки бойцов с историей, заметками офицеров и статусом',
+      title: t('clan_auto_148', 'Архив и личные карточки бойцов'),
+      desc: t('clan_auto_202', 'Персональные карточки бойцов с историей, заметками офицеров и статусом'),
       keywords: ['досье', 'карточка', 'заметки', 'характеристика', 'dossier', 'боец', 'архив']
     },
     {
@@ -2613,8 +2613,8 @@ export default function ClanManager() {
       tabId: 'dossier',
       tabName: t('clan_tab_archive') || 'Архив',
       tabIcon: Archive,
-      title: 'Черный список игроков (Blacklist)',
-      desc: 'Внесение недобросовестных игроков, читеров или нарушителей в клановый бан-лист',
+      title: t('clan_auto_149', 'Черный список игроков (Blacklist)'),
+      desc: t('clan_auto_203', 'Внесение недобросовестных игроков, читеров или нарушителей в клановый бан-лист'),
       keywords: ['черный список', 'чс', 'банлист', 'предатели', 'blacklist']
     },
 
@@ -2622,28 +2622,28 @@ export default function ClanManager() {
     {
       id: 'stats_voice_time',
       tabId: 'stats',
-      tabName: 'Статистика',
+      tabName: t('clan_auto_261', 'Статистика'),
       tabIcon: BarChart3,
-      title: 'Голосовая активность участников (Voice Time)',
-      desc: 'Счетчик времени участников в голосовых каналах Discord',
+      title: t('clan_auto_150', 'Голосовая активность участников (Voice Time)'),
+      desc: t('clan_auto_204', 'Счетчик времени участников в голосовых каналах Discord'),
       keywords: ['войс статистика', 'время в войсе', 'онлайн', 'voice time', 'стата']
     },
     {
       id: 'stats_messages_count',
       tabId: 'stats',
-      tabName: 'Статистика',
+      tabName: t('clan_auto_262', 'Статистика'),
       tabIcon: BarChart3,
-      title: 'Текстовая активность (Сообщения)',
-      desc: 'Количество сообщений, отправленных каждым участником на сервере',
+      title: t('clan_auto_151', 'Текстовая активность (Сообщения)'),
+      desc: t('clan_auto_205', 'Количество сообщений, отправленных каждым участником на сервере'),
       keywords: ['сообщения', 'активность чата', 'текст', 'messages', 'chat']
     },
     {
       id: 'stats_warns_status',
       tabId: 'stats',
-      tabName: 'Статистика',
+      tabName: t('clan_auto_263', 'Статистика'),
       tabIcon: BarChart3,
-      title: 'Статус предупреждений (Варны в статистике)',
-      desc: 'Быстрый просмотр и управление варнами конкретного участника из таблицы',
+      title: t('clan_auto_152', 'Статус предупреждений (Варны в статистике)'),
+      desc: t('clan_auto_206', 'Быстрый просмотр и управление варнами конкретного участника из таблицы'),
       keywords: ['варны в статистике', 'просмотр варнов', 'warn modal']
     },
 
@@ -2653,8 +2653,8 @@ export default function ClanManager() {
       tabId: 'moderation',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
-      title: 'Клановая система предупреждений (Clan Warnings)',
-      desc: 'Выдача, снятие и прозрачный журнал варнов с фиксацией модератора',
+      title: t('clan_auto_153', 'Клановая система предупреждений (Clan Warnings)'),
+      desc: t('clan_auto_207', 'Выдача, снятие и прозрачный журнал варнов с фиксацией модератора'),
       keywords: ['варн', 'предупреждение', 'warn', 'система варнов', 'наказание', 'штраф']
     },
     {
@@ -2662,8 +2662,8 @@ export default function ClanManager() {
       tabId: 'moderation',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
-      title: 'Порог предупреждений до наказания (3, 4 или 5)',
-      desc: 'Количество варнов, при достижении которого бот автоматически наказывает нарушителя',
+      title: t('clan_auto_154', 'Порог предупреждений до наказания (3, 4 или 5)'),
+      desc: t('clan_auto_208', 'Количество варнов, при достижении которого бот автоматически наказывает нарушителя'),
       keywords: ['порог варнов', 'лимит', '3 варна', 'threshold', 'warn limit']
     },
     {
@@ -2671,8 +2671,8 @@ export default function ClanManager() {
       tabId: 'moderation',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
-      title: 'Автоматическое наказание (Таймаут, Кик, Бан)',
-      desc: 'Выбор санкции при превышении лимита варнов: Таймаут (1ч, 1д, 1нед), Кик или Бан',
+      title: t('clan_auto_155', 'Автоматическое наказание (Таймаут, Кик, Бан)'),
+      desc: t('clan_auto_209', 'Выбор санкции при превышении лимита варнов: Таймаут (1ч, 1д, 1нед), Кик или Бан'),
       keywords: ['таймаут', 'кик', 'бан', 'действие', 'action', 'timeout', 'kick', 'ban']
     },
     {
@@ -2680,8 +2680,8 @@ export default function ClanManager() {
       tabId: 'moderation',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
-      title: 'Черный список слов (Bad Words Blacklist)',
-      desc: 'Автоматическое удаление нецензурной лексики, оскорблений и запрещенных фраз',
+      title: t('clan_auto_156', 'Черный список слов (Bad Words Blacklist)'),
+      desc: t('clan_auto_210', 'Автоматическое удаление нецензурной лексики, оскорблений и запрещенных фраз'),
       keywords: ['мат', 'слова', 'запрещенные слова', 'фильтр мата', 'черный список', 'bad words', 'цензура']
     },
     {
@@ -2689,8 +2689,8 @@ export default function ClanManager() {
       tabId: 'moderation',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
-      title: 'Защита от спама упоминаниями (Anti-Mention)',
-      desc: 'Предотвращение массового спама @everyone, @here и пинга ролей',
+      title: t('clan_auto_157', 'Защита от спама упоминаниями (Anti-Mention)'),
+      desc: t('clan_auto_211', 'Предотвращение массового спама @everyone, @here и пинга ролей'),
       keywords: ['упоминания', 'спам', 'анти-спам', 'everyone', 'here', 'anti mention', 'пинг']
     },
     {
@@ -2698,8 +2698,8 @@ export default function ClanManager() {
       tabId: 'moderation',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
-      title: 'Белый список исключений из модерации (Exempt)',
-      desc: 'Роли, на которые не распространяются автоматические фильтры и санкции',
+      title: t('clan_auto_158', 'Белый список исключений из модерации (Exempt)'),
+      desc: t('clan_auto_212', 'Роли, на которые не распространяются автоматические фильтры и санкции'),
       keywords: ['белый список', 'исключения', 'иммунитет', 'exempt', 'whitelist']
     },
 
@@ -2709,8 +2709,8 @@ export default function ClanManager() {
       tabId: 'logs',
       tabName: t('clan_tab_logs') || 'Логирование',
       tabIcon: ScrollText,
-      title: 'Логи модерации и наказаний',
-      desc: 'Аудит выдачи варнов, таймаутов, мутов, киков и банов',
+      title: t('clan_auto_159', 'Логи модерации и наказаний'),
+      desc: t('clan_auto_213', 'Аудит выдачи варнов, таймаутов, мутов, киков и банов'),
       keywords: ['логи модерации', 'журнал наказаний', 'warn logs']
     },
     {
@@ -2718,8 +2718,8 @@ export default function ClanManager() {
       tabId: 'logs',
       tabName: t('clan_tab_logs') || 'Логирование',
       tabIcon: ScrollText,
-      title: 'Логи голосовых каналов',
-      desc: 'Отслеживание подключений, выходов, перемещений и серверных мутов',
+      title: t('clan_auto_160', 'Логи голосовых каналов'),
+      desc: t('clan_auto_214', 'Отслеживание подключений, выходов, перемещений и серверных мутов'),
       keywords: ['логи войса', 'кто заходил', 'voice logs']
     },
     {
@@ -2727,8 +2727,8 @@ export default function ClanManager() {
       tabId: 'logs',
       tabName: t('clan_tab_logs') || 'Логирование',
       tabIcon: ScrollText,
-      title: 'Логи сообщений',
-      desc: 'Запись удаленных и отредактированных сообщений на сервере',
+      title: t('clan_auto_161', 'Логи сообщений'),
+      desc: t('clan_auto_215', 'Запись удаленных и отредактированных сообщений на сервере'),
       keywords: ['логи сообщений', 'удаленные сообщения', 'message logs']
     },
     {
@@ -2736,8 +2736,8 @@ export default function ClanManager() {
       tabId: 'logs',
       tabName: t('clan_tab_logs') || 'Логирование',
       tabIcon: ScrollText,
-      title: 'Anti-Raid мониторинг',
-      desc: 'Оповещения при подозрительных массовых входах и рейдах на Discord сервер',
+      title: t('clan_auto_162', 'Anti-Raid мониторинг'),
+      desc: t('clan_auto_216', 'Оповещения при подозрительных массовых входах и рейдах на Discord сервер'),
       keywords: ['антирейд', 'рейд', 'anti-raid', 'атака', 'защита']
     },
 
@@ -2747,8 +2747,8 @@ export default function ClanManager() {
       tabId: 'voice',
       tabName: t('clan_tab_voice') || 'Динамические войсы',
       tabIcon: Volume2,
-      title: 'Мастер-канал создания войсов («Нажми для создания»)',
-      desc: 'Голосовой канал, при заходе в который бот мгновенно создает новую комнату',
+      title: t('clan_auto_163', 'Мастер-канал создания войсов («Нажми для создания»)'),
+      desc: t('clan_auto_217', 'Голосовой канал, при заходе в который бот мгновенно создает новую комнату'),
       keywords: ['динамические войсы', 'создание войса', 'нажми для создания', 'voice create', 'комната']
     },
     {
@@ -2756,8 +2756,8 @@ export default function ClanManager() {
       tabId: 'voice',
       tabName: t('clan_tab_voice') || 'Динамические войсы',
       tabIcon: Volume2,
-      title: 'Настройка лимита участников комнат',
-      desc: 'Установка ограничения слотов пользователей для динамических каналов',
+      title: t('clan_auto_164', 'Настройка лимита участников комнат'),
+      desc: t('clan_auto_218', 'Установка ограничения слотов пользователей для динамических каналов'),
       keywords: ['лимит войса', 'ограничение людей', 'слоты', 'room limit']
     },
     {
@@ -2765,8 +2765,8 @@ export default function ClanManager() {
       tabId: 'voice',
       tabName: t('clan_tab_voice') || 'Динамические войсы',
       tabIcon: Volume2,
-      title: 'Активные голосовые комнаты',
-      desc: 'Управление текущими комнатами: мут, кик, переименование, закрытие',
+      title: t('clan_auto_165', 'Активные голосовые комнаты'),
+      desc: t('clan_auto_219', 'Управление текущими комнатами: мут, кик, переименование, закрытие'),
       keywords: ['активные комнаты', 'управление войсом', 'кикнуть из войса', 'lock room']
     },
 
@@ -2774,21 +2774,21 @@ export default function ClanManager() {
     {
       id: 'ads_publication',
       tabId: 'ads',
-      tabName: 'Реклама',
+      tabName: t('clan_auto_264', 'Реклама'),
       tabIcon: Megaphone,
-      title: 'Автоматическая публикация рекламы',
-      desc: 'Периодическая рассылка анонсов вайпов серверов и наборов в клан',
-      keywords: ['реклама', 'авторассылка', 'анонсы', 'ads', 'промо']
+      title: t('clan_auto_166', 'Автоматическая публикация рекламы'),
+      desc: t('clan_auto_220', 'Периодическая рассылка анонсов вайпов серверов и наборов в клан'),
+      keywords: [t('clan_default_ads_ch', 'реклама'), 'авторассылка', 'анонсы', 'ads', 'промо']
     },
 
     // Votes
     {
       id: 'votes_manager',
       tabId: 'votes',
-      tabName: 'Голосования',
+      tabName: t('clan_auto_265', 'Голосования'),
       tabIcon: Vote,
-      title: 'Клановые голосования и опросы',
-      desc: 'Создание голосований с таймерами и автоматическим подведением итогов',
+      title: t('clan_auto_167', 'Клановые голосования и опросы'),
+      desc: t('clan_auto_221', 'Создание голосований с таймерами и автоматическим подведением итогов'),
       keywords: ['голосование', 'опрос', 'выборы', 'votes', 'poll']
     }
   ];
@@ -2815,8 +2815,8 @@ export default function ClanManager() {
       let rConfig = {
         link: config?.discordLink || '',
         banner: 'https://i.imgur.com/UaMfYMK.png',
-        title: config?.name ? `Набор в клан ${config.name}` : 'Набор в клан',
-        text: "Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы",
+        title: config?.name ? `Набор в клан ${config.name}` : t('clan_rec_base', 'Набор в клан'),
+        text: t('clan_auto_v2_1022', 'Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы'),
         customLeaderId: ''
       };
       try {
@@ -2826,7 +2826,7 @@ export default function ClanManager() {
       } catch (e) {}
 
       if (config?.name) {
-        if (!rConfig.title || rConfig.title === 'Набор в клан GODS' || rConfig.title === 'Набор в клан') {
+        if (!rConfig.title || rConfig.title === t('clan_rec_gods', 'Набор в клан GODS') || rConfig.title === t('clan_rec_base', 'Набор в клан')) {
           rConfig.title = `Набор в клан ${config.name}`;
         } else if (rConfig.title.includes('GODS')) {
           rConfig.title = rConfig.title.replace(/\bGODS\b/g, config.name);
@@ -2841,19 +2841,19 @@ export default function ClanManager() {
         : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : '@Лидер');
 
       const appChannel = discordInfo?.channels?.find(c => c.id === cConfig.applications);
-      const channelName = appChannel ? appChannel.name : 'набор-в-клан';
+      const channelName = appChannel ? appChannel.name : t('clan_default_rec_ch', 'набор-в-клан');
 
       return {
-        tabTitle: 'Набор в клан',
+        tabTitle: t('clan_auto_v2_1018', t('clan_rec_base', 'Набор в клан')),
         channelName,
         embed: {
           title: `ССЫЛКА НА ДС -> ${inviteLink}`,
           color: '#5865f2',
-          description: `\`\`\`ansi\n${rConfig.title || 'Набор в клан'}\n\n${rConfig.text || 'Требования...'}\n\`\`\`\n# Лидер: ${leaderDisplay}`,
+          description: `\`\`\`ansi\n${rConfig.title || t('clan_rec_base', 'Набор в клан')}\n\n${rConfig.text || 'Требования...'}\n\`\`\`\n# Лидер: ${leaderDisplay}`,
           banner: rConfig.banner
         },
         buttons: [
-          { label: 'Подать заявку', emoji: '📝', style: 'success' }
+          { label: t('clan_auto_v2_1001', 'Подать заявку'), emoji: '📝', style: 'success' }
         ]
       };
     }
@@ -2867,26 +2867,26 @@ export default function ClanManager() {
       } catch (e) {}
 
       const voteChannel = discordInfo?.channels?.find(c => c.id === cConfig.votes);
-      const channelName = voteChannel ? voteChannel.name : 'голосования';
+      const channelName = voteChannel ? voteChannel.name : t('clan_default_vote_ch', 'голосования');
 
       const safeIdx = Math.min(previewVoteIndex, Math.max(0, wTemplates.length - 1));
       const activeTpl = wTemplates[safeIdx] || { 
         name: 'Rust Server #1', 
-        day: 'Четверг', 
+        day: t('clan_auto_231', t('clan_thursday', 'Четверг')), 
         time: '16:00', 
         ip: 'connect 127.0.0.1:28015', 
         banner: '' 
       };
 
       return {
-        tabTitle: 'Голосование за вайп',
+        tabTitle: t('clan_auto_v2_1019', 'Голосование за вайп'),
         channelName,
         templates: wTemplates,
         activeTemplateIndex: safeIdx,
         embed: {
-          title: `🔥 ВАЙП | ${activeTpl.name || 'Сервер'}`,
+          title: `🔥 ВАЙП | ${activeTpl.name || t('clan_srv_default', 'Сервер')}`,
           color: '#e67e22',
-          description: `**Сервер:** ${activeTpl.name || 'TBA'}\n**День:** ${activeTpl.day || 'Четверг'}\n**Время:** ${activeTpl.time || '16:00'}\n**Подключение (IP):** \`${activeTpl.ip || 'connect 127.0.0.1:28015'}\`\n\nОтметьтесь, пожалуйста, о вашем присутствии на вайпе!`,
+          description: `**Сервер:** ${activeTpl.name || t('clan_tba', 'TBA')}\n**День:** ${activeTpl.day || t('clan_thursday', 'Четверг')}\n**Время:** ${activeTpl.time || '16:00'}\n**Подключение (IP):** \`${activeTpl.ip || 'connect 127.0.0.1:28015'}\`\n\nОтметьтесь, пожалуйста, о вашем присутствии на вайпе!`,
           banner: activeTpl.banner,
           fields: [
             { name: '🟢 Буду вовремя', value: '0 голосов', inline: true },
@@ -2894,21 +2894,21 @@ export default function ClanManager() {
             { name: '🟠 Завтра', value: '0 голосов', inline: true },
             { name: '🔴 Не буду', value: '0 голосов', inline: true }
           ],
-          footer: 'Голосование за вайп'
+          footer: t('clan_auto_v2_1021', 'Голосование за вайп')
         },
         buttons: [
-          { label: 'Буду вовремя', emoji: '🟢', style: 'success' },
-          { label: 'Опоздаю', emoji: '🟡', style: 'primary' },
-          { label: 'Завтра', emoji: '🟠', style: 'secondary' },
-          { label: 'Не буду', emoji: '🔴', style: 'danger' }
+          { label: t('clan_auto_v2_1002', 'Буду вовремя'), emoji: '🟢', style: 'success' },
+          { label: t('clan_auto_v2_1003', 'Опоздаю'), emoji: '🟡', style: 'primary' },
+          { label: t('clan_auto_v2_1004', 'Завтра'), emoji: '🟠', style: 'secondary' },
+          { label: t('clan_auto_v2_1005', 'Не буду'), emoji: '🔴', style: 'danger' }
         ]
       };
     }
 
     if (activeTab === 'ads') {
       let aConfig = {
-        title: 'Покупка рекламы',
-        text: 'Здесь вы можете приобрести рекламу или обсудить партнерство.',
+        title: t('clan_auto_168', t('clan_ads_buy', 'Покупка рекламы')),
+        text: t('clan_auto_229', 'Здесь вы можете приобрести рекламу или обсудить партнерство.'),
         banner: 'https://i.imgur.com/example.png',
         priceLink: 'https://telegra.ph/price',
       };
@@ -2919,25 +2919,25 @@ export default function ClanManager() {
       } catch (e) {}
 
       const adsChannel = discordInfo?.channels?.find(c => c.id === cConfig.ads);
-      const channelName = adsChannel ? adsChannel.name : 'реклама';
+      const channelName = adsChannel ? adsChannel.name : t('clan_default_ads_ch', 'реклама');
 
       return {
-        tabTitle: 'Панель рекламы',
+        tabTitle: t('clan_auto_v2_1020', 'Панель рекламы'),
         channelName,
         embed: {
-          title: aConfig.title || 'Покупка рекламы',
+          title: aConfig.title || t('clan_ads_buy', 'Покупка рекламы'),
           color: '#2ecc71',
           description: aConfig.text ? `**${aConfig.text}**` : '**Размещение рекламы/партнерства на платных/взаимных условиях, актуальная информация по кнопкам ниже.**',
           banner: aConfig.banner
         },
         buttons: [
-          { label: 'Заказать рекламу', emoji: '📢', style: 'primary' },
-          { label: 'Заключить партнерство', emoji: '🤝', style: 'primary' },
+          { label: t('clan_auto_v2_1006', 'Заказать рекламу'), emoji: '📢', style: 'primary' },
+          { label: t('clan_auto_v2_1007', 'Заключить партнерство'), emoji: '🤝', style: 'primary' },
           aConfig.priceLink
-            ? { label: 'Узнать цену', emoji: '💰', style: 'link' }
-            : { label: 'Узнать цену', emoji: '💰', style: 'primary' },
-          { label: 'Разработка бота', emoji: '⚙️', style: 'secondary' },
-          { label: 'Вопрос администрации', emoji: '❓', style: 'secondary' }
+            ? { label: t('clan_auto_v2_1008', 'Узнать цену'), emoji: '💰', style: 'link' }
+            : { label: t('clan_auto_v2_1009', 'Узнать цену'), emoji: '💰', style: 'primary' },
+          { label: t('clan_auto_v2_1010', 'Разработка бота'), emoji: '⚙️', style: 'secondary' },
+          { label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '❓', style: 'secondary' }
         ]
       };
     }
@@ -3140,7 +3140,7 @@ export default function ClanManager() {
               <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-4xl">
                 <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                  Основные настройки
+                  {t('clan_auto_1', 'Основные настройки')}
                 </h3>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
@@ -3382,10 +3382,10 @@ export default function ClanManager() {
                         type="button"
                         onClick={handleSyncDiscordRoles}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all cursor-pointer"
-                        title="Подтянуть все роли из Discord и привязать их как кастомные, сохраняя текущие настройки"
+                        title={t('clan_auto_96', 'Подтянуть все роли из Discord и привязать их как кастомные, сохраняя текущие настройки')}
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
-                        <span>Синхронизировать с Discord</span>
+                        <span>{t('clan_auto_2', 'Синхронизировать с Discord')}</span>
                       </button>
 
                       {/* Move Roles Up in Discord Hierarchy */}
@@ -3394,10 +3394,10 @@ export default function ClanManager() {
                         onClick={handleMoveRolesUp}
                         disabled={movingRoles}
                         className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all cursor-pointer disabled:opacity-50"
-                        title="Переместить созданные и клановые роли вверх в иерархии Discord (под роль бота)"
+                        title={t('clan_auto_97', 'Переместить созданные и клановые роли вверх в иерархии Discord (под роль бота)')}
                       >
                         <ArrowUp className={`w-3.5 h-3.5 ${movingRoles ? 'animate-bounce' : ''}`} />
-                        <span>{movingRoles ? 'Перемещение...' : 'Переместить роли вверх'}</span>
+                        <span>{movingRoles ? t('clan_auto_v2_1024', 'Перемещение...') : t('clan_auto_v2_1025', 'Переместить роли вверх')}</span>
                       </button>
 
                       {/* Add Custom Role */}
@@ -3420,7 +3420,7 @@ export default function ClanManager() {
                     {visibleStandardRoles.length === 0 ? (
                       <div className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center bg-slate-50/50 dark:bg-slate-950/20">
                         <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
-                          Все стандартные роли были скрыты или удалены
+                          {t('clan_auto_3', 'Все стандартные роли были скрыты или удалены')}
                         </p>
                         <button
                           type="button"
@@ -3447,7 +3447,7 @@ export default function ClanManager() {
                               {/* Role name in bot */}
                               <div className="w-full md:w-60 lg:w-72 shrink-0">
                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                  Название роли (в боте)
+                                  {t('clan_auto_4', 'Название роли (в боте)')}
                                 </label>
                                 <input
                                   type="text"
@@ -3463,7 +3463,7 @@ export default function ClanManager() {
                               {/* Role in Discord (dropdown + create button) */}
                               <div className="flex-1 min-w-[220px]">
                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                  Роль в Discord
+                                  {t('clan_auto_5', 'Роль в Discord')}
                                 </label>
                                 <div className="flex items-center gap-2">
                                   <select
@@ -3471,7 +3471,7 @@ export default function ClanManager() {
                                     onChange={e => handleSelectDiscordRole(r.key, r.dbKey, e.target.value, false)}
                                     className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
                                   >
-                                    <option value="">-- Выберите роль --</option>
+                                    <option value="">{t('clan_auto_6', '-- Выберите роль --')}</option>
                                     {(discordInfo?.roles || []).map(dRole => (
                                       <option key={dRole.id} value={dRole.id}>
                                         {dRole.name}
@@ -3490,7 +3490,7 @@ export default function ClanManager() {
                                     ) : (
                                       <Plus className="w-3.5 h-3.5" />
                                     )}
-                                    <span className="hidden sm:inline">Создать</span>
+                                    <span className="hidden sm:inline">{t('clan_auto_7', 'Создать')}</span>
                                   </button>
                                 </div>
                               </div>
@@ -3501,11 +3501,11 @@ export default function ClanManager() {
                                   {boundRoleId ? (
                                     <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
                                       <Check className="w-3 h-3" />
-                                      Привязано
+                                      {t('clan_auto_8', 'Привязано')}
                                     </span>
                                   ) : (
                                     <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-800/60">
-                                      Не привязано
+                                      {t('clan_auto_9', 'Не привязано')}
                                     </span>
                                   )}
                                 </div>
@@ -3550,10 +3550,10 @@ export default function ClanManager() {
                           <Plus className="w-5 h-5" />
                         </div>
                         <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          Нет дополнительных ролей
+                          {t('clan_auto_10', 'Нет дополнительных ролей')}
                         </h4>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                          Нажмите сюда, чтобы добавить кастомную роль (например: Медик, Снайпер, Гость)
+                          {t('clan_auto_11', 'Нажмите сюда, чтобы добавить кастомную роль (например: Медик, Снайпер, Гость)')}
                         </p>
                       </div>
                     ) : (
@@ -3571,7 +3571,7 @@ export default function ClanManager() {
                                   {cr.color && (
                                     <span className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10" style={{ backgroundColor: cr.color }}></span>
                                   )}
-                                  <span>Название роли (в боте)</span>
+                                  <span>{t('clan_auto_12', 'Название роли (в боте)')}</span>
                                 </label>
                                 <input
                                   type="text"
@@ -3580,14 +3580,14 @@ export default function ClanManager() {
                                   onChange={e => handleRoleNameChange(cr.key, e.target.value, true, cr.id)}
                                   onBlur={e => handleRoleNameBlur(cr.key, null, e.target.value, true, cr.id)}
                                   onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
-                                  placeholder="Новая роль"
+                                  placeholder={t('clan_auto_108', 'Новая роль')}
                                 />
                               </div>
 
                               {/* Role in Discord (dropdown + create button) */}
                               <div className="flex-1 min-w-[220px]">
                                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                  Роль в Discord
+                                  {t('clan_auto_13', 'Роль в Discord')}
                                 </label>
                                 <div className="flex items-center gap-2">
                                   <select
@@ -3595,7 +3595,7 @@ export default function ClanManager() {
                                     onChange={e => handleSelectDiscordRole(cr.key, null, e.target.value, true, cr.id)}
                                     className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
                                   >
-                                    <option value="">-- Выберите роль --</option>
+                                    <option value="">{t('clan_auto_14', '-- Выберите роль --')}</option>
                                     {(discordInfo?.roles || []).map(dRole => (
                                       <option key={dRole.id} value={dRole.id}>
                                         {dRole.name}
@@ -3614,7 +3614,7 @@ export default function ClanManager() {
                                     ) : (
                                       <Plus className="w-3.5 h-3.5" />
                                     )}
-                                    <span className="hidden sm:inline">Создать</span>
+                                    <span className="hidden sm:inline">{t('clan_auto_15', 'Создать')}</span>
                                   </button>
                                 </div>
                               </div>
@@ -3625,11 +3625,11 @@ export default function ClanManager() {
                                   {cr.roleId ? (
                                     <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
                                       <Check className="w-3 h-3" />
-                                      Привязано
+                                      {t('clan_auto_16', 'Привязано')}
                                     </span>
                                   ) : (
                                     <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-800/60">
-                                      Не привязано
+                                      {t('clan_auto_17', 'Не привязано')}
                                     </span>
                                   )}
                                 </div>
@@ -3657,10 +3657,10 @@ export default function ClanManager() {
                 <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <Hash className="w-5 h-5 text-blue-500" />
-                    Настройки каналов
+                    {t('clan_auto_18', 'Настройки каналов')}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Привяжите каналы Discord сервера для автоматической работы функций бота
+                    {t('clan_auto_19', 'Привяжите каналы Discord сервера для автоматической работы функций бота')}
                   </p>
                 </div>
                 
@@ -3679,15 +3679,15 @@ export default function ClanManager() {
                   };
                   
                   const channelsList = [
-                    { key: 'ticketsCategory', label: 'Категория для тикетов', desc: 'Здесь бот будет создавать приватные каналы тикетов заявок.', typeFilter: 4, badge: 'Категория' },
-                    { key: 'applications', label: 'Одобренные заявки', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.', typeFilter: [0, 2] },
+                    { key: 'ticketsCategory', label: t('clan_auto_v2_1012', 'Категория для тикетов'), desc: t('clan_auto_222', 'Здесь бот будет создавать приватные каналы тикетов заявок.'), typeFilter: 4, badge: 'Категория' },
+                    { key: 'applications', label: t('clan_auto_v2_1013', 'Одобренные заявки'), desc: t('clan_auto_223', 'Сюда будут пересылаться одобренные заявки из тикетов.'), typeFilter: [0, 2] },
                     { key: 'autoRejectedApplications', label: t('clan_channel_auto_rejected_app') || 'Отклоненные ботом заявки', desc: t('clan_channel_auto_rejected_app_desc') || 'Канал для автоматических отказов кандидатам (нехватка часов, возраст, блокировки VAC/Game).', typeFilter: [0, 2] },
                     { key: 'rejectedApplications', label: t('clan_channel_rejected_app') || 'Отклоненные админами заявки', desc: t('clan_channel_rejected_app_desc') || 'Канал для заявок, отклоненных вручную модераторами/рекрутерами с указанием причины.', typeFilter: [0, 2] },
-                    { key: 'leaderboard', label: 'Leaderboard (Статистика)', desc: 'Канал, где публикуется статистика по вайпам и топам.', typeFilter: [0, 2] },
-                    { key: 'news', label: 'Новости клана', desc: 'Канал для публикации объявлений и новостей бота.', typeFilter: [0, 2] },
-                    { key: 'votes', label: 'Голосования', desc: 'Канал для создания голосований. Может быть тем же, что и новости.', typeFilter: [0, 2] },
-                    { key: 'ads', label: 'Реклама и альянсы', desc: 'Сюда бот отправляет информацию об оплаченной рекламе.', typeFilter: [0, 2] },
-                    { key: 'roster', label: 'Состав клана', desc: 'Здесь выводится динамический список всех участников.', typeFilter: [0, 2] }
+                    { key: 'leaderboard', label: t('clan_auto_v2_1014', 'Leaderboard (Статистика)'), desc: t('clan_auto_224', 'Канал, где публикуется статистика по вайпам и топам.'), typeFilter: [0, 2] },
+                    { key: 'news', label: t('clan_auto_v2_1015', 'Новости клана'), desc: t('clan_auto_225', 'Канал для публикации объявлений и новостей бота.'), typeFilter: [0, 2] },
+                    { key: 'votes', label: t('clan_tab_votes', 'Голосования'), desc: t('clan_auto_226', 'Канал для создания голосований. Может быть тем же, что и новости.'), typeFilter: [0, 2] },
+                    { key: 'ads', label: t('clan_auto_v2_1016', 'Реклама и альянсы'), desc: t('clan_auto_227', 'Сюда бот отправляет информацию об оплаченной рекламе.'), typeFilter: [0, 2] },
+                    { key: 'roster', label: t('clan_auto_v2_1017', 'Состав клана'), desc: t('clan_auto_228', 'Здесь выводится динамический список всех участников.'), typeFilter: [0, 2] }
                   ];
 
                   return (
@@ -3713,7 +3713,7 @@ export default function ClanManager() {
                                onChange={e => updateCConfig(c.key, e.target.value)}
                                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer"
                              >
-                               <option value="">-- Не выбрано --</option>
+                               <option value="">{t('clan_auto_20', '-- Не выбрано --')}</option>
                                {(discordInfo?.channels || [])
                                  .filter(ch => c.typeFilter === null || ch.type === c.typeFilter || (Array.isArray(c.typeFilter) && c.typeFilter.includes(ch.type)))
                                  .map(ch => {
@@ -3736,17 +3736,17 @@ export default function ClanManager() {
                   <div>
                     <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
                       <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                      Права Доступа (Матрица ролей и каналов)
+                      {t('clan_auto_21', 'Права Доступа (Матрица ролей и каналов)')}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-3xl">
-                      Выберите каналы, к которым каждая роль должна иметь доступ.
+                      {t('clan_auto_22', 'Выберите каналы, к которым каждая роль должна иметь доступ.')}
                       <br/>
-                      <span className="text-blue-500 font-medium">💡 Совет:</span> Сначала настройте каналы для низших ролей. Более высокие роли автоматически унаследуют эти доступы, и вам останется только добавить им их уникальные административные каналы.
+                      <span className="text-blue-500 font-medium">{t('clan_auto_23', '💡 Совет:')}</span> {t('clan_auto_24', 'Сначала настройте каналы для низших ролей. Более высокие роли автоматически унаследуют эти доступы, и вам останется только добавить им их уникальные административные каналы.')}
                     </p>
                   </div>
                   <button onClick={syncPermissions} disabled={saveStatus === 'saving'} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm font-medium transition-colors disabled:opacity-50 flex items-center shrink-0">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Синхронизировать с Discord
+                    {t('clan_auto_25', 'Синхронизировать с Discord')}
                   </button>
                 </div>
 
@@ -3886,15 +3886,15 @@ export default function ClanManager() {
                     return (
                       <tr key={rKey} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                          {!isConfigured && <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" title="Роль не привязана к Discord"></span>}
-                          {isConfigured && <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" title="Роль привязана к Discord"></span>}
+                          {!isConfigured && <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" title={t('clan_auto_98', 'Роль не привязана к Discord')}></span>}
+                          {isConfigured && <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" title={t('clan_auto_99', 'Роль привязана к Discord')}></span>}
                           {rDef.color && (
                             <span className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10" style={{ backgroundColor: rDef.color }}></span>
                           )}
                           <span className="truncate">{rName}</span>
                           {rDef.isCustom && (
                             <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md shrink-0">
-                              кастом
+                              {t('clan_auto_26', 'кастом')}
                             </span>
                           )}
                         </td>
@@ -3922,7 +3922,7 @@ export default function ClanManager() {
                       <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                           <tr>
-                            <th className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Роль</th>
+                            <th className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">{t('clan_auto_27', 'Роль')}</th>
                             {channelKeys.map(cKey => (
                               <th key={cKey} className="px-2 py-3 text-center font-medium text-slate-600 dark:text-slate-400">
                                 <div className="truncate max-w-[85px] mx-auto text-xs" title={channelLabels[cKey] || cKey}>
@@ -3936,7 +3936,7 @@ export default function ClanManager() {
                           {matrixHierarchyRoles.length > 0 && (
                             <tr className="bg-slate-50/80 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                               <td colSpan={channelKeys.length + 1} className="px-4 py-1.5">
-                                Иерархические роли
+                                {t('clan_auto_28', 'Иерархические роли')}
                               </td>
                             </tr>
                           )}
@@ -3945,7 +3945,7 @@ export default function ClanManager() {
                           {matrixSideRoles.length > 0 && (
                             <tr className="bg-slate-50/80 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                               <td colSpan={channelKeys.length + 1} className="px-4 py-1.5 border-t border-slate-200 dark:border-slate-700">
-                                Специальные роли
+                                {t('clan_auto_29', 'Специальные роли')}
                               </td>
                             </tr>
                           )}
@@ -3983,10 +3983,10 @@ export default function ClanManager() {
                       <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                         <div>
                           <h4 className="font-semibold text-slate-900 dark:text-white text-base">
-                            Настройки системы Join-to-Create
+                            {t('clan_auto_30', 'Настройки системы Join-to-Create')}
                           </h4>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Настройте категорию и канал для автоматического создания пати
+                            {t('clan_auto_31', 'Настройте категорию и канал для автоматического создания пати')}
                           </p>
                         </div>
                         <ToggleSwitch
@@ -4044,7 +4044,7 @@ export default function ClanManager() {
                               const updated = { ...(dynamicVoiceData.config || {}), template: e.target.value };
                               queueAutoSaveVoice(updated, true);
                             }}
-                            placeholder="🔊 Пати {user}"
+                            placeholder={t('clan_auto_109', '🔊 Пати {user}')}
                             className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
                           />
                         </div>
@@ -4065,15 +4065,15 @@ export default function ClanManager() {
                             className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
                           >
                             <option value={0}>0 — {t('clan_voice_unlimited')}</option>
-                            <option value={2}>2 места (Дуо)</option>
-                            <option value={3}>3 места (Трио)</option>
-                            <option value={4}>4 места (Квадро)</option>
-                            <option value={5}>5 мест (Пятерка)</option>
-                            <option value={6}>6 мест</option>
-                            <option value={8}>8 мест</option>
-                            <option value={10}>10 мест</option>
-                            <option value={12}>12 мест</option>
-                            <option value={16}>16 мест</option>
+                            <option value={2}>{t('clan_auto_32', '2 места (Дуо)')}</option>
+                            <option value={3}>{t('clan_auto_33', '3 места (Трио)')}</option>
+                            <option value={4}>{t('clan_auto_34', '4 места (Квадро)')}</option>
+                            <option value={5}>{t('clan_auto_35', '5 мест (Пятерка)')}</option>
+                            <option value={6}>{t('clan_auto_36', '6 мест')}</option>
+                            <option value={8}>{t('clan_auto_37', '8 мест')}</option>
+                            <option value={10}>{t('clan_auto_38', '10 мест')}</option>
+                            <option value={12}>{t('clan_auto_39', '12 мест')}</option>
+                            <option value={16}>{t('clan_auto_40', '16 мест')}</option>
                           </select>
                         </div>
                       </div>
@@ -4178,7 +4178,7 @@ export default function ClanManager() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      if (window.confirm(`Удалить комнату "${room.name}"? Все участники будут отключены.`)) {
+                                      if (window.confirm(`${t('clan_voice_delete_confirm', 'Удалить комнату')} "${room.name}"? ${t('clan_voice_delete_confirm2', 'Все участники будут отключены.')}`)) {
                                         handleManageDynamicRoom('delete_room', room.channelId);
                                       }
                                     }}
@@ -4221,7 +4221,7 @@ export default function ClanManager() {
                                         type="button"
                                         onClick={() => handleManageDynamicRoom('kick_member', room.channelId, { userId: m.id })}
                                         className="text-red-500 hover:text-red-700 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors cursor-pointer"
-                                        title="Отключить из голосового канала"
+                                        title={t('clan_auto_100', 'Отключить из голосового канала')}
                                       >
                                         <UserX className="w-3.5 h-3.5" />
                                       </button>
@@ -4244,7 +4244,7 @@ export default function ClanManager() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
                     <UserPlus className="w-5 h-5 mr-2 text-blue-500" />
-                    Настройки набора в клан
+                    {t('clan_auto_41', 'Настройки набора в клан')}
                   </h3>
                   {isFullScreenWindow && (
                     <button
@@ -4255,10 +4255,10 @@ export default function ClanManager() {
                           ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
                           : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
                       }`}
-                      title={showDiscordLivePreview ? 'Скрыть живой предпросмотр Discord' : 'Показать живой предпросмотр Discord'}
+                      title={showDiscordLivePreview ? t('clan_auto_v2_1026', 'Скрыть живой предпросмотр Discord') : t('clan_auto_v2_1027', 'Показать живой предпросмотр Discord')}
                     >
                       {showDiscordLivePreview ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      <span>{showDiscordLivePreview ? 'Превью Discord' : 'Включить превью'}</span>
+                      <span>{showDiscordLivePreview ? t('clan_auto_v2_1028', 'Превью Discord') : t('clan_auto_v2_1029', 'Включить превью')}</span>
                     </button>
                   )}
                 </div>
@@ -4268,8 +4268,8 @@ export default function ClanManager() {
                   let rConfig = {
                     link: config?.discordLink || '',
                     banner: 'https://i.imgur.com/UaMfYMK.png',
-                    title: config?.name ? `Набор в клан ${config.name}` : 'Набор в клан',
-                    text: "Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы",
+                    title: config?.name ? `Набор в клан ${config.name}` : t('clan_rec_base', 'Набор в клан'),
+                    text: t('clan_auto_v2_1023', 'Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы'),
                     customLeaderId: '',
                     autoRejectEnabled: false,
                     minAge: 0,
@@ -4292,7 +4292,7 @@ export default function ClanManager() {
 
                   // Keep title synchronized with actual clan name if title was old default / GODS
                   if (config?.name) {
-                    if (!rConfig.title || rConfig.title === 'Набор в клан GODS' || rConfig.title === 'Набор в клан') {
+                    if (!rConfig.title || rConfig.title === t('clan_rec_gods', 'Набор в клан GODS') || rConfig.title === t('clan_rec_base', 'Набор в клан')) {
                       rConfig.title = `Набор в клан ${config.name}`;
                     } else if (rConfig.title.includes('GODS')) {
                       rConfig.title = rConfig.title.replace(/\bGODS\b/g, config.name);
@@ -4326,7 +4326,7 @@ export default function ClanManager() {
                     : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : '@Лидер');
 
                   const appChannel = discordInfo?.channels?.find(c => c.id === cConfig.applications);
-                  const channelName = appChannel ? appChannel.name : 'набор-в-клан';
+                  const channelName = appChannel ? appChannel.name : t('clan_default_rec_ch', 'набор-в-клан');
 
                   return (
                     <div className="space-y-6">
@@ -4334,7 +4334,7 @@ export default function ClanManager() {
                       <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
                         <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                           <Sliders className="w-4 h-4 text-orange-500" />
-                          Панель набора в Discord
+                          {t('clan_auto_42', 'Панель набора в Discord')}
                         </h4>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -4347,7 +4347,7 @@ export default function ClanManager() {
                                 type="button"
                                 onClick={handleCreateRecruitmentInvite}
                                 disabled={creatingRecruitmentInvite}
-                                title="Создать новую постоянную ссылку через бота и вставить в поле"
+                                title={t('clan_auto_101', 'Создать новую постоянную ссылку через бота и вставить в поле')}
                                 className="text-[11px] font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 flex items-center gap-1 cursor-pointer transition-colors"
                               >
                                 <RefreshCw className={`w-3 h-3 ${creatingRecruitmentInvite ? 'animate-spin' : ''}`} />
@@ -4400,7 +4400,7 @@ export default function ClanManager() {
                           </div>
                           
                           <div>
-                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Ссылка на баннер (Изображение)</label>
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('clan_auto_43', 'Ссылка на баннер (Изображение)')}</label>
                             <input 
                               type="text" 
                               className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
@@ -4417,7 +4417,7 @@ export default function ClanManager() {
                           <div className="flex items-center justify-between">
                             <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                               <UserCheck className="w-3.5 h-3.5 text-orange-500" />
-                              Лидер клана (в embed-сообщении набора)
+                              {t('clan_auto_44', 'Лидер клана (в embed-сообщении набора)')}
                             </label>
                             {rConfig.customLeaderId && (
                               <button
@@ -4426,7 +4426,7 @@ export default function ClanManager() {
                                 className="text-[11px] text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 transition-colors cursor-pointer"
                               >
                                 <X className="w-3 h-3" />
-                                <span>Стереть (вернуть авто-определение)</span>
+                                <span>{t('clan_auto_45', 'Стереть (вернуть авто-определение)')}</span>
                               </button>
                             )}
                           </div>
@@ -4449,7 +4449,7 @@ export default function ClanManager() {
                                               type="button"
                                               onClick={() => updateRConfig('customLeaderId', leaderId, true)}
                                               className="inline-flex items-center gap-0.5 font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 hover:bg-orange-100 dark:bg-slate-700 dark:hover:bg-orange-950/60 text-slate-700 hover:text-orange-700 dark:text-slate-300 dark:hover:text-orange-300 transition-colors cursor-pointer"
-                                              title="Нажмите, чтобы вставить этот ID в поле"
+                                              title={t('clan_auto_102', 'Нажмите, чтобы вставить этот ID в поле')}
                                             >
                                               <span>(ID: {leaderId})</span>
                                             </button>
@@ -4461,7 +4461,7 @@ export default function ClanManager() {
                                   </span>
                                 );
                               }
-                              return <strong className="text-slate-700 dark:text-slate-300">Роль не выдана ни одному участнику</strong>;
+                              return <strong className="text-slate-700 dark:text-slate-300">{t('clan_auto_46', 'Роль не выдана ни одному участнику')}</strong>;
                             })()}
                             . Вы можете принудительно указать Discord ID пользователя:
                           </div>
@@ -4475,8 +4475,8 @@ export default function ClanManager() {
                                   const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
                                   const firstId = leaders[0]?.userId || leaders[0]?.id;
                                   return firstId 
-                                    ? `ID лидера (например: ${firstId})` 
-                                    : "Укажите Discord ID пользователя (например: 718872288000000000)";
+                                    ? `${t('clan_leader_id_ex', 'ID лидера (например: ')}${firstId})` 
+                                    : t('clan_leader_id_placeholder', 'Укажите Discord ID пользователя (например: 718872288000000000)');
                                 })()
                               }
                               value={rConfig.customLeaderId || ''}
@@ -4492,10 +4492,10 @@ export default function ClanManager() {
                                     type="button"
                                     onClick={() => updateRConfig('customLeaderId', firstId, true)}
                                     className="px-3 py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/80 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-                                    title="Вставить ID лидера по умолчанию"
+                                    title={t('clan_auto_103', 'Вставить ID лидера по умолчанию')}
                                   >
                                     <UserCheck className="w-3.5 h-3.5" />
-                                    <span>Вставить ID</span>
+                                    <span>{t('clan_auto_47', 'Вставить ID')}</span>
                                   </button>
                                 );
                               }
@@ -4506,7 +4506,7 @@ export default function ClanManager() {
                                 type="button"
                                 onClick={() => updateRConfig('customLeaderId', '', true)}
                                 className="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                                title="Стереть"
+                                title={t('clan_auto_104', 'Стереть')}
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -4515,7 +4515,7 @@ export default function ClanManager() {
                         </div>
                         
                         <div>
-                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Заголовок Embed-сообщения *</label>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('clan_auto_48', 'Заголовок Embed-сообщения *')}</label>
                           <input 
                             type="text" 
                             required
@@ -4528,14 +4528,14 @@ export default function ClanManager() {
                         </div>
                         
                         <div>
-                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Текст с требованиями (Markdown поддерживается) *</label>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('clan_auto_49', 'Текст с требованиями (Markdown поддерживается) *')}</label>
                           <textarea 
                             required
                             className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[140px]"
                             value={rConfig.text}
                             onChange={e => updateRConfig('text', e.target.value, false)}
                             onBlur={e => updateRConfig('text', e.target.value, true)}
-                            placeholder="Опишите требования..."
+                            placeholder={t('clan_auto_110', 'Опишите требования...')}
                           ></textarea>
                         </div>
                       </div>
@@ -4583,7 +4583,7 @@ export default function ClanManager() {
                                 onBlur={e => updateRConfig('minAge', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
                                 placeholder={t('clan_recruitment_min_age_ph') || 'Например: 18 (0 — без ограничений)'}
                               />
-                              <p className="text-[11px] text-slate-400 mt-1">Кандидаты младше этого возраста будут отклонены.</p>
+                              <p className="text-[11px] text-slate-400 mt-1">{t('clan_auto_50', 'Кандидаты младше этого возраста будут отклонены.')}</p>
                             </div>
 
                             <div>
@@ -4672,7 +4672,7 @@ export default function ClanManager() {
                               <div>
                                 <ChannelSelect
                                   label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}
-                                  description="Канал для карточек авто-отказа (нехватка часов, возраст, VAC-баны)"
+                                  description={t('clan_auto_113', 'Канал для карточек авто-отказа (нехватка часов, возраст, VAC-баны)')}
                                   value={cConfig.autoRejectedApplications || ''}
                                   onChange={val => updateChannelConfig('autoRejectedApplications', val)}
                                   discordChannels={discordInfo?.channels || []}
@@ -4682,7 +4682,7 @@ export default function ClanManager() {
                               <div>
                                 <ChannelSelect
                                   label={t('clan_recruitment_channel_admin') || 'Отклоненные админами заявки'}
-                                  description="Канал для карточек заявок, отклоненных рекрутерами вручную"
+                                  description={t('clan_auto_114', 'Канал для карточек заявок, отклоненных рекрутерами вручную')}
                                   value={cConfig.rejectedApplications || ''}
                                   onChange={val => updateChannelConfig('rejectedApplications', val)}
                                   discordChannels={discordInfo?.channels || []}
@@ -4754,7 +4754,7 @@ export default function ClanManager() {
                                 type="button"
                                 onClick={() => setAppSearch('')}
                                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                                title="Очистить поиск"
+                                title={t('clan_auto_105', 'Очистить поиск')}
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -4818,7 +4818,7 @@ export default function ClanManager() {
                                 <UserCheck className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {query 
-                                    ? `По запросу «${appSearch}» заявок не найдено.` 
+                                    ? `${t('clan_apps_search_empty', 'По запросу «')}${appSearch}${t('clan_apps_search_empty2', '» заявок не найдено.')}` 
                                     : (t('clan_recruitment_apps_empty') || 'Заявок в выбранной категории пока нет.')
                                   }
                                 </p>
@@ -4831,7 +4831,7 @@ export default function ClanManager() {
                               <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
                                 <thead className="bg-slate-50 dark:bg-slate-800/70 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                                   <tr>
-                                    <th className="px-4 py-3">{t('clan_recruitment_app_col_candidate') || 'Кандидат'}</th>
+                                    <th className="px-4 py-3">{t('clan_recruitment_app_col_candidate') || t('clan_candidate', 'Кандидат')}</th>
                                     <th className="px-3 py-3">{t('clan_recruitment_app_col_steam') || 'Steam'}</th>
                                     <th className="px-3 py-3">{t('clan_recruitment_app_col_age') || 'Возраст'}</th>
                                     <th className="px-3 py-3">{t('clan_recruitment_app_col_hours') || 'Часы'}</th>
@@ -4854,7 +4854,7 @@ export default function ClanManager() {
                                             </div>
                                           )}
                                           <div>
-                                            <div className="font-semibold text-slate-800 dark:text-slate-200">{app.username || 'Кандидат'}</div>
+                                            <div className="font-semibold text-slate-800 dark:text-slate-200">{app.username || t('clan_candidate', 'Кандидат')}</div>
                                             <div className="text-[10px] text-slate-400 font-mono">{app.userId}</div>
                                           </div>
                                         </div>
@@ -4881,13 +4881,13 @@ export default function ClanManager() {
                                         })()}
                                       </td>
                                       <td className="px-3 py-3 font-medium text-slate-700 dark:text-slate-300">
-                                        {app.age ? `${app.age} лет` : '—'}
+                                        {app.age ? `${app.age} ${t('clan_years', 'лет')}` : '—'}
                                       </td>
                                       <td className="px-3 py-3">
                                         <div className="flex items-center space-x-1">
-                                          <span className="font-medium text-slate-800 dark:text-slate-200">{app.hours || 0} ч.</span>
+                                          <span className="font-medium text-slate-800 dark:text-slate-200">{app.hours || 0} {t('clan_hours_short', 'ч.')}</span>
                                           {app.verifiedHours !== null && app.verifiedHours !== undefined && (
-                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-bold" title="Верифицировано в Steam">
+                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-bold" title={t('clan_auto_106', 'Верифицировано в Steam')}>
                                               ✓
                                             </span>
                                           )}
@@ -4925,7 +4925,7 @@ export default function ClanManager() {
                                           </span>
                                         ) : app.reviewedBy ? (
                                           <span className="text-slate-500">
-                                            Рассмотрел: <span className="font-medium text-slate-700 dark:text-slate-300">{app.reviewedBy}</span>
+                                            {t('clan_auto_51', 'Рассмотрел:')} <span className="font-medium text-slate-700 dark:text-slate-300">{app.reviewedBy}</span>
                                           </span>
                                         ) : (
                                           <span className="text-slate-400">—</span>
@@ -4964,7 +4964,7 @@ export default function ClanManager() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
                     <Vote className="w-5 h-5 mr-2 text-blue-500" />
-                    Шаблоны серверов для голосований
+                    {t('clan_auto_52', 'Шаблоны серверов для голосований')}
                   </h3>
                   {isFullScreenWindow && (
                     <button
@@ -4975,10 +4975,10 @@ export default function ClanManager() {
                           ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
                           : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
                       }`}
-                      title={showDiscordLivePreview ? 'Скрыть живой предпросмотр Discord' : 'Показать живой предпросмотр Discord'}
+                      title={showDiscordLivePreview ? t('clan_auto_v2_1030', 'Скрыть живой предпросмотр Discord') : t('clan_auto_v2_1031', 'Показать живой предпросмотр Discord')}
                     >
                       {showDiscordLivePreview ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      <span>{showDiscordLivePreview ? 'Превью Discord' : 'Включить превью'}</span>
+                      <span>{showDiscordLivePreview ? t('clan_auto_v2_1032', 'Превью Discord') : t('clan_auto_v2_1033', 'Включить превью')}</span>
                     </button>
                   )}
                 </div>
@@ -4999,7 +4999,7 @@ export default function ClanManager() {
                   };
 
                   const addTemplate = () => {
-                    const newTemplates = [...wTemplates, { name: '', day: 'Четверг', time: '16:00', ip: '', banner: '' }];
+                    const newTemplates = [...wTemplates, { name: '', day: t('clan_auto_232', t('clan_thursday', 'Четверг')), time: '16:00', ip: '', banner: '' }];
                     const updated = { ...config, wipeTemplatesJson: JSON.stringify(newTemplates) };
                     queueAutoSave(updated, true);
                   };
@@ -5017,12 +5017,12 @@ export default function ClanManager() {
                     }
                   } catch(e) {}
                   const voteChannel = discordInfo?.channels?.find(c => c.id === cConfig.votes);
-                  const channelName = voteChannel ? voteChannel.name : 'голосования';
+                  const channelName = voteChannel ? voteChannel.name : t('clan_default_vote_ch', 'голосования');
 
                   const safeIdx = Math.min(previewVoteIndex, Math.max(0, wTemplates.length - 1));
                   const activeTpl = wTemplates[safeIdx] || { 
                     name: 'Rustoria Main', 
-                    day: 'Четверг', 
+                    day: t('clan_auto_233', t('clan_thursday', 'Четверг')), 
                     time: '16:00', 
                     ip: 'connect 127.0.0.1:28015', 
                     banner: '' 
@@ -5037,7 +5037,7 @@ export default function ClanManager() {
                             </button>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Название сервера *</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_auto_53', 'Название сервера *')}</label>
                                 <input 
                                   type="text" 
                                   required 
@@ -5049,23 +5049,23 @@ export default function ClanManager() {
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">День вайпа</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_auto_54', 'День вайпа')}</label>
                                 <select 
                                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
-                                  value={tpl.day || 'Четверг'} 
+                                  value={tpl.day || t('clan_thursday', 'Четверг')} 
                                   onChange={e => updateTemplate(index, 'day', e.target.value, true)}
                                 >
-                                  <option value="Понедельник">Понедельник</option>
-                                  <option value="Вторник">Вторник</option>
-                                  <option value="Среда">Среда</option>
-                                  <option value="Четверг">Четверг</option>
-                                  <option value="Пятница">Пятница</option>
-                                  <option value="Суббота">Суббота</option>
-                                  <option value="Воскресенье">Воскресенье</option>
+                                  <option value="Понедельник">{t('clan_auto_55', t('clan_monday', 'Понедельник'))}</option>
+                                  <option value="Вторник">{t('clan_auto_56', t('clan_tuesday', 'Вторник'))}</option>
+                                  <option value="Среда">{t('clan_auto_57', t('clan_wednesday', 'Среда'))}</option>
+                                  <option value="Четверг">{t('clan_auto_58', t('clan_thursday', 'Четверг'))}</option>
+                                  <option value="Пятница">{t('clan_auto_59', t('clan_friday', 'Пятница'))}</option>
+                                  <option value="Суббота">{t('clan_auto_60', t('clan_saturday', 'Суббота'))}</option>
+                                  <option value="Воскресенье">{t('clan_auto_61', t('clan_sunday', 'Воскресенье'))}</option>
                                 </select>
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Время (МСК)</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_auto_62', 'Время (МСК)')}</label>
                                 <input 
                                   type="text" 
                                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
@@ -5088,7 +5088,7 @@ export default function ClanManager() {
                                 />
                               </div>
                               <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Ссылка на баннер</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_auto_63', 'Ссылка на баннер')}</label>
                                 <input 
                                   type="text" 
                                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
@@ -5104,7 +5104,7 @@ export default function ClanManager() {
                         
                         <button type="button" onClick={addTemplate} className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center font-medium">
                           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                          Добавить шаблон сервера
+                          {t('clan_auto_64', 'Добавить шаблон сервера')}
                         </button>
                       </div>
                   );
@@ -5117,7 +5117,7 @@ export default function ClanManager() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
                     <Megaphone className="w-5 h-5 mr-2 text-blue-500" />
-                    Настройки панели рекламы
+                    {t('clan_auto_65', 'Настройки панели рекламы')}
                   </h3>
                   {isFullScreenWindow && (
                     <button
@@ -5128,18 +5128,18 @@ export default function ClanManager() {
                           ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
                           : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
                       }`}
-                      title={showDiscordLivePreview ? 'Скрыть живой предпросмотр Discord' : 'Показать живой предпросмотр Discord'}
+                      title={showDiscordLivePreview ? t('clan_auto_v2_1034', 'Скрыть живой предпросмотр Discord') : t('clan_auto_v2_1035', 'Показать живой предпросмотр Discord')}
                     >
                       {showDiscordLivePreview ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      <span>{showDiscordLivePreview ? 'Превью Discord' : 'Включить превью'}</span>
+                      <span>{showDiscordLivePreview ? t('clan_auto_v2_1036', 'Превью Discord') : t('clan_auto_v2_1037', 'Включить превью')}</span>
                     </button>
                   )}
                 </div>
                 
                 {(() => {
                   let aConfig = {
-                    title: 'Покупка рекламы',
-                    text: 'Здесь вы можете приобрести рекламу или обсудить партнерство.',
+                    title: t('clan_auto_169', t('clan_ads_buy', 'Покупка рекламы')),
+                    text: t('clan_auto_230', 'Здесь вы можете приобрести рекламу или обсудить партнерство.'),
                     banner: 'https://i.imgur.com/example.png',
                     priceLink: 'https://telegra.ph/price',
                   };
@@ -5162,12 +5162,12 @@ export default function ClanManager() {
                     }
                   } catch(e) {}
                   const adsChannel = discordInfo?.channels?.find(c => c.id === cConfig.ads);
-                  const channelName = adsChannel ? adsChannel.name : 'реклама';
+                  const channelName = adsChannel ? adsChannel.name : t('clan_default_ads_ch', 'реклама');
                   
                   return (
                     <div className="space-y-5 p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения *</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('clan_auto_66', 'Заголовок Embed-сообщения *')}</label>
                         <input 
                           type="text" 
                           required
@@ -5175,24 +5175,24 @@ export default function ClanManager() {
                           value={aConfig.title}
                           onChange={e => updateAConfig('title', e.target.value, false)}
                           onBlur={e => updateAConfig('title', e.target.value, true)}
-                          placeholder="Покупка рекламы"
+                          placeholder={t('clan_auto_111', t('clan_ads_buy', 'Покупка рекламы'))}
                         />
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст *</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('clan_auto_67', 'Текст *')}</label>
                         <textarea 
                           required
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px]"
                           value={aConfig.text}
                           onChange={e => updateAConfig('text', e.target.value, false)}
                           onBlur={e => updateAConfig('text', e.target.value, true)}
-                          placeholder="Информация о рекламе..."
+                          placeholder={t('clan_auto_112', 'Информация о рекламе...')}
                         ></textarea>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Прайс-лист (Telegraph / Сайт)</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('clan_auto_68', 'Ссылка на Прайс-лист (Telegraph / Сайт)')}</label>
                         <input 
                           type="text" 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
@@ -5204,7 +5204,7 @@ export default function ClanManager() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на баннер (Изображение)</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('clan_auto_69', 'Ссылка на баннер (Изображение)')}</label>
                         <input 
                           type="text" 
                           className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
@@ -5225,11 +5225,11 @@ export default function ClanManager() {
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
                     <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    Состав клана
+                    {t('clan_auto_70', 'Состав клана')}
                   </h3>
                   <button onClick={() => setRosterData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Обновить
+                    {t('clan_auto_71', 'Обновить')}
                   </button>
                 </div>
                 
@@ -5241,7 +5241,7 @@ export default function ClanManager() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {rosterData.roster.length === 0 ? (
                       <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
-                        Участники не найдены. Убедитесь, что роли настроены правильно.
+                        {t('clan_auto_72', 'Участники не найдены. Убедитесь, что роли настроены правильно.')}
                       </div>
                     ) : (
                       rosterData.roster.map(member => {
@@ -5305,7 +5305,7 @@ export default function ClanManager() {
                                 setSelectedProfileForDossier(profileToOpen);
                               }}
                               className="p-2 text-slate-400 hover:text-orange-500 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
-                              title="Открыть личное дело / Архив"
+                              title={t('clan_auto_107', 'Открыть личное дело / Архив')}
                             >
                               <Archive className="w-4 h-4" />
                             </button>
@@ -5570,7 +5570,7 @@ export default function ClanManager() {
                     </div>
                     <button onClick={() => setStatsData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center self-start sm:self-auto cursor-pointer">
                       <RefreshCw className="w-4 h-4 mr-1.5" />
-                      Обновить
+                      {t('clan_auto_73', 'Обновить')}
                     </button>
                   </div>
                   
@@ -5672,7 +5672,7 @@ export default function ClanManager() {
                         <tbody>
                           {sortedStats.length === 0 ? (
                             <tr>
-                              <td colSpan="6" className="px-6 py-8 text-center">Нет данных для отображения.</td>
+                              <td colSpan="6" className="px-6 py-8 text-center">{t('clan_auto_74', 'Нет данных для отображения.')}</td>
                             </tr>
                           ) : (
                             sortedStats.map(stat => (
@@ -5685,7 +5685,7 @@ export default function ClanManager() {
                                   </div>
                                 </th>
                                 <td className="px-6 py-4 text-center font-mono">
-                                  {Math.floor(stat.voiceTime / 3600)}ч {Math.floor((stat.voiceTime % 3600) / 60)}м
+                                  {Math.floor(stat.voiceTime / 3600)}{t('clan_h_short', 'ч')} {Math.floor((stat.voiceTime % 3600) / 60)}{t('clan_m_short', 'м')}
                                 </td>
                                 <td className="px-6 py-4 text-center font-mono">
                                   {stat.messageCount}
@@ -6009,7 +6009,7 @@ export default function ClanManager() {
                   action: 'timeout',
                   durationMinutes: 10,
                   autoDelete: true,
-                  warnMessage: 'Массовые упоминания запрещены на этом сервере!',
+                  warnMessage: t('clan_auto_234', 'Массовые упоминания запрещены на этом сервере!'),
                   ignoreRoles: [],
                   ignoreChannels: []
                 },
@@ -6019,7 +6019,7 @@ export default function ClanManager() {
                   action: 'timeout',
                   durationMinutes: 10,
                   autoDelete: true,
-                  warnMessage: 'Использование запретных выражений недопустимо на нашем сервере!',
+                  warnMessage: t('clan_auto_235', 'Использование запретных выражений недопустимо на нашем сервере!'),
                   ignoreRoles: [],
                   ignoreChannels: []
                 },
@@ -6239,7 +6239,7 @@ export default function ClanManager() {
                     {/* What to count checkboxes */}
                     <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2.5">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                        Что учитывать при подсчете:
+                        {t('clan_auto_75', 'Что учитывать при подсчете:')}
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300">
@@ -6502,7 +6502,7 @@ export default function ClanManager() {
                       {/* Word Pills */}
                       <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-2.5 bg-slate-50/60 dark:bg-slate-950/30 rounded-xl border border-slate-100 dark:border-slate-800/60">
                         {(!bw.words || bw.words.length === 0) ? (
-                          <span className="text-xs text-slate-400 italic py-2 px-1">Список пуст</span>
+                          <span className="text-xs text-slate-400 italic py-2 px-1">{t('clan_auto_76', 'Список пуст')}</span>
                         ) : (
                           bw.words.map((word, idx) => (
                             <span
@@ -6538,7 +6538,7 @@ export default function ClanManager() {
                         onChange={e => handleUpdateModRoot('logChannelId', e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                       >
-                        <option value="">(По умолчанию: основной канал логов)</option>
+                        <option value="">{t('clan_auto_77', '(По умолчанию: основной канал логов)')}</option>
                         {textChannels.map(ch => (
                           <option key={ch.id} value={ch.id}>#️⃣ {ch.name}</option>
                         ))}
@@ -6549,7 +6549,7 @@ export default function ClanManager() {
                   {/* Whitelists Card */}
                   <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
                     <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                      Исключения (Белый список)
+                      {t('clan_auto_78', 'Исключения (Белый список)')}
                     </h4>
 
                     {/* Roles Whitelist */}
@@ -6565,7 +6565,7 @@ export default function ClanManager() {
                       </p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {allRoles.length === 0 ? (
-                          <span className="text-xs text-slate-400 italic">Роли не загружены</span>
+                          <span className="text-xs text-slate-400 italic">{t('clan_auto_79', 'Роли не загружены')}</span>
                         ) : (
                           allRoles.map(r => {
                             const isAuto = isLeadershipRole(r.id);
@@ -6616,7 +6616,7 @@ export default function ClanManager() {
                       </p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {textChannels.length === 0 ? (
-                          <span className="text-xs text-slate-400 italic">Каналы не загружены</span>
+                          <span className="text-xs text-slate-400 italic">{t('clan_auto_80', 'Каналы не загружены')}</span>
                         ) : (
                           textChannels.map(ch => {
                             const isIgnored = Array.isArray(am.ignoreChannels) && am.ignoreChannels.includes(ch.id);
@@ -6732,25 +6732,25 @@ export default function ClanManager() {
                               className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                             >
                               <RefreshCw className={`w-3 h-3 ${loadingClanWarnings ? 'animate-spin' : ''}`} />
-                              <span>Обновить</span>
+                              <span>{t('clan_auto_81', 'Обновить')}</span>
                             </button>
                           </div>
 
                           {clanWarnings.length === 0 ? (
                             <div className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl text-center text-xs text-slate-400">
-                              Предупреждений нет или они не загружены.
+                              {t('clan_auto_82', 'Предупреждений нет или они не загружены.')}
                             </div>
                           ) : (
                             <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                               <table className="w-full text-left text-xs text-slate-500 dark:text-slate-400">
                                 <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 uppercase select-none border-b border-slate-200 dark:border-slate-700">
                                   <tr>
-                                    <th className="px-4 py-2.5">Участник</th>
-                                    <th className="px-4 py-2.5">Причина</th>
-                                    <th className="px-4 py-2.5">Модератор</th>
-                                    <th className="px-4 py-2.5">Дата</th>
-                                    <th className="px-4 py-2.5 text-center">Статус</th>
-                                    <th className="px-4 py-2.5 text-right">Действие</th>
+                                    <th className="px-4 py-2.5">{t('clan_auto_83', 'Участник')}</th>
+                                    <th className="px-4 py-2.5">{t('clan_auto_84', 'Причина')}</th>
+                                    <th className="px-4 py-2.5">{t('clan_auto_85', 'Модератор')}</th>
+                                    <th className="px-4 py-2.5">{t('clan_auto_86', 'Дата')}</th>
+                                    <th className="px-4 py-2.5 text-center">{t('clan_auto_87', 'Статус')}</th>
+                                    <th className="px-4 py-2.5 text-right">{t('clan_auto_88', 'Действие')}</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -6763,7 +6763,7 @@ export default function ClanManager() {
                                         {w.reason}
                                       </td>
                                       <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                                        {w.moderatorTag || 'Система'}
+                                        {w.moderatorTag || t('clan_system', 'Система')}
                                       </td>
                                       <td className="px-4 py-2.5 text-slate-400">
                                         {new Date(w.createdAt).toLocaleDateString()}
@@ -6771,11 +6771,11 @@ export default function ClanManager() {
                                       <td className="px-4 py-2.5 text-center">
                                         {w.active ? (
                                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                                            Активен
+                                            {t('clan_auto_89', t('clan_warn_active', 'Активен'))}
                                           </span>
                                         ) : (
                                           <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                                            Снят
+                                            {t('clan_auto_90', t('clan_warn_removed', 'Снят'))}
                                           </span>
                                         )}
                                       </td>
@@ -6787,7 +6787,7 @@ export default function ClanManager() {
                                             onClick={() => handleRemoveWarn(w.id)}
                                             className="text-xs text-red-600 dark:text-red-400 hover:underline cursor-pointer font-medium disabled:opacity-50"
                                           >
-                                            Снять
+                                            {t('clan_auto_v2_1040', t('clan_warn_remove', 'Снять'))}
                                           </button>
                                         )}
                                       </td>
@@ -7112,7 +7112,7 @@ export default function ClanManager() {
                 { id: 'voice', title: t('clan_reset_sec_voice_title') || 'Динамические войсы', desc: t('clan_reset_sec_voice_desc') || 'Отключение Join-to-Create, сброс триггер-канала и категории временных комнат' },
                 { id: 'logging', title: t('clan_reset_sec_logging_title') || 'Логирование', desc: t('clan_reset_sec_logging_desc') || 'Сброс настроек каналов логирования и отключение отслеживаемых событий аудита' },
                 { id: 'moderation', title: t('clan_reset_sec_moderation_title') || 'Модерация', desc: t('clan_reset_sec_moderation_desc') || 'Сброс правил анти-спама, фильтрации упоминаний и белых списков' },
-                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || 'Набор в клан', desc: t('clan_reset_sec_recruitment_desc') || 'Сброс требований к возрасту и часам в Rust, параметров авто-отклонений, тикетов и очистка заявок' },
+                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || t('clan_rec_base', 'Набор в клан'), desc: t('clan_reset_sec_recruitment_desc') || 'Сброс требований к возрасту и часам в Rust, параметров авто-отклонений, тикетов и очистка заявок' },
                 { id: 'applications', title: t('clan_reset_sec_applications_title') || 'Журнал заявок', desc: t('clan_reset_sec_applications_desc') || 'Очистка всех поданных анкет, истории рассмотрения заявок и архива тикетов' },
                 { id: 'ads', title: t('clan_reset_sec_ads_title') || 'Реклама и партнерство', desc: t('clan_reset_sec_ads_desc') || 'Сброс текста авто-объявлений, интервалов рассылки и привязанных каналов' },
                 { id: 'general', title: t('clan_reset_sec_general_title') || 'Основные настройки', desc: t('clan_reset_sec_general_desc') || 'Сброс названия клана, ссылки Discord и закрытие набора в клан' },
@@ -7237,7 +7237,7 @@ export default function ClanManager() {
                     if (leaders.length === 0) return null;
                     return (
                       <div className="sm:self-end pb-0.5">
-                        <div className="text-[10px] text-slate-400 mb-1">Выбрать лидера:</div>
+                        <div className="text-[10px] text-slate-400 mb-1">{t('clan_auto_91', 'Выбрать лидера:')}</div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {leaders.slice(0, 3).map(m => {
                             const name = m.displayName || m.username;
@@ -7305,11 +7305,11 @@ export default function ClanManager() {
                 {loadingUserWarnings ? (
                   <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Загрузка предупреждений...</span>
+                    <span>{t('clan_auto_92', 'Загрузка предупреждений...')}</span>
                   </div>
                 ) : userWarningsList.length === 0 ? (
                   <div className="py-6 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/20 rounded-xl">
-                    У пользователя нет предупреждений.
+                    {t('clan_auto_93', 'У пользователя нет предупреждений.')}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -7328,11 +7328,11 @@ export default function ClanManager() {
                             <span className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
                               w.active ? 'bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                             }`}>
-                              {w.active ? 'Активен' : 'Снят'}
+                              {w.active ? t('clan_auto_v2_1038', t('clan_warn_active', 'Активен')) : t('clan_auto_v2_1039', t('clan_warn_removed', 'Снят'))}
                             </span>
                           </div>
                           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            Модератор: <span className="font-semibold text-slate-800 dark:text-slate-200">{w.moderatorTag || 'Система'}</span> • {new Date(w.createdAt).toLocaleString()}
+                            {t('clan_auto_94', 'Модератор:')} <span className="font-semibold text-slate-800 dark:text-slate-200">{w.moderatorTag || t('clan_system', 'Система')}</span> • {new Date(w.createdAt).toLocaleString()}
                           </div>
                         </div>
 
@@ -7343,7 +7343,7 @@ export default function ClanManager() {
                             onClick={() => handleRemoveWarn(w.id)}
                             className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-medium cursor-pointer shrink-0 transition-all"
                           >
-                            Снять
+                            {t('clan_auto_v2_1041', t('clan_warn_remove', 'Снять'))}
                           </button>
                         )}
                       </div>
@@ -7400,7 +7400,7 @@ export default function ClanManager() {
 
             <div className="space-y-3 mb-5">
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                {t('clan_voice_limit_modal_desc') || 'Укажите количество мест для комнаты'} <span className="font-semibold text-slate-700 dark:text-slate-300">"{editingRoomLimit.name}"</span> (0 — без ограничений, максимум 99):
+                {t('clan_voice_limit_modal_desc') || 'Укажите количество мест для комнаты'} <span className="font-semibold text-slate-700 dark:text-slate-300">"{editingRoomLimit.name}"</span> {t('clan_auto_95', '(0 — без ограничений, максимум 99):')}
               </p>
               <div>
                 <input
