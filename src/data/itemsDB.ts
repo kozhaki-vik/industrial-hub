@@ -1,6 +1,5 @@
 import itemsRu from './items_ru.json';
 
-const images = import.meta.glob('../assets/items/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
 const rawItemsDB = [
   {
@@ -6353,10 +6352,13 @@ const rawItemsDB = [
   }
 ];
 
+const isElectron = typeof window !== 'undefined' && Boolean((window as any).electronAPI);
+
 export const itemsDB = rawItemsDB.map(item => {
   const ruData = (itemsRu as Record<string, { name: string, aliases: string[] }>)[item.shortname];
-  const imgVal = images[`../assets/items/${item.shortname}.png`];
-  const imageUrl = typeof imgVal === 'string' ? imgVal : (imgVal as any)?.default || '';
+  const imageUrl = isElectron
+    ? `hub-asset://items/${item.shortname}.png`
+    : `https://raw.githubusercontent.com/kozhaki-vik/industrial-hub-assets/main/items/${encodeURIComponent(item.shortname)}.png`;
   return {
     shortname: item.shortname,
     nameEn: item.localizedName,

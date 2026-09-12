@@ -43,6 +43,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return () => ipcRenderer.removeListener('gamma:hotkey_pressed', wrapped);
     }
   },
+  assets: {
+    sync: () => ipcRenderer.invoke('assets:sync'),
+    onProgress: (callback) => {
+      const wrapped = (event, data) => callback(data);
+      ipcRenderer.on('assets:sync-progress', wrapped);
+      return () => ipcRenderer.removeListener('assets:sync-progress', wrapped);
+    }
+  },
   ipcRenderer: {
     invoke: (channel, ...args) => {
         const ALLOWED_CHANNELS = [
@@ -51,7 +59,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
             'diagnostics:getAppPath', 'diagnostics:getAppDataPath',
             'diagnostics:checkAppIntegrity', 'diagnostics:checkRustIntegrity',
             'diagnostics:pingUrl',
-            'app:relaunch', 'app:focusWindow', 'app:reportError'
+            'app:relaunch', 'app:focusWindow', 'app:reportError',
+            'assets:sync'
         ];
         if (!ALLOWED_CHANNELS.includes(channel)) {
             console.error(`Blocked IPC invoke to unauthorized channel: ${channel}`);

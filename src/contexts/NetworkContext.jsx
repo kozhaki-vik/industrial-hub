@@ -159,6 +159,12 @@ export const NetworkProvider = ({ children }) => {
           console.log('Real-time update notification from server WebSocket:', data);
           addLog("WS update_available received, triggering check...");
           triggerUpdateCheck();
+        } else if (data.type === 'assets_update') {
+          console.log('Real-time assets update notification from server WebSocket');
+          addLog("WS assets_update received, syncing items assets...");
+          if (window.electronAPI?.assets?.sync) {
+            window.electronAPI.assets.sync().catch(e => console.warn('Asset sync error:', e));
+          }
         } else if (data.type === 'notification') {
           console.log('Received notification from server:', data);
           addNotification(data.message, data.notifType || 'info');
@@ -211,8 +217,14 @@ export const NetworkProvider = ({ children }) => {
       }
     }, 60000);
 
+    // Safety net: periodic background update check every 5 minutes
+    const updateInterval = setInterval(() => {
+      triggerUpdateCheck();
+    }, 300000);
+
     return () => {
       clearInterval(interval);
+      clearInterval(updateInterval);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (wsRef.current) {
         wsRef.current.close();

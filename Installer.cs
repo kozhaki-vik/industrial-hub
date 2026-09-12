@@ -178,16 +178,41 @@ namespace IndustrialHubLauncher
         {
             try
             {
-                string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "industrial-hub");
-                string configPath = Path.Combine(configDir, "config.json");
-                if (File.Exists(configPath))
+                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string[] possibleFiles = new string[]
                 {
-                    string content = File.ReadAllText(configPath);
-                    if (content.Contains("\"updateChannel\": \"test\"") || content.Contains("\"updateChannel\":\"test\""))
+                    Path.Combine(appData, "industrial-hub", "industrial-hub-config.json"),
+                    Path.Combine(appData, "industrial-hub", "config.json"),
+                    Path.Combine(appData, "Industrial Hub", "industrial-hub-config.json"),
+                    Path.Combine(appData, "Industrial Hub", "config.json")
+                };
+
+                foreach (string configPath in possibleFiles)
+                {
+                    if (File.Exists(configPath))
                     {
-                        content = content.Replace("\"updateChannel\": \"test\"", "\"updateChannel\": \"main\"");
-                        content = content.Replace("\"updateChannel\":\"test\"", "\"updateChannel\":\"main\"");
-                        File.WriteAllText(configPath, content);
+                        string content = File.ReadAllText(configPath);
+                        bool changed = false;
+                        if (content.Contains("\"updateChannel\": \"test\"") || content.Contains("\"updateChannel\":\"test\""))
+                        {
+                            content = content.Replace("\"updateChannel\": \"test\"", "\"updateChannel\": \"main\"");
+                            content = content.Replace("\"updateChannel\":\"test\"", "\"updateChannel\":\"main\"");
+                            changed = true;
+                        }
+                        else if (!content.Contains("\"updateChannel\""))
+                        {
+                            int firstBrace = content.IndexOf('{');
+                            if (firstBrace != -1)
+                            {
+                                content = content.Insert(firstBrace + 1, "\n\t\"updateChannel\": \"main\",");
+                                changed = true;
+                            }
+                        }
+
+                        if (changed)
+                        {
+                            File.WriteAllText(configPath, content);
+                        }
                     }
                 }
             }
@@ -358,6 +383,7 @@ namespace IndustrialHubLauncher
 
         private void LaunchApp(string path)
         {
+            EnforceMainUpdateChannel();
             if (File.Exists(path))
             {
                 this.Hide();

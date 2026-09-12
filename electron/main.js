@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell, protocol } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import child_process from 'child_process';
@@ -8,8 +8,29 @@ import crypto from 'crypto';
 import http from 'http';
 import https from 'https';
 import Store from 'electron-store';
+import { AssetManager } from './assetManager.js';
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'hub-asset',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      bypassCSP: true
+    }
+  }
+]);
 
 const store = new Store({ name: 'industrial-hub-config' });
+
+if (process.argv.includes('--force-main-channel')) {
+  console.log("Installer mode detected via argument. Forcing updateChannel to main in electron-store.");
+  store.set('updateChannel', 'main');
+}
+
+let assetManager = null;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -236,6 +257,49 @@ app.on('render-process-gone', (event, webContents, details) => {
 });
 
 app.whenReady().then(async () => {
+  assetManager = new AssetManager(app.getPath('userData'));
+  protocol.handle('hub-asset', (req) => assetManager.handleProtocolRequest(req));
+
+  ipcMain.handle('assets:sync', async () => {
+    return await assetManager.syncAssets((prog) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('assets:sync-progress', prog);
+      }
+    });
+  });
+
+  // Pre-seed cache from local assets/items if available and cache is empty
+  try {
+    const devItemsDir = path.join(__dirname, '../src/assets/items');
+    const targetCache = path.join(app.getPath('userData'), 'cache', 'items');
+    if (fs.existsSync(devItemsDir)) {
+      if (!fs.existsSync(targetCache) || fs.readdirSync(targetCache).length === 0) {
+        fs.mkdirSync(targetCache, { recursive: true });
+        for (const f of fs.readdirSync(devItemsDir)) {
+          if (/\.(png|jpg|webp)$/i.test(f)) {
+            fs.copyFileSync(path.join(devItemsDir, f), path.join(targetCache, f));
+          }
+        }
+        console.log('[AssetManager] Pre-seeded cache from local assets/items');
+      }
+    }
+  } catch (e) {
+    console.warn('[AssetManager] Pre-seed error:', e);
+  }
+
+  // Trigger background asset sync after startup
+  setTimeout(() => {
+    if (assetManager) {
+      assetManager.syncAssets((prog) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('assets:sync-progress', prog);
+        }
+      }).catch(err => {
+        console.warn('[AssetManager] Background sync warning:', err.message);
+      });
+    }
+  }, 4000);
+
   flushCrashQueue();
   setInterval(flushCrashQueue, 60000);
 
