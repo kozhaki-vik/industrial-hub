@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ExternalLink, Hash, Sparkles, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Parses basic Discord markdown:
@@ -148,6 +149,7 @@ export default function DiscordMessagePreview({
   tabTitle = '',
   className = ''
 }) {
+  const { t } = useTranslation();
   const [imgError, setImgError] = useState(false);
 
   const embedColor = embed.color || '#5865f2';
@@ -200,7 +202,7 @@ export default function DiscordMessagePreview({
                   : 'bg-[#313338] text-[#949ba4] hover:text-[#f2f3f5] hover:bg-[#35373c]'
               }`}
             >
-              {tpl.name || `\${t('preview_template', 'Шаблон #')}\${tIdx + 1}`}
+              {tpl.name || `${t('preview_template', 'Шаблон #')}${tIdx + 1}`}
             </button>
           ))}
         </div>
