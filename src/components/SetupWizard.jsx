@@ -132,8 +132,8 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', 
               <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" checked={options.createCategory} onChange={() => toggleOption('createCategory')} />
             </div>
             <div className="ml-3 text-sm">
-              <span className="font-medium text-slate-900 dark:text-white">{t('clan_wizard_category', 'Категория "CLAN HUB"')}</span>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">{t('clan_wizard_category_desc', 'Проверяет существующую категорию клана или создает основную категорию "CLAN HUB".')}</p>
+              <span className="font-medium text-slate-900 dark:text-white">{t('clan_wizard_category', 'Категория "КЛАН ХАБ"')}</span>
+              <p className="text-slate-500 dark:text-slate-400 mt-1">{t('clan_wizard_category_desc', 'Проверяет существующую категорию клана или создает основную категорию "КЛАН ХАБ".')}</p>
             </div>
           </label>
 
@@ -143,7 +143,7 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', 
             </div>
             <div className="ml-3 text-sm">
               <span className="font-medium text-slate-900 dark:text-white">{t('clan_wizard_text', 'Текстовые каналы')}</span>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">{t('clan_wizard_text_desc', 'Проверяет существующие каналы и привязывает их, либо создает недостающие: logs, applications, news, roster...')}</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-1">{t('clan_wizard_text_desc', 'Проверяет существующие каналы и привязывает их, либо создает недостающие: logs, заявки, leaderboard, состав...')}</p>
             </div>
           </label>
 

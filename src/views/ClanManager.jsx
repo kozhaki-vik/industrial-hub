@@ -2030,15 +2030,15 @@ export default function ClanManager() {
     { id: 'roles', label: 'Роли', icon: Users },
     { id: 'channels', label: 'Каналы', icon: Hash },
     { id: 'recruitment', label: 'Наборы', icon: UserPlus },
-    { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
-    { id: 'roster', label: 'Состав', icon: UserCheck },
-    { id: 'dossier', label: t('clan_tab_dossier') || 'Досье', icon: BookOpen },
-    { id: 'stats', label: 'Статистика', icon: BarChart3 },
-    { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
+    { id: 'votes', label: 'Голосования', icon: Vote },
     { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
+    { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
+    { id: 'dossier', label: t('clan_tab_dossier') || 'Досье', icon: BookOpen },
+    { id: 'roster', label: 'Состав', icon: UserCheck },
     { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
     { id: 'ads', label: 'Реклама', icon: Megaphone },
-    { id: 'votes', label: 'Голосования', icon: Vote },
+    { id: 'permissions', label: 'Права Доступа', icon: ShieldCheck },
+    { id: 'stats', label: 'Статистика', icon: BarChart3 },
   ];
 
   const botSearchIndex = [
@@ -2655,7 +2655,7 @@ export default function ClanManager() {
       ) : config ? (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0">
           {/* Left Sidebar Navigation */}
-          <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto h-full scrollbar-thin">
+          <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-hidden h-full">
             <div className="hidden md:flex items-center justify-between px-3 py-1.5 mb-1 shrink-0">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {t('clan_nav_sections') || 'Разделы'}
@@ -3330,11 +3330,11 @@ export default function ClanManager() {
                     { key: 'applications', label: 'Одобренные заявки', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.', typeFilter: [0, 2] },
                     { key: 'autoRejectedApplications', label: t('clan_channel_auto_rejected_app') || 'Отклоненные ботом заявки', desc: t('clan_channel_auto_rejected_app_desc') || 'Канал для автоматических отказов кандидатам (нехватка часов, возраст, блокировки VAC/Game).', typeFilter: [0, 2] },
                     { key: 'rejectedApplications', label: t('clan_channel_rejected_app') || 'Отклоненные админами заявки', desc: t('clan_channel_rejected_app_desc') || 'Канал для заявок, отклоненных вручную модераторами/рекрутерами с указанием причины.', typeFilter: [0, 2] },
-                    { key: 'leaderboard', label: 'Статистика (Leaderboard)', desc: 'Канал, где публикуется статистика по вайпам и топам.', typeFilter: [0, 2] },
+                    { key: 'leaderboard', label: 'Leaderboard (Статистика)', desc: 'Канал, где публикуется статистика по вайпам и топам.', typeFilter: [0, 2] },
                     { key: 'news', label: 'Новости клана', desc: 'Канал для публикации объявлений и новостей бота.', typeFilter: [0, 2] },
                     { key: 'votes', label: 'Голосования', desc: 'Канал для создания голосований. Может быть тем же, что и новости.', typeFilter: [0, 2] },
                     { key: 'ads', label: 'Реклама и альянсы', desc: 'Сюда бот отправляет информацию об оплаченной рекламе.', typeFilter: [0, 2] },
-                    { key: 'roster', label: 'Состав клана (Roster)', desc: 'Здесь выводится динамический список всех участников.', typeFilter: [0, 2] }
+                    { key: 'roster', label: 'Состав клана', desc: 'Здесь выводится динамический список всех участников.', typeFilter: [0, 2] }
                   ];
 
                   return (
