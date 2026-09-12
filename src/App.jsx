@@ -46,6 +46,32 @@ function RouteTracker() {
   return null;
 }
 
+function AppMain() {
+  const location = useLocation();
+  const isClan = location.pathname === '/clan';
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-slate-950 transition-colors duration-300 animate-main-fade-in">
+      <Header />
+      <main className={`w-full mx-auto px-4 sm:px-6 py-6 transition-all duration-300 ${isClan ? 'max-w-[1720px]' : 'max-w-6xl'}`}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/conveyors" element={<Conveyors />} />
+          <Route path="/monuments" element={<Navigate to="/" replace />} />
+          <Route path="/electricity" element={<Navigate to="/" replace />} />
+          <Route path="/graphics" element={<Graphics />} />
+          <Route path="/servers" element={<Servers />} />
+          <Route path="/binds" element={<Binds />} />
+          <Route path="/developer" element={<Developer />} />
+          <Route path="/gamma" element={<Gamma />} />
+          <Route path="/clan" element={<ClanManager />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
 import { NotificationProvider } from './contexts/NotificationContext';
 import ToastContainer from './components/ToastContainer';
 
@@ -95,24 +121,7 @@ function App() {
               <ErrorBoundary>
                 <HashRouter>
                   <RouteTracker />
-                  <div className="min-h-screen bg-[#F8F9FA] dark:bg-slate-950 transition-colors duration-300 animate-main-fade-in">
-                    <Header />
-                    <main className="max-w-6xl mx-auto px-6 py-8">
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/conveyors" element={<Conveyors />} />
-                      <Route path="/monuments" element={<Navigate to="/" replace />} />
-                      <Route path="/electricity" element={<Navigate to="/" replace />} />
-                      <Route path="/graphics" element={<Graphics />} />
-                      <Route path="/servers" element={<Servers />} />
-                      <Route path="/binds" element={<Binds />} />
-                      <Route path="/developer" element={<Developer />} />
-                      <Route path="/gamma" element={<Gamma />} />
-                      <Route path="/clan" element={<ClanManager />} />
-                    </Routes>
-                    </main>
-                  </div>
+                  <AppMain />
                   <FeedbackButton />
                   <RustPathModal isOpen={showRustModal} onClose={() => setShowRustModal(false)} />
                   <ToastContainer />

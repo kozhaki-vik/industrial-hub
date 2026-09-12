@@ -2802,15 +2802,162 @@ export default function ClanManager() {
         .map(x => x.item);
 
 
+  const getLivePreviewData = () => {
+    if (!config) return null;
+    let cConfig = {};
+    try {
+      if (config.channelsConfigJson) {
+        cConfig = JSON.parse(config.channelsConfigJson);
+      }
+    } catch (e) {}
+
+    if (activeTab === 'recruitment') {
+      let rConfig = {
+        link: config?.discordLink || '',
+        banner: 'https://i.imgur.com/UaMfYMK.png',
+        title: config?.name ? `Набор в клан ${config.name}` : 'Набор в клан',
+        text: "Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы",
+        customLeaderId: ''
+      };
+      try {
+        if (config.recruitmentConfigJson) {
+          rConfig = { ...rConfig, ...JSON.parse(config.recruitmentConfigJson) };
+        }
+      } catch (e) {}
+
+      if (config?.name) {
+        if (!rConfig.title || rConfig.title === 'Набор в клан GODS' || rConfig.title === 'Набор в клан') {
+          rConfig.title = `Набор в клан ${config.name}`;
+        } else if (rConfig.title.includes('GODS')) {
+          rConfig.title = rConfig.title.replace(/\bGODS\b/g, config.name);
+        }
+      }
+
+      const inviteLink = rConfig.link || config?.discordLink || 'https://discord.gg/clan';
+      const leaders = rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
+      const firstLeader = leaders[0];
+      const leaderDisplay = rConfig.customLeaderId 
+        ? `<@${rConfig.customLeaderId}>` 
+        : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : '@Лидер');
+
+      const appChannel = discordInfo?.channels?.find(c => c.id === cConfig.applications);
+      const channelName = appChannel ? appChannel.name : 'набор-в-клан';
+
+      return {
+        tabTitle: 'Набор в клан',
+        channelName,
+        embed: {
+          title: `ССЫЛКА НА ДС -> ${inviteLink}`,
+          color: '#5865f2',
+          description: `\`\`\`ansi\n${rConfig.title || 'Набор в клан'}\n\n${rConfig.text || 'Требования...'}\n\`\`\`\n# Лидер: ${leaderDisplay}`,
+          banner: rConfig.banner
+        },
+        buttons: [
+          { label: 'Подать заявку', emoji: '📝', style: 'success' }
+        ]
+      };
+    }
+
+    if (activeTab === 'votes') {
+      let wTemplates = [];
+      try {
+        if (config.wipeTemplatesJson) {
+          wTemplates = JSON.parse(config.wipeTemplatesJson);
+        }
+      } catch (e) {}
+
+      const voteChannel = discordInfo?.channels?.find(c => c.id === cConfig.votes);
+      const channelName = voteChannel ? voteChannel.name : 'голосования';
+
+      const safeIdx = Math.min(previewVoteIndex, Math.max(0, wTemplates.length - 1));
+      const activeTpl = wTemplates[safeIdx] || { 
+        name: 'Rust Server #1', 
+        day: 'Четверг', 
+        time: '16:00', 
+        ip: 'connect 127.0.0.1:28015', 
+        banner: '' 
+      };
+
+      return {
+        tabTitle: 'Голосование за вайп',
+        channelName,
+        templates: wTemplates,
+        activeTemplateIndex: safeIdx,
+        embed: {
+          title: `🔥 ВАЙП | ${activeTpl.name || 'Сервер'}`,
+          color: '#e67e22',
+          description: `**Сервер:** ${activeTpl.name || 'TBA'}\n**День:** ${activeTpl.day || 'Четверг'}\n**Время:** ${activeTpl.time || '16:00'}\n**Подключение (IP):** \`${activeTpl.ip || 'connect 127.0.0.1:28015'}\`\n\nОтметьтесь, пожалуйста, о вашем присутствии на вайпе!`,
+          banner: activeTpl.banner,
+          fields: [
+            { name: '🟢 Буду вовремя', value: '0 голосов', inline: true },
+            { name: '🟡 Опоздаю', value: '0 голосов', inline: true },
+            { name: '🟠 Завтра', value: '0 голосов', inline: true },
+            { name: '🔴 Не буду', value: '0 голосов', inline: true }
+          ],
+          footer: 'Голосование за вайп'
+        },
+        buttons: [
+          { label: 'Буду вовремя', emoji: '🟢', style: 'success' },
+          { label: 'Опоздаю', emoji: '🟡', style: 'primary' },
+          { label: 'Завтра', emoji: '🟠', style: 'secondary' },
+          { label: 'Не буду', emoji: '🔴', style: 'danger' }
+        ]
+      };
+    }
+
+    if (activeTab === 'ads') {
+      let aConfig = {
+        title: 'Покупка рекламы',
+        text: 'Здесь вы можете приобрести рекламу или обсудить партнерство.',
+        banner: 'https://i.imgur.com/example.png',
+        priceLink: 'https://telegra.ph/price',
+      };
+      try {
+        if (config.adConfigJson) {
+          aConfig = { ...aConfig, ...JSON.parse(config.adConfigJson) };
+        }
+      } catch (e) {}
+
+      const adsChannel = discordInfo?.channels?.find(c => c.id === cConfig.ads);
+      const channelName = adsChannel ? adsChannel.name : 'реклама';
+
+      return {
+        tabTitle: 'Панель рекламы',
+        channelName,
+        embed: {
+          title: aConfig.title || 'Покупка рекламы',
+          color: '#2ecc71',
+          description: aConfig.text ? `**${aConfig.text}**` : '**Размещение рекламы/партнерства на платных/взаимных условиях, актуальная информация по кнопкам ниже.**',
+          banner: aConfig.banner
+        },
+        buttons: [
+          { label: 'Заказать рекламу', emoji: '📢', style: 'primary' },
+          { label: 'Заключить партнерство', emoji: '🤝', style: 'primary' },
+          aConfig.priceLink
+            ? { label: 'Узнать цену', emoji: '💰', style: 'link' }
+            : { label: 'Узнать цену', emoji: '💰', style: 'primary' },
+          { label: 'Разработка бота', emoji: '⚙️', style: 'secondary' },
+          { label: 'Вопрос администрации', emoji: '❓', style: 'secondary' }
+        ]
+      };
+    }
+
+    return null;
+  };
+
+  const previewData = getLivePreviewData();
+  const isCompanionWindowVisible = isFullScreenWindow && showDiscordLivePreview && Boolean(previewData);
+
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-6xl mx-auto">
+    <div className={`flex items-start justify-center gap-6 h-[calc(100vh-8rem)] w-full mx-auto transition-all duration-300 ${isCompanionWindowVisible ? 'max-w-[1720px]' : 'max-w-6xl'}`}>
       {loadingConfig ? (
-        <div className="flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
+        <div className="w-full flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
           <RefreshCw className="w-5 h-5 animate-spin mr-2.5 text-orange-500" />
           <span className="font-medium text-sm">{t('clan_loading')}</span>
         </div>
       ) : config ? (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0">
+        <>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 min-w-0 max-w-6xl w-full">
           {/* Left Sidebar Navigation */}
           <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-hidden h-full">
             <div className="hidden md:flex items-center justify-between px-3 py-1.5 mb-1 shrink-0">
@@ -4183,9 +4330,7 @@ export default function ClanManager() {
 
                   return (
                     <div className="space-y-6">
-                      <div className="flex flex-col xl:flex-row gap-6 items-start">
-                        <div className="flex-1 min-w-0 w-full space-y-6">
-                          {/* Основные параметры панели набора */}
+                      {/* Основные параметры панели набора */}
                       <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
                         <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                           <Sliders className="w-4 h-4 text-orange-500" />
@@ -4548,34 +4693,6 @@ export default function ClanManager() {
                           </div>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Discord Live Preview on the right */}
-                        {isFullScreenWindow && showDiscordLivePreview && (
-                          <div className="w-full xl:w-[420px] 2xl:w-[460px] shrink-0 xl:sticky xl:top-6 space-y-2">
-                            <div className="flex items-center justify-between px-1">
-                              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                                <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-                                Живой предпросмотр в Discord
-                              </span>
-                              <span className="text-[11px] text-slate-400">В реальном времени</span>
-                            </div>
-                            <DiscordMessagePreview
-                              channelName={channelName}
-                              botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
-                              embed={{
-                                title: `ССЫЛКА НА ДС -> ${inviteLink}`,
-                                color: '#5865f2',
-                                description: `\`\`\`ansi\n${rConfig.title || 'Набор в клан'}\n\n${rConfig.text || 'Требования...'}\n\`\`\`\n# Лидер: ${leaderDisplay}`,
-                                banner: rConfig.banner
-                              }}
-                              buttons={[
-                                { label: 'Подать заявку', emoji: '📝', style: 'success' }
-                              ]}
-                            />
-                          </div>
-                        )}
-                      </div>
 
                       {/* Журнал и история заявок в клан */}
                       <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
@@ -4912,9 +5029,8 @@ export default function ClanManager() {
                   };
                   
                   return (
-                    <div className="flex flex-col xl:flex-row gap-6 items-start">
-                      <div className="flex-1 min-w-0 w-full space-y-4">
-                        {wTemplates.map((tpl, index) => (
+                    <div className="space-y-4">
+                      {wTemplates.map((tpl, index) => (
                           <div key={index} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30 relative">
                             <button type="button" onClick={() => removeTemplate(index)} className="absolute top-4 right-4 text-red-500 hover:text-red-700">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -4991,63 +5107,6 @@ export default function ClanManager() {
                           Добавить шаблон сервера
                         </button>
                       </div>
-
-                      {/* Discord Live Preview on the right */}
-                      {isFullScreenWindow && showDiscordLivePreview && (
-                        <div className="w-full xl:w-[420px] 2xl:w-[460px] shrink-0 xl:sticky xl:top-6 space-y-2">
-                          <div className="flex items-center justify-between px-1">
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-                              Живой предпросмотр в Discord
-                            </span>
-                            <span className="text-[11px] text-slate-400">В реальном времени</span>
-                          </div>
-
-                          {wTemplates.length > 1 && (
-                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                              {wTemplates.map((tpl, tIdx) => (
-                                <button
-                                  key={tIdx}
-                                  type="button"
-                                  onClick={() => setPreviewVoteIndex(tIdx)}
-                                  className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                                    safeIdx === tIdx
-                                      ? 'bg-orange-500 text-white shadow-xs'
-                                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                                  }`}
-                                >
-                                  {tpl.name || `Шаблон #${tIdx + 1}`}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          <DiscordMessagePreview
-                            channelName={channelName}
-                            botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
-                            embed={{
-                              title: `🔥 ВАЙП | ${activeTpl.name || 'Сервер'}`,
-                              color: '#e67e22',
-                              description: `**Сервер:** ${activeTpl.name || 'TBA'}\n**День:** ${activeTpl.day || 'Четверг'}\n**Время:** ${activeTpl.time || '16:00'}\n**Подключение (IP):** \`${activeTpl.ip || 'connect 127.0.0.1:28015'}\`\n\nОтметьтесь, пожалуйста, о вашем присутствии на вайпе!`,
-                              banner: activeTpl.banner,
-                              fields: [
-                                { name: '🟢 Буду вовремя', value: '0 голосов', inline: true },
-                                { name: '🟡 Опоздаю', value: '0 голосов', inline: true },
-                                { name: '🟠 Завтра', value: '0 голосов', inline: true },
-                                { name: '🔴 Не буду', value: '0 голосов', inline: true }
-                              ],
-                              footer: 'Голосование за вайп'
-                            }}
-                            buttons={[
-                              { label: 'Буду вовремя', emoji: '🟢', style: 'success' },
-                              { label: 'Опоздаю', emoji: '🟡', style: 'primary' },
-                              { label: 'Завтра', emoji: '🟠', style: 'secondary' },
-                              { label: 'Не буду', emoji: '🔴', style: 'danger' }
-                            ]}
-                          />
-                        </div>
-                      )}
-                    </div>
                   );
                 })()}
               </form>
@@ -5106,90 +5165,55 @@ export default function ClanManager() {
                   const channelName = adsChannel ? adsChannel.name : 'реклама';
                   
                   return (
-                    <div className="flex flex-col xl:flex-row gap-6 items-start">
-                      <div className="flex-1 min-w-0 w-full space-y-5 p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения *</label>
-                          <input 
-                            type="text" 
-                            required
-                            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                            value={aConfig.title}
-                            onChange={e => updateAConfig('title', e.target.value, false)}
-                            onBlur={e => updateAConfig('title', e.target.value, true)}
-                            placeholder="Покупка рекламы"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст *</label>
-                          <textarea 
-                            required
-                            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px]"
-                            value={aConfig.text}
-                            onChange={e => updateAConfig('text', e.target.value, false)}
-                            onBlur={e => updateAConfig('text', e.target.value, true)}
-                            placeholder="Информация о рекламе..."
-                          ></textarea>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Прайс-лист (Telegraph / Сайт)</label>
-                          <input 
-                            type="text" 
-                            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                            value={aConfig.priceLink}
-                            onChange={e => updateAConfig('priceLink', e.target.value, false)}
-                            onBlur={e => updateAConfig('priceLink', e.target.value, true)}
-                            placeholder="https://telegra.ph/..."
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на баннер (Изображение)</label>
-                          <input 
-                            type="text" 
-                            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-                            value={aConfig.banner}
-                            onChange={e => updateAConfig('banner', e.target.value, false)}
-                            onBlur={e => updateAConfig('banner', e.target.value, true)}
-                            placeholder="https://i.imgur.com/..."
-                          />
-                        </div>
+                    <div className="space-y-5 p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Заголовок Embed-сообщения *</label>
+                        <input 
+                          type="text" 
+                          required
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                          value={aConfig.title}
+                          onChange={e => updateAConfig('title', e.target.value, false)}
+                          onBlur={e => updateAConfig('title', e.target.value, true)}
+                          placeholder="Покупка рекламы"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Текст *</label>
+                        <textarea 
+                          required
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px]"
+                          value={aConfig.text}
+                          onChange={e => updateAConfig('text', e.target.value, false)}
+                          onBlur={e => updateAConfig('text', e.target.value, true)}
+                          placeholder="Информация о рекламе..."
+                        ></textarea>
                       </div>
 
-                      {/* Discord Live Preview on the right */}
-                      {isFullScreenWindow && showDiscordLivePreview && (
-                        <div className="w-full xl:w-[420px] 2xl:w-[460px] shrink-0 xl:sticky xl:top-6 space-y-2">
-                          <div className="flex items-center justify-between px-1">
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-                              Живой предпросмотр в Discord
-                            </span>
-                            <span className="text-[11px] text-slate-400">В реальном времени</span>
-                          </div>
-
-                          <DiscordMessagePreview
-                            channelName={channelName}
-                            botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
-                            embed={{
-                              title: aConfig.title || 'Покупка рекламы',
-                              color: '#2ecc71',
-                              description: aConfig.text ? `**${aConfig.text}**` : '**Размещение рекламы/партнерства на платных/взаимных условиях, актуальная информация по кнопкам ниже.**',
-                              banner: aConfig.banner
-                            }}
-                            buttons={[
-                              { label: 'Заказать рекламу', emoji: '📢', style: 'primary' },
-                              { label: 'Заключить партнерство', emoji: '🤝', style: 'primary' },
-                              aConfig.priceLink
-                                ? { label: 'Узнать цену', emoji: '💰', style: 'link' }
-                                : { label: 'Узнать цену', emoji: '💰', style: 'primary' },
-                              { label: 'Разработка бота', emoji: '⚙️', style: 'secondary' },
-                              { label: 'Вопрос администрации', emoji: '❓', style: 'secondary' }
-                            ]}
-                          />
-                        </div>
-                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на Прайс-лист (Telegraph / Сайт)</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                          value={aConfig.priceLink}
+                          onChange={e => updateAConfig('priceLink', e.target.value, false)}
+                          onBlur={e => updateAConfig('priceLink', e.target.value, true)}
+                          placeholder="https://telegra.ph/..."
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ссылка на баннер (Изображение)</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+                          value={aConfig.banner}
+                          onChange={e => updateAConfig('banner', e.target.value, false)}
+                          onBlur={e => updateAConfig('banner', e.target.value, true)}
+                          placeholder="https://i.imgur.com/..."
+                        />
+                      </div>
                     </div>
                   );
                 })()}
@@ -6783,7 +6807,74 @@ export default function ClanManager() {
             
           </div>
         </div>
-      ) : (
+
+        {/* Discord Companion Window (Additional window on wide/fullscreen display) */}
+        {isCompanionWindowVisible && previewData && (
+          <aside className="w-[430px] 2xl:w-[470px] shrink-0 h-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col min-h-0 animate-in fade-in slide-in-from-right-4 duration-200">
+            {/* Window Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-xl bg-[#5865F2] flex items-center justify-center text-white shadow-xs shrink-0">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 truncate">
+                    Discord Live Preview
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      LIVE
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                    {previewData.tabTitle} • #{previewData.channelName}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowDiscordLivePreview(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Скрыть окно предпросмотра"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Template selector if votes has multiple templates */}
+            {previewData.templates && previewData.templates.length > 1 && (
+              <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40 flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
+                {previewData.templates.map((tpl, tIdx) => (
+                  <button
+                    key={tIdx}
+                    type="button"
+                    onClick={() => setPreviewVoteIndex(tIdx)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                      previewData.activeTemplateIndex === tIdx
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {tpl.name || `Шаблон #${tIdx + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Scrollable Preview Body */}
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-100/60 dark:bg-slate-950/40">
+              <DiscordMessagePreview
+                channelName={previewData.channelName}
+                botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
+                embed={previewData.embed}
+                buttons={previewData.buttons}
+              />
+            </div>
+          </aside>
+        )}
+      </>
+    ) : (
         <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-6 rounded-2xl font-medium border border-red-200 dark:border-red-900/50 flex flex-col items-center justify-center text-center gap-3">
           <AlertTriangle className="w-8 h-8 text-red-500 shrink-0" />
           <div className="space-y-1">
