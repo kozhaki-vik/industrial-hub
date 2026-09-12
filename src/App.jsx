@@ -53,7 +53,7 @@ function AppMain() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] dark:bg-slate-950 transition-colors duration-300 animate-main-fade-in">
       <Header />
-      <main className={`w-full mx-auto px-6 py-8 ${isClan ? 'max-w-[1720px]' : 'max-w-6xl'}`}>
+      <main className={`w-full mx-auto px-6 py-8 ${isClan ? 'max-w-[1780px]' : 'max-w-6xl'}`}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />

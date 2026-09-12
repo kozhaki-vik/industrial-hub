@@ -2949,7 +2949,7 @@ export default function ClanManager() {
   const isCompanionWindowVisible = isFullScreenWindow && showDiscordLivePreview && Boolean(previewData);
 
   return (
-    <div className={`flex items-start justify-center gap-6 h-[calc(100vh-8rem)] w-full mx-auto animate-main-fade-in ${isCompanionWindowVisible ? 'max-w-[1720px]' : 'max-w-6xl'}`}>
+    <div className={`flex items-start justify-center gap-6 h-[calc(100vh-8rem)] w-full mx-auto animate-main-fade-in ${isCompanionWindowVisible ? 'max-w-[1780px]' : 'max-w-6xl'}`}>
       {loadingConfig ? (
         <div className="w-full flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
           <RefreshCw className="w-5 h-5 animate-spin mr-2.5 text-orange-500" />
@@ -6808,69 +6808,20 @@ export default function ClanManager() {
           </div>
         </div>
 
-        {/* Discord Companion Window (Additional window on wide/fullscreen display) */}
+        {/* Discord Companion Window (Real Discord Desktop Dimensions) */}
         {isCompanionWindowVisible && previewData && (
-          <aside className="w-[430px] 2xl:w-[470px] shrink-0 h-full bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col min-h-0">
-            {/* Window Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 shrink-0">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-xl bg-[#5865F2] flex items-center justify-center text-white shadow-xs shrink-0">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 truncate">
-                    Discord Live Preview
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      LIVE
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
-                    {previewData.tabTitle} • #{previewData.channelName}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowDiscordLivePreview(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Скрыть окно предпросмотра"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Template selector if votes has multiple templates */}
-            {previewData.templates && previewData.templates.length > 1 && (
-              <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40 flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
-                {previewData.templates.map((tpl, tIdx) => (
-                  <button
-                    key={tIdx}
-                    type="button"
-                    onClick={() => setPreviewVoteIndex(tIdx)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                      previewData.activeTemplateIndex === tIdx
-                        ? 'bg-orange-500 text-white shadow-xs'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    {tpl.name || `Шаблон #${tIdx + 1}`}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Scrollable Preview Body */}
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-100/60 dark:bg-slate-950/40">
-              <DiscordMessagePreview
-                channelName={previewData.channelName}
-                botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
-                embed={previewData.embed}
-                buttons={previewData.buttons}
-              />
-            </div>
+          <aside className="w-[580px] 2xl:w-[600px] shrink-0 h-full flex flex-col min-h-0">
+            <DiscordMessagePreview
+              channelName={previewData.channelName}
+              botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
+              embed={previewData.embed}
+              buttons={previewData.buttons}
+              templates={previewData.templates}
+              activeTemplateIndex={previewData.activeTemplateIndex}
+              onSelectTemplate={(idx) => setPreviewVoteIndex(idx)}
+              onClose={() => setShowDiscordLivePreview(false)}
+              tabTitle={previewData.tabTitle}
+            />
           </aside>
         )}
       </>

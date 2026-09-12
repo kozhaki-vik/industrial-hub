@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Hash, Sparkles } from 'lucide-react';
+import { ExternalLink, Hash, Sparkles, X } from 'lucide-react';
 
 /**
  * Parses basic Discord markdown:
@@ -141,6 +141,11 @@ export default function DiscordMessagePreview({
   botAvatar = null,
   embed = {},
   buttons = [],
+  templates = [],
+  activeTemplateIndex = 0,
+  onSelectTemplate = () => {},
+  onClose = null,
+  tabTitle = '',
   className = ''
 }) {
   const [imgError, setImgError] = useState(false);
@@ -150,29 +155,59 @@ export default function DiscordMessagePreview({
   const timeString = `Сегодня, в ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
   return (
-    <div className={`flex flex-col bg-[#313338] rounded-2xl border border-[#232428] shadow-2xl overflow-hidden font-sans text-xs sm:text-sm select-none ${className}`}>
+    <div className={`flex flex-col h-full w-full bg-[#313338] rounded-2xl border border-[#232428] shadow-2xl overflow-hidden font-sans text-xs sm:text-sm select-none ${className}`}>
       {/* Top Discord Channel Header */}
-      <div className="h-10 bg-[#2b2d31] px-3.5 flex items-center justify-between border-b border-[#1f2023] text-[#949ba4] shrink-0">
+      <div className="h-12 bg-[#313338] px-4 flex items-center justify-between border-b border-[#232428] text-[#949ba4] shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <Hash className="w-4 h-4 text-[#80848e] shrink-0" />
-          <span className="font-bold text-xs text-[#f2f3f5] truncate tracking-wide">
+          <Hash className="w-5 h-5 text-[#80848e] shrink-0" />
+          <span className="font-bold text-sm text-[#f2f3f5] truncate tracking-wide">
             {channelName.replace(/^[#️⃣\s]+/, '').toLowerCase() || 'general'}
           </span>
-          <span className="hidden md:inline-block w-1 h-1 rounded-full bg-[#4e5058]" />
-          <span className="hidden md:inline-block text-[11px] text-[#949ba4] truncate">
-            Предпросмотр сообщения бота в реальном времени
+          <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-[#4e5058]" />
+          <span className="hidden sm:inline-block text-xs text-[#949ba4] truncate font-normal">
+            {tabTitle ? `${tabTitle} • Предпросмотр в реальном времени` : 'Предпросмотр сообщения бота'}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[10px] font-semibold">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Live Preview
           </span>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded text-[#949ba4] hover:text-[#f2f3f5] hover:bg-[#35373c] transition-colors cursor-pointer ml-1"
+              title="Закрыть предпросмотр"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
+      {/* If templates exist (e.g. wipe templates in votes) */}
+      {Array.isArray(templates) && templates.length > 1 && (
+        <div className="px-4 py-2 border-b border-[#232428] bg-[#2b2d31] flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-thin">
+          {templates.map((tpl, tIdx) => (
+            <button
+              key={tIdx}
+              type="button"
+              onClick={() => onSelectTemplate(tIdx)}
+              className={`px-3 py-1 rounded-[3px] text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                activeTemplateIndex === tIdx
+                  ? 'bg-[#5865f2] text-white shadow-xs'
+                  : 'bg-[#313338] text-[#949ba4] hover:text-[#f2f3f5] hover:bg-[#35373c]'
+              }`}
+            >
+              {tpl.name || `Шаблон #${tIdx + 1}`}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Discord Message Content */}
-      <div className="p-4 sm:p-5 flex gap-3.5 overflow-y-auto max-h-[600px] leading-relaxed">
+      <div className="p-4 sm:p-5 flex gap-4 overflow-y-auto flex-1 leading-relaxed custom-scrollbar">
         {/* Bot Avatar */}
         <div className="w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center text-white shrink-0 shadow-md overflow-hidden relative group">
           {botAvatar ? (
@@ -185,49 +220,49 @@ export default function DiscordMessagePreview({
         </div>
 
         {/* Message Body */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 max-w-[520px]">
           {/* Bot Name and Timestamp */}
-          <div className="flex items-baseline gap-1.5 mb-1">
-            <span className="font-semibold text-[#f2f3f5] text-sm hover:underline cursor-pointer">
+          <div className="flex items-baseline gap-1.5 mb-1.5">
+            <span className="font-semibold text-[#f2f3f5] text-[15px] hover:underline cursor-pointer">
               {botName}
             </span>
-            <span className="bg-[#5865f2] text-white text-[9px] font-bold px-1 py-0.5 rounded uppercase tracking-wider select-none leading-none">
+            <span className="bg-[#5865f2] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-[3px] uppercase tracking-wider select-none leading-none">
               BOT
             </span>
-            <span className="text-[11px] text-[#949ba4] font-normal ml-1">
+            <span className="text-xs text-[#949ba4] font-normal ml-1.5">
               {timeString}
             </span>
           </div>
 
-          {/* Embed Container */}
+          {/* Embed Container - Exactly max-w-[520px] like in real Discord */}
           <div 
-            className="bg-[#2b2d31] rounded-r-lg rounded-bl-sm p-3.5 sm:p-4 text-[#dbdee1] shadow-lg max-w-xl transition-all border-l-4"
+            className="bg-[#2b2d31] rounded-r-[4px] rounded-bl-[4px] p-4 text-[#dbdee1] shadow-md w-full border-l-4 transition-all"
             style={{ borderLeftColor: embedColor }}
           >
             {/* Embed Title */}
             {embed.title && (
-              <div className="font-bold text-[#f2f3f5] text-sm sm:text-base mb-2 hover:underline cursor-pointer flex items-center gap-1.5">
+              <div className="font-semibold text-[#f2f3f5] text-base mb-2 hover:underline cursor-pointer flex items-center gap-1.5 leading-snug">
                 <span>{embed.title}</span>
-                {embed.url && <ExternalLink className="w-3.5 h-3.5 text-[#949ba4] shrink-0" />}
+                {embed.url && <ExternalLink className="w-4 h-4 text-[#949ba4] shrink-0" />}
               </div>
             )}
 
             {/* Embed Description */}
             {embed.description && (
-              <div className="text-xs sm:text-[13px] text-[#dbdee1] leading-relaxed">
+              <div className="text-sm leading-relaxed text-[#dbdee1]">
                 {renderDiscordMarkdown(embed.description)}
               </div>
             )}
 
             {/* Embed Fields */}
             {Array.isArray(embed.fields) && embed.fields.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3 pt-2.5 border-t border-[#35373c]/50">
+              <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-[#35373c]/50">
                 {embed.fields.map((f, i) => (
                   <div key={i} className={f.inline ? 'col-span-1' : 'col-span-full'}>
-                    <div className="text-[11px] font-bold text-[#949ba4] uppercase tracking-wider mb-0.5">
+                    <div className="text-xs font-bold text-[#949ba4] uppercase tracking-wider mb-0.5">
                       {f.name}
                     </div>
-                    <div className="text-xs text-[#f2f3f5] font-medium">
+                    <div className="text-sm text-[#f2f3f5] font-medium">
                       {f.value}
                     </div>
                   </div>
@@ -237,11 +272,11 @@ export default function DiscordMessagePreview({
 
             {/* Embed Banner Image */}
             {embed.banner && !imgError && (
-              <div className="mt-3 rounded-lg overflow-hidden border border-[#1e1f22] bg-[#1e1f22]/60">
+              <div className="mt-3 rounded-[4px] overflow-hidden border border-[#1e1f22] bg-[#1e1f22]/60">
                 <img
                   src={embed.banner}
                   alt="Embed Banner"
-                  className="w-full max-h-56 object-cover hover:scale-[1.01] transition-transform duration-300"
+                  className="w-full max-h-72 object-cover"
                   onError={() => setImgError(true)}
                 />
               </div>
@@ -249,8 +284,8 @@ export default function DiscordMessagePreview({
 
             {/* Embed Footer */}
             {embed.footer && (
-              <div className="mt-3 pt-2 border-t border-[#35373c]/40 text-[10px] text-[#949ba4] flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-[#5865f2] shrink-0" />
+              <div className="mt-3 pt-2.5 border-t border-[#35373c]/40 text-xs text-[#949ba4] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#5865f2] shrink-0" />
                 <span>{embed.footer}</span>
                 <span className="w-1 h-1 rounded-full bg-[#4e5058]" />
                 <span>{timeString}</span>
@@ -258,9 +293,9 @@ export default function DiscordMessagePreview({
             )}
           </div>
 
-          {/* Action Row Component Buttons */}
+          {/* Action Row Component Buttons - Real Discord Size (h-8, px-4, rounded-[3px], text-sm) */}
           {Array.isArray(buttons) && buttons.length > 0 && (
-            <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
               {buttons.map((btn, bIdx) => {
                 let btnStyle = 'bg-[#4e5058] hover:bg-[#6d6f78] text-white'; // default secondary
                 if (btn.style === 'success') {
@@ -277,11 +312,11 @@ export default function DiscordMessagePreview({
                   <button
                     key={bIdx}
                     type="button"
-                    className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer select-none ${btnStyle}`}
+                    className={`h-8 px-4 rounded-[3px] text-sm font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer select-none ${btnStyle}`}
                   >
-                    {btn.emoji && <span className="text-sm">{btn.emoji}</span>}
-                    <span>{btn.label}</span>
-                    {btn.style === 'link' && <ExternalLink className="w-3 h-3 ml-0.5 opacity-70" />}
+                    {btn.emoji && <span className="text-base leading-none">{btn.emoji}</span>}
+                    <span className="leading-none">{btn.label}</span>
+                    {btn.style === 'link' && <ExternalLink className="w-3.5 h-3.5 ml-1 opacity-70" />}
                   </button>
                 );
               })}
