@@ -10,7 +10,7 @@ import {
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
-  BookOpen, Star, Search, ExternalLink, Archive
+  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp
 } from 'lucide-react';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -520,6 +520,7 @@ export default function ClanManager() {
   const [recruitmentInviteDetails, setRecruitmentInviteDetails] = useState(null);
   const [creatingRecruitmentInvite, setCreatingRecruitmentInvite] = useState(false);
   const [checkingRecruitmentInvite, setCheckingRecruitmentInvite] = useState(false);
+  const [movingRoles, setMovingRoles] = useState(false);
 
   // Bot Settings Search state
   const [botSearchQuery, setBotSearchQuery] = useState('');
@@ -1077,6 +1078,16 @@ export default function ClanManager() {
             addLog(t('clan_recruitment_apps_cleared_log') || 'Журнал заявок в клан успешно очищен');
           } else {
             setError(data.error || (data.data && data.data.error) || 'Ошибка очистки журнала заявок');
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'move_roles_up') {
+          setMovingRoles(false);
+          if (!data.error && data.data && data.data.success) {
+            addLog(`Успешно перемещено ролей вверх в Discord: ${data.data.movedCount}`);
+            if (data.data.roles) {
+              setDiscordInfo(prev => ({ ...(prev || {}), roles: data.data.roles }));
+            }
+          } else {
+            setError(data.error || (data.data && data.data.error) || 'Ошибка перемещения ролей в Discord');
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'create_log_channel') {
           setCreatingLogChannel(false);
@@ -1747,7 +1758,94 @@ export default function ClanManager() {
     autoSaveConfig(updatedConfig);
   };
 
+  const handleSyncDiscordRoles = () => {
+    if (!config || !discordInfo?.roles) {
+      if (ws && wsStatus === 'online') fetchDiscordInfo();
+      return;
+    }
 
+    const standardRoleKeys = [
+      'leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId',
+      'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId',
+      'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'
+    ];
+    const boundStandardIds = new Set(standardRoleKeys.map(k => config[k]).filter(Boolean));
+
+    let customRoles = [];
+    try {
+      if (config.customRolesJson) {
+        customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
+      }
+    } catch (e) {}
+    if (!Array.isArray(customRoles)) customRoles = [];
+
+    const customRoleByRoleId = new Map();
+    customRoles.forEach((cr, index) => {
+      if (cr.roleId) customRoleByRoleId.set(cr.roleId, index);
+    });
+
+    let newRolesCount = 0;
+    let updatedCount = 0;
+
+    for (const dRole of discordInfo.roles) {
+      if (boundStandardIds.has(dRole.id)) continue;
+
+      if (customRoleByRoleId.has(dRole.id)) {
+        const idx = customRoleByRoleId.get(dRole.id);
+        if (customRoles[idx].name !== dRole.name) {
+          customRoles[idx].name = dRole.name;
+          updatedCount++;
+        }
+        if (dRole.color && customRoles[idx].color !== dRole.color) {
+          customRoles[idx].color = dRole.color;
+        }
+      } else {
+        const matchByNameIdx = customRoles.findIndex(cr => !cr.roleId && cr.name?.toLowerCase().trim() === dRole.name.toLowerCase().trim());
+        if (matchByNameIdx !== -1) {
+          customRoles[matchByNameIdx].roleId = dRole.id;
+          customRoles[matchByNameIdx].name = dRole.name;
+          if (dRole.color) customRoles[matchByNameIdx].color = dRole.color;
+          customRoleByRoleId.set(dRole.id, matchByNameIdx);
+          updatedCount++;
+        } else {
+          const newId = `custom_${dRole.id}`;
+          customRoles.push({
+            id: newId,
+            key: newId,
+            name: dRole.name,
+            roleId: dRole.id,
+            color: dRole.color || '#3b82f6'
+          });
+          customRoleByRoleId.set(dRole.id, customRoles.length - 1);
+          newRolesCount++;
+        }
+      }
+    }
+
+    const updatedConfig = {
+      ...config,
+      customRolesJson: JSON.stringify(customRoles)
+    };
+    autoSaveConfig(updatedConfig, true);
+
+    if (newRolesCount > 0 || updatedCount > 0) {
+      addLog(`Синхронизировано ролей с Discord: +${newRolesCount} новых, ${updatedCount} обновлено`);
+    } else {
+      addLog('Все роли из Discord уже синхронизированы в кастомные роли');
+    }
+  };
+
+  const handleMoveRolesUp = () => {
+    if (!ws || wsStatus !== 'online') return;
+    setMovingRoles(true);
+    addLog('Перемещение созданных и клановых ролей вверх в Discord...');
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'move_roles_up',
+      payload: { action: 'move_roles_up' }
+    }));
+  };
 
   const handleExecuteFactoryReset = () => {
     if (!resetSections || resetSections.length === 0) return;
@@ -3109,6 +3207,29 @@ export default function ClanManager() {
                         </button>
                       )}
 
+                      {/* Sync Discord Roles into Custom Roles */}
+                      <button
+                        type="button"
+                        onClick={handleSyncDiscordRoles}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all cursor-pointer"
+                        title="Подтянуть все роли из Discord и привязать их как кастомные, сохраняя текущие настройки"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Синхронизировать с Discord</span>
+                      </button>
+
+                      {/* Move Roles Up in Discord Hierarchy */}
+                      <button
+                        type="button"
+                        onClick={handleMoveRolesUp}
+                        disabled={movingRoles}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all cursor-pointer disabled:opacity-50"
+                        title="Переместить созданные и клановые роли вверх в иерархии Discord (под роль бота)"
+                      >
+                        <ArrowUp className={`w-3.5 h-3.5 ${movingRoles ? 'animate-bounce' : ''}`} />
+                        <span>{movingRoles ? 'Перемещение...' : 'Переместить роли вверх'}</span>
+                      </button>
+
                       {/* Add Custom Role */}
                       <button
                         type="button"
@@ -3141,7 +3262,7 @@ export default function ClanManager() {
                         </button>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
                         {visibleStandardRoles.map(r => {
                           const rawName = roleNames[r.key];
                           const currentName = (rawName !== undefined && !rawName.toLowerCase().includes('clan manager')) ? rawName : (r.defaultName || r.defaultRu);
@@ -3151,60 +3272,69 @@ export default function ClanManager() {
                           return (
                             <div 
                               key={r.key} 
-                              className="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 hover:border-blue-400/40 dark:hover:border-blue-500/40 transition-all shadow-sm flex flex-col justify-between gap-3"
+                              className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-400/40 dark:hover:border-blue-500/40 transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
                             >
-                              <div className="space-y-3">
-                                <div>
-                                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                    Название роли (в боте)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-                                    value={currentName}
-                                    onChange={e => handleRoleNameChange(r.key, e.target.value, false)}
-                                    onBlur={e => handleRoleNameBlur(r.key, r.dbKey, e.target.value, false)}
-                                    onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
-                                    placeholder={r.defaultName || r.defaultRu}
-                                  />
-                                </div>
+                              {/* Role name in bot */}
+                              <div className="w-full md:w-60 lg:w-72 shrink-0">
+                                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                                  Название роли (в боте)
+                                </label>
+                                <input
+                                  type="text"
+                                  className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                                  value={currentName}
+                                  onChange={e => handleRoleNameChange(r.key, e.target.value, false)}
+                                  onBlur={e => handleRoleNameBlur(r.key, r.dbKey, e.target.value, false)}
+                                  onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                                  placeholder={r.defaultName || r.defaultRu}
+                                />
+                              </div>
 
-                                <div>
-                                  <RoleSelect
-                                    label="Роль в Discord"
-                                    description=""
+                              {/* Role in Discord (dropdown + create button) */}
+                              <div className="flex-1 min-w-[220px]">
+                                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                                  Роль в Discord
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <select
                                     value={boundRoleId}
-                                    onChange={val => handleSelectDiscordRole(r.key, r.dbKey, val, false)}
-                                    discordRoles={discordInfo?.roles || []}
-                                    rightAction={
-                                      <button
-                                        type="button"
-                                        onClick={() => handleCreateRoleInDiscord(r, false, currentName)}
-                                        disabled={isCreatingThis || creatingRoleKey !== null}
-                                        className="px-2.5 py-2 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950/50 border border-slate-300 dark:border-slate-700 hover:border-blue-400 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium transition-all shadow-sm shrink-0 flex items-center gap-1 disabled:opacity-50 cursor-pointer"
-                                        title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
-                                      >
-                                        {isCreatingThis ? (
-                                          <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                        ) : (
-                                          <Plus className="w-3.5 h-3.5" />
-                                        )}
-                                        <span className="hidden sm:inline">Создать</span>
-                                      </button>
-                                    }
-                                  />
+                                    onChange={e => handleSelectDiscordRole(r.key, r.dbKey, e.target.value, false)}
+                                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
+                                  >
+                                    <option value="">-- Выберите роль --</option>
+                                    {(discordInfo?.roles || []).map(dRole => (
+                                      <option key={dRole.id} value={dRole.id}>
+                                        {dRole.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCreateRoleInDiscord(r, false, currentName)}
+                                    disabled={isCreatingThis || creatingRoleKey !== null}
+                                    className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/50 border border-slate-300 dark:border-slate-700 hover:border-blue-400 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                    title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
+                                  >
+                                    {isCreatingThis ? (
+                                      <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                      <Plus className="w-3.5 h-3.5" />
+                                    )}
+                                    <span className="hidden sm:inline">Создать</span>
+                                  </button>
                                 </div>
                               </div>
 
-                              <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/50 mt-1">
-                                <div>
+                              {/* Status & Unlink/Delete button */}
+                              <div className="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-5 border-t md:border-t-0 border-slate-100 dark:border-slate-800 shrink-0">
+                                <div className="w-28 flex justify-center">
                                   {boundRoleId ? (
-                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
                                       <Check className="w-3 h-3" />
                                       Привязано
                                     </span>
                                   ) : (
-                                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
+                                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-800/60">
                                       Не привязано
                                     </span>
                                   )}
@@ -3212,16 +3342,16 @@ export default function ClanManager() {
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteStandardRole(r.key, r.dbKey)}
-                                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg transition-colors cursor-pointer"
+                                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl transition-colors cursor-pointer"
                                   title={t('clan_roles_delete_std') || 'Удалить стандартную роль'}
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
                   )}
                 </div>
 
@@ -3257,66 +3387,78 @@ export default function ClanManager() {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
                         {customRoles.map(cr => {
                           const isCreatingThis = creatingRoleKey === cr.id;
                           return (
                             <div 
                               key={cr.id} 
-                              className="bg-amber-50/20 dark:bg-amber-950/10 p-4 rounded-2xl border border-amber-200/50 dark:border-amber-800/40 hover:border-amber-400 dark:hover:border-amber-600 transition-all shadow-sm flex flex-col justify-between gap-3"
+                              className="bg-amber-50/20 dark:bg-amber-950/10 p-3.5 rounded-xl border border-amber-200/50 dark:border-amber-800/40 hover:border-amber-400 dark:hover:border-amber-600 transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
                             >
-                              <div className="space-y-3">
-                                <div>
-                                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                    Название роли (в боте)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
-                                    value={cr.name || ''}
-                                    onChange={e => handleRoleNameChange(cr.key, e.target.value, true, cr.id)}
-                                    onBlur={e => handleRoleNameBlur(cr.key, null, e.target.value, true, cr.id)}
-                                    onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
-                                    placeholder="Новая роль"
-                                  />
-                                </div>
+                              {/* Role name in bot */}
+                              <div className="w-full md:w-60 lg:w-72 shrink-0">
+                                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1.5">
+                                  {cr.color && (
+                                    <span className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10" style={{ backgroundColor: cr.color }}></span>
+                                  )}
+                                  <span>Название роли (в боте)</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
+                                  value={cr.name || ''}
+                                  onChange={e => handleRoleNameChange(cr.key, e.target.value, true, cr.id)}
+                                  onBlur={e => handleRoleNameBlur(cr.key, null, e.target.value, true, cr.id)}
+                                  onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                                  placeholder="Новая роль"
+                                />
+                              </div>
 
-                                <div>
-                                  <RoleSelect
-                                    label="Роль в Discord"
-                                    description=""
+                              {/* Role in Discord (dropdown + create button) */}
+                              <div className="flex-1 min-w-[220px]">
+                                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                                  Роль в Discord
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <select
                                     value={cr.roleId || ''}
-                                    onChange={val => handleSelectDiscordRole(cr.key, null, val, true, cr.id)}
-                                    discordRoles={discordInfo?.roles || []}
-                                    rightAction={
-                                      <button
-                                        type="button"
-                                        onClick={() => handleCreateRoleInDiscord(cr, true, cr.name)}
-                                        disabled={isCreatingThis || creatingRoleKey !== null}
-                                        className="px-2.5 py-2 bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/50 border border-slate-300 dark:border-slate-700 hover:border-amber-400 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-medium transition-all shadow-sm shrink-0 flex items-center gap-1 disabled:opacity-50 cursor-pointer"
-                                        title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
-                                      >
-                                        {isCreatingThis ? (
-                                          <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                                        ) : (
-                                          <Plus className="w-3.5 h-3.5" />
-                                        )}
-                                        <span className="hidden sm:inline">Создать</span>
-                                      </button>
-                                    }
-                                  />
+                                    onChange={e => handleSelectDiscordRole(cr.key, null, e.target.value, true, cr.id)}
+                                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
+                                  >
+                                    <option value="">-- Выберите роль --</option>
+                                    {(discordInfo?.roles || []).map(dRole => (
+                                      <option key={dRole.id} value={dRole.id}>
+                                        {dRole.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCreateRoleInDiscord(cr, true, cr.name)}
+                                    disabled={isCreatingThis || creatingRoleKey !== null}
+                                    className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/50 border border-slate-300 dark:border-slate-700 hover:border-amber-400 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                    title={t('clan_roles_create_in_discord') || 'Создать роль на Discord сервере и привязать'}
+                                  >
+                                    {isCreatingThis ? (
+                                      <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                      <Plus className="w-3.5 h-3.5" />
+                                    )}
+                                    <span className="hidden sm:inline">Создать</span>
+                                  </button>
                                 </div>
                               </div>
 
-                              <div className="flex items-center justify-between pt-2 border-t border-amber-200/50 dark:border-amber-800/40 mt-1">
-                                <div>
+                              {/* Status & Delete button */}
+                              <div className="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-5 border-t md:border-t-0 border-amber-200/50 dark:border-amber-800/40 shrink-0">
+                                <div className="w-28 flex justify-center">
                                   {cr.roleId ? (
-                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
                                       <Check className="w-3 h-3" />
                                       Привязано
                                     </span>
                                   ) : (
-                                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/60">
+                                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-800/60">
                                       Не привязано
                                     </span>
                                   )}
@@ -3324,10 +3466,10 @@ export default function ClanManager() {
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteCustomRole(cr.id)}
-                                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-all cursor-pointer"
+                                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-all cursor-pointer"
                                   title={t('clan_roles_delete_template') || 'Удалить шаблон роли'}
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>
@@ -3341,11 +3483,16 @@ export default function ClanManager() {
             })()}
 
             {activeTab === 'channels' && (
-              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-4xl">
-                <h3 className="text-xl font-semibold mb-6 text-slate-800 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
-                  Настройки каналов
-                </h3>
+              <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-5xl">
+                <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Hash className="w-5 h-5 text-blue-500" />
+                    Настройки каналов
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Привяжите каналы Discord сервера для автоматической работы функций бота
+                  </p>
+                </div>
                 
                 {(() => {
                   let cConfig = {};
@@ -3362,7 +3509,7 @@ export default function ClanManager() {
                   };
                   
                   const channelsList = [
-                    { key: 'ticketsCategory', label: 'Категория для тикетов', desc: 'Здесь бот будет создавать приватные каналы тикетов заявок.', typeFilter: 4 },
+                    { key: 'ticketsCategory', label: 'Категория для тикетов', desc: 'Здесь бот будет создавать приватные каналы тикетов заявок.', typeFilter: 4, badge: 'Категория' },
                     { key: 'applications', label: 'Одобренные заявки', desc: 'Сюда будут пересылаться одобренные заявки из тикетов.', typeFilter: [0, 2] },
                     { key: 'autoRejectedApplications', label: t('clan_channel_auto_rejected_app') || 'Отклоненные ботом заявки', desc: t('clan_channel_auto_rejected_app_desc') || 'Канал для автоматических отказов кандидатам (нехватка часов, возраст, блокировки VAC/Game).', typeFilter: [0, 2] },
                     { key: 'rejectedApplications', label: t('clan_channel_rejected_app') || 'Отклоненные админами заявки', desc: t('clan_channel_rejected_app_desc') || 'Канал для заявок, отклоненных вручную модераторами/рекрутерами с указанием причины.', typeFilter: [0, 2] },
@@ -3374,17 +3521,37 @@ export default function ClanManager() {
                   ];
 
                   return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
                       {channelsList.map(c => (
-                         <div key={c.key} className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500/20 transition-shadow">
-                           <ChannelSelect
-                             label={c.label}
-                             description={c.desc}
-                             value={cConfig[c.key] || ''}
-                             onChange={val => updateCConfig(c.key, val)}
-                             discordChannels={discordInfo?.channels || []}
-                             typeFilter={c.typeFilter}
-                           />
+                         <div key={c.key} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:border-blue-400/40 dark:hover:border-blue-500/40 transition-all">
+                           <div className="flex-1 min-w-0 pr-2">
+                             <div className="flex items-center gap-2">
+                               <span className="font-semibold text-sm text-slate-900 dark:text-white">{c.label}</span>
+                               {c.badge && (
+                                 <span className="text-[10px] px-2 py-0.5 font-medium rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/50">
+                                   {c.badge}
+                                 </span>
+                               )}
+                             </div>
+                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                               {c.desc}
+                             </p>
+                           </div>
+                           <div className="w-full md:w-80 shrink-0">
+                             <select
+                               value={cConfig[c.key] || ''}
+                               onChange={e => updateCConfig(c.key, e.target.value)}
+                               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer"
+                             >
+                               <option value="">-- Не выбрано --</option>
+                               {(discordInfo?.channels || [])
+                                 .filter(ch => c.typeFilter === null || ch.type === c.typeFilter || (Array.isArray(c.typeFilter) && c.typeFilter.includes(ch.type)))
+                                 .map(ch => {
+                                   let prefix = ch.type === 4 ? '📁 ' : ch.type === 2 ? '🔊 ' : '#️⃣ ';
+                                   return <option key={ch.id} value={ch.id}>{prefix}{ch.name}</option>;
+                                 })}
+                             </select>
+                           </div>
                          </div>
                       ))}
                     </div>
@@ -3440,30 +3607,48 @@ export default function ClanManager() {
                   };
 
                   const matrixHierarchyRoles = [
-                    { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: 'Испытательный срок' },
-                    { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: 'Основной состав' },
-                    { key: 'recruiter', dbKey: 'recruiterRoleId', nameKey: 'recruiter', defaultName: 'Рекрутер' },
-                    { key: 'caller', dbKey: 'callerRoleId', nameKey: 'caller', defaultName: 'Коллер' },
+                    { key: 'leader', dbKey: 'leaderRoleId', nameKey: 'leader', defaultName: 'Leader' },
                     { key: 'deputy', dbKey: 'deputyLeaderRoleId', nameKey: 'deputy', defaultName: 'Deputy Leader' },
-                    { key: 'leader', dbKey: 'leaderRoleId', nameKey: 'leader', defaultName: 'Leader' }
+                    { key: 'caller', dbKey: 'callerRoleId', nameKey: 'caller', defaultName: 'Коллер' },
+                    { key: 'recruiter', dbKey: 'recruiterRoleId', nameKey: 'recruiter', defaultName: 'Рекрутер' },
+                    { key: 'main', dbKey: 'mainRosterRoleId', nameKey: 'main', defaultName: 'Основной состав' },
+                    { key: 'trial', dbKey: 'trialRoleId', nameKey: 'trial', defaultName: 'Испытательный срок' }
                   ];
 
                   const matrixSideRoles = [
-                    { key: 'farmer', dbKey: 'farmerRoleId', nameKey: 'farmer', defaultName: 'Фармер' },
-                    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', nameKey: 'plantFarmer', defaultName: 'Фермер' },
-                    { key: 'electrician', dbKey: 'electricianRoleId', nameKey: 'electrician', defaultName: 'Электрик' },
+                    { key: 'vip', dbKey: 'vipRoleId', nameKey: 'vip', defaultName: 'VIP' },
                     { key: 'builder', dbKey: 'builderRoleId', nameKey: 'builder', defaultName: 'Билдер' },
+                    { key: 'electrician', dbKey: 'electricianRoleId', nameKey: 'electrician', defaultName: 'Электрик' },
                     { key: 'pilot', dbKey: 'pilotRoleId', nameKey: 'pilot', defaultName: 'Пилот' },
-                    { key: 'sponsor', dbKey: 'sponsorRoleId', nameKey: 'sponsor', defaultName: 'Спонсор' },
-                    { key: 'vip', dbKey: 'vipRoleId', nameKey: 'vip', defaultName: 'VIP' }
+                    { key: 'plantFarmer', dbKey: 'plantFarmerRoleId', nameKey: 'plantFarmer', defaultName: 'Фермер' },
+                    { key: 'farmer', dbKey: 'farmerRoleId', nameKey: 'farmer', defaultName: 'Фармер' },
+                    { key: 'sponsor', dbKey: 'sponsorRoleId', nameKey: 'sponsor', defaultName: 'Спонсор' }
                   ];
 
-                  const allMatrixRoles = [...matrixHierarchyRoles, ...matrixSideRoles];
+                  let customRoles = [];
+                  try {
+                    if (config.customRolesJson) {
+                      customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
+                    }
+                  } catch (e) {}
+                  if (!Array.isArray(customRoles)) customRoles = [];
+
+                  const matrixCustomRoles = customRoles.map(cr => ({
+                    key: cr.key || cr.id,
+                    dbKey: null,
+                    roleId: cr.roleId,
+                    nameKey: cr.key || cr.id,
+                    defaultName: cr.name || 'Кастомная роль',
+                    isCustom: true,
+                    color: cr.color
+                  }));
+
+                  const allMatrixRoles = [...matrixHierarchyRoles, ...matrixSideRoles, ...matrixCustomRoles];
                   
                   // Helper mapping to actual discord role IDs
                   const roleIdMap = {};
                   allMatrixRoles.forEach(r => {
-                    roleIdMap[r.key] = config[r.dbKey];
+                    roleIdMap[r.key] = r.isCustom ? r.roleId : config[r.dbKey];
                   });
 
                   const getChannelId = (cKey) => {
@@ -3510,6 +3695,58 @@ export default function ClanManager() {
                     queueAutoSave(updated, true);
                   };
 
+                  const renderRoleRow = (rDef) => {
+                    const rKey = rDef.key;
+                    const rId = roleIdMap[rKey];
+                    const isConfigured = !!rId;
+                    
+                    let rName = rDef.defaultName;
+                    if (!rDef.isCustom) {
+                      try {
+                        if (config.roleNamesJson) {
+                          const names = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
+                          if (names[rDef.nameKey]) rName = names[rDef.nameKey];
+                          else if (names[rKey]) rName = names[rKey];
+                        }
+                      } catch(e) {}
+                    }
+                    
+                    const roleEffectiveIds = getRoleEffectiveAllowedIds(rKey, rId);
+
+                    return (
+                      <tr key={rKey} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          {!isConfigured && <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" title="Роль не привязана к Discord"></span>}
+                          {isConfigured && <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" title="Роль привязана к Discord"></span>}
+                          {rDef.color && (
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10" style={{ backgroundColor: rDef.color }}></span>
+                          )}
+                          <span className="truncate">{rName}</span>
+                          {rDef.isCustom && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md shrink-0">
+                              кастом
+                            </span>
+                          )}
+                        </td>
+                        {channelKeys.map(cKey => {
+                          const cId = getChannelId(cKey);
+                          const isAllowed = isConfigured && cId && roleEffectiveIds.includes(cId);
+                          return (
+                            <td key={cKey} className="px-2 py-3 text-center">
+                              <input 
+                                type="checkbox"
+                                disabled={!isConfigured || !cId}
+                                checked={Boolean(isAllowed)}
+                                onChange={() => togglePermission(rKey, cKey)}
+                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  };
+
                   return (
                     <div className="overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
                       <table className="w-full text-sm text-left">
@@ -3526,48 +3763,32 @@ export default function ClanManager() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                          {allMatrixRoles.map((rDef, idx) => {
-                            const rKey = rDef.key;
-                            const rId = roleIdMap[rKey];
-                            const isConfigured = !!rId;
-                            
-                            // Find name from roleNamesJson or fallback to defaultName
-                            let rName = rDef.defaultName;
-                            try {
-                              if (config.roleNamesJson) {
-                                const names = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-                                if (names[rDef.nameKey]) rName = names[rDef.nameKey];
-                                else if (names[rKey]) rName = names[rKey];
-                              }
-                            } catch(e) {}
-                            
-                            const roleEffectiveIds = getRoleEffectiveAllowedIds(rKey, rId);
+                          {matrixHierarchyRoles.length > 0 && (
+                            <tr className="bg-slate-50/80 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                              <td colSpan={channelKeys.length + 1} className="px-4 py-1.5">
+                                Иерархические роли
+                              </td>
+                            </tr>
+                          )}
+                          {matrixHierarchyRoles.map(renderRoleRow)}
 
-                            return (
-                              <tr key={rKey} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 ${idx === matrixHierarchyRoles.length ? 'border-t-2 border-slate-200 dark:border-slate-700' : ''}`}>
-                                <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100 flex items-center">
-                                  {!isConfigured && <span className="w-2 h-2 rounded-full bg-red-400 mr-2 shrink-0" title="Роль не привязана к Discord"></span>}
-                                  {isConfigured && <span className="w-2 h-2 rounded-full bg-green-400 mr-2 shrink-0"></span>}
-                                  <span className="truncate">{rName}</span>
-                                </td>
-                                {channelKeys.map(cKey => {
-                                  const cId = getChannelId(cKey);
-                                  const isAllowed = isConfigured && cId && roleEffectiveIds.includes(cId);
-                                  return (
-                                    <td key={cKey} className="px-2 py-3 text-center">
-                                      <input 
-                                        type="checkbox"
-                                        disabled={!isConfigured || !cId}
-                                        checked={Boolean(isAllowed)}
-                                        onChange={() => togglePermission(rKey, cKey)}
-                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                                      />
-                                    </td>
-                                  );
-                                })}
-                              </tr>
-                            );
-                          })}
+                          {matrixSideRoles.length > 0 && (
+                            <tr className="bg-slate-50/80 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                              <td colSpan={channelKeys.length + 1} className="px-4 py-1.5 border-t border-slate-200 dark:border-slate-700">
+                                Специальные роли
+                              </td>
+                            </tr>
+                          )}
+                          {matrixSideRoles.map(renderRoleRow)}
+
+                          {matrixCustomRoles.length > 0 && (
+                            <tr className="bg-slate-50/80 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                              <td colSpan={channelKeys.length + 1} className="px-4 py-1.5 border-t border-slate-200 dark:border-slate-700">
+                                Кастомные роли ({matrixCustomRoles.length})
+                              </td>
+                            </tr>
+                          )}
+                          {matrixCustomRoles.map(renderRoleRow)}
                         </tbody>
                       </table>
                     </div>
