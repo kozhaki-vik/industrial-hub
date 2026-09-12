@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const ChannelSelect = ({ label, description, value, onChange, discordChannels = [], typeFilter = null, required = false }) => {
+  const { t } = useTranslation();
   const filteredChannels = typeFilter !== null 
     ? discordChannels.filter(c => c.type === typeFilter || (Array.isArray(typeFilter) && typeFilter.includes(c.type)))
     : discordChannels;

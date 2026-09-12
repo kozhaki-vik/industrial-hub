@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../contexts/NotificationContext';
 import { X, CheckCircle, Info, MessageSquare } from 'lucide-react';
 
 const ToastContainer = () => {
+  const { t } = useTranslation();
   const { notifications, removeNotification } = useNotification();
 
   if (notifications.length === 0) return null;
@@ -33,7 +35,7 @@ const ToastContainer = () => {
             
             <div className="flex-1">
               <h4 className="text-sm font-bold mb-1">
-                {isSuccess ? 'Обращение решено' : 'Ответ техподдержки'}
+                {isSuccess ? t('toast_ticket_resolved', 'Обращение решено') : t('toast_support_reply', 'Ответ техподдержки')}
               </h4>
               <p className="text-xs opacity-90 leading-relaxed whitespace-pre-wrap">
                 {notif.message}

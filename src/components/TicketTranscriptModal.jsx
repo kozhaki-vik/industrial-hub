@@ -93,23 +93,19 @@ export default function TicketTranscriptModal({
                 </h3>
                 {app?.status === 'ACCEPTED' && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3 mr-1" /> Принята
-                  </span>
+                    <CheckCircle2 className="w-3 h-3 mr-1" />{t('status_accepted', 'Принята')}</span>
                 )}
                 {app?.status === 'REJECTED' && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400">
-                    <XCircle className="w-3 h-3 mr-1" /> Отклонена
-                  </span>
+                    <XCircle className="w-3 h-3 mr-1" />{t('status_rejected', 'Отклонена')}</span>
                 )}
                 {app?.status === 'AUTO_REJECTED' && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400">
-                    <Bot className="w-3 h-3 mr-1" /> Авто-отказ
-                  </span>
+                    <Bot className="w-3 h-3 mr-1" />{t('status_auto_reject', 'Авто-отказ')}</span>
                 )}
                 {app?.status === 'PENDING' && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
-                    <Clock className="w-3 h-3 mr-1" /> Ожидает
-                  </span>
+                    <Clock className="w-3 h-3 mr-1" />{t('status_pending', 'Ожидает')}</span>
                 )}
               </div>
               <div className="flex items-center space-x-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -128,7 +124,7 @@ export default function TicketTranscriptModal({
                   <span>• {new Date(app.appliedAt).toLocaleString()}</span>
                 )}
                 {app?.hours !== undefined && (
-                  <span>• {app.hours} ч.</span>
+                  <span>• {app.hours} {t('time_hours_short', 'ч.')}</span>
                 )}
               </div>
             </div>
@@ -142,7 +138,7 @@ export default function TicketTranscriptModal({
                   type="button"
                   onClick={handleDownload}
                   className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-xs"
-                  title="Скачать архив транскрипта .html"
+                  title={t('transcript_download', 'Скачать архив транскрипта .html')}
                 >
                   <Download className="w-3.5 h-3.5 text-slate-500" />
                   <span className="hidden sm:inline">HTML</span>
@@ -165,7 +161,7 @@ export default function TicketTranscriptModal({
                 onClick={onRefresh}
                 disabled={loading}
                 className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
-                title="Обновить транскрипт"
+                title={t('transcript_refresh', 'Обновить транскрипт')}
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-orange-500' : ''}`} />
               </button>
@@ -175,7 +171,7 @@ export default function TicketTranscriptModal({
               type="button"
               onClick={onClose}
               className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="Закрыть (Esc)"
+              title={t('transcript_close', 'Закрыть (Esc)')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -190,16 +186,14 @@ export default function TicketTranscriptModal({
               <p className="text-sm font-medium text-slate-300">
                 {t('clan_recruitment_app_transcript_loading') || 'Загрузка транскрипта тикета...'}
               </p>
-              <p className="text-xs text-slate-400 max-w-sm">
-                Бот извлекает архив сообщений, вложений и действий модераторов из Discord.
-              </p>
+              <p className="text-xs text-slate-400 max-w-sm">{t('transcript_fetching', 'Бот извлекает архив сообщений, вложений и действий модераторов из Discord.')}</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center p-8 space-y-3 text-center bg-[#313338] max-w-md">
               <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
                 <AlertCircle className="w-8 h-8" />
               </div>
-              <h4 className="text-sm font-bold text-white">Не удалось отобразить транскрипт</h4>
+              <h4 className="text-sm font-bold text-white">{t('transcript_error', 'Не удалось отобразить транскрипт')}</h4>
               <p className="text-xs text-slate-400">{error}</p>
               {onRefresh && (
                 <button

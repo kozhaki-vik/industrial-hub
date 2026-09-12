@@ -5,6 +5,7 @@ import { useNetwork } from '../contexts/NetworkContext';
 import { validateForm } from '../utils/formValidation';
 
 export default function SuggestBindModal({ isOpen, onClose }) {
+  const { t } = useTranslation();
   const { createTicket, status } = useNetwork();
   
   const [bindCommand, setBindCommand] = useState('');
@@ -78,9 +79,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
               )}
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Сам бинд
-                </label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('suggest_bind_code', 'Сам бинд')}</label>
                 <input 
                   value={bindCommand}
                   onChange={(e) => setBindCommand(e.target.value)}
@@ -88,9 +87,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-slate-100 mb-4"
                   required
                 />
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Описание функционала или название бинда
-                </label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('suggest_bind_desc', 'Описание функционала или название бинда')}</label>
                 <textarea 
                   value={bindDescription}
                   onChange={(e) => setBindDescription(e.target.value)}
@@ -109,9 +106,7 @@ export default function SuggestBindModal({ isOpen, onClose }) {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
-                    Отправить
-                  </>
+                    <Send className="w-4 h-4" />{t('suggest_bind_send', 'Отправить')}</>
                 )}
               </button>
             </form>

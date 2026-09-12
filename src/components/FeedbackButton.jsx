@@ -96,7 +96,7 @@ export default function FeedbackButton() {
                 
                 {status !== 'online' && (
                   <div className="text-xs text-red-500 text-center">
-                    Нет подключения к серверу
+                    {t('settings_no_connection', 'Нет подключения к серверу')}
                   </div>
                 )}
 

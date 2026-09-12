@@ -138,15 +138,11 @@ export default function RustPathModal({ isOpen, onClose }) {
             <button
               onClick={onClose}
               className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-xl font-medium text-xs transition-colors"
-            >
-              Пропустить
-            </button>
+            >{t('rust_path_skip', 'Пропустить')}</button>
             <button
               onClick={handleSave}
               className="flex-1 sm:flex-none px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-xs shadow-md shadow-orange-500/20 transition-all hover:scale-105"
-            >
-              Сохранить
-            </button>
+            >{t('rust_path_save', 'Сохранить')}</button>
           </div>
         </div>
 

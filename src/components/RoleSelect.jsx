@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const RoleSelect = ({ label, description, value, onChange, discordRoles = [], required = false, rightAction = null }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col">
       {label && (

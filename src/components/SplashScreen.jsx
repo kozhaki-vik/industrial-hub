@@ -127,15 +127,15 @@ export default function SplashScreen({ onComplete }) {
           )}
 
           {progressData && progressData.status === 'error' && (
-            <span className="text-sm font-medium text-red-500">
-              Ошибка загрузки обновления.
-            </span>
+            <p className="mt-2 text-sm text-red-500 font-medium">
+              {t('splash_error', 'Ошибка загрузки обновления.')}
+            </p>
           )}
 
           {updateStatus === 'done' && (
-            <span className="text-sm font-medium text-emerald-500">
-              Обновление установлено. Перезапуск...
-            </span>
+            <p className="mt-2 text-sm text-green-500 font-medium animate-pulse">
+              {t('splash_restarting', 'Обновление установлено. Перезапуск...')}
+            </p>
           )}
         </div>
       </div>

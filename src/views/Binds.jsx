@@ -119,7 +119,7 @@ export default function Binds() {
       } else if (result.error === 'rust_running') {
         alert(t('rust_running_error'));
       } else {
-        alert("Ошибка при восстановлении бэкапа.");
+        alert(t('binds_error_restore', 'Ошибка при восстановлении бэкапа.'));
       }
     }
   };
@@ -254,7 +254,7 @@ export default function Binds() {
               onClick={() => setIsSuggestModalOpen(true)}
               className="px-5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl text-sm font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
             >
-              Предложить свой бинд
+              {t('suggest_bind_title', 'Предложить свой бинд')}
             </button>
           </div>
 
