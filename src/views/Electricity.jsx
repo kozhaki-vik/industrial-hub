@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { ArrowLeft, Zap, Battery, ShieldAlert, Cpu, ExternalLink, Edit3, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SupportTicketModal from '../components/SupportTicketModal';

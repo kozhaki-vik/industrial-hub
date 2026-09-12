@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { ArrowLeft, Search, AlertCircle, Map as MapIcon, Shield, PlayCircle, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SupportTicketModal from '../components/SupportTicketModal';

@@ -322,6 +322,13 @@ app.whenReady().then(async () => {
     }
   });
 
+  
+  ipcMain.handle('store:get', (event, key) => store.get(key));
+  ipcMain.handle('store:set', (event, key, val) => store.set(key, val));
+  ipcMain.handle('store:delete', (event, key) => store.delete(key));
+  ipcMain.handle('store:clear', () => store.clear());
+  ipcMain.handle('store:getAll', () => store.store);
+  
   ipcMain.handle('autoDetectRustPath', () => {
     try {
       if (process.platform !== 'win32') return null;
@@ -629,7 +636,18 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
+    ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
+    if (!rustPath || !filename) return false;
+    try {
+      let cfgDir = path.join(rustPath, 'cfg');
+      if (path.basename(rustPath).toLowerCase() === 'cfg') cfgDir = rustPath;
+      const cfgPath = path.join(cfgDir, filename);
+      if (!path.resolve(cfgPath).startsWith(path.resolve(cfgDir))) throw new Error('Path traversal detected');
+      if (!fs.existsSync(cfgDir)) fs.mkdirSync(cfgDir, { recursive: true });
+      fs.writeFileSync(cfgPath, content, 'utf8');
+      return true;
+    } catch (e) { console.error(e); return false; }
+  }); // replaced writeConfig 
     if (!rustPath) return false;
     let cfgDir = path.join(rustPath, 'cfg');
     // If rustPath already points to cfg folder, don't append another cfg
@@ -672,7 +690,12 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('config:copyFile', (event, srcPath, destPath) => {
+    ipcMain.handle('config:copyFile', (event, srcPath, destPath) => {
+    try {
+      const rustPath = store.get('rustPath') || '';
+      if (!rustPath || !path.resolve(srcPath).startsWith(path.resolve(rustPath)) || !path.resolve(destPath).startsWith(path.resolve(rustPath))) {
+        throw new Error('Path traversal detected');
+      }
     try {
       fs.copyFileSync(srcPath, destPath);
       return true;
@@ -682,7 +705,12 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('config:ensureDir', (event, dirPath) => {
+    ipcMain.handle('config:ensureDir', (event, dirPath) => {
+    try {
+      const rustPath = store.get('rustPath') || '';
+      if (!rustPath || !path.resolve(dirPath).startsWith(path.resolve(rustPath))) {
+        throw new Error('Path traversal detected');
+      }
     try {
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
@@ -841,7 +869,7 @@ app.whenReady().then(async () => {
         const lib = parsed.protocol === 'https:' ? https : http;
 
         const options = {
-          rejectUnauthorized: false,
+          rejectUnauthorized: true,
           headers: {
             'User-Agent': 'Industrial-Hub-Updater/1.0'
           }

@@ -3,63 +3,63 @@
   "private": true,
   "version": "2.7.82",
   "author": "Kozhaki",
-    "description": "Industrial Hub - Ultimate Rust Assistant",
-    "type": "module",
-    "main": "electron/main.js",
-    "scripts": {
-        "dev:vite": "vite",
-        "dev:electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
-        "dev": "concurrently -k \"npm run dev:vite\" \"npm run dev:electron\"",
-        "build": "vite build",
-        "lint": "oxlint",
-        "preview": "vite preview"
+  "description": "Industrial Hub - Ultimate Rust Assistant",
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev:vite": "vite",
+    "dev:electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
+    "dev": "concurrently -k \"npm run dev:vite\" \"npm run dev:electron\"",
+    "build": "vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "electron-store": "^11.0.2",
+    "i18next": "^26.3.6",
+    "lucide-react": "^1.28.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.11",
+    "react-router-dom": "^7.18.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "autoprefixer": "^10.5.4",
+    "concurrently": "^10.0.4",
+    "cross-env": "^10.1.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "oxlint": "^1.75.0",
+    "postcss": "^8.5.25",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.2.0",
+    "wait-on": "^9.1.0"
+  },
+  "build": {
+    "appId": "com.industrialhub.app",
+    "productName": "Industrial Hub",
+    "copyright": "Copyright © Kozhaki 2026. All rights reserved.",
+    "directories": {
+      "output": "release"
     },
-    "dependencies": {
-        "@hello-pangea/dnd": "^18.0.1",
-        "i18next": "^26.3.6",
-        "lucide-react": "^1.28.0",
-        "react": "^19.2.8",
-        "react-dom": "^19.2.8",
-        "react-i18next": "^17.0.11",
-        "react-router-dom": "^7.18.2"
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      "resources/**/*.dll",
+      "resources/**/*.exe"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "icon256.png"
     },
-    "devDependencies": {
-        "@tailwindcss/postcss": "^4.3.3",
-        "@types/react": "^19.2.17",
-        "@types/react-dom": "^19.2.3",
-        "@vitejs/plugin-react": "^6.0.4",
-        "autoprefixer": "^10.5.4",
-        "concurrently": "^10.0.4",
-        "cross-env": "^10.1.0",
-        "electron": "^43.2.0",
-        "electron-builder": "^26.15.3",
-        "oxlint": "^1.75.0",
-        "postcss": "^8.5.25",
-        "tailwindcss": "^4.3.3",
-        "vite": "^8.2.0",
-        "wait-on": "^9.1.0"
-    },
-    "build": {
-        "appId": "com.industrialhub.app",
-        "productName": "Industrial Hub",
-        "copyright": "Copyright © Kozhaki 2026. All rights reserved.",
-        "directories": {
-            "output": "release"
-        },
-        "files": [
-            "dist/**/*",
-            "electron/**/*",
-            "package.json"
-        ],
-        "extraResources": [
-            "resources/**/*.dll", "resources/**/*.exe"
-        ],
-        "win": {
-            "target": "portable",
-            "icon": "icon256.png"
-        },
-        "portable": {
-            
-        }
-    }
+    "portable": {}
+  }
 }

@@ -1,6 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  store: {
+    get: (key) => ipcRenderer.invoke('store:get', key),
+    set: (key, val) => ipcRenderer.invoke('store:set', key, val),
+    delete: (key) => ipcRenderer.invoke('store:delete', key),
+    clear: () => ipcRenderer.invoke('store:clear'),
+    getAll: () => ipcRenderer.invoke('store:getAll')
+  },
   autoDetectRustPath: () => ipcRenderer.invoke('autoDetectRustPath'),
   browseForRustPath: () => ipcRenderer.invoke('browseForRustPath'),
   app: {
