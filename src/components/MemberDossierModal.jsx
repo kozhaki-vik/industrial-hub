@@ -531,10 +531,10 @@ export default function MemberDossierModal({
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { id: 'ACTIVE', label: 'В клане', color: 'emerald' },
-                    { id: 'LEFT', label: '{t('dossier_archived', 'Вышел (Архив)')}', color: 'slate' },
-                    { id: 'KICKED', label: '{t('dossier_kicked', 'Исключен')}', color: 'amber' },
-                    { id: 'BLACKLISTED', label: '{t('dossier_blacklisted', 'Черный список')}', color: 'red' }
+                    { id: 'ACTIVE', label: t('dossier_in_clan', 'В клане'), color: 'emerald' },
+                    { id: 'LEFT', label: t('dossier_archived', 'Вышел (Архив)'), color: 'slate' },
+                    { id: 'KICKED', label: t('dossier_kicked', 'Исключен'), color: 'amber' },
+                    { id: 'BLACKLISTED', label: t('dossier_blacklisted', 'Черный список'), color: 'red' }
                   ].map(opt => (
                     <button
                       key={opt.id}
