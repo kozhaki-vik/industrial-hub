@@ -71,7 +71,6 @@ namespace IndustrialHubLauncher
             try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             try { 
                 ServicePointManager.SecurityProtocol = (SecurityProtocolType)12288 | (SecurityProtocolType)3072 | (SecurityProtocolType)768 | SecurityProtocolType.Tls; 
-                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
                 ServicePointManager.Expect100Continue = false;
             } catch { }
 
@@ -138,6 +137,19 @@ namespace IndustrialHubLauncher
             installPath = Path.Combine(appDataPath, "client");
 
             this.Load += InstallerForm_Load;
+        }
+
+        private bool VerifySignature(string filePath)
+        {
+            try
+            {
+                var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(filePath);
+                return cert.Subject.Contains("Kozhaki") || cert.GetCertHashString() == "CF5FD177247FC2EEB561B69BE223EF0757218C08";
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private void KillExistingAppProcesses()
@@ -306,6 +318,15 @@ namespace IndustrialHubLauncher
                 else
                 {
                     client.Dispose();
+                    if (!VerifySignature(exeFilePath))
+                    {
+                        MessageBox.Show(
+                            "Ошибка проверки подписи! Скачанный файл может быть повреждён или подменён.\nУстановка отменена.",
+                            "Ошибка безопасности", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        try { File.Delete(exeFilePath); } catch { }
+                        Application.Exit();
+                        return;
+                    }
                     CreateShortcut(exeFilePath);
                     LaunchApp(exeFilePath);
                 }

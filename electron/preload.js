@@ -44,7 +44,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   ipcRenderer: {
-    invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+    invoke: (channel, ...args) => {
+        const ALLOWED_CHANNELS = [
+            'network:get-hwid', 'network:apply-updates', 'network:apply-exe-update',
+            'diagnostics:getAppVersionInfo', 'diagnostics:getHardwareInfo',
+            'diagnostics:getAppPath', 'diagnostics:getAppDataPath',
+            'diagnostics:checkAppIntegrity', 'diagnostics:checkRustIntegrity',
+            'diagnostics:pingUrl',
+            'app:relaunch', 'app:focusWindow', 'app:reportError'
+        ];
+        if (!ALLOWED_CHANNELS.includes(channel)) {
+            console.error(`Blocked IPC invoke to unauthorized channel: ${channel}`);
+            return Promise.reject(new Error('Unauthorized IPC channel'));
+        }
+        return ipcRenderer.invoke(channel, ...args);
+    },
     onUpdateProgress: (callback) => {
       const wrapped = (event, data) => callback(data);
       ipcRenderer.on('update-progress', wrapped);

@@ -7,6 +7,9 @@ import os from 'os';
 import crypto from 'crypto';
 import http from 'http';
 import https from 'https';
+import Store from 'electron-store';
+
+const store = new Store({ name: 'industrial-hub-config' });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -121,8 +124,10 @@ function saveToCrashQueue(crashData) {
     if (fs.existsSync(CRASH_QUEUE_FILE)) {
       const data = fs.readFileSync(CRASH_QUEUE_FILE, 'utf8');
       queue = JSON.parse(data);
+      if (!Array.isArray(queue)) queue = [];
     }
     queue.push({ ...crashData, timestamp: Date.now() });
+    if (queue.length > 50) queue = queue.slice(-50);
     fs.writeFileSync(CRASH_QUEUE_FILE, JSON.stringify(queue), 'utf8');
   } catch (e) {
     console.error('Failed to save crash to queue:', e);
@@ -318,8 +323,16 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('shell:openFolder', async (event, folderPath) => {
     if (folderPath) {
+      const allowedRoots = [app.getPath('userData'), store.get('rustPath')].filter(Boolean);
+      const isAllowed = allowedRoots.some(root => path.resolve(folderPath).startsWith(path.resolve(root)));
+      if (!isAllowed) {
+        console.error('Blocked shell:openFolder to unauthorized path:', folderPath);
+        return false;
+      }
       await shell.openPath(folderPath);
+      return true;
     }
+    return false;
   });
 
   
@@ -385,6 +398,15 @@ app.whenReady().then(async () => {
       const start = Date.now();
       try {
         const url = new URL(urlStr);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            return resolve({ status: 'error', time: 0, msg: 'Invalid protocol' });
+        }
+        
+        const hostname = url.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('169.254.') || hostname === '0.0.0.0') {
+            return resolve({ status: 'error', time: 0, msg: 'Private address blocked' });
+        }
+        
         const protocol = url.protocol === 'https:' ? https : http;
         
         const req = protocol.get(urlStr, { timeout: 3000 }, (res) => {
@@ -618,7 +640,17 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('config:readConfig', (event, rustPath, filename) => {
-    if (!rustPath) return null;
+    if (!rustPath || !filename) return null;
+    
+    // Path traversal protection
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      const safeName = path.basename(filename);
+      if (safeName !== filename) {
+        console.error('Path traversal detected in readConfig:', filename);
+        return '';
+      }
+    }
+
     let cfgPath = path.join(rustPath, 'cfg', filename);
     try {
       if (!fs.existsSync(cfgPath)) {
@@ -636,35 +668,25 @@ app.whenReady().then(async () => {
     }
   });
 
-    ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
+  ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
     if (!rustPath || !filename) return false;
     try {
       let cfgDir = path.join(rustPath, 'cfg');
       if (path.basename(rustPath).toLowerCase() === 'cfg') cfgDir = rustPath;
       const cfgPath = path.join(cfgDir, filename);
-      if (!path.resolve(cfgPath).startsWith(path.resolve(cfgDir))) throw new Error('Path traversal detected');
+      
+      const resolvedCfg = path.resolve(cfgPath);
+      const resolvedDir = path.resolve(cfgDir);
+      if (!resolvedCfg.startsWith(resolvedDir)) {
+        console.error('Path traversal detected in writeConfig:', cfgPath);
+        return false;
+      }
+      
       if (!fs.existsSync(cfgDir)) fs.mkdirSync(cfgDir, { recursive: true });
       fs.writeFileSync(cfgPath, content, 'utf8');
       return true;
-    } catch (e) { console.error(e); return false; }
-  }); // replaced writeConfig 
-    if (!rustPath) return false;
-    let cfgDir = path.join(rustPath, 'cfg');
-    // If rustPath already points to cfg folder, don't append another cfg
-    if (path.basename(rustPath).toLowerCase() === 'cfg') {
-      cfgDir = rustPath;
-    }
-    
-    if (!fs.existsSync(cfgDir)) {
-      fs.mkdirSync(cfgDir, { recursive: true });
-    }
-    
-    const cfgPath = path.join(cfgDir, filename);
-    try {
-      fs.writeFileSync(cfgPath, content, 'utf8');
-      return true;
-    } catch (err) {
-      console.error(`Failed to write config ${filename}:`, err);
+    } catch (e) {
+      console.error(`Failed to write config ${filename}:`, e);
       return false;
     }
   });
@@ -684,19 +706,30 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('config:fileExists', (event, fullPath) => {
     try {
+      const rustPath = store.get('rustPath') || '';
+      if (!rustPath || !path.resolve(fullPath).startsWith(path.resolve(rustPath))) {
+        return false;
+      }
       return fs.existsSync(fullPath);
     } catch {
       return false;
     }
   });
 
-    ipcMain.handle('config:copyFile', (event, srcPath, destPath) => {
+  ipcMain.handle('config:copyFile', (event, srcPath, destPath) => {
     try {
       const rustPath = store.get('rustPath') || '';
-      if (!rustPath || !path.resolve(srcPath).startsWith(path.resolve(rustPath)) || !path.resolve(destPath).startsWith(path.resolve(rustPath))) {
-        throw new Error('Path traversal detected');
+      if (!rustPath) return false;
+      
+      const resolvedSrc = path.resolve(srcPath);
+      const resolvedDest = path.resolve(destPath);
+      const resolvedRust = path.resolve(rustPath);
+      
+      if (!resolvedSrc.startsWith(resolvedRust) || !resolvedDest.startsWith(resolvedRust)) {
+        console.error('Path traversal detected in copyFile');
+        return false;
       }
-    try {
+      
       fs.copyFileSync(srcPath, destPath);
       return true;
     } catch (e) {
@@ -705,13 +738,19 @@ app.whenReady().then(async () => {
     }
   });
 
-    ipcMain.handle('config:ensureDir', (event, dirPath) => {
+  ipcMain.handle('config:ensureDir', (event, dirPath) => {
     try {
       const rustPath = store.get('rustPath') || '';
-      if (!rustPath || !path.resolve(dirPath).startsWith(path.resolve(rustPath))) {
-        throw new Error('Path traversal detected');
+      if (!rustPath) return false;
+      
+      const resolvedDir = path.resolve(dirPath);
+      const resolvedRust = path.resolve(rustPath);
+      
+      if (!resolvedDir.startsWith(resolvedRust)) {
+        console.error('Path traversal detected in ensureDir');
+        return false;
       }
-    try {
+      
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
       }
@@ -834,8 +873,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('shell:openExternal', async (event, url) => {
     if (url) {
       try {
-        await shell.openExternal(url);
-        return true;
+        const parsedUrl = new URL(url);
+        if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+          await shell.openExternal(url);
+          return true;
+        }
+        return false;
       } catch (err) {
         console.error('shell:openExternal error:', err);
         return false;
@@ -847,6 +890,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('shell:openPath', async (event, filePath) => {
     if (filePath) {
       try {
+        const allowedRoots = [app.getPath('userData'), store.get('rustPath')].filter(Boolean);
+        const isAllowed = allowedRoots.some(root => path.resolve(filePath).startsWith(path.resolve(root)));
+        if (!isAllowed) {
+          console.error('Blocked shell:openPath to unauthorized path:', filePath);
+          return false;
+        }
         await shell.openPath(filePath);
         return true;
       } catch (err) {

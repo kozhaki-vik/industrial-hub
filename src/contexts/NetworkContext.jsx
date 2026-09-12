@@ -7,9 +7,7 @@ const NetworkContext = createContext(null);
 const electron = window.electronAPI ? window.electronAPI : null;
 const SERVER_ENDPOINTS = [
   'wss://industrial-hub.duckdns.org',
-  'ws://industrial-hub.duckdns.org',
-  'ws://industrial-hub.duckdns.org:8080',
-  'ws://industrial-hub.duckdns.org:80'
+  'wss://industrial-hub.duckdns.org:8080'
 ];
 
 export const NetworkProvider = ({ children }) => {
