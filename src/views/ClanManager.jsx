@@ -249,7 +249,7 @@ function ToggleSwitch({
   );
 }
 
-const loggingEventGroups = [
+const getLoggingEventGroups = (t) => [
   {
     id: 'members',
     title: () => t('members_title'),
