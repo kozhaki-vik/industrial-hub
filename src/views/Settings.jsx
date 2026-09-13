@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, RefreshCw, Sparkles } from 'lucide-react';
+import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
 import { useNavigate } from 'react-router-dom';
@@ -71,22 +71,16 @@ export default function Settings() {
   const [sponsorSuccess, setSponsorSuccess] = React.useState(false);
   const [sponsorError, setSponsorError] = React.useState(null);
 
-  // Update Channel State
-  const [updateChannel, setUpdateChannel] = React.useState(getConfigKey('updateChannel') || 'main');
+  // Developer Mode PIN State
   const [showPinModal, setShowPinModal] = React.useState(false);
   const [pinInput, setPinInput] = React.useState('');
   const [pinError, setPinError] = React.useState('');
   const pinInputRef = React.useRef(null);
 
-  const handleChannelSwitch = (channel) => {
-    if (channel === 'test') {
-      setShowPinModal(true);
-      setPinError('');
-      setPinInput('');
-    } else {
-      setUpdateChannel('main');
-      setConfigKey('updateChannel', 'main');
-    }
+  const handleOpenDeveloper = () => {
+    setShowPinModal(true);
+    setPinError('');
+    setPinInput('');
   };
 
   const submitPin = () => {
@@ -98,9 +92,9 @@ export default function Settings() {
       return;
     }
     if (pinInput === '2136') {
-      setUpdateChannel('test');
-      setConfigKey('updateChannel', 'test');
+      sessionStorage.setItem('dev_authenticated', 'true');
       setShowPinModal(false);
+      navigate('/developer');
     } else {
       setPinError(t('invalid_pin', 'Неверный ПИН-код'));
       if (pinInputRef.current) {
@@ -228,41 +222,6 @@ export default function Settings() {
 
           <div className="border-t border-slate-100 dark:border-slate-800"></div>
 
-          {/* Update Channel */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <RefreshCw className="w-5 h-5 text-orange-500" />
-              <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('settings_update_channel', 'Канал обновлений')}</h3>
-            </div>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="updateChannel" 
-                  value="main" 
-                  checked={updateChannel === 'main'} 
-                  onChange={() => handleChannelSwitch('main')}
-                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
-                />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('settings_update_main', 'Стабильная (Main)')}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="updateChannel" 
-                  value="test" 
-                  checked={updateChannel === 'test'} 
-                  onChange={() => handleChannelSwitch('test')}
-                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
-                />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('settings_update_test', 'Тестовая (Test)')}</span>
-              </label>
-            </div>
-            <p className="text-xs text-slate-500 mt-2">{t('settings_update_test_desc', 'Для перехода на тестовую версию требуется ПИН-код.')}</p>
-          </div>
-
-          <div className="border-t border-slate-100 dark:border-slate-800"></div>
-
           {/* Developer Mode */}
           <div>
             <div className="flex items-center justify-between">
@@ -274,7 +233,7 @@ export default function Settings() {
                 <p className="text-sm text-slate-500">{t('developer_desc', 'Доступ к инструментам диагностики и отладки')}</p>
               </div>
               <button 
-                onClick={() => navigate('/developer')}
+                onClick={handleOpenDeveloper}
                 className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
               >
                 {t('developer_open', 'Открыть')}
@@ -547,7 +506,7 @@ export default function Settings() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-main-fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl relative">
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('settings_pin_title', 'Ввод ПИН-кода')}</h3>
-            <p className="text-sm text-slate-500 mb-4">{t('settings_pin_desc', 'Введите ПИН-код для доступа к тестовым сборкам.')}</p>
+            <p className="text-sm text-slate-500 mb-4">{t('settings_dev_pin_desc', 'Введите ПИН-код для перехода в режим разработчика.')}</p>
             
             <input 
               ref={pinInputRef}
@@ -563,7 +522,7 @@ export default function Settings() {
             
             <div className="flex gap-3 mt-4">
               <button 
-                onClick={() => { setShowPinModal(false); setUpdateChannel('main'); }}
+                onClick={() => { setShowPinModal(false); setPinInput(''); setPinError(''); }}
                 className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 {t('settings_pin_cancel', 'Отмена')}

@@ -30,6 +30,19 @@ export default function Developer() {
   const [isTestingSplash, setIsTestingSplash] = useState(false);
   const [shouldCrash, setShouldCrash] = useState(false);
   const [flamesResetSuccess, setFlamesResetSuccess] = useState(false);
+  const [updateChannel, setUpdateChannel] = useState(getConfigKey('updateChannel') || 'main');
+
+  useEffect(() => {
+    if (sessionStorage.getItem('dev_authenticated') !== 'true') {
+      navigate('/settings', { replace: true });
+    }
+  }, [navigate]);
+
+  const handleChannelChange = async (channel) => {
+    setUpdateChannel(channel);
+    setConfigKey('updateChannel', channel);
+    await triggerUpdateCheck();
+  };
 
   const compareVersions = (v1, v2) => {
     if (!v1 || !v2) return 0;
@@ -325,6 +338,43 @@ export default function Developer() {
               <Clock className="w-4 h-4 text-blue-500" />
               <span><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_total_uptime')}</span> {formatUptime(hwInfo?.totalAppUptime)}</span>
             </div>
+          </div>
+
+          {/* Update Channel */}
+          <div className="mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
+            <div className="flex items-center gap-2 mb-3">
+              <RefreshCw className="w-4 h-4 text-orange-500" />
+              <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('settings_update_channel', 'Канал обновлений')}</h4>
+            </div>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="radio" 
+                  name="devUpdateChannel" 
+                  value="main" 
+                  checked={updateChannel === 'main'} 
+                  onChange={() => handleChannelChange('main')}
+                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
+                />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('settings_update_main', 'Стабильная (Main)')}</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="radio" 
+                  name="devUpdateChannel" 
+                  value="test" 
+                  checked={updateChannel === 'test'} 
+                  onChange={() => handleChannelChange('test')}
+                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
+                />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('settings_update_test', 'Тестовая (Test)')}</span>
+              </label>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">
+              {updateChannel === 'test' 
+                ? t('dev_update_test_desc', 'Канал предварительных сборок (Pre-release). Обновления загружаются из тестовой ветки.') 
+                : t('dev_update_main_desc', 'Канал стабильных релизов (Release).')}
+            </p>
           </div>
 
           <div className="mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
