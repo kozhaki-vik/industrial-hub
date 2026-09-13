@@ -10,10 +10,14 @@ import {
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
-  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, Eye, EyeOff
+  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, Eye, EyeOff, Copy
 } from 'lucide-react';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
+
+const DiscordIcon = ({ className = 'w-5 h-5' }) => (
+  <svg role="img" viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.0777.0777 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+);
 import { 
   RosterSkeleton, 
   StatsTableSkeleton, 
@@ -455,6 +459,7 @@ export default function ClanManager() {
   const [error, setError] = useState('');
   const [logs, setLogs] = useState(['Initializing Clan Manager...']);
   const [lastLinkAttempt, setLastLinkAttempt] = useState(0);
+  const [copiedCommand, setCopiedCommand] = useState(false);
   
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -2121,56 +2126,219 @@ export default function ClanManager() {
     );
   }
 
+  const BOT_INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1545095227440631808&permissions=423087296&scope=bot%20applications.commands';
+
+  const handleCopyCommand = () => {
+    navigator.clipboard.writeText('/hub_link');
+    setCopiedCommand(true);
+    setTimeout(() => setCopiedCommand(false), 2500);
+  };
+
   if (status === 'unlinked') {
     return (
-      <div className="p-4 md:p-8 max-w-xl mx-auto">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
-            {t('clan_setup_title')}
+      <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
+        {/* Top Header Banner */}
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 text-orange-600 dark:text-orange-400 text-xs font-bold tracking-wide uppercase">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>{t('clan_onboarding_badge', 'Центр управления кланом в Rust')}</span>
+          </div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {t('clan_setup_title', 'Настройка Clan Manager')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-            {t('clan_setup_desc')}
+          <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl mx-auto">
+            {t('clan_setup_desc_modern', 'Свяжите приложение с вашим Discord-сервером для автоматизации набора, синхронизации 12 ролей, создания временных войсов и защиты клана.')}
           </p>
+        </div>
+
+        {/* 2-Column Grid: Left = Benefits & Trust, Right = 3-Step Interactive Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          <div className="space-y-6 mb-8">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">1</div>
-              <div className="text-slate-700 dark:text-slate-300 pt-1">{t('clan_setup_step1')}</div>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">2</div>
-              <div className="text-slate-700 dark:text-slate-300 pt-1">
-                {t('clan_setup_step2').split('/hub_link').map((part, i, arr) => 
-                  <React.Fragment key={i}>
-                    {part}
-                    {i < arr.length - 1 && <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-blue-600 dark:text-blue-400 font-mono text-sm mx-1">/hub_link</code>}
-                  </React.Fragment>
-                )}
+          {/* Left Column: Why use the bot & Trust manifesto (7 cols) */}
+          <div className="lg:col-span-7 space-y-4">
+            
+            {/* Feature Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Feature 1 */}
+              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
+                  <UserPlus className="w-4.5 h-4.5" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_recruit_title', 'Автоматизация набора')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_recruit_desc', 'Готовые формы анкет, тикеты для приватного собеседования и авто-отсев кандидатов по часам в Rust и возрасту.')}
+                </p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50">
+                  <Users className="w-4.5 h-4.5" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_roles_title', 'Иерархия 12 ролей')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_roles_desc', 'Моментальное назначение ролей Лидера, Колера, Билдера, Фармера и др. в один клик без рутины в Discord.')}
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
+                  <Volume2 className="w-4.5 h-4.5" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_voice_title', 'Динамические войсы')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_voice_desc', 'Временные комнаты для пати (дуо, трио, сквад), которые создаются автоматически при входе и удаляются, когда пусты.')}
+                </p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
+                  <ShieldAlert className="w-4.5 h-4.5" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_security_title', 'Аудит и безопасность')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_security_desc', 'Защита от сливов, логирование изменений прав и ролей, отслеживание подозрительных участников и досье игроков.')}
+                </p>
               </div>
             </div>
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">3</div>
-              <div className="text-slate-700 dark:text-slate-300 pt-1">{t('clan_setup_step3')}</div>
+
+            {/* Trust & Safety Banner */}
+            <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-4.5 flex gap-4 items-start shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h5 className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
+                  {t('clan_trust_title', '100% безопасность и защита сервера')}
+                </h5>
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                  {t('clan_trust_desc', 'Бот НЕ запрашивает опасные права Администратора и не имеет скрытых команд. Он физически не может выдать роль выше своей собственной и подчиняется только вам через приложение Industrial Hub.')}
+                </p>
+              </div>
+            </div>
+
+            {/* Role Hierarchy Tip */}
+            <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4.5 flex gap-4 items-start shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h5 className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                  {t('clan_hierarchy_tip_title', 'Важное правило Discord: Иерархия ролей')}
+                </h5>
+                <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                  {t('clan_hierarchy_tip_desc', 'После добавления бота перейдите в Настройки сервера → Роли и поднимите роль бота выше ролей участников клана. Бот может выдавать только те роли, которые находятся строго ниже его собственной.')}
+                </p>
+              </div>
             </div>
           </div>
-          
-          <form onSubmit={handleLink} noValidate className="space-y-4">
-            <div>
-              <input 
-                type="text" 
-                required
-                placeholder={t('clan_setup_placeholder')} 
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-center text-2xl tracking-[0.5em] font-mono shadow-inner transition-all placeholder:text-slate-300 placeholder:tracking-normal placeholder:font-sans placeholder:text-base dark:placeholder:text-slate-600"
-                value={linkCode}
-                onChange={(e) => setLinkCode(e.target.value)}
-                maxLength={6}
-              />
+
+          {/* Right Column: 3-Step Interactive Form (5 cols) */}
+          <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 p-6 space-y-6">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {t('clan_quick_link_title', 'Привязка в 3 шага')}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('clan_quick_link_desc', 'Займет не более 1 минуты')}
+              </p>
             </div>
-            {error && <div className="text-red-500 text-sm font-medium text-center">{error}</div>}
-            <button type="submit" className="w-full bg-blue-600 text-white font-medium py-3 rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 transition-all shadow-sm">
-              {t('clan_setup_btn')}
-            </button>
-          </form>
+
+            {/* Step 1 */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {t('clan_step1_label', 'Пригласите бота на ваш сервер')}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => openExternalUrl(BOT_INVITE_URL)}
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/15 transition-all cursor-pointer group"
+              >
+                <DiscordIcon className="w-5 h-5 text-white group-hover:scale-105 transition-transform" />
+                <span>{t('clan_invite_btn', 'Пригласить бота в Discord')}</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              </button>
+            </div>
+
+            {/* Step 2 */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {t('clan_step2_label', 'Напишите в любом канале сервера:')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                <code className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400 px-2 select-all">
+                  /hub_link
+                </code>
+                <button
+                  type="button"
+                  onClick={handleCopyCommand}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
+                >
+                  {copiedCommand ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-green-500" />
+                      <span className="text-green-600 dark:text-green-400">{t('copied', 'Скопировано!')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{t('copy', 'Копировать')}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="space-y-2.5 pt-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">3</div>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {t('clan_step3_label', 'Введите полученный 6-значный код:')}
+                </span>
+              </div>
+
+              <form onSubmit={handleLink} noValidate className="space-y-4">
+                <div>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="000000" 
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-center text-2xl tracking-[0.5em] font-mono shadow-inner transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 placeholder:tracking-normal placeholder:font-sans placeholder:text-lg"
+                    value={linkCode}
+                    onChange={(e) => setLinkCode(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                    maxLength={6}
+                    autoFocus
+                  />
+                </div>
+                {error && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
+                <button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl focus:ring-4 focus:ring-blue-500/20 transition-all shadow-md shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 text-blue-200" />
+                  <span>{t('clan_setup_btn', 'Привязать сервер')}</span>
+                </button>
+              </form>
+            </div>
+
+          </div>
         </div>
       </div>
     );
