@@ -24,17 +24,17 @@
 * Автосохранение размеров и положения в `store`: `windowBounds`, `isWindowMaximized`. При рестарте восстанавливается.
 
 ## Версионирование (Major . Main . Test)
-* Формат: `X.Y.Z` (текущая стабильная: `2.8.0`).
+* Формат: `X.Y.Z` (текущая стабильная: `2.9.0`).
   - **`X` (Major):** Глобальное обновление архитектуры.
-  - **`Y` (Main):** Стабильный релиз. **Только по прямому указанию пользователя!** При выходе Main-релиза номер `Y` увеличивается на `+1`, а `Z` сбрасывается в `0` (напр. с `2.7.92` → `2.8.0`).
-  - **`Z` (Test):** Тестовый билд. При **любом** изменении/патче увеличивается на `+1` (напр. `2.8.1`, `2.8.2`...).
+  - **`Y` (Main):** Стабильный релиз. **Только по прямому указанию пользователя!** При выходе Main-релиза номер `Y` увеличивается на `+1`, а `Z` сбрасывается в `0` (напр. с `2.8.1` → `2.9.0`).
+  - **`Z` (Test):** Тестовый билд. При **любом** изменении/патче увеличивается на `+1` (напр. `2.9.1`, `2.9.2`...).
 * Ветка git `pre-release` для тестов, ветка `main` для стабильных версий.
 
 ## Сборка и релиз
 1. Поднять версию в `package.json` (`Z+1` для Test или `Y+1, Z=0` для Main).
 2. `git commit -am "message"` → `git push`
 3. `npm run build` → `npx electron-builder --win`
-4. Подписать `.exe` утилитой `signtool.exe` сертификатом `CF5FD177...`
+4. Подписать `.exe` утилитой `signtool.exe` сертификатом `CF5FD177...` или `4061B8CF...`
 5. Публикация в `kozhaki-vik/industrial-hub-releases`:
    - **Test-сборка:** `.\upload_release.ps1 -Version "X.Y.Z" -FilePath "release\Industrial Hub X.Y.Z.exe" -IsPreRelease $true`
    - **Main-релиз:** `.\upload_release.ps1 -Version "X.Y.0" -FilePath "release\Industrial Hub X.Y.0.exe" -IsPreRelease $false`
@@ -43,9 +43,11 @@
 * Test = Pre-release, Main = Release. PIN для Test ветки: `2136`.
 
 ## Подпись кода и безопасность
-* Thumbprint: `CF5FD177247FC2EEB561B69BE223EF0757218C08`
+* **Dual-Trust Сертификаты:**
+  - `CF5FD177247FC2EEB561B69BE223EF0757218C08` (CN=Industrial Systems Studio, O=Kozhaki, до 08.2027)
+  - `4061B8CF1678362998377C36C8F16A505ED8CE34` (CN=Kozhaki, O=Industrial Hub Systems, до 08.2036, 10 лет)
 * `signtool.exe sign /sha1 CF5FD177247FC2EEB561B69BE223EF0757218C08 /fd sha256 /tr http://timestamp.digicert.com /td sha256 <file.exe>`
-* **Автообновление:** перед запуском скачанного `.exe` обязательно валидируется Thumbprint подписи через PowerShell (`Get-AuthenticodeSignature`).
+* **Автообновление:** перед запуском скачанного `.exe` обязательно валидируется Thumbprint подписи через PowerShell (`Get-AuthenticodeSignature`), проверяя наличие в доверенном списке (`TRUSTED_THUMBPRINTS`).
 * **Конфиги Rust:** `config:writeConfig` пишет строго внутри `store.get('rustPath')/cfg`, проверяя `path.basename` от Path Traversal.
 * **Диагностика:** `diagnostics:pingUrl` валидирует DNS через `dns.lookup` против SSRF приватных подсетей.
 

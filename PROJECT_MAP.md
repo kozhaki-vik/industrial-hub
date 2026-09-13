@@ -15,7 +15,7 @@ repos/
 ### Electron (`electron/`)
 * **main.js** — главный процесс.
   - **Адаптивный размер окна:** Автоопределение экрана (`screen.getPrimaryDisplay().workAreaSize`), 3 брейкпоинта (Ноутбуки `1080x680`, Full HD `1280x820`, 27"+ 2K/4K `1500x960`), сохранение координат и размера в `store`.
-  - **Безопасность:** Проверка подписи Thumbprint `CF5FD177...` перед запуском апдейтов, валидация путей в `config:writeConfig` против Path Traversal, валидация DNS в `diagnostics:pingUrl` против SSRF.
+  - **Безопасность:** Проверка подписи (Dual-Trust: `CF5FD177...` до 2027 и `4061B8CF...` до 2036) перед запуском апдейтов, валидация путей в `config:writeConfig` против Path Traversal, валидация DNS в `diagnostics:pingUrl` против SSRF.
   - IPC-хэндлеры:
     - `autoDetectRustPath()` / `browseForRustPath()` — путь к Rust
     - `config:readConfig/writeConfig/copyFile/ensureDir` — работа с cfg Rust

@@ -1140,13 +1140,19 @@ app.whenReady().then(async () => {
     return false;
   });
 
+  const TRUSTED_THUMBPRINTS = [
+    'CF5FD177247FC2EEB561B69BE223EF0757218C08', // Kozhaki / Industrial Systems Studio (2026-2027)
+    '4061B8CF1678362998377C36C8F16A505ED8CE34'  // Kozhaki / Industrial Hub Systems 10-year (2026-2036)
+  ];
+
   const verifyFileSignature = (filePath) => {
     return new Promise((resolve) => {
       if (process.platform !== 'win32') return resolve(true);
       const psCommand = `(Get-AuthenticodeSignature "${filePath}").SignerCertificate.Thumbprint`;
       child_process.exec(`powershell -NoProfile -Command "${psCommand}"`, { windowsHide: true }, (error, stdout) => {
         if (error) return resolve(false);
-        resolve(stdout.trim().toUpperCase() === 'CF5FD177247FC2EEB561B69BE223EF0757218C08');
+        const thumbprint = stdout.trim().toUpperCase();
+        resolve(TRUSTED_THUMBPRINTS.includes(thumbprint));
       });
     });
   };

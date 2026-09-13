@@ -144,7 +144,8 @@ namespace IndustrialHubLauncher
             try
             {
                 var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(filePath);
-                return cert.GetCertHashString() == "CF5FD177247FC2EEB561B69BE223EF0757218C08";
+                string hash = cert.GetCertHashString();
+                return hash == "CF5FD177247FC2EEB561B69BE223EF0757218C08" || hash == "4061B8CF1678362998377C36C8F16A505ED8CE34";
             }
             catch
             {
