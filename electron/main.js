@@ -1141,6 +1141,7 @@ app.whenReady().then(async () => {
   });
 
   const TRUSTED_THUMBPRINTS = [
+    'F275C9D48A3325871DB04B0FDFB5701BE34802B7', // Industrial Studio / Kozak 10-year (2026-2036)
     'CF5FD177247FC2EEB561B69BE223EF0757218C08', // Kozhaki / Industrial Systems Studio (2026-2027)
     '4061B8CF1678362998377C36C8F16A505ED8CE34'  // Kozhaki / Industrial Hub Systems 10-year (2026-2036)
   ];

@@ -19,7 +19,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Signing Installer.exe...
-"C:\Users\Developer\AppData\Local\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe" sign /sha1 CF5FD177247FC2EEB561B69BE223EF0757218C08 /fd sha256 /tr http://timestamp.digicert.com /td sha256 Installer.exe
+"C:\Users\Developer\AppData\Local\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe" sign /sha1 F275C9D48A3325871DB04B0FDFB5701BE34802B7 /fd sha256 /tr http://timestamp.digicert.com /td sha256 Installer.exe
 
 if %errorlevel% neq 0 (
     echo Signing failed!

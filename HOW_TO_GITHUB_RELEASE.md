@@ -58,11 +58,11 @@ npm run build
 # 2. Компиляция Electron Portable EXE
 npx electron-builder --win
 
-# 3. Подпись цифровым сертификатом Kozhaki
-& "C:\Users\Developer\AppData\Local\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe" sign /sha1 CF5FD177247FC2EEB561B69BE223EF0757218C08 /fd sha256 /tr http://timestamp.digicert.com /td sha256 "release\Industrial Hub 2.8.1.exe"
+# 3. Подпись цифровым сертификатом Industrial Studio (Kozak)
+& "C:\Users\Developer\AppData\Local\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe" sign /sha1 F275C9D48A3325871DB04B0FDFB5701BE34802B7 /fd sha256 /tr http://timestamp.digicert.com /td sha256 "release\Industrial Hub 2.10.0.exe"
 ```
 После успешной сборки готовый подписанный исполняемый файл появится в папке:  
-`release\Industrial Hub 2.8.1.exe`
+`release\Industrial Hub 2.10.0.exe`
 
 ---
 
