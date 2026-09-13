@@ -144,7 +144,7 @@ namespace IndustrialHubLauncher
             try
             {
                 var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(filePath);
-                return cert.Subject.Contains("Kozhaki") || cert.GetCertHashString() == "CF5FD177247FC2EEB561B69BE223EF0757218C08";
+                return cert.GetCertHashString() == "CF5FD177247FC2EEB561B69BE223EF0757218C08";
             }
             catch
             {

@@ -488,8 +488,8 @@ app.whenReady().then(async () => {
     return null;
   });
 
-  ipcMain.handle('diagnostics:pingUrl', (event, urlStr) => {
-    return new Promise((resolve) => {
+  ipcMain.handle('diagnostics:pingUrl', async (event, urlStr) => {
+    return new Promise(async (resolve) => {
       const start = Date.now();
       try {
         const url = new URL(urlStr);
@@ -498,8 +498,19 @@ app.whenReady().then(async () => {
         }
         
         const hostname = url.hostname;
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('169.254.') || hostname === '0.0.0.0') {
-            return resolve({ status: 'error', time: 0, msg: 'Private address blocked' });
+        const dns = require('dns').promises;
+        try {
+            const { address } = await dns.lookup(hostname);
+            const parts = address.split('.').map(Number);
+            const isPrivate = (parts[0] === 127 || parts[0] === 10 ||
+                    (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
+                    (parts[0] === 192 && parts[1] === 168) ||
+                    address === '::1' || address === '0.0.0.0');
+            if (isPrivate) {
+                return resolve({ status: 'error', time: 0, msg: 'Private address blocked' });
+            }
+        } catch {
+            return resolve({ status: 'error', time: 0, msg: 'DNS lookup failed' });
         }
         
         const protocol = url.protocol === 'https:' ? https : http;
@@ -764,21 +775,22 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
-    if (!rustPath || !filename) return false;
+    if (!filename) return false;
+    const realRustPath = store.get('rustPath');
+    if (!realRustPath) return false;
+    
     try {
-      let cfgDir = path.join(rustPath, 'cfg');
-      if (path.basename(rustPath).toLowerCase() === 'cfg') cfgDir = rustPath;
-      const cfgPath = path.join(cfgDir, filename);
+      const sanitized = path.basename(filename);
+      const cfgDir = path.join(realRustPath, 'cfg');
+      const targetPath = path.join(cfgDir, sanitized);
       
-      const resolvedCfg = path.resolve(cfgPath);
-      const resolvedDir = path.resolve(cfgDir);
-      if (!resolvedCfg.startsWith(resolvedDir)) {
-        console.error('Path traversal detected in writeConfig:', cfgPath);
+      if (!targetPath.startsWith(cfgDir)) {
+        console.error('Path traversal detected in writeConfig:', targetPath);
         return false;
       }
       
       if (!fs.existsSync(cfgDir)) fs.mkdirSync(cfgDir, { recursive: true });
-      fs.writeFileSync(cfgPath, content, 'utf8');
+      fs.writeFileSync(targetPath, content, 'utf8');
       return true;
     } catch (e) {
       console.error(`Failed to write config ${filename}:`, e);
@@ -1001,7 +1013,23 @@ app.whenReady().then(async () => {
     return false;
   });
 
+  const verifyFileSignature = (filePath) => {
+    return new Promise((resolve) => {
+      if (process.platform !== 'win32') return resolve(true);
+      const psCommand = `(Get-AuthenticodeSignature "${filePath}").SignerCertificate.Thumbprint`;
+      child_process.exec(`powershell -NoProfile -Command "${psCommand}"`, { windowsHide: true }, (error, stdout) => {
+        if (error) return resolve(false);
+        resolve(stdout.trim().toUpperCase() === 'CF5FD177247FC2EEB561B69BE223EF0757218C08');
+      });
+    });
+  };
+
   ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion) => {
+    const TRUSTED_PREFIX = 'https://github.com/kozhaki-vik/industrial-hub-releases/';
+    if (!exeUrl || (!exeUrl.startsWith(TRUSTED_PREFIX) && !exeUrl.startsWith('https://api.github.com/'))) {
+      throw new Error('Недоверенный источник обновления');
+    }
+
     const appPath = getRealAppPath();
     const tempExePath = path.join(os.tmpdir(), `ih_update_${newVersion}.exe`);
 
@@ -1075,6 +1103,12 @@ app.whenReady().then(async () => {
           });
         }
       });
+
+      const isValidSignature = await verifyFileSignature(tempExePath);
+      if (!isValidSignature) {
+        fs.unlinkSync(tempExePath);
+        throw new Error('Невалидная подпись исполняемого файла');
+      }
 
       event.sender.send('update-progress', {
         status: 'extracting',
