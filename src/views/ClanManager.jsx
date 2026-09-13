@@ -14,6 +14,14 @@ import {
 } from 'lucide-react';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
+import { 
+  RosterSkeleton, 
+  StatsTableSkeleton, 
+  DossierCardsSkeleton, 
+  ApplicationsTableSkeleton, 
+  VoiceRoomsSkeleton, 
+  SelectSkeleton 
+} from '../components/Skeleton';
 
 export const DEFAULT_BAD_WORDS = [
   'хохол', 'хохлы', 'хохлов', 'хохлу', 'хохлом', 'хохлам', 'хохлами', 'хохлах', 'хохляра', 'хохлят',
@@ -2117,11 +2125,12 @@ export default function ClanManager() {
 
   if (status === 'checking') {
     return (
-      <div className="p-4 md:p-8 max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-          <div className="text-slate-600 dark:text-slate-400 font-medium">{t('clan_connecting')}</div>
+      <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex items-center justify-center space-x-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+          <div className="text-slate-700 dark:text-slate-300 font-medium text-sm">{t('clan_connecting')}</div>
         </div>
+        <RosterSkeleton count={6} columns="grid-cols-1 md:grid-cols-2" />
         <DebugLogs />
       </div>
     );
@@ -3467,18 +3476,22 @@ export default function ClanManager() {
                                   {t('clan_auto_5', 'Роль в Discord')}
                                 </label>
                                 <div className="flex items-center gap-2">
-                                  <select
-                                    value={boundRoleId}
-                                    onChange={e => handleSelectDiscordRole(r.key, r.dbKey, e.target.value, false)}
-                                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
-                                  >
-                                    <option value="">{t('clan_auto_6', '-- Выберите роль --')}</option>
-                                    {(discordInfo?.roles || []).map(dRole => (
-                                      <option key={dRole.id} value={dRole.id}>
-                                        {dRole.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  {!discordInfo ? (
+                                    <div className="flex-1 h-9.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 animate-pulse border border-slate-200 dark:border-slate-700" />
+                                  ) : (
+                                    <select
+                                      value={boundRoleId}
+                                      onChange={e => handleSelectDiscordRole(r.key, r.dbKey, e.target.value, false)}
+                                      className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
+                                    >
+                                      <option value="">{t('clan_auto_6', '-- Выберите роль --')}</option>
+                                      {(discordInfo?.roles || []).map(dRole => (
+                                        <option key={dRole.id} value={dRole.id}>
+                                          {dRole.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
                                   <button
                                     type="button"
                                     onClick={() => handleCreateRoleInDiscord(r, false, currentName)}
@@ -3591,18 +3604,22 @@ export default function ClanManager() {
                                   {t('clan_auto_13', 'Роль в Discord')}
                                 </label>
                                 <div className="flex items-center gap-2">
-                                  <select
-                                    value={cr.roleId || ''}
-                                    onChange={e => handleSelectDiscordRole(cr.key, null, e.target.value, true, cr.id)}
-                                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
-                                  >
-                                    <option value="">{t('clan_auto_14', '-- Выберите роль --')}</option>
-                                    {(discordInfo?.roles || []).map(dRole => (
-                                      <option key={dRole.id} value={dRole.id}>
-                                        {dRole.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  {!discordInfo ? (
+                                    <div className="flex-1 h-9.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 animate-pulse border border-slate-200 dark:border-slate-700" />
+                                  ) : (
+                                    <select
+                                      value={cr.roleId || ''}
+                                      onChange={e => handleSelectDiscordRole(cr.key, null, e.target.value, true, cr.id)}
+                                      className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer truncate"
+                                    >
+                                      <option value="">{t('clan_auto_14', '-- Выберите роль --')}</option>
+                                      {(discordInfo?.roles || []).map(dRole => (
+                                        <option key={dRole.id} value={dRole.id}>
+                                          {dRole.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
                                   <button
                                     type="button"
                                     onClick={() => handleCreateRoleInDiscord(cr, true, cr.name)}
@@ -3709,19 +3726,23 @@ export default function ClanManager() {
                              </p>
                            </div>
                            <div className="w-full md:w-80 shrink-0">
-                             <select
-                               value={cConfig[c.key] || ''}
-                               onChange={e => updateCConfig(c.key, e.target.value)}
-                               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer"
-                             >
-                               <option value="">{t('clan_auto_20', '-- Не выбрано --')}</option>
-                               {(discordInfo?.channels || [])
-                                 .filter(ch => c.typeFilter === null || ch.type === c.typeFilter || (Array.isArray(c.typeFilter) && c.typeFilter.includes(ch.type)))
-                                 .map(ch => {
-                                   let prefix = ch.type === 4 ? '📁 ' : ch.type === 2 ? '🔊 ' : '#️⃣ ';
-                                   return <option key={ch.id} value={ch.id}>{prefix}{ch.name}</option>;
-                                 })}
-                             </select>
+                             {!discordInfo ? (
+                               <div className="w-full h-10 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 animate-pulse border border-slate-200 dark:border-slate-700" />
+                             ) : (
+                               <select
+                                 value={cConfig[c.key] || ''}
+                                 onChange={e => updateCConfig(c.key, e.target.value)}
+                                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white text-sm transition-colors cursor-pointer"
+                               >
+                                 <option value="">{t('clan_auto_20', '-- Не выбрано --')}</option>
+                                 {(discordInfo?.channels || [])
+                                   .filter(ch => c.typeFilter === null || ch.type === c.typeFilter || (Array.isArray(c.typeFilter) && c.typeFilter.includes(ch.type)))
+                                   .map(ch => {
+                                     let prefix = ch.type === 4 ? '📁 ' : ch.type === 2 ? '🔊 ' : '#️⃣ ';
+                                     return <option key={ch.id} value={ch.id}>{prefix}{ch.name}</option>;
+                                   })}
+                               </select>
+                             )}
                            </div>
                          </div>
                       ))}
@@ -3971,12 +3992,7 @@ export default function ClanManager() {
             {activeTab === 'voice' && (
               <div className="space-y-6 max-w-5xl">
                 {loadingVoice || !dynamicVoiceData ? (
-                  <div className="flex justify-center items-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-                    <div className="flex flex-col items-center gap-3">
-                      <RefreshCw className="w-7 h-7 animate-spin text-orange-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('clan_loading') || 'Загрузка данных...'}</span>
-                    </div>
-                  </div>
+                  <VoiceRoomsSkeleton />
                 ) : (
                   <>
                     {/* Section 1: Settings Form (Join-to-Create) */}
@@ -4678,6 +4694,7 @@ export default function ClanManager() {
                                   onChange={val => updateChannelConfig('autoRejectedApplications', val)}
                                   discordChannels={discordInfo?.channels || []}
                                   typeFilter={[0, 2]}
+                                  isLoading={!discordInfo}
                                 />
                               </div>
                               <div>
@@ -4688,6 +4705,7 @@ export default function ClanManager() {
                                   onChange={val => updateChannelConfig('rejectedApplications', val)}
                                   discordChannels={discordInfo?.channels || []}
                                   typeFilter={[0, 2]}
+                                  isLoading={!discordInfo}
                                 />
                               </div>
                             </div>
@@ -4812,6 +4830,10 @@ export default function ClanManager() {
                                    rejectReason.includes(query) ||
                                    experience.includes(query);
                           });
+
+                          if (loadingApps && (!applicationsData || applicationsData.length === 0)) {
+                            return <ApplicationsTableSkeleton rows={5} />;
+                          }
 
                           if (filtered.length === 0) {
                             return (
@@ -5235,9 +5257,7 @@ export default function ClanManager() {
                 </div>
                 
                 {!rosterData ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
+                  <RosterSkeleton count={6} columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {rosterData.roster.length === 0 ? (
@@ -5407,12 +5427,7 @@ export default function ClanManager() {
 
                 {/* Dossier Cards Grid */}
                 {loadingDossiers && (!dossiersData || dossiersData.length === 0) ? (
-                  <div className="flex justify-center items-center py-16">
-                    <div className="flex flex-col items-center gap-3">
-                      <RefreshCw className="w-7 h-7 animate-spin text-orange-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('clan_loading') || 'Загрузка данных...'}</span>
-                    </div>
-                  </div>
+                  <DossierCardsSkeleton count={6} />
                 ) : !dossiersData || dossiersData.length === 0 ? (
                   <div className="bg-slate-50/60 dark:bg-slate-800/20 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center">
                     <Archive className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
@@ -5576,9 +5591,7 @@ export default function ClanManager() {
                   </div>
                   
                   {!statsData ? (
-                    <div className="flex justify-center items-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
+                    <StatsTableSkeleton rows={8} />
                   ) : (
                     <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
                       <table className="w-full text-left text-sm text-slate-500 dark:text-slate-400">

@@ -7,6 +7,7 @@ import { getButtonStats } from '../services/analytics';
 import { getConfigKey, setConfigKey, factoryReset } from '../services/store';
 import { defaultConveyors } from '../data/defaultConveyors';
 import SplashScreen from '../components/SplashScreen';
+import { IntegrityCheckSkeleton } from '../components/Skeleton';
 
 import { useNetwork } from '../contexts/NetworkContext';
 
@@ -257,7 +258,7 @@ export default function Developer() {
               <div className="space-y-2 text-sm bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                 <h4 className="font-bold text-slate-700 dark:text-slate-300">{t('dev_app_integrity')}</h4>
                 {integrity.status === 'loading' ? (
-                  <div className="text-slate-500 animate-pulse">{t('dev_ping_check') || 'Checking...'}</div>
+                  <IntegrityCheckSkeleton rows={4} />
                 ) : (
                   <>
                     <div className={`font-bold ${integrity.status === 'ok' ? 'text-green-500' : 'text-red-500'}`}>
@@ -281,7 +282,7 @@ export default function Developer() {
               <div className="space-y-2 text-sm bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                 <h4 className="font-bold text-slate-700 dark:text-slate-300">{t('dev_rust_integrity')}</h4>
                 {rustIntegrity?.status === 'loading' ? (
-                  <div className="text-slate-500 animate-pulse">{t('dev_ping_check') || 'Checking...'}</div>
+                  <IntegrityCheckSkeleton rows={4} />
                 ) : rustIntegrity ? (
                   <>
                     <div className={`font-bold ${rustIntegrity.status === 'ok' ? 'text-green-500' : 'text-red-500'}`}>
@@ -433,7 +434,10 @@ const PingResult = ({ label, res }) => {
         {!res ? (
           <span className="text-slate-400">{t('dev_ping_wait')}</span>
         ) : res.status === 'loading' ? (
-          <span className="text-blue-500 animate-pulse">{t('dev_ping_check')}</span>
+          <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 animate-pulse text-xs font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" />
+            <span>{t('dev_ping_check') || 'Проверка...'}</span>
+          </div>
         ) : res.status === 'ok' ? (
           <span className="text-green-500">{res.time}ms ({res.msg})</span>
         ) : res.status === 'warning' ? (

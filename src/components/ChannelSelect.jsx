@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const ChannelSelect = ({ label, description, value, onChange, discordChannels = [], typeFilter = null, required = false }) => {
+const ChannelSelect = ({ label, description, value, onChange, discordChannels = [], typeFilter = null, required = false, isLoading = false }) => {
   const { t } = useTranslation();
   const filteredChannels = typeFilter !== null 
     ? discordChannels.filter(c => c.type === typeFilter || (Array.isArray(typeFilter) && typeFilter.includes(c.type)))
@@ -14,21 +14,25 @@ const ChannelSelect = ({ label, description, value, onChange, discordChannels = 
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       {description && <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{description}</p>}
-      <select
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm transition-colors"
-      >
-        <option value="">{t('select_none', '-- Не выбрано --')}</option>
-        {filteredChannels.map(c => {
-          let prefix = '';
-          if (c.type === 4) prefix = '📁 ';
-          else if (c.type === 2) prefix = '🔊 ';
-          else prefix = '#️⃣ ';
-          return <option key={c.id} value={c.id}>{prefix}{c.name}</option>
-        })}
-      </select>
+      {isLoading ? (
+        <div className="h-9.5 rounded-lg bg-slate-200/80 dark:bg-slate-800/80 animate-pulse border border-slate-300/40 dark:border-slate-700/40" />
+      ) : (
+        <select
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white text-sm transition-colors"
+        >
+          <option value="">{t('select_none', '-- Не выбрано --')}</option>
+          {filteredChannels.map(c => {
+            let prefix = '';
+            if (c.type === 4) prefix = '📁 ';
+            else if (c.type === 2) prefix = '🔊 ';
+            else prefix = '#️⃣ ';
+            return <option key={c.id} value={c.id}>{prefix}{c.name}</option>
+          })}
+        </select>
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import {
   Hammer, Pickaxe, Award, CheckCircle2, RefreshCw, RotateCcw, Send, MessageSquare,
   ScrollText, Vote
 } from 'lucide-react';
+import { DossierModalGlobalSkeleton } from './Skeleton';
 
 export default function MemberDossierModal({
   isOpen,
@@ -901,7 +902,11 @@ export default function MemberDossierModal({
                 </div>
               )}
 
-              {globalData && (
+              {searchingGlobal && (
+                <DossierModalGlobalSkeleton />
+              )}
+
+              {!searchingGlobal && globalData && (
                 <div className="space-y-4">
                   {/* Multi-Clan Warning Banner */}
                   {globalData.isMultiClan && (
