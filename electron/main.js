@@ -7,6 +7,7 @@ import os from 'os';
 import crypto from 'crypto';
 import http from 'http';
 import https from 'https';
+import dns from 'dns';
 import Store from 'electron-store';
 import { AssetManager } from './assetManager.js';
 
@@ -625,9 +626,8 @@ app.whenReady().then(async () => {
         }
         
         const hostname = url.hostname;
-        const dns = require('dns').promises;
         try {
-            const { address } = await dns.lookup(hostname);
+            const { address } = await dns.promises.lookup(hostname);
             const parts = address.split('.').map(Number);
             const isPrivate = (parts[0] === 127 || parts[0] === 10 ||
                     (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
