@@ -13,16 +13,20 @@ repos/
 ## Клиент: Industrial Hub
 
 ### Electron (`electron/`)
-* **main.js** — главный процесс. IPC-хэндлеры:
-  - `autoDetectRustPath()` / `browseForRustPath()` — путь к Rust
-  - `config:readConfig/writeConfig/copyFile/ensureDir` — работа с cfg Rust
-  - `config:isRustRunning` — проверка rustclient.exe
-  - `gamma:getDisplays/setDisplayGamma/registerHook/unregisterHook` — NativeHelper.exe
-  - `diagnostics:*` — железо, пинг, целостность файлов
-  - `network:get-hwid` — SHA256 хеш машины
-  - `network:apply-exe-update` — скачивание и установка обновления с GitHub
-  - `shell:openExternal/openPath/openFolder` — проводник/браузер
-  - `app:relaunch/reportError`
+* **main.js** — главный процесс.
+  - **Адаптивный размер окна:** Автоопределение экрана (`screen.getPrimaryDisplay().workAreaSize`), 3 брейкпоинта (Ноутбуки `1080x680`, Full HD `1280x820`, 27"+ 2K/4K `1500x960`), сохранение координат и размера в `store`.
+  - **Безопасность:** Проверка подписи Thumbprint `CF5FD177...` перед запуском апдейтов, валидация путей в `config:writeConfig` против Path Traversal, валидация DNS в `diagnostics:pingUrl` против SSRF.
+  - IPC-хэндлеры:
+    - `autoDetectRustPath()` / `browseForRustPath()` — путь к Rust
+    - `config:readConfig/writeConfig/copyFile/ensureDir` — работа с cfg Rust
+    - `config:isRustRunning` — проверка rustclient.exe
+    - `gamma:getDisplays/setDisplayGamma/registerHook/unregisterHook` — NativeHelper.exe
+    - `diagnostics:*` — железо, пинг, целостность файлов
+    - `network:get-hwid` — SHA256 хеш машины
+    - `network:apply-exe-update` — скачивание, проверка подписи и запуск обновления
+    - `shell:openExternal/openPath/openFolder` — проводник/браузер (с проверкой whitelist путей)
+    - `app:relaunch/reportError`
+* **assetManager.js** — кэширование картинок предметов в `%APPDATA%\IndustrialHubClient\client\items\` и протокол `hub-asset://` с он-деманд fallback-докачкой из GitHub CDN.
 * **preload.js** — мост `window.electronAPI` (contextIsolation)
 
 ### Сервисы (`src/services/`)

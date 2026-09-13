@@ -27,10 +27,10 @@
 
 ## 🔢 Правила версионирования (Semantic Versioning)
 
-Формат версии состоит из 3 чисел, например: **`2.7.8`**:
+Формат версии состоит из 3 чисел, например: **`2.8.1`**:
 * **1-я цифра (`2`):** Глобальная версия (Major).
-* **2-я цифра (`7`):** Стабильная версия (Main). Увеличивается только при выпуске официального стабильного релиза.
-* **3-я цифра (`8`):** Тестовая версия (Test). Увеличивается на `+1` при **каждом** изменении/патче.
+* **2-я цифра (`8`):** Стабильная версия (Main). Увеличивается на `+1` только при выходе официального стабильного релиза (при этом 3-я цифра сбрасывается в `0`, например: с `2.7.92` до `2.8.0`).
+* **3-я цифра (`1`):** Тестовая версия (Test). Увеличивается на `+1` при **каждом** изменении/патче (`2.8.1`, `2.8.2`...).
 
 ---
 
@@ -38,27 +38,31 @@
 
 ### Шаг 1: Поднятие версии в `package.json`
 Откройте `package.json` и увеличьте номер версии:
-* Для обычного хотфикса/теста: увеличьте третью цифру на `+1` (например, с `2.7.7` до `2.7.8`).
+* Для обычного хотфикса/теста: увеличьте третью цифру на `+1` (например, с `2.8.0` до `2.8.1`).
+* Для официального стабильного релиза (только по прямому указанию): увеличьте вторую цифру на `+1`, а третью обнулите (например, с `2.8.9` до `2.9.0`).
 
 ### Шаг 2: Фиксация изменений в Git
 Перед созданием сборки обязательно сохраните код в приватный репозиторий:
 ```powershell
 git add .
-git commit -m "Описание изменений v2.7.8"
+git commit -m "Описание изменений v2.8.1"
 git push
 ```
 
 ### Шаг 3: Сборка клиента
-Скомпилируйте веб-часть и упакуйте Electron в автономный Portable `.exe`:
+Скомпилируйте веб-часть, упакуйте Electron и подпишите `.exe`:
 ```powershell
 # 1. Сборка React фронтенда
 npm run build
 
 # 2. Компиляция Electron Portable EXE
 npx electron-builder --win
+
+# 3. Подпись цифровым сертификатом Kozhaki
+& "C:\Users\Developer\AppData\Local\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe" sign /sha1 CF5FD177247FC2EEB561B69BE223EF0757218C08 /fd sha256 /tr http://timestamp.digicert.com /td sha256 "release\Industrial Hub 2.8.1.exe"
 ```
-После успешной сборки готовый исполняемый файл появится в папке:  
-`release\Industrial Hub 2.7.8.exe`
+После успешной сборки готовый подписанный исполняемый файл появится в папке:  
+`release\Industrial Hub 2.8.1.exe`
 
 ---
 
@@ -69,12 +73,12 @@ npx electron-builder --win
 
 * **Для тестовой сборки (Pre-release):**
   ```powershell
-  .\upload_release.ps1 -Version "2.7.8" -FilePath "release\Industrial Hub 2.7.8.exe" -IsPreRelease $true
+  & .\upload_release.ps1 -Version "2.8.1" -FilePath "release\Industrial Hub 2.8.1.exe" -IsPreRelease $true
   ```
 
 * **Для стабильной сборки (Main Release):**
   ```powershell
-  .\upload_release.ps1 -Version "2.7.0" -FilePath "release\Industrial Hub 2.7.0.exe" -IsPreRelease $false
+  & .\upload_release.ps1 -Version "2.8.0" -FilePath "release\Industrial Hub 2.8.0.exe" -IsPreRelease $false
   ```
 
 ---
