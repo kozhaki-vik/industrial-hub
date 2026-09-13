@@ -2109,20 +2109,6 @@ export default function ClanManager() {
     }
   }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData, config?.discordLink]);
 
-  const DebugLogs = () => (
-    <div className="mt-8 bg-slate-900 text-green-400 p-4 rounded-xl shadow-inner text-xs font-mono max-h-64 overflow-y-auto border border-slate-800">
-      <div className="mb-2 font-bold text-white border-b border-slate-700 pb-2 flex items-center justify-between">
-        <span>Debug Logs</span>
-        <span className="text-[10px] text-slate-500 font-normal">Auto-scrolling</span>
-      </div>
-      <div className="space-y-1">
-        {logs.map((log, i) => (
-          <div key={i} className="opacity-90">{log}</div>
-        ))}
-      </div>
-    </div>
-  );
-
   if (status === 'checking') {
     return (
       <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
@@ -2131,7 +2117,6 @@ export default function ClanManager() {
           <div className="text-slate-700 dark:text-slate-300 font-medium text-sm">{t('clan_connecting')}</div>
         </div>
         <RosterSkeleton count={6} columns="grid-cols-1 md:grid-cols-2" />
-        <DebugLogs />
       </div>
     );
   }
@@ -2187,7 +2172,6 @@ export default function ClanManager() {
             </button>
           </form>
         </div>
-        <DebugLogs />
       </div>
     );
   }
