@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell, protocol } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell, protocol, screen } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import child_process from 'child_process';
@@ -87,11 +87,102 @@ let currentHookProcess = null;
 // Disable hardware acceleration to fix GPU crashes on some Windows systems
 app.disableHardwareAcceleration();
 
+function getAdaptiveWindowBounds() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+
+  let targetWidth;
+  let targetHeight;
+  let minWidth = 960;
+  let minHeight = 600;
+
+  // 1. Ноутбуки и маленькие экраны (высота <= 800px или ширина <= 1366px)
+  if (screenHeight <= 800 || screenWidth <= 1366) {
+    targetWidth = 1080;
+    targetHeight = 680;
+    minWidth = 960;
+    minHeight = 600;
+  }
+  // 3. Большие мониторы 27"+ (2K 2560x1440, 4K 3840x2160: высота > 1100px и ширина >= 2000px)
+  else if (screenHeight > 1100 && screenWidth >= 2000) {
+    targetWidth = 1500;
+    targetHeight = 960;
+    minWidth = 1080;
+    minHeight = 700;
+  }
+  // 2. Стандартный ПК (Full HD 1920x1080)
+  else {
+    targetWidth = 1280;
+    targetHeight = 820;
+    minWidth = 1000;
+    minHeight = 650;
+  }
+
+  // Защита: размер окна никогда не должен превышать доступную рабочую область экрана
+  targetWidth = Math.min(targetWidth, Math.max(minWidth, screenWidth - 30));
+  targetHeight = Math.min(targetHeight, Math.max(minHeight, screenHeight - 30));
+
+  return {
+    width: targetWidth,
+    height: targetHeight,
+    minWidth,
+    minHeight,
+  };
+}
+
+function getInitialWindowBounds() {
+  const savedBounds = store.get('windowBounds');
+  const isMaximized = store.get('isWindowMaximized');
+
+  const adaptive = getAdaptiveWindowBounds();
+
+  if (savedBounds && typeof savedBounds === 'object') {
+    const { width, height, x, y } = savedBounds;
+    const displays = screen.getAllDisplays();
+    const isVisible = displays.some(display => {
+      const b = display.bounds;
+      return (
+        x >= b.x - 100 &&
+        x < b.x + b.width &&
+        y >= b.y - 100 &&
+        y < b.y + b.height
+      );
+    });
+
+    if (isVisible && width >= adaptive.minWidth && height >= adaptive.minHeight) {
+      return {
+        width,
+        height,
+        x,
+        y,
+        minWidth: adaptive.minWidth,
+        minHeight: adaptive.minHeight,
+        isMaximized: !!isMaximized,
+        isCustom: true
+      };
+    }
+  }
+
+  return {
+    ...adaptive,
+    x: undefined,
+    y: undefined,
+    isMaximized: false,
+    isCustom: false
+  };
+}
+
 function createWindow() {
+  const windowConfig = getInitialWindowBounds();
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 840,
-    show: true, // Show instantly
+    width: windowConfig.width,
+    height: windowConfig.height,
+    minWidth: windowConfig.minWidth,
+    minHeight: windowConfig.minHeight,
+    x: windowConfig.x,
+    y: windowConfig.y,
+    show: false, // Don't show until centered or positioned to prevent visual jumping
     backgroundColor: '#0f172a', // Match slate-950
     autoHideMenuBar: true, // Remove the top menu (File, Edit, View, Window)
     webPreferences: {
@@ -102,9 +193,45 @@ function createWindow() {
   });
   mainWindow.setMenu(null); // Completely removes the top menu
 
+  if (windowConfig.isMaximized) {
+    mainWindow.maximize();
+  } else if (!windowConfig.isCustom) {
+    mainWindow.center();
+  }
+
+  let saveBoundsTimeout = null;
+  const saveBounds = () => {
+    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
+    if (mainWindow.isMaximized()) {
+      store.set('isWindowMaximized', true);
+    } else {
+      store.set('isWindowMaximized', false);
+      store.set('windowBounds', mainWindow.getBounds());
+    }
+  };
+
+  mainWindow.on('resize', () => {
+    clearTimeout(saveBoundsTimeout);
+    saveBoundsTimeout = setTimeout(saveBounds, 300);
+  });
+
+  mainWindow.on('move', () => {
+    clearTimeout(saveBoundsTimeout);
+    saveBoundsTimeout = setTimeout(saveBounds, 300);
+  });
+
+  mainWindow.on('maximize', () => {
+    store.set('isWindowMaximized', true);
+  });
+
+  mainWindow.on('unmaximize', () => {
+    store.set('isWindowMaximized', false);
+    saveBounds();
+  });
+
   // Focus both window and webContents on ready-to-show
   mainWindow.once('ready-to-show', () => {
-    mainWindow.center();
+    mainWindow.show();
     mainWindow.focus();
     if (mainWindow.webContents) {
       mainWindow.webContents.focus();
