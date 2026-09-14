@@ -17,8 +17,6 @@
   "clan_feature_votes_desc": "Interactive votes with live transparent tallies: see exactly which member voted for each option.",
   "clan_feature_stats_title": "Clan Statistics",
   "clan_feature_stats_desc": "Deep member analytics: voice channel activity, wipes attended, message counts, and overall contribution.",
-  "clan_feature_rustplus_title": "Coming Soon: Rust+ Integration",
-  "clan_feature_rustplus_desc": "Instant raid alerts directly in Discord, motion sensor monitoring, smart alarms, turret control, and base status.",
   "clan_hierarchy_tip_title": "Important Discord Rule: Role Hierarchy",
   "clan_hierarchy_tip_desc": "After adding the bot, open Server Settings → Roles and drag the Clan Manager role above your clan member roles so it can assign roles.",
   "clan_quick_link_title": "Link in 3 Steps",

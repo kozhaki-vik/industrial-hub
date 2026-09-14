@@ -2233,18 +2233,6 @@ export default function ClanManager() {
                 </p>
               </div>
 
-              {/* Feature 7: Rust+ */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50">
-                  <Radio className="w-4 h-4" />
-                </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_rustplus_title', 'Скоро: Интеграция с Rust+')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_rustplus_desc', 'Мгновенные оповещения о рейдах прямо в Discord, мониторинг датчиков движения, пейджеров, турелей и состояния базы.')}
-                </p>
-              </div>
             </div>
           </div>
 
