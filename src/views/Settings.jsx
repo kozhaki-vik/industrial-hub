@@ -287,7 +287,7 @@ export default function Settings() {
                     <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://steamcommunity.com/id/Kochz/', '_blank'); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Steam">
                       <Gamepad2 className="w-5 h-5" />
                     </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kozhaki.vn'); alert('Discord тег @kozhaki.vn скопирован!'); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kozhaki.vn">
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kozhaki.vn'); alert(t('settings_discord_copied', { tag: '@kozhaki.vn' })); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kozhaki.vn">
                       <DiscordIcon className="w-5 h-5" />
                     </a>
                     <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://t.me/DimitryVik', '_blank'); }} className="text-slate-400 hover:text-[#229ED9] transition-colors" title="Telegram">
@@ -309,7 +309,7 @@ export default function Settings() {
                     <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://steamcommunity.com/profiles/76561198131045923', '_blank'); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Steam">
                       <Gamepad2 className="w-5 h-5" />
                     </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kaktycfps'); alert('Discord тег @kaktycfps скопирован!'); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kaktycfps">
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kaktycfps'); alert(t('settings_discord_copied', { tag: '@kaktycfps' })); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kaktycfps">
                       <DiscordIcon className="w-5 h-5" />
                     </a>
                   </div>
@@ -437,7 +437,7 @@ export default function Settings() {
                   setSponsorError(null);
                   try {
                     const type = sponsorStep === 'monobank' ? 'Monobank' : sponsorStep === 'stars' ? 'Telegram Stars' : 'Telegram Crypto';
-                    const message = `Новая заявка на спонсорство!\nСпособ: ${type}\nВремя из чека: ${sponsorTime}\nКонтакт для карточки: ${sponsorContact}`;
+                    const message = t('settings_sponsor_ticket_body', { type, time: sponsorTime, contact: sponsorContact });
                     await createTicket(message, "Sponsorship");
                     setSponsorSuccess(true);
                     setTimeout(() => setSponsorStep(null), 3000);

@@ -154,7 +154,8 @@ export default function DiscordMessagePreview({
 
   const embedColor = embed.color || '#5865f2';
   const now = new Date();
-  const timeString = `Сегодня, в ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const formattedTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const timeString = t('discord_preview_today_at', { time: formattedTime });
 
   return (
     <div className={`flex flex-col h-full w-full bg-[#313338] rounded-2xl border border-[#232428] shadow-2xl overflow-hidden font-sans text-xs sm:text-sm select-none ${className}`}>

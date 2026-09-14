@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 export const pingUrl = async (urlStr) => {
   if (window.electronAPI?.diagnostics) {
     return await window.electronAPI.diagnostics.pingUrl(urlStr);
@@ -58,7 +60,7 @@ export const getRecentLogs = async () => {
   if (window.electronAPI?.logs?.getRecent) {
     return await window.electronAPI.logs.getRecent();
   }
-  return 'Логи недоступны в браузере.';
+  return i18n.t('dev_logs_browser_unavailable');
 };
 
 

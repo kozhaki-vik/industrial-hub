@@ -27,18 +27,18 @@ export default function RustPathModal({ isOpen, onClose }) {
 
   const handleAutoDetect = async () => {
     setIsDetecting(true);
-    setStatusMsg({ type: 'info', text: t('rust_modal_detecting') || 'Поиск игры Rust...' });
+    setStatusMsg({ type: 'info', text: t('rust_modal_detecting') });
     try {
       const detected = await autoDetectRustPath();
       if (detected) {
         setCurrentPath(detected);
         setConfigKey('rustPath', detected);
-        setStatusMsg({ type: 'success', text: t('rust_modal_found') || 'Папка Rust успешно найдена!' });
+        setStatusMsg({ type: 'success', text: t('rust_modal_found') });
       } else {
-        setStatusMsg({ type: 'error', text: t('rust_modal_not_found') || 'Папка Rust не найдена автоматически. Укажите путь вручную.' });
+        setStatusMsg({ type: 'error', text: t('rust_modal_not_found') });
       }
     } catch {
-      setStatusMsg({ type: 'error', text: t('rust_modal_error') || 'Ошибка при поиске папки Rust.' });
+      setStatusMsg({ type: 'error', text: t('rust_modal_error') });
     } finally {
       setIsDetecting(false);
     }
@@ -49,7 +49,7 @@ export default function RustPathModal({ isOpen, onClose }) {
       const selected = await browseForRustPath();
       if (selected) {
         setCurrentPath(selected);
-        setStatusMsg({ type: 'info', text: t('rust_modal_selected') || 'Выбрана новая папка.' });
+        setStatusMsg({ type: 'info', text: t('rust_modal_selected') });
       }
     } catch (e) {
       console.error(e);
@@ -79,10 +79,10 @@ export default function RustPathModal({ isOpen, onClose }) {
           </div>
           <div>
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {t('rust_modal_title') || 'Укажите путь к игре Rust'}
+              {t('rust_modal_title')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {t('rust_modal_desc') || 'Первичная настройка для работы конфигураций, графика и биндов'}
+              {t('rust_modal_desc')}
             </p>
           </div>
         </div>

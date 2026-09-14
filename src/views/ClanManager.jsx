@@ -1365,8 +1365,8 @@ export default function ClanManager() {
       }
       const oldName = config?.name || '';
       // If recruitment title was not customized, or was using old name, or was GODS, update it to match new name
-      if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || (oldName && r.title === `Набор в клан ${oldName}`) || r.title.includes('GODS')) {
-        r.title = newName ? `Набор в клан ${newName}` : t('clan_rec_base', 'Набор в клан');
+      if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || (oldName && r.title === `${t('clan_recruit_title_prefix', 'Набор в клан')} ${oldName}`) || r.title.includes('GODS')) {
+        r.title = newName ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${newName}` : t('clan_rec_base', 'Набор в клан');
         updatedRecruitment = JSON.stringify(r);
       }
     } catch (e) {}
@@ -5256,7 +5256,7 @@ export default function ClanManager() {
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">IP (connect ...) *</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_server_ip_label', 'IP (connect ...) *')}</label>
                                 <input 
                                   type="text" 
                                   required 

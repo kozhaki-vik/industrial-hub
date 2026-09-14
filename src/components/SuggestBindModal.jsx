@@ -59,14 +59,14 @@ export default function SuggestBindModal({ isOpen, onClose }) {
           {status !== 'online' ? (
             <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <p className="text-sm font-medium">You must be connected to the server to send a support ticket.</p>
+              <p className="text-sm font-medium">{t('suggest_bind_offline')}</p>
             </div>
           ) : success ? (
             <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-6 rounded-xl flex flex-col items-center justify-center gap-3 text-center h-48">
               <CheckCircle className="w-10 h-10" />
               <div>
-                <p className="font-bold text-lg">Ticket Submitted</p>
-                <p className="text-sm mt-1 opacity-80">Our team will look into it shortly.</p>
+                <p className="font-bold text-lg">{t('suggest_bind_success_title')}</p>
+                <p className="text-sm mt-1 opacity-80">{t('suggest_bind_success_desc')}</p>
               </div>
             </div>
           ) : (

@@ -9,6 +9,21 @@ import SupportTicketModal from '../components/SupportTicketModal';
 import { itemsDB } from '../data/itemsDB';
 import { defaultConveyors, defaultCategories } from '../data/defaultConveyors';
 
+const defaultCatKeys = {
+  auto_craft: 'convCatAutoCraft',
+  auto_locker: 'convCatAutoLocker',
+  auto_smelt: 'convCatAutoSmelt',
+  resources: 'convCatResources',
+  weapons: 'convCatWeapons',
+  clothing: 'convCatClothing',
+  ammo: 'convCatAmmo',
+  components: 'convCatComponents',
+  farming: 'convCatFarming',
+  food: 'convCatFood',
+  explosives: 'convCatExplosives',
+  misc_category: 'convCatMisc'
+};
+
 function getSystemCategories(t) {
   return [
     { id: 'all', label: t('convCatAll') || 'All' },
@@ -22,6 +37,13 @@ export default function Conveyors() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const lang = i18n.language || 'ru';
+
+  const getCategoryLabel = useCallback((cat) => {
+    if (cat && defaultCatKeys[cat.id]) {
+      return t(defaultCatKeys[cat.id], cat.label);
+    }
+    return cat?.label || '';
+  }, [t]);
   
   const [conveyors, setConveyors] = useState([]);
   const [customCategories, setCustomCategories] = useState([]);
@@ -273,7 +295,7 @@ export default function Conveyors() {
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                   }`}
                 >
-                  {cat.label}
+                  {getCategoryLabel(cat)}
                 </button>
               ))}
             </div>
@@ -546,7 +568,7 @@ export default function Conveyors() {
           t={t}
           lang={lang}
           initialData={selectedConveyor}
-          categories={[{ id: 'uncategorized', label: t('convCatUncategorized') }, ...customCategories]}
+          categories={[{ id: 'uncategorized', label: t('convCatUncategorized') }, ...customCategories.map(cat => ({ ...cat, label: getCategoryLabel(cat) }))]}
           onClose={() => setIsEditing(false)}
           onSave={handleSaveConveyor}
         />
@@ -597,7 +619,7 @@ export default function Conveyors() {
                 className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mt-2"
                 onClick={() => setIsRestoreModalOpen(false)}
               >
-                {t('cancel') || 'Отмена'}
+                {t('cancel')}
               </button>
             </div>
           </div>

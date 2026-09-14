@@ -1,4 +1,5 @@
 import { getConfigKey, setConfigKey } from './store';
+import i18n from '../i18n';
 
 const readConfig = async (filename) => {
   if (!window.electronAPI?.config) {
@@ -154,14 +155,14 @@ export const ensureOriginalBackup = async () => {
     }
     
     backups.unshift({
-      id: 'original', name: 'Оригинальный бэкап', timestamp: Date.now(),
+      id: 'original', name: i18n.t('graphics_original_backup', 'Оригинальный бэкап'), timestamp: Date.now(),
       filename: 'keys_original_backup.cfg', content, isOriginal: true
     });
     setConfigKey('keysBackups', backups);
   }
 };
 
-export const createBackup = async (name = 'Ручной бэкап') => {
+export const createBackup = async (name = i18n.t('binds_backup_manual', 'Ручной бэкап')) => {
   await ensureOriginalBackup();
 
   const timestamp = Date.now();
@@ -251,14 +252,14 @@ export const ensureOriginalGraphicsBackup = async () => {
     }
     
     backups.unshift({
-      id: 'original', name: 'Оригинальный бэкап графики', timestamp: Date.now(),
+      id: 'original', name: i18n.t('graphics_original_backup', 'Оригинальный бэкап графики'), timestamp: Date.now(),
       filename: 'client_original_backup.cfg', content, isOriginal: true
     });
     setConfigKey('graphicsBackups', backups);
   }
 };
 
-export const createGraphicsBackup = async (name = 'Ручной бэкап графики') => {
+export const createGraphicsBackup = async (name = i18n.t('graphics_backup_manual', 'Ручной бэкап графики')) => {
   await ensureOriginalGraphicsBackup();
 
   const timestamp = Date.now();

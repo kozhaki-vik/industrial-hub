@@ -315,7 +315,7 @@ export default function Binds() {
                   </div>
                   <div>
                     <h4 className={`font-bold ${bkp.isOriginal ? 'text-orange-700 dark:text-orange-400' : 'text-slate-800 dark:text-slate-200'}`}>
-                      {bkp.name}
+                      {bkp.isOriginal ? t('graphics_original_backup') : (bkp.name === 'Ручной бэкап' ? t('binds_backup_manual') : bkp.name)}
                     </h4>
                     <p className="text-xs text-slate-500 mt-1">
                       {new Date(bkp.timestamp).toLocaleString()}

@@ -120,7 +120,7 @@ export default function SplashScreen({ onComplete }) {
                 />
               </div>
               <div className="flex justify-between text-[10px] text-slate-400">
-                <span>{progressData.currentFile || ''}</span>
+                <span>{progressData.currentFile === 'Применение обновления...' ? t('splash_applying_update') : (progressData.currentFile || '')}</span>
                 <span>{(downloadSpeed / 1024 / 1024).toFixed(2)} MB/s</span>
               </div>
             </div>
