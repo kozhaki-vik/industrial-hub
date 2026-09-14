@@ -2139,10 +2139,6 @@ export default function ClanManager() {
       <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
         {/* Top Header Banner */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 text-orange-600 dark:text-orange-400 text-xs font-bold tracking-wide uppercase">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>{t('clan_onboarding_badge', 'Центр управления кланом в Rust')}</span>
-          </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {t('clan_setup_title', 'Настройка Clan Manager')}
           </h2>
@@ -2157,7 +2153,7 @@ export default function ClanManager() {
           {/* Left Column: Why use the bot (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
             
-            {/* Feature Cards Grid (8 Core Features) */}
+            {/* Feature Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Feature 1: Fast & Detailed Recruitment */}
               <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
@@ -2185,20 +2181,7 @@ export default function ClanManager() {
                 </p>
               </div>
 
-              {/* Feature 3: Security & Anti-Raid */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
-                  <ShieldAlert className="w-4 h-4" />
-                </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_security_title', 'Аудит и безопасность')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_security_desc', 'Защита сервера от сливов и краш-рейдов, отслеживание подозрительных действий и полный контроль доступа к ролям клана.')}
-                </p>
-              </div>
-
-              {/* Feature 4: Logging & Moderation */}
+              {/* Feature 3: Logging & Moderation */}
               <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
                 <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
                   <ScrollText className="w-4 h-4" />
@@ -2211,7 +2194,7 @@ export default function ClanManager() {
                 </p>
               </div>
 
-              {/* Feature 5: Player Cross-Clan History */}
+              {/* Feature 4: Player Cross-Clan History */}
               <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">
                   <UserCheck className="w-4 h-4" />
@@ -2224,7 +2207,7 @@ export default function ClanManager() {
                 </p>
               </div>
 
-              {/* Feature 6: Transparent Votes */}
+              {/* Feature 5: Transparent Votes */}
               <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
                 <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 flex items-center justify-center text-cyan-600 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-900/50">
                   <Vote className="w-4 h-4" />
@@ -2237,7 +2220,7 @@ export default function ClanManager() {
                 </p>
               </div>
 
-              {/* Feature 7: Clan Stats */}
+              {/* Feature 6: Clan Stats */}
               <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
                 <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50">
                   <BarChart3 className="w-4 h-4" />
@@ -2250,7 +2233,7 @@ export default function ClanManager() {
                 </p>
               </div>
 
-              {/* Feature 8: Rust+ */}
+              {/* Feature 7: Rust+ */}
               <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
                 <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50">
                   <Radio className="w-4 h-4" />
@@ -2260,21 +2243,6 @@ export default function ClanManager() {
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   {t('clan_feature_rustplus_desc', 'Мгновенные оповещения о рейдах прямо в Discord, мониторинг датчиков движения, пейджеров, турелей и состояния базы.')}
-                </p>
-              </div>
-            </div>
-
-            {/* Role Hierarchy Tip */}
-            <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4.5 flex gap-4 items-start shadow-xs">
-              <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h5 className="text-sm font-bold text-amber-900 dark:text-amber-200">
-                  {t('clan_hierarchy_tip_title', 'Важное правило Discord: Иерархия ролей')}
-                </h5>
-                <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-                  {t('clan_hierarchy_tip_desc', 'После добавления бота откройте «Настройки сервера» → «Роли» и перетащите роль бота Clan Manager выше ролей участников клана, чтобы он мог выдавать и снимать роли.')}
                 </p>
               </div>
             </div>
