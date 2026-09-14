@@ -2126,7 +2126,7 @@ export default function ClanManager() {
     );
   }
 
-  const BOT_INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1545095227440631808&permissions=423087296&scope=bot%20applications.commands';
+  const BOT_INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1545095227440631808&permissions=8&scope=bot%20applications.commands';
 
   const handleCopyCommand = () => {
     navigator.clipboard.writeText('/hub_link');
@@ -2147,82 +2147,119 @@ export default function ClanManager() {
             {t('clan_setup_title', 'Настройка Clan Manager')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl mx-auto">
-            {t('clan_setup_desc_modern', 'Свяжите приложение с вашим Discord-сервером для автоматизации набора, синхронизации 12 ролей, создания временных войсов и защиты клана.')}
+            {t('clan_setup_desc_modern', 'Свяжите приложение с вашим Discord-сервером для детального набора кандидатов, аналитики состава, динамических войсов и полной защиты клана.')}
           </p>
         </div>
 
-        {/* 2-Column Grid: Left = Benefits & Trust, Right = 3-Step Interactive Form */}
+        {/* 2-Column Grid: Left = Benefits, Right = 3-Step Interactive Form */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Why use the bot & Trust manifesto (7 cols) */}
+          {/* Left Column: Why use the bot (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
             
-            {/* Feature Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Feature 1 */}
-              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
-                  <UserPlus className="w-4.5 h-4.5" />
+            {/* Feature Cards Grid (8 Core Features) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Feature 1: Fast & Detailed Recruitment */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
+                  <UserPlus className="w-4 h-4" />
                 </div>
                 <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_recruit_title', 'Автоматизация набора')}
+                  {t('clan_feature_recruit_title', 'Легкий и детальный набор')}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_recruit_desc', 'Готовые формы анкет, тикеты для приватного собеседования и авто-отсев кандидатов по часам в Rust и возрасту.')}
+                  {t('clan_feature_recruit_desc', 'Удобные анкеты кандидатов с авто-проверкой часов в Rust, подробными досье, фильтром по возрасту/блокировкам и приватными тикетами для собеседований.')}
                 </p>
               </div>
 
-              {/* Feature 2 */}
-              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50">
-                  <Users className="w-4.5 h-4.5" />
-                </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_roles_title', 'Иерархия 12 ролей')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_roles_desc', 'Моментальное назначение ролей Лидера, Колера, Билдера, Фармера и др. в один клик без рутины в Discord.')}
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
-                  <Volume2 className="w-4.5 h-4.5" />
+              {/* Feature 2: Dynamic Voice */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
+                  <Volume2 className="w-4 h-4" />
                 </div>
                 <h4 className="font-bold text-slate-900 dark:text-white text-sm">
                   {t('clan_feature_voice_title', 'Динамические войсы')}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_voice_desc', 'Временные комнаты для пати (дуо, трио, сквад), которые создаются автоматически при входе и удаляются, когда пусты.')}
+                  {t('clan_feature_voice_desc', 'Автоматическое создание комнат для пати при входе и их мгновенное удаление, когда они освобождаются.')}
                 </p>
               </div>
 
-              {/* Feature 4 */}
-              <div className="bg-white dark:bg-slate-900 p-4.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
-                  <ShieldAlert className="w-4.5 h-4.5" />
+              {/* Feature 3: Security & Anti-Raid */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
+                  <ShieldAlert className="w-4 h-4" />
                 </div>
                 <h4 className="font-bold text-slate-900 dark:text-white text-sm">
                   {t('clan_feature_security_title', 'Аудит и безопасность')}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_security_desc', 'Защита от сливов, логирование изменений прав и ролей, отслеживание подозрительных участников и досье игроков.')}
+                  {t('clan_feature_security_desc', 'Защита сервера от сливов и краш-рейдов, отслеживание подозрительных действий и полный контроль доступа к ролям клана.')}
                 </p>
               </div>
-            </div>
 
-            {/* Trust & Safety Banner */}
-            <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-4.5 flex gap-4 items-start shadow-xs">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
-                <ShieldCheck className="w-5 h-5" />
+              {/* Feature 4: Logging & Moderation */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                  <ScrollText className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_logging_title', 'Логирование и модерация')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_logging_desc', 'Детальный журнал всех событий клана, авто-модерация чата, система предупреждений (варнов) и прозрачный контроль прав.')}
+                </p>
               </div>
-              <div className="space-y-1">
-                <h5 className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
-                  {t('clan_trust_title', '100% безопасность и защита сервера')}
-                </h5>
-                <p className="text-xs text-emerald-700 dark:text-emerald-400 leading-relaxed">
-                  {t('clan_trust_desc', 'Бот НЕ запрашивает опасные права Администратора и не имеет скрытых команд. Он физически не может выдать роль выше своей собственной и подчиняется только вам через приложение Industrial Hub.')}
+
+              {/* Feature 5: Player Cross-Clan History */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">
+                  <UserCheck className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_player_history_title', 'История игрока в кланах')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_player_history_desc', 'Единая база досье: привязанные Steam-аккаунты, история прошлых кланов, причины кика или ухода, черные списки.')}
+                </p>
+              </div>
+
+              {/* Feature 6: Transparent Votes */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 flex items-center justify-center text-cyan-600 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-900/50">
+                  <Vote className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_votes_title', 'Удобные голосования')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_votes_desc', 'Голосования с открытыми результатами в реальном времени: сразу видно, кто именно из бойцов и за какой вариант проголосовал.')}
+                </p>
+              </div>
+
+              {/* Feature 7: Clan Stats */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_stats_title', 'Статистика клана')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_stats_desc', 'Глубокая аналитика состава: активность в голосовых каналах, посещаемость вайпов, сообщения и вклад каждого участника.')}
+                </p>
+              </div>
+
+              {/* Feature 8: Rust+ */}
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/50">
+                  <Radio className="w-4 h-4" />
+                </div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {t('clan_feature_rustplus_title', 'Скоро: Интеграция с Rust+')}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t('clan_feature_rustplus_desc', 'Мгновенные оповещения о рейдах прямо в Discord, мониторинг датчиков движения, пейджеров, турелей и состояния базы.')}
                 </p>
               </div>
             </div>
@@ -2237,7 +2274,7 @@ export default function ClanManager() {
                   {t('clan_hierarchy_tip_title', 'Важное правило Discord: Иерархия ролей')}
                 </h5>
                 <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-                  {t('clan_hierarchy_tip_desc', 'После добавления бота перейдите в Настройки сервера → Роли и поднимите роль бота выше ролей участников клана. Бот может выдавать только те роли, которые находятся строго ниже его собственной.')}
+                  {t('clan_hierarchy_tip_desc', 'После добавления бота откройте «Настройки сервера» → «Роли» и перетащите роль бота Clan Manager выше ролей участников клана, чтобы он мог выдавать и снимать роли.')}
                 </p>
               </div>
             </div>
