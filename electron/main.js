@@ -10,6 +10,7 @@ import https from 'https';
 import dns from 'dns';
 import Store from 'electron-store';
 import { AssetManager } from './assetManager.js';
+import { logger } from './logger.js';
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -372,19 +373,24 @@ function sendCrashReport(errorStack) {
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
+  logger.error('Uncaught Exception:', err);
   sendCrashReport(err.stack || err.message);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection:', reason);
   sendCrashReport(reason instanceof Error ? reason.stack : String(reason));
 });
 
 app.on('render-process-gone', (event, webContents, details) => {
-  sendCrashReport(`Renderer process gone! Reason: ${details.reason}, Exit code: ${details.exitCode}`);
+  const msg = `Renderer process gone! Reason: ${details.reason}, Exit code: ${details.exitCode}`;
+  logger.error(msg);
+  sendCrashReport(msg);
 });
 
 app.whenReady().then(async () => {
+  logger.init();
   const getClientDir = () => {
     try {
       const appPath = getRealAppPath();
@@ -698,7 +704,7 @@ app.whenReady().then(async () => {
       try {
         const psResult = await new Promise((resolve) => {
           child_process.exec(
-            'powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).Caption; (Get-CimInstance Win32_VideoController).Name"',
+            'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_OperatingSystem).Caption; (Get-CimInstance Win32_VideoController).Name"',
             { timeout: 3000, windowsHide: true },
             (error, stdout) => {
               if (error || !stdout.trim()) resolve({ os: '', gpu: '' });
@@ -920,7 +926,10 @@ app.whenReady().then(async () => {
       fs.writeFileSync(targetPath, content, 'utf8');
       return true;
     } catch (e) {
-      console.error(`Failed to write config ${filename}:`, e);
+      const isPerm = e.code === 'EPERM' || e.code === 'EACCES';
+      const msg = `Failed to write config ${filename}: ${e.message}${isPerm ? ' (PERMISSION DENIED: Run app as administrator if Rust is in Program Files)' : ''}`;
+      console.error(msg);
+      logger.error(msg);
       return false;
     }
   });
@@ -1149,12 +1158,30 @@ app.whenReady().then(async () => {
   const verifyFileSignature = (filePath) => {
     return new Promise((resolve) => {
       if (process.platform !== 'win32') return resolve(true);
-      const psCommand = `(Get-AuthenticodeSignature "${filePath}").SignerCertificate.Thumbprint`;
-      child_process.exec(`powershell -NoProfile -Command "${psCommand}"`, { windowsHide: true }, (error, stdout) => {
-        if (error) return resolve(false);
-        const thumbprint = stdout.trim().toUpperCase();
-        resolve(TRUSTED_THUMBPRINTS.includes(thumbprint));
-      });
+      if (!filePath || !fs.existsSync(filePath)) {
+        logger.warn(`Signature verification skipped: file does not exist: ${filePath}`);
+        return resolve(false);
+      }
+      const safePath = filePath.replace(/'/g, "''");
+      const psCommand = `(Get-AuthenticodeSignature -LiteralPath '${safePath}').SignerCertificate.Thumbprint`;
+      child_process.exec(
+        `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`,
+        { timeout: 10000, windowsHide: true },
+        (error, stdout) => {
+          if (error) {
+            logger.error(`Signature verification failed for ${filePath}:`, error.message);
+            return resolve(false);
+          }
+          const thumbprint = (stdout || '').trim().toUpperCase();
+          const isTrusted = TRUSTED_THUMBPRINTS.includes(thumbprint);
+          if (!isTrusted) {
+            logger.warn(`Untrusted thumbprint for ${filePath}: ${thumbprint}`);
+          } else {
+            logger.info(`Verified signature for ${filePath}: ${thumbprint} (Trusted)`);
+          }
+          resolve(isTrusted);
+        }
+      );
     });
   };
 
@@ -1321,7 +1348,25 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('app:reportError', (event, errorDetails) => {
+    logger.error('Reported from renderer:', errorDetails);
     sendCrashReport(errorDetails);
+  });
+
+  ipcMain.handle('logs:openFolder', async () => {
+    try {
+      const { logDir } = logger.getLogPaths();
+      if (fs.existsSync(logDir)) {
+        await shell.openPath(logDir);
+        return true;
+      }
+    } catch (e) {
+      logger.error('Failed to open log folder:', e.message);
+    }
+    return false;
+  });
+
+  ipcMain.handle('logs:getRecent', () => {
+    return logger.getRecentLogs(150);
   });
 
   ipcMain.handle('network:apply-updates', async (event, files, baseUrl) => {

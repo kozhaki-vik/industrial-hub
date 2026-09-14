@@ -2,9 +2,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles } from 'lucide-react';
+import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
+import { openLogFolder } from '../services/diagnostics';
 import { useNavigate } from 'react-router-dom';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 
@@ -237,6 +238,28 @@ export default function Settings() {
                 className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
               >
                 {t('developer_open', 'Открыть')}
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 dark:border-slate-800"></div>
+
+          {/* Logs & Diagnostics */}
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <FolderOpen className="w-5 h-5 text-emerald-500" />
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('settings_logs_title', 'Логи приложения')}</h3>
+                </div>
+                <p className="text-sm text-slate-500">{t('settings_logs_desc', 'Файлы диагностики и работы программы для техподдержки')}</p>
+              </div>
+              <button 
+                onClick={() => openLogFolder()}
+                className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-medium rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center gap-1.5"
+              >
+                <FolderOpen className="w-4 h-4" />
+                <span>{t('settings_logs_open', 'Открыть папку')}</span>
               </button>
             </div>
           </div>

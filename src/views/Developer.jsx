@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check } from 'lucide-react';
+import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath } from '../services/diagnostics';
+import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath, openLogFolder, getRecentLogs } from '../services/diagnostics';
 import { getButtonStats } from '../services/analytics';
 import { getConfigKey, setConfigKey, factoryReset } from '../services/store';
 import { defaultConveyors } from '../data/defaultConveyors';
@@ -31,6 +31,18 @@ export default function Developer() {
   const [shouldCrash, setShouldCrash] = useState(false);
   const [flamesResetSuccess, setFlamesResetSuccess] = useState(false);
   const [updateChannel, setUpdateChannel] = useState(getConfigKey('updateChannel') || 'main');
+  const [logCopied, setLogCopied] = useState(false);
+
+  const handleCopyLogs = async () => {
+    try {
+      const text = await getRecentLogs();
+      await navigator.clipboard.writeText(text);
+      setLogCopied(true);
+      setTimeout(() => setLogCopied(false), 2500);
+    } catch (e) {
+      console.error('Failed to copy logs:', e);
+    }
+  };
 
   useEffect(() => {
     if (sessionStorage.getItem('dev_authenticated') !== 'true') {
@@ -414,6 +426,23 @@ export default function Developer() {
             </button>
             <button onClick={() => setIsTestingSplash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors">
               <PlayCircle className="w-4 h-4" /> {t('dev_app_test_splash')}
+            </button>
+            <button 
+              onClick={() => openLogFolder()} 
+              className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-100 dark:bg-emerald-950/40 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-lg text-sm font-medium transition-colors border border-emerald-200 dark:border-emerald-800"
+            >
+              <FolderOpen className="w-4 h-4" /> {t('dev_open_log_folder', 'Открыть папку с логами')}
+            </button>
+            <button 
+              onClick={handleCopyLogs} 
+              className={`flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium transition-all ${
+                logCopied 
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' 
+                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              {logCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <span>{logCopied ? t('dev_copy_log_success', 'Лог скопирован в буфер!') : t('dev_copy_log_btn', 'Скопировать последние логи')}</span>
             </button>
             <button 
               onClick={handleResetFlames}

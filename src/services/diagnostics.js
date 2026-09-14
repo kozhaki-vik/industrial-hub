@@ -47,3 +47,18 @@ export const checkRustIntegrity = async (rustPath) => {
   return { status: 'error', details: [] };
 };
 
+export const openLogFolder = async () => {
+  if (window.electronAPI?.logs?.openFolder) {
+    return await window.electronAPI.logs.openFolder();
+  }
+  return false;
+};
+
+export const getRecentLogs = async () => {
+  if (window.electronAPI?.logs?.getRecent) {
+    return await window.electronAPI.logs.getRecent();
+  }
+  return 'Логи недоступны в браузере.';
+};
+
+

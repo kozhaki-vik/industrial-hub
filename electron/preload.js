@@ -15,6 +15,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     reportError: (err) => ipcRenderer.invoke('app:reportError', err),
     focusWindow: () => ipcRenderer.invoke('app:focusWindow')
   },
+  logs: {
+    openFolder: () => ipcRenderer.invoke('logs:openFolder'),
+    getRecent: () => ipcRenderer.invoke('logs:getRecent')
+  },
   diagnostics: {
     pingUrl: (url) => ipcRenderer.invoke('diagnostics:pingUrl', url),
     getHardwareInfo: () => ipcRenderer.invoke('diagnostics:getHardwareInfo'),
@@ -60,7 +64,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
             'diagnostics:checkAppIntegrity', 'diagnostics:checkRustIntegrity',
             'diagnostics:pingUrl',
             'app:relaunch', 'app:focusWindow', 'app:reportError',
-            'assets:sync'
+            'assets:sync',
+            'logs:openFolder', 'logs:getRecent'
         ];
         if (!ALLOWED_CHANNELS.includes(channel)) {
             console.error(`Blocked IPC invoke to unauthorized channel: ${channel}`);
