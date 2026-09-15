@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
+import { showConfirm } from '../components/ConfirmModal';
 
 const DiscordIcon = ({ className = 'w-5 h-5' }) => (
   <svg role="img" viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.0777.0777 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
@@ -609,7 +610,13 @@ export default function ClanManager() {
 
   const handleClearUserWarns = async (userId) => {
     if (!userId) return;
-    if (!window.confirm(t('msg_warn_clear_confirm', 'Снять все активные предупреждения с данного пользователя?'))) return;
+    const confirmed = await showConfirm({
+      title: t('msg_warn_clear_title', 'Снятие предупреждений'),
+      message: t('msg_warn_clear_confirm', 'Снять все активные предупреждения с данного пользователя?'),
+      confirmText: t('confirm_btn', 'Снять'),
+      danger: true
+    });
+    if (!confirmed) return;
     setWarnActionLoading(true);
     const modTag = (warnModerator || '').trim() || getDefaultModeratorName() || t('clan_mod_admin', 'Администратор');
     const res = await sendProxyAction('clear_warnings', { 
@@ -1139,8 +1146,14 @@ export default function ClanManager() {
     ws.send(JSON.stringify({ type: 'clan', action: 'link', code: linkCode }));
   };
 
-  const handleUnlink = () => {
-    if (window.confirm(t('clan_unlink_confirm') || 'Are you sure you want to unlink your Clan Manager?')) {
+  const handleUnlink = async () => {
+    const confirmed = await showConfirm({
+      title: t('clan_unlink_btn', 'Отвязать сервер'),
+      message: t('clan_unlink_confirm', 'Вы уверены, что хотите отвязать Clan Manager от текущего Discord сервера?'),
+      confirmText: t('clan_unlink_btn', 'Отвязать сервер'),
+      danger: true
+    });
+    if (confirmed) {
       addLog('Sending unlink request');
       hasPromptedRef.current = false;
       ws.send(JSON.stringify({ type: 'clan', action: 'unlink' }));
@@ -1609,9 +1622,15 @@ export default function ClanManager() {
     autoSaveConfig(updatedConfig);
   };
 
-  const handleDeleteCustomRole = (customId) => {
+  const handleDeleteCustomRole = async (customId) => {
     if (!config) return;
-    if (!window.confirm(t('clan_roles_delete_confirm') || 'Удалить этот шаблон роли? Привязка к Discord роли будет снята.')) return;
+    const confirmed = await showConfirm({
+      title: t('clan_roles_delete_title', 'Удаление роли'),
+      message: t('clan_roles_delete_confirm', 'Удалить этот шаблон роли? Привязка к Discord роли будет снята.'),
+      confirmText: t('confirm_btn', 'Удалить'),
+      danger: true
+    });
+    if (!confirmed) return;
     
     let customRoles = [];
     try {
@@ -1626,9 +1645,15 @@ export default function ClanManager() {
     autoSaveConfig(updatedConfig);
   };
 
-  const handleDeleteStandardRole = (roleKey, dbKey) => {
+  const handleDeleteStandardRole = async (roleKey, dbKey) => {
     if (!config) return;
-    if (!window.confirm(t('clan_role_delete_std_confirm') || 'Удалить эту стандартную роль из конфигурации? Привязка к Discord роли будет снята.')) return;
+    const confirmed = await showConfirm({
+      title: t('clan_roles_delete_title', 'Удаление роли'),
+      message: t('clan_role_delete_std_confirm', 'Удалить эту стандартную роль из конфигурации? Привязка к Discord роли будет снята.'),
+      confirmText: t('confirm_btn', 'Удалить'),
+      danger: true
+    });
+    if (!confirmed) return;
 
     let deletedRoles = [];
     try {
@@ -1747,9 +1772,15 @@ export default function ClanManager() {
     }));
   };
 
-  const handleExecuteFactoryReset = () => {
+  const handleExecuteFactoryReset = async () => {
     if (!resetSections || resetSections.length === 0) return;
-    if (!window.confirm(t('clan_reset_confirm_prompt') || 'Вы уверены, что хотите сбросить выбранные разделы к заводским настройкам?')) return;
+    const confirmed = await showConfirm({
+      title: t('clan_reset_sections_title', 'Сброс разделов настроек'),
+      message: t('clan_reset_confirm_prompt') || 'Вы уверены, что хотите сбросить выбранные разделы к заводским настройкам?',
+      confirmText: t('confirm_btn', 'Сбросить'),
+      danger: true
+    });
+    if (!confirmed) return;
 
     setIsResetting(true);
     addLog(`${t('log_reset_start', 'Запуск выборочного сброса к заводским настройкам: ')}${resetSections.join(', ')}`);
@@ -1888,9 +1919,15 @@ export default function ClanManager() {
     }));
   };
 
-  const handleClearApplications = () => {
+  const handleClearApplications = async () => {
     if (!ws || wsStatus !== 'online') return;
-    if (!window.confirm(t('clan_recruitment_apps_clear_confirm') || 'Вы действительно хотите полностью очистить весь журнал заявок в клан? Все записи будут безвозвратно удалены.')) return;
+    const confirmed = await showConfirm({
+      title: t('clan_recruitment_apps_clear_title', 'Очистка журнала заявок'),
+      message: t('clan_recruitment_apps_clear_confirm') || 'Вы действительно хотите полностью очистить весь журнал заявок в клан? Все записи будут безвозвратно удалены.',
+      confirmText: t('confirm_btn', 'Очистить'),
+      danger: true
+    });
+    if (!confirmed) return;
     setLoadingApps(true);
     ws.send(JSON.stringify({
       type: 'clan',
@@ -4202,8 +4239,14 @@ export default function ClanManager() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      if (window.confirm(`${t('clan_voice_delete_confirm', 'Удалить комнату')} "${room.name}"? ${t('clan_voice_delete_confirm2', 'Все участники будут отключены.')}`)) {
+                                    onClick={async () => {
+                                      const confirmed = await showConfirm({
+                                        title: t('clan_voice_delete_room_btn', 'Удалить комнату'),
+                                        message: `${t('clan_voice_delete_confirm', 'Удалить комнату')} "${room.name}"? ${t('clan_voice_delete_confirm2', 'Все участники будут отключены.')}`,
+                                        confirmText: t('confirm_btn', 'Удалить'),
+                                        danger: true
+                                      });
+                                      if (confirmed) {
                                         handleManageDynamicRoom('delete_room', room.channelId);
                                       }
                                     }}

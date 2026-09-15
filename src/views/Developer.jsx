@@ -8,6 +8,7 @@ import { getConfigKey, setConfigKey, factoryReset } from '../services/store';
 import { defaultConveyors } from '../data/defaultConveyors';
 import SplashScreen from '../components/SplashScreen';
 import { IntegrityCheckSkeleton } from '../components/Skeleton';
+import { showConfirm } from '../components/ConfirmModal';
 
 import { useNetwork } from '../contexts/NetworkContext';
 
@@ -140,8 +141,12 @@ export default function Developer() {
     setRustIntegrity(resRust);
   };
  
-  const handleResetFlames = () => {
-    if (!window.confirm(t('dev_reset_flames_confirm'))) return;
+  const handleResetFlames = async () => {
+    if (!await showConfirm({
+      title: t('dev_reset_flames', 'Сброс популярности конвейеров'),
+      message: t('dev_reset_flames_confirm'),
+      danger: true
+    })) return;
     let savedConveyors = getConfigKey('conveyorTemplates');
     if (!savedConveyors || !Array.isArray(savedConveyors) || savedConveyors.length === 0) {
       savedConveyors = defaultConveyors || [];
@@ -458,7 +463,15 @@ export default function Developer() {
             <button onClick={() => setShouldCrash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors hover:bg-red-200 dark:hover:bg-red-900/40">
               <AlertTriangle className="w-4 h-4" /> {t('dev_trigger_error')}
             </button>
-            <button onClick={() => { if(window.confirm(t('dev_factory_reset_confirm', 'Сбросить данные до заводских настроек? Программа будет перезапущена.'))) factoryReset(); }} className="flex items-center justify-center gap-2 w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/30">
+            <button onClick={async () => { 
+              const confirmed = await showConfirm({
+                title: t('dev_factory_reset_btn', 'Сброс настроек (Factory Reset)'),
+                message: t('dev_factory_reset_confirm', 'Сбросить данные до заводских настроек? Программа будет перезапущена.'),
+                confirmText: t('confirm_btn', 'Сбросить'),
+                danger: true
+              });
+              if (confirmed) factoryReset(); 
+            }} className="flex items-center justify-center gap-2 w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/30">
               <RefreshCw className="w-4 h-4" /> {t('dev_factory_reset_btn', 'Сбросить настройки (Factory Reset)')}
             </button>
           </div>

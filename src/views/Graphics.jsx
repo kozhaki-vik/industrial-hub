@@ -5,10 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { applyGraphicsPreset, getGraphicsBackups, createGraphicsBackup, restoreGraphicsBackup, ensureOriginalGraphicsBackup } from '../services/configManager';
 import SupportTicketModal from '../components/SupportTicketModal';
+import { showConfirm } from '../components/ConfirmModal';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function Graphics() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { addNotification } = useNotification();
   const rustPath = getConfigKey('rustPath');
   const [activePreset, setActivePreset] = React.useState(getConfigKey('activeGraphicsPreset') || 'Custom');
   const [activeTab, setActiveTab] = React.useState('presets'); // presets, backups
@@ -30,7 +33,7 @@ export default function Graphics() {
 
   const handleApplyPreset = async (preset) => {
     if (!rustPath) {
-      alert(t('error_rust_path_desc'));
+      addNotification(t('error_rust_path_desc'), 'error');
       return;
     }
     
@@ -49,10 +52,11 @@ export default function Graphics() {
       loadBackups();
       setActivePreset(preset);
       setConfigKey('activeGraphicsPreset', preset);
+      addNotification(t('graphics_preset_applied', 'Пресет успешно применен'), 'success');
     } else if (result.error === 'rust_running') {
-      alert(t('rust_running_error'));
+      addNotification(t('rust_running_error'), 'error');
     } else {
-      alert(t('graphics_error'));
+      addNotification(t('graphics_error'), 'error');
     }
   };
 
@@ -62,20 +66,26 @@ export default function Graphics() {
     const name = `${t('graphics_manual_backup')} (${timeStr})`;
     await createGraphicsBackup(name);
     await loadBackups();
-    alert(t('graphics_backup_created'));
+    addNotification(t('graphics_backup_created'), 'success');
   };
 
   const handleRestoreBackup = async (filename) => {
     if (!rustPath) return;
-    if (window.confirm(t('graphics_backup_restore_confirm'))) {
+    const confirmed = await showConfirm({
+      title: t('graphics_backup_restore_title', 'Восстановление настроек графики'),
+      message: t('graphics_backup_restore_confirm'),
+      confirmText: t('confirm_btn', 'Восстановить'),
+      danger: false
+    });
+    if (confirmed) {
       const result = await restoreGraphicsBackup(filename);
       if (result.success) {
         loadBackups();
-        alert(t('graphics_backup_restored'));
+        addNotification(t('graphics_backup_restored'), 'success');
       } else if (result.error === 'rust_running') {
-        alert(t('rust_running_error'));
+        addNotification(t('rust_running_error'), 'error');
       } else {
-        alert(t('graphics_error_restore'));
+        addNotification(t('graphics_error_restore'), 'error');
       }
     }
   };

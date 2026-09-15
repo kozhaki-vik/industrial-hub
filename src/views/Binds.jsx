@@ -8,10 +8,13 @@ import { saveBind, getBinds, ensureOriginalBackup, getBackups, createBackup, res
 import { bindSignatures } from '../services/bindAnalyzer';
 import SuggestBindModal from '../components/SuggestBindModal';
 import FullKeyboard from '../components/FullKeyboard';
+import { showConfirm } from '../components/ConfirmModal';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function Binds() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { addNotification } = useNotification();
   const [rustPath, setRustPath] = React.useState(getConfigKey('rustPath') || '');
   const [binds, setBinds] = React.useState({});
   const [gammaBind, setGammaBind] = React.useState(getConfigKey('gammaBind') || 'END');
@@ -52,7 +55,7 @@ export default function Binds() {
 
   const handleKeyClick = async (key) => {
     if (!rustPath) {
-      alert(t('error_rust_path_desc'));
+      addNotification(t('error_rust_path_desc'), 'error');
       return;
     }
 
@@ -67,13 +70,23 @@ export default function Binds() {
 
     // Warnings
     if (key === gammaBind) {
-      if (!window.confirm(t('binds_warn_gamma'))) {
+      const confirmed = await showConfirm({
+        title: t('binds_warn_title', 'Предупреждение о бинде'),
+        message: t('binds_warn_gamma'),
+        danger: false
+      });
+      if (!confirmed) {
         setHighlightEmpty(false);
         setBindingCommand(null);
         return;
       }
     } else if (binds[key]) {
-      if (!window.confirm(`${t('binds_warn_conflict')}\n${binds[key]}`)) {
+      const confirmed = await showConfirm({
+        title: t('binds_warn_title', 'Конфликт бинда'),
+        message: `${t('binds_warn_conflict')}\n${binds[key]}`,
+        danger: false
+      });
+      if (!confirmed) {
         setHighlightEmpty(false);
         setBindingCommand(null);
         return;
@@ -88,10 +101,11 @@ export default function Binds() {
     const result = await saveBind(key, commandToSave);
     if (result.success) {
       loadBinds();
+      addNotification(t('binds_saved_success', 'Бинд успешно сохранен'), 'success');
     } else if (result.error === 'rust_running') {
-      alert(t('rust_running_error'));
+      addNotification(t('rust_running_error'), 'error');
     } else {
-      alert(t('binds_error'));
+      addNotification(t('binds_error'), 'error');
     }
 
     // Reset modes
@@ -104,22 +118,26 @@ export default function Binds() {
     const name = `${t('binds_manual_backup')} (${timeStr})`;
     await createBackup(name);
     await loadBinds();
-    // alert is supported in Electron but we can just let the UI update speak for itself, 
-    // or keep alert if it works. Let's keep it.
-    alert(t('binds_backup_created'));
+    addNotification(t('binds_backup_created'), 'success');
   };
 
   const handleRestoreBackup = async (filename) => {
     if (!rustPath) return;
-    if (window.confirm(t('binds_backup_restore_confirm'))) {
+    const confirmed = await showConfirm({
+      title: t('binds_backup_restore_title', 'Восстановление биндов'),
+      message: t('binds_backup_restore_confirm'),
+      confirmText: t('confirm_btn', 'Восстановить'),
+      danger: false
+    });
+    if (confirmed) {
       const result = await restoreBackup(filename);
       if (result.success) {
         loadBinds();
-        alert(t('binds_backup_restored'));
+        addNotification(t('binds_backup_restored'), 'success');
       } else if (result.error === 'rust_running') {
-        alert(t('rust_running_error'));
+        addNotification(t('rust_running_error'), 'error');
       } else {
-        alert(t('binds_error_restore', 'Ошибка при восстановлении бэкапа.'));
+        addNotification(t('binds_error_restore', 'Ошибка при восстановлении бэкапа.'), 'error');
       }
     }
   };

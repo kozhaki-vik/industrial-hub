@@ -6,6 +6,7 @@ import Settings from './views/Settings';
 import SplashScreen from './components/SplashScreen';
 import RustPathModal from './components/RustPathModal';
 import InitialSetupModal from './components/InitialSetupModal';
+import ConfirmModal from './components/ConfirmModal';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { getConfigKey, setConfigKey } from './services/store';
 import { autoDetectRustPath } from './services/rustPath';
@@ -131,6 +132,7 @@ function App() {
                   />
                   <RustPathModal isOpen={showRustModal} onClose={() => setShowRustModal(false)} />
                   <ToastContainer />
+                  <ConfirmModal />
                 </HashRouter>
               </ErrorBoundary>
             </GammaProvider>
