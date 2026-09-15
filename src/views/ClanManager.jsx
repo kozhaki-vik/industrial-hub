@@ -318,137 +318,6 @@ const getLoggingEventGroups = (t) => [
   }
 ];
 
-function InitialClanNameModal({ isOpen, onClose, onSave, onOpenWizard, t }) {
-  const [name, setName] = useState('');
-  const [error, setError] = useState(false);
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      setName('');
-      setError(false);
-      const timer = setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div 
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div 
-        className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200 relative"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          title={t('clan_modal_close') || 'Закрыть'}
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="flex items-center gap-3 mb-4 pr-8">
-          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/50 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60 shrink-0">
-            <Settings className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              {t('clan_initial_name_title') || 'Укажите название клана'}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('clan_initial_name_subtitle') || 'Синхронизация с ботом в Discord'}
-            </p>
-          </div>
-        </div>
-
-        <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
-          {t('clan_initial_name_desc') || 'Для корректной работы всех модулей, набора и эмбедов бота в Discord, пожалуйста, укажите название вашего клана:'}
-        </p>
-
-        <form 
-          onSubmit={e => {
-            e.preventDefault();
-            if (!name.trim()) {
-              setError(true);
-              inputRef.current?.focus();
-              return;
-            }
-            setError(false);
-            onSave(name.trim());
-          }} 
-          noValidate 
-          className="space-y-4"
-        >
-          <div>
-            <input
-              ref={inputRef}
-              type="text"
-              required
-              data-required="true"
-              value={name}
-              onChange={e => {
-                setName(e.target.value);
-                if (e.target.value.trim()) setError(false);
-              }}
-              placeholder={t('clan_name_placeholder') || 'Например: TITAN'}
-              className={`w-full px-3.5 py-2.5 border rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
-                error ? 'border-red-400 dark:border-red-800 ring-2 ring-red-500/20' : 'border-slate-300 dark:border-slate-700'
-              }`}
-            />
-            {error && (
-              <p className="text-xs text-red-500 mt-1.5 font-medium">
-                {t('clan_name_required') || 'Пожалуйста, введите название клана'}
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2 pt-1">
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Check className="w-4 h-4" />
-              <span>{t('clan_initial_name_submit') || 'Сохранить и синхронизировать'}</span>
-            </button>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onOpenWizard}
-                className="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>{t('clan_wizard_btn') || 'Мастер настройки'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="py-2 px-4 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-semibold transition-all cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-              >
-                <span>{t('clan_modal_later') || 'Позже'}</span>
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 export default function ClanManager() {
   const { t } = useTranslation();
   const loggingEventGroups = getLoggingEventGroups(t);
@@ -482,10 +351,6 @@ export default function ClanManager() {
   const [isResetting, setIsResetting] = useState(false);
   const [syncModalData, setSyncModalData] = useState(null);
   const [editingRoomLimit, setEditingRoomLimit] = useState(null); // { channelId, name, limit }
-  const [initialNameDismissed, setInitialNameDismissed] = useState(false);
-  const hasPromptedRef = useRef(false);
-
-  const isInitialNameModalOpen = Boolean(config && (!config.name || !config.name.trim()) && !showSetupWizard && !initialNameDismissed);
 
   // Invite link verification & creation state
   const [inviteStatus, setInviteStatus] = useState(null); // 'checking' | 'valid' | 'invalid' | null
@@ -925,10 +790,6 @@ export default function ClanManager() {
             const sanitized = sanitizeClanConfig(fetchedConfig);
             setConfig(sanitized);
             lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
-            if (!hasPromptedRef.current && (!isBotConfigured(fetchedConfig) || !fetchedConfig?.name?.trim())) {
-              hasPromptedRef.current = true;
-              setShowSetupWizard(true);
-            }
             if (sanitized?.discordLink && sanitized.discordLink.trim()) {
               setCheckingInvite(true);
               setInviteStatus('checking');
@@ -1091,9 +952,6 @@ export default function ClanManager() {
               setConfig(sanitizeClanConfig(data.data.config));
             }
             const resetSecs = data.data.resetSections || [];
-            if (resetSecs.length === 0 || resetSecs.includes('general')) {
-              setInitialNameDismissed(false);
-            }
             if (resetSecs.length === 0 || resetSecs.includes('recruitment') || resetSecs.includes('applications')) {
               setApplicationsData([]);
               fetchApplications();
@@ -7029,21 +6887,6 @@ export default function ClanManager() {
           }}
         />
       )}
-
-      {/* Initial Clan Name Prompt Modal if no clan name is set yet */}
-      <InitialClanNameModal
-        isOpen={isInitialNameModalOpen}
-        onClose={() => setInitialNameDismissed(true)}
-        onSave={(newName) => {
-          handleClanNameChange(newName, true);
-          setInitialNameDismissed(true);
-        }}
-        onOpenWizard={() => {
-          setInitialNameDismissed(true);
-          setShowSetupWizard(true);
-        }}
-        t={t}
-      />
 
       {/* Role Sync Progress / Verification Modal */}
       {syncModalData && syncModalData.isOpen && (

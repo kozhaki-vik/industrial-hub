@@ -22,7 +22,6 @@ import ClanManager from './views/ClanManager';
 import { GammaProvider } from './contexts/GammaContext';
 import { initAnalytics } from './services/analytics';
 import ErrorBoundary from './components/ErrorBoundary';
-import SetupWizard from './components/SetupWizard';
 import FeedbackButton from './components/FeedbackButton';
 
 import { NetworkProvider, useNetwork } from './contexts/NetworkContext';
@@ -78,18 +77,9 @@ import ToastContainer from './components/ToastContainer';
 function App() {
   const [isStarting, setIsStarting] = useState(true);
   const [showRustModal, setShowRustModal] = useState(false);
-  const [setupCompleted, setSetupCompleted] = useState(getConfigKey('setupCompleted') !== false); // Default to true if not explicitly false to not bother existing users
-
   useEffect(() => {
     initAnalytics();
-    
-    // Check if it's the first run
-    const isSetupDone = getConfigKey('setupCompleted');
-    if (isSetupDone === false) {
-      setSetupCompleted(false);
-    }
   }, []);
-
 
   const handleSplashComplete = async () => {
     setIsStarting(false);
@@ -111,11 +101,7 @@ function App() {
       <NotificationProvider>
         {isStarting && <SplashScreen onComplete={handleSplashComplete} />}
         
-        {!isStarting && !setupCompleted && (
-          <SetupWizard onComplete={() => setSetupCompleted(true)} />
-        )}
-
-        {!isStarting && setupCompleted && (
+        {!isStarting && (
           <NetworkProvider>
             <GammaProvider>
               <ErrorBoundary>

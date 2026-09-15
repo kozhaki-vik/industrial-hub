@@ -5,7 +5,7 @@ let currentConfig = {
   rustPath: '',
   templates: [],
   telemetry: {},
-  setupCompleted: false,
+  setupCompleted: true,
   visitedTabs: []
 };
 
@@ -90,7 +90,7 @@ export const factoryReset = () => {
     rustPath: '',
     templates: [],
     telemetry: {},
-    setupCompleted: false,
+    setupCompleted: true,
     visitedTabs: []
   };
 

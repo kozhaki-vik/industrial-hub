@@ -23,11 +23,15 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', 
       return;
     }
     setNameError(false);
-    onConfirm({ ...options, clanName: clanName.trim() });
+    if (typeof onConfirm === 'function') {
+      onConfirm({ ...options, clanName: clanName.trim() });
+    } else if (typeof onClose === 'function') {
+      onClose();
+    }
   };
 
   const handleManual = () => {
-    if (onManualSetup) {
+    if (typeof onManualSetup === 'function') {
       onManualSetup(clanName.trim());
     }
   };
@@ -44,7 +48,7 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', 
               {t('clan_wizard_title')}
             </h2>
             <button
-              onClick={onClose}
+              onClick={() => onClose?.()}
               className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,7 +177,7 @@ const SetupWizard = ({ onClose, onConfirm, onManualSetup, initialClanName = '', 
           <div className="flex items-center gap-3 ml-auto">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => onClose?.()}
               className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
               {t('clan_wizard_cancel')}
