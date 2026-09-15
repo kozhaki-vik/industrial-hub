@@ -798,10 +798,6 @@ export default function ClanManager() {
             const sanitized = sanitizeClanConfig(fetchedConfig);
             setConfig(sanitized);
             lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
-            if (!hasPromptedRef.current && !isBotConfigured(sanitized)) {
-              hasPromptedRef.current = true;
-              setShowSetupWizard(true);
-            }
             if (sanitized?.discordLink && sanitized.discordLink.trim()) {
               setCheckingInvite(true);
               setInviteStatus('checking');
@@ -3060,22 +3056,9 @@ export default function ClanManager() {
               </div>
             </div>
 
-            {config && !isBotConfigured(config) && (
-              <button 
-                type="button"
-                onClick={() => setShowSetupWizard(true)} 
-                className="hidden md:flex items-center justify-center gap-1.5 px-2.5 py-1.5 mb-2 rounded-xl text-xs font-medium bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/80 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors shadow-sm animate-pulse shrink-0"
-                title={t('clan_unconfigured_desc') || 'Для работы бота необходимо привязать роли и каналы в Discord. Нажмите, чтобы открыть мастер настройки.'}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="truncate">{t('clan_unconfigured_title') || 'Бот еще не настроен'}</span>
-              </button>
-            )}
             {tabs.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
-              const isUnconfigured = (tab.id === 'roles' || tab.id === 'channels') && config && !isBotConfigured(config);
               return (
                 <button
                   key={tab.id}
@@ -3083,16 +3066,11 @@ export default function ClanManager() {
                   className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                      : isUnconfigured
-                        ? 'text-amber-700 dark:text-amber-300 bg-amber-50/60 dark:bg-amber-950/30 hover:bg-amber-100/70 dark:hover:bg-amber-900/40'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
-                  {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : isUnconfigured ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />}
+                  {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
                   <span className="truncate">{tab.label}</span>
-                  {isUnconfigured && (
-                    <span className={`ml-auto w-2 h-2 rounded-full ${isActive ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
-                  )}
                 </button>
               );
             })}
