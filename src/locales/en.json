@@ -1,4 +1,13 @@
 {
+  "initial_setup_title": "Welcome to Industrial Hub!",
+  "initial_setup_desc": "Select your interface language and theme to start.",
+  "initial_setup_lang_title": "Interface Language",
+  "initial_setup_theme_title": "Interface Theme",
+  "initial_setup_theme_dark": "Dark Theme",
+  "initial_setup_theme_dark_desc": "For night raids",
+  "initial_setup_theme_light": "Light Theme",
+  "initial_setup_theme_light_desc": "Clean classic style",
+  "initial_setup_continue": "Apply and Continue",
   "clan_setup_title": "Clan Manager Setup",
   "clan_setup_desc": "To manage your clan, you need to link this app to your Discord server.",
   "clan_onboarding_badge": "Rust Clan Management Center",

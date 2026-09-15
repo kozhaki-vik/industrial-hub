@@ -6,7 +6,7 @@ export const bindSignatures = [
     icon: 'run',
     color: 'emerald',
     isLong: false,
-    match: (cmd) => /\\bforward\\b/.test(cmd) && /\\bsprint\\b/.test(cmd)
+    match: (cmd) => /\bforward\b/.test(cmd) && /\bsprint\b/.test(cmd)
   },
   {
     id: 'autofarm',
@@ -15,7 +15,7 @@ export const bindSignatures = [
     icon: 'pickaxe',
     color: 'amber',
     isLong: false,
-    match: (cmd) => /\\battack\\b/.test(cmd) && /\\bduck\\b/.test(cmd)
+    match: (cmd) => /\battack\b/.test(cmd) && /\bduck\b/.test(cmd)
   },
   {
     id: 'combatlog',
@@ -24,7 +24,7 @@ export const bindSignatures = [
     icon: 'shield',
     color: 'indigo',
     isLong: true,
-    match: (cmd) => /\\bcombatlog\\b/.test(cmd)
+    match: (cmd) => /\bcombatlog\b/.test(cmd)
   },
   {
     id: 'suicide',
@@ -33,7 +33,7 @@ export const bindSignatures = [
     icon: 'skull',
     color: 'red',
     isLong: false,
-    match: (cmd) => /\\bkill\\b/.test(cmd)
+    match: (cmd) => /\bkill\b/.test(cmd)
   },
   {
     id: 'disconnect',
@@ -42,7 +42,7 @@ export const bindSignatures = [
     icon: 'log-out',
     color: 'slate',
     isLong: false,
-    match: (cmd) => /\\bdisconnect\\b/.test(cmd)
+    match: (cmd) => /\bdisconnect\b/.test(cmd)
   },
   {
     id: 'fov',
@@ -51,7 +51,7 @@ export const bindSignatures = [
     icon: 'eye',
     color: 'blue',
     isLong: true,
-    match: (cmd) => /\\bgraphics\\.fov\\b/.test(cmd)
+    match: (cmd) => /\bgraphics\.fov\b/.test(cmd)
   },
   {
     id: 'mute',
@@ -60,7 +60,7 @@ export const bindSignatures = [
     icon: 'volume-x',
     color: 'purple',
     isLong: true,
-    match: (cmd) => /\\baudio\\.master\\b/.test(cmd) || /\\baudio\\.game\\b/.test(cmd)
+    match: (cmd) => /\baudio\.master\b/.test(cmd) || /\baudio\.game\b/.test(cmd)
   },
   {
     id: 'clear',
@@ -69,7 +69,7 @@ export const bindSignatures = [
     icon: 'trash',
     color: 'slate',
     isLong: false,
-    match: (cmd) => /\\bclear\\b/.test(cmd) && !/\\bcombatlog\\b/.test(cmd)
+    match: (cmd) => /\bclear\b/.test(cmd) && !/\bcombatlog\b/.test(cmd)
   },
   {
     id: 'change_hands',
@@ -78,7 +78,7 @@ export const bindSignatures = [
     icon: 'refresh-ccw',
     color: 'teal',
     isLong: true,
-    match: (cmd) => /\\bvm_horizontal_flip\\b/.test(cmd)
+    match: (cmd) => /\bvm_horizontal_flip\b/.test(cmd)
   },
   {
     id: 'hide_hud',
@@ -87,7 +87,7 @@ export const bindSignatures = [
     icon: 'monitor-off',
     color: 'stone',
     isLong: true,
-    match: (cmd) => /\\bgraphics\\.hud\\b/.test(cmd)
+    match: (cmd) => /\bgraphics\.hud\b/.test(cmd)
   },
   {
     id: 'auto_swim',
@@ -96,7 +96,7 @@ export const bindSignatures = [
     icon: 'waves',
     color: 'cyan',
     isLong: false,
-    match: (cmd) => /\\bjump\\b/.test(cmd) && /\\bforward\\b/.test(cmd) && /\\bsprint\\b/.test(cmd)
+    match: (cmd) => /\bjump\b/.test(cmd) && /\bforward\b/.test(cmd) && /\bsprint\b/.test(cmd)
   },
   {
     id: 'crouch_toggle',

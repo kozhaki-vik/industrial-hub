@@ -100,7 +100,8 @@ export const saveBind = async (key, command) => {
   
   let currentKeys = await readConfig('keys.cfg') || '';
   const bindLine = `bind ${key.toLowerCase()} "${command}"`;
-  const regex = new RegExp(`^bind\\s+${key.toLowerCase()}\\s+.*$`, 'im');
+  const escapedKey = key.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`^bind\\s+${escapedKey}\\s+.*$`, 'im');
   
   if (currentKeys.match(regex)) {
     currentKeys = currentKeys.replace(regex, bindLine);
@@ -220,9 +221,7 @@ export const restoreBackup = async (filename) => {
     } else if (backup && backup.content !== undefined) {
       await window.electronAPI.config.writeConfig(rustPath, 'keys.cfg', backup.content);
     }
-  }
-
-  if (backup && backup.content !== undefined) {
+  } else if (backup && backup.content !== undefined) {
     await writeConfig('keys.cfg', backup.content);
   }
   return { success: true };
@@ -317,9 +316,7 @@ export const restoreGraphicsBackup = async (filename) => {
     } else if (backup && backup.content !== undefined) {
       await window.electronAPI.config.writeConfig(rustPath, 'client.cfg', backup.content);
     }
-  }
-
-  if (backup && backup.content !== undefined) {
+  } else if (backup && backup.content !== undefined) {
     await writeConfig('client.cfg', backup.content);
   }
   return { success: true };

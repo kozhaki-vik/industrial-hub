@@ -1,4 +1,13 @@
 {
+  "initial_setup_title": "Ласкаво просимо до Industrial Hub!",
+  "initial_setup_desc": "Оберіть мову інтерфейсу та тему для початку комфортної роботи.",
+  "initial_setup_lang_title": "Мова інтерфейсу",
+  "initial_setup_theme_title": "Тема оформлення",
+  "initial_setup_theme_dark": "Темна",
+  "initial_setup_theme_dark_desc": "Для нічних рейдів",
+  "initial_setup_theme_light": "Світла",
+  "initial_setup_theme_light_desc": "Класичний стиль",
+  "initial_setup_continue": "Застосувати та продовжити",
   "clan_setup_title": "Налаштування Clan Manager",
   "clan_setup_desc": "Для керування кланом необхідно прив'язати цей додаток до вашого Discord серверу.",
   "clan_onboarding_badge": "Центр керування кланом у Rust",

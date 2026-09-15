@@ -339,6 +339,7 @@ export default function ClanManager() {
   const [discordInfo, setDiscordInfo] = useState(null);
   const [activeVotes, setActiveVotes] = useState(null);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const hasPromptedRef = useRef(false);
   const [dynamicVoiceData, setDynamicVoiceData] = useState(null);
   const [loadingVoice, setLoadingVoice] = useState(false);
   const [voiceActionLoading, setVoiceActionLoading] = useState(false);
@@ -579,7 +580,7 @@ export default function ClanManager() {
     if (res && res.success) {
       setNewWarnReason('');
       await fetchUserWarnings(selectedUserForWarns.userId);
-      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
       if (activeTab === 'moderation') fetchClanWarnings();
     } else {
       setError(res?.error || t('msg_warn_issue_failed', 'Не удалось выдать предупреждение'));
@@ -599,7 +600,7 @@ export default function ClanManager() {
       if (selectedUserForWarns) {
         await fetchUserWarnings(selectedUserForWarns.userId);
       }
-      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
       if (activeTab === 'moderation') fetchClanWarnings();
     } else {
       setError(res?.error || t('msg_warn_remove_failed', 'Не удалось снять предупреждение'));
@@ -620,7 +621,7 @@ export default function ClanManager() {
       if (selectedUserForWarns) {
         await fetchUserWarnings(selectedUserForWarns.userId);
       }
-      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
       if (activeTab === 'moderation') fetchClanWarnings();
     } else {
       setError(res?.error || t('msg_warn_clear_failed', 'Не удалось очистить предупреждения'));
@@ -790,6 +791,10 @@ export default function ClanManager() {
             const sanitized = sanitizeClanConfig(fetchedConfig);
             setConfig(sanitized);
             lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
+            if (!hasPromptedRef.current && !isBotConfigured(sanitized)) {
+              hasPromptedRef.current = true;
+              setShowSetupWizard(true);
+            }
             if (sanitized?.discordLink && sanitized.discordLink.trim()) {
               setCheckingInvite(true);
               setInviteStatus('checking');
@@ -844,7 +849,7 @@ export default function ClanManager() {
             setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 3000);
           }
-        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_roster') {
+        } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_roster' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_roster_')))) {
           if (!data.error && data.data && data.data.success) {
             setRosterData(data.data);
           }
@@ -860,11 +865,11 @@ export default function ClanManager() {
             html: data.data?.transcriptHtml || null,
             error: data.error || (data.data && !data.data.success ? (data.data.error || t('msg_transcript_error', 'Ошибка загрузки транскрипта')) : (!data.data?.transcriptHtml ? t('msg_transcript_not_found', 'Транскрипт не найден или еще формируется') : null))
           }));
-        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_stats') {
+        } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_stats' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_stats_')))) {
           if (!data.error && data.data && data.data.success) {
             setStatsData(data.data.stats);
           }
-        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_discord_info') {
+        } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_discord_info' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_discord_info_')))) {
           if (!data.error && data.data && data.data.success) {
             setDiscordInfo({ roles: data.data.roles, channels: data.data.channels });
           }
@@ -1952,16 +1957,16 @@ export default function ClanManager() {
         verifyRecruitmentInvite(config.discordLink);
       }
       if (!rosterData) {
-        ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_roster', payload: { action: 'get_roster' } }));
+        ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_roster_${Date.now()}`, payload: { action: 'get_roster' } }));
       }
     } else if (activeTab === 'dossier') {
       fetchDossiers(dossierFilter, dossierSearch);
     } else if (activeTab === 'roster' && !rosterData) {
       addLog('Fetching roster via proxy');
-      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_roster', payload: { action: 'get_roster' } }));
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_roster_${Date.now()}`, payload: { action: 'get_roster' } }));
     } else if (activeTab === 'stats' && !statsData) {
       addLog('Fetching stats via proxy');
-      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: 'get_stats', payload: { action: 'get_stats' } }));
+      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
     } else if (activeTab === 'voice' && !dynamicVoiceData) {
       fetchDynamicVoice();
     } else if (activeTab === 'moderation') {

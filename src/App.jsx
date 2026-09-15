@@ -5,6 +5,7 @@ import Dashboard from './views/Dashboard';
 import Settings from './views/Settings';
 import SplashScreen from './components/SplashScreen';
 import RustPathModal from './components/RustPathModal';
+import InitialSetupModal from './components/InitialSetupModal';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { getConfigKey, setConfigKey } from './services/store';
 import { autoDetectRustPath } from './services/rustPath';
@@ -77,14 +78,12 @@ import ToastContainer from './components/ToastContainer';
 function App() {
   const [isStarting, setIsStarting] = useState(true);
   const [showRustModal, setShowRustModal] = useState(false);
+  const [showInitialSetupModal, setShowInitialSetupModal] = useState(false);
   useEffect(() => {
     initAnalytics();
   }, []);
 
-  const handleSplashComplete = async () => {
-    setIsStarting(false);
-    
-    // Check if Rust path is configured on launch
+  const checkRustPath = async () => {
     const path = getConfigKey('rustPath');
     if (!path) {
       const detected = await autoDetectRustPath();
@@ -94,6 +93,23 @@ function App() {
         setShowRustModal(true);
       }
     }
+  };
+
+  const handleSplashComplete = async () => {
+    setIsStarting(false);
+    
+    const initialSetupDone = localStorage.getItem('industrial-hub-initial-setup') || getConfigKey('initialSetupCompleted');
+    if (!initialSetupDone) {
+      setShowInitialSetupModal(true);
+      return;
+    }
+    
+    await checkRustPath();
+  };
+
+  const handleInitialSetupComplete = async () => {
+    setShowInitialSetupModal(false);
+    await checkRustPath();
   };
 
   return (
@@ -109,6 +125,10 @@ function App() {
                   <RouteTracker />
                   <AppMain />
                   <FeedbackButton />
+                  <InitialSetupModal 
+                    isOpen={showInitialSetupModal} 
+                    onComplete={handleInitialSetupComplete} 
+                  />
                   <RustPathModal isOpen={showRustModal} onClose={() => setShowRustModal(false)} />
                   <ToastContainer />
                 </HashRouter>
