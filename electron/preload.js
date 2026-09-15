@@ -13,7 +13,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   app: {
     relaunch: () => ipcRenderer.invoke('app:relaunch'),
     reportError: (err) => ipcRenderer.invoke('app:reportError', err),
-    focusWindow: () => ipcRenderer.invoke('app:focusWindow')
+    focusWindow: () => ipcRenderer.invoke('app:focusWindow'),
+    getAutoStart: () => ipcRenderer.invoke('app:getAutoStart'),
+    setAutoStart: (enabled) => ipcRenderer.invoke('app:setAutoStart', enabled)
   },
   logs: {
     openFolder: () => ipcRenderer.invoke('logs:openFolder'),
@@ -64,6 +66,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
             'diagnostics:checkAppIntegrity', 'diagnostics:checkRustIntegrity',
             'diagnostics:pingUrl',
             'app:relaunch', 'app:focusWindow', 'app:reportError',
+            'app:getAutoStart', 'app:setAutoStart',
             'assets:sync',
             'logs:openFolder', 'logs:getRecent'
         ];

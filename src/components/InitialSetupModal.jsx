@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Palette, Moon, Sun, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { Globe, Palette, Moon, Sun, Check, ArrowRight, Sparkles, Power } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { setConfigKey } from '../services/store';
 
@@ -10,6 +10,17 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
 
   const [selectedLang, setSelectedLang] = useState(() => i18n.language || 'ru');
   const [selectedTheme, setSelectedTheme] = useState(() => theme || 'dark');
+  const [autoStart, setAutoStart] = useState(true);
+
+  useEffect(() => {
+    if (window.electronAPI?.app?.getAutoStart) {
+      window.electronAPI.app.getAutoStart().then((enabled) => {
+        if (typeof enabled === 'boolean') {
+          setAutoStart(enabled);
+        }
+      }).catch(() => {});
+    }
+  }, []);
 
   if (!isOpen) return null;
 
@@ -33,6 +44,10 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
     setConfigKey('language', selectedLang);
     setConfigKey('theme', selectedTheme);
     setConfigKey('initialSetupCompleted', true);
+
+    if (window.electronAPI?.app?.setAutoStart) {
+      window.electronAPI.app.setAutoStart(autoStart);
+    }
 
     if (onComplete) {
       onComplete();
@@ -163,6 +178,51 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
                 </div>
               )}
             </button>
+          </div>
+        </div>
+
+        {/* AutoStart Selection */}
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2">
+            <Power className="w-4 h-4 text-orange-500" />
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              {t('initial_setup_autostart_title', 'Автозапуск при старте Windows')}
+            </label>
+          </div>
+          <div
+            onClick={() => setAutoStart(!autoStart)}
+            className={`p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
+              autoStart
+                ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
+                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
+            }`}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                autoStart 
+                  ? 'bg-orange-500 text-white' 
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+              }`}>
+                <Power className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  {t('initial_setup_autostart_title', 'Автозапуск при старте Windows')}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {t('initial_setup_autostart_desc', 'Запускать Industrial Hub в фоне при включении ПК (безопасно, без нагрузки)')}
+                </div>
+              </div>
+            </div>
+
+            {/* Switch slider */}
+            <div className={`w-11 h-6 flex items-center rounded-full p-1 duration-200 shrink-0 ${
+              autoStart ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-700'
+            }`}>
+              <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-200 ease-in-out ${
+                autoStart ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </div>
           </div>
         </div>
 

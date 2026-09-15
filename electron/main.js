@@ -82,6 +82,47 @@ function getNativeHelperPath() {
   return path.join(process.resourcesPath, 'resources', 'NativeHelper.exe');
 }
 
+function updateDesktopShortcut(targetExe, workingDir) {
+  try {
+    const target = targetExe || process.execPath;
+    const cwd = workingDir || path.dirname(target);
+    const desktopDirs = new Set();
+
+    try {
+      const p = app.getPath('desktop');
+      if (p) desktopDirs.add(p);
+    } catch {}
+
+    if (process.env.USERPROFILE) {
+      desktopDirs.add(path.join(process.env.USERPROFILE, 'Desktop'));
+      desktopDirs.add(path.join(process.env.USERPROFILE, 'OneDrive', 'Desktop'));
+    }
+    if (process.env.PUBLIC) {
+      desktopDirs.add(path.join(process.env.PUBLIC, 'Desktop'));
+    }
+
+    for (const dir of desktopDirs) {
+      if (fs.existsSync(dir)) {
+        const shortcutFile = path.join(dir, 'Industrial Hub.lnk');
+        try {
+          shell.writeShortcutLink(shortcutFile, 'replace', {
+            target,
+            cwd,
+            description: 'Industrial Hub - Ultimate Rust Assistant',
+            icon: target,
+            iconIndex: 0
+          });
+          console.log(`[Shortcut] Successfully updated desktop shortcut at ${shortcutFile}`);
+        } catch (err) {
+          console.warn(`[Shortcut] Could not write shortcut to ${shortcutFile}:`, err.message);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[Shortcut] Failed to update desktop shortcut:', e);
+  }
+}
+
 // --- Gamma & Hook Native Logic ---
 
 let currentHookProcess = null;
@@ -548,6 +589,21 @@ app.whenReady().then(async () => {
     }
   } catch (e) {
     console.error('Cleanup error:', e);
+  }
+
+  // Self-heal desktop shortcut & sync auto-start on startup
+  try {
+    updateDesktopShortcut();
+    const loginSettings = app.getLoginItemSettings();
+    if (loginSettings.openAtLogin) {
+      app.setLoginItemSettings({
+        openAtLogin: true,
+        path: process.execPath,
+        args: []
+      });
+    }
+  } catch (e) {
+    console.error('Failed to self-heal shortcut or auto-start on startup:', e);
   }
 
   ipcMain.handle('shell:openFolder', async (event, folderPath) => {
@@ -1306,14 +1362,21 @@ app.whenReady().then(async () => {
         console.error('Failed to save last_update.json:', e);
       }
 
+      // Robustly update desktop shortcut to point to new version
+      updateDesktopShortcut(targetExePath, newAppDir);
+
+      // If auto-start was enabled, update login item settings to point to new exe
       try {
-        shell.writeShortcutLink(shortcutPath, 'create', {
-          target: targetExePath,
-          cwd: newAppDir,
-          description: 'Industrial Hub'
-        });
+        const loginSettings = app.getLoginItemSettings();
+        if (loginSettings.openAtLogin) {
+          app.setLoginItemSettings({
+            openAtLogin: true,
+            path: targetExePath,
+            args: []
+          });
+        }
       } catch (e) {
-        console.error("Failed to update shortcut:", e);
+        console.error('Failed to update login item settings on update:', e);
       }
 
       const child = child_process.spawn(targetExePath, [
@@ -1350,6 +1413,30 @@ app.whenReady().then(async () => {
   ipcMain.handle('app:reportError', (event, errorDetails) => {
     logger.error('Reported from renderer:', errorDetails);
     sendCrashReport(errorDetails);
+  });
+
+  ipcMain.handle('app:getAutoStart', () => {
+    try {
+      const settings = app.getLoginItemSettings();
+      return settings.openAtLogin;
+    } catch (e) {
+      console.error('Failed to get auto-start setting:', e);
+      return false;
+    }
+  });
+
+  ipcMain.handle('app:setAutoStart', (_event, enabled) => {
+    try {
+      app.setLoginItemSettings({
+        openAtLogin: !!enabled,
+        path: process.execPath,
+        args: []
+      });
+      return { success: true, enabled: !!enabled };
+    } catch (e) {
+      console.error('Failed to set auto-start setting:', e);
+      return { success: false, error: e.message };
+    }
   });
 
   ipcMain.handle('logs:openFolder', async () => {

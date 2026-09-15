@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen } from 'lucide-react';
+import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
 import { openLogFolder } from '../services/diagnostics';
@@ -71,6 +71,24 @@ export default function Settings() {
   const [isSubmittingSponsor, setIsSubmittingSponsor] = React.useState(false);
   const [sponsorSuccess, setSponsorSuccess] = React.useState(false);
   const [sponsorError, setSponsorError] = React.useState(null);
+
+  // Auto-Start State
+  const [autoStart, setAutoStart] = React.useState(false);
+
+  React.useEffect(() => {
+    if (window.electronAPI?.app?.getAutoStart) {
+      window.electronAPI.app.getAutoStart().then(enabled => {
+        setAutoStart(!!enabled);
+      }).catch(() => {});
+    }
+  }, []);
+
+  const handleToggleAutoStart = async (val) => {
+    setAutoStart(val);
+    if (window.electronAPI?.app?.setAutoStart) {
+      await window.electronAPI.app.setAutoStart(val).catch(() => {});
+    }
+  };
 
   // Developer Mode PIN State
   const [showPinModal, setShowPinModal] = React.useState(false);
@@ -217,6 +235,32 @@ export default function Settings() {
                   className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
                 />
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('theme_dark')}</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Auto-Start with Windows */}
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Power className="w-5 h-5 text-orange-500" />
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {t('settings_autostart_title', 'Автозапуск программы')}
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-500">
+                  {t('settings_autostart_desc', 'Автоматически запускать Industrial Hub при включении компьютера')}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={autoStart} 
+                  onChange={(e) => handleToggleAutoStart(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
             </div>
           </div>
