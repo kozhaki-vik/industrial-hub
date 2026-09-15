@@ -51,6 +51,39 @@ function getRealAppPath() {
   return process.cwd();
 }
 
+function getRealExecutablePath() {
+  if (process.env.PORTABLE_EXECUTABLE_FILE && fs.existsSync(process.env.PORTABLE_EXECUTABLE_FILE)) {
+    return process.env.PORTABLE_EXECUTABLE_FILE;
+  }
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    const candidate = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Industrial Hub.exe');
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
+  // Check client directory under AppData\Roaming\IndustrialHubClient\client
+  try {
+    const appData = app.getPath('appData');
+    const clientDir = path.join(appData, 'IndustrialHubClient', 'client');
+    if (fs.existsSync(clientDir)) {
+      const dirs = fs.readdirSync(clientDir).filter(d => d.startsWith('app-'));
+      if (dirs.length > 0) {
+        dirs.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+        const latestExe = path.join(clientDir, dirs[0], 'Industrial Hub.exe');
+        if (fs.existsSync(latestExe)) {
+          return latestExe;
+        }
+      }
+    }
+  } catch {}
+
+  // Fallback: only use process.execPath if it is NOT in Temp
+  if (process.execPath && !process.execPath.toLowerCase().includes('\\temp\\') && !process.execPath.toLowerCase().includes('/temp/')) {
+    return process.execPath;
+  }
+
+  return process.execPath;
+}
+
 // --- Single Instance Lock ---
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -84,7 +117,11 @@ function getNativeHelperPath() {
 
 function updateDesktopShortcut(targetExe, workingDir) {
   try {
-    const target = targetExe || process.execPath;
+    const target = targetExe || getRealExecutablePath();
+    if (!target || target.toLowerCase().includes('\\temp\\') || target.toLowerCase().includes('/temp/')) {
+      console.warn('[Shortcut] Refusing to set desktop shortcut to temporary directory:', target);
+      return;
+    }
     const cwd = workingDir || path.dirname(target);
     const desktopDirs = new Set();
 
@@ -112,7 +149,7 @@ function updateDesktopShortcut(targetExe, workingDir) {
             icon: target,
             iconIndex: 0
           });
-          console.log(`[Shortcut] Successfully updated desktop shortcut at ${shortcutFile}`);
+          console.log(`[Shortcut] Successfully updated desktop shortcut at ${shortcutFile} -> ${target}`);
         } catch (err) {
           console.warn(`[Shortcut] Could not write shortcut to ${shortcutFile}:`, err.message);
         }
@@ -593,14 +630,22 @@ app.whenReady().then(async () => {
 
   // Self-heal desktop shortcut & sync auto-start on startup
   try {
-    updateDesktopShortcut();
-    const loginSettings = app.getLoginItemSettings();
-    if (loginSettings.openAtLogin) {
-      app.setLoginItemSettings({
-        openAtLogin: true,
-        path: process.execPath,
-        args: []
-      });
+    const realExe = getRealExecutablePath();
+    if (realExe && !realExe.toLowerCase().includes('\\temp\\') && !realExe.toLowerCase().includes('/temp/')) {
+      updateDesktopShortcut(realExe);
+      
+      const isAutoStartConfigured = store.get('autoStart');
+      const isCurrentlyRegistered = app.getLoginItemSettings().openAtLogin || app.getLoginItemSettings({ path: realExe }).openAtLogin;
+      const shouldAutoStart = isAutoStartConfigured ?? isCurrentlyRegistered;
+
+      if (shouldAutoStart) {
+        app.setLoginItemSettings({
+          openAtLogin: true,
+          path: realExe,
+          args: []
+        });
+        store.set('autoStart', true);
+      }
     }
   } catch (e) {
     console.error('Failed to self-heal shortcut or auto-start on startup:', e);
@@ -1367,13 +1412,14 @@ app.whenReady().then(async () => {
 
       // If auto-start was enabled, update login item settings to point to new exe
       try {
-        const loginSettings = app.getLoginItemSettings();
-        if (loginSettings.openAtLogin) {
+        const isAutoStartEnabled = store.get('autoStart') ?? (app.getLoginItemSettings().openAtLogin || app.getLoginItemSettings({ path: targetExePath }).openAtLogin);
+        if (isAutoStartEnabled) {
           app.setLoginItemSettings({
             openAtLogin: true,
             path: targetExePath,
             args: []
           });
+          store.set('autoStart', true);
         }
       } catch (e) {
         console.error('Failed to update login item settings on update:', e);
@@ -1417,7 +1463,12 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('app:getAutoStart', () => {
     try {
-      const settings = app.getLoginItemSettings();
+      const realExe = getRealExecutablePath();
+      const settings = app.getLoginItemSettings({ path: realExe });
+      const stored = store.get('autoStart');
+      if (typeof stored === 'boolean') {
+        return stored;
+      }
       return settings.openAtLogin;
     } catch (e) {
       console.error('Failed to get auto-start setting:', e);
@@ -1427,11 +1478,16 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('app:setAutoStart', (_event, enabled) => {
     try {
+      const realExe = getRealExecutablePath();
+      if (!realExe || realExe.toLowerCase().includes('\\temp\\') || realExe.toLowerCase().includes('/temp/')) {
+        throw new Error('Недопустимый путь к исполняемому файлу (Temp)');
+      }
       app.setLoginItemSettings({
         openAtLogin: !!enabled,
-        path: process.execPath,
+        path: realExe,
         args: []
       });
+      store.set('autoStart', !!enabled);
       return { success: true, enabled: !!enabled };
     } catch (e) {
       console.error('Failed to set auto-start setting:', e);
