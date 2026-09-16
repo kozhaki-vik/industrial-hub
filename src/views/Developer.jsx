@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, FileText } from 'lucide-react';
+import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, Key, Eye, EyeOff, Server, Lock, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath, openLogFolder, getRecentLogs } from '../services/diagnostics';
 import { getButtonStats } from '../services/analytics';
@@ -33,6 +33,71 @@ export default function Developer() {
   const [flamesResetSuccess, setFlamesResetSuccess] = useState(false);
   const [updateChannel, setUpdateChannel] = useState(getConfigKey('updateChannel') || 'main');
   const [logCopied, setLogCopied] = useState(false);
+
+  // Developer Discord Bot Management States
+  const [devKeyInput, setDevKeyInput] = useState('');
+  const [showDevKey, setShowDevKey] = useState(false);
+  const [hasSavedKey, setHasSavedKey] = useState(false);
+  const [adminModeEnabled, setAdminModeEnabled] = useState(getConfigKey('devAdminModeEnabled') ?? false);
+  const [keyStatusMsg, setKeyStatusMsg] = useState({ text: '', type: 'info' });
+
+  useEffect(() => {
+    if (window.electronAPI?.dev) {
+      window.electronAPI.dev.hasKey().then(has => {
+        setHasSavedKey(has);
+        if (has) {
+          window.electronAPI.dev.getKey().then(k => {
+            if (k) setDevKeyInput(k);
+          });
+        }
+      });
+    } else {
+      const saved = localStorage.getItem('hub_dev_key');
+      if (saved) {
+        setHasSavedKey(true);
+        setDevKeyInput(saved);
+      }
+    }
+  }, []);
+
+  const handleSaveDevKey = async () => {
+    const trimmed = devKeyInput.trim();
+    if (!trimmed || trimmed.length !== 32) {
+      setKeyStatusMsg({ text: 'Ключ должен содержать ровно 32 символа!', type: 'error' });
+      setTimeout(() => setKeyStatusMsg({ text: '', type: 'info' }), 4000);
+      return;
+    }
+    if (window.electronAPI?.dev) {
+      const res = await window.electronAPI.dev.saveKey(trimmed);
+      if (res && res.success) {
+        setHasSavedKey(true);
+        setKeyStatusMsg({ text: 'Ключ зашифрован через Windows DPAPI и сохранен!', type: 'success' });
+      } else {
+        setKeyStatusMsg({ text: 'Ошибка сохранения: ' + (res?.error || 'Неизвестная ошибка'), type: 'error' });
+      }
+    } else {
+      localStorage.setItem('hub_dev_key', trimmed);
+      setHasSavedKey(true);
+      setKeyStatusMsg({ text: 'Сохранено локально', type: 'success' });
+    }
+    setTimeout(() => setKeyStatusMsg({ text: '', type: 'info' }), 4000);
+  };
+
+  const handleRemoveDevKey = async () => {
+    if (window.electronAPI?.dev) {
+      await window.electronAPI.dev.removeKey();
+    }
+    localStorage.removeItem('hub_dev_key');
+    setDevKeyInput('');
+    setHasSavedKey(false);
+    setKeyStatusMsg({ text: 'Ключ удален', type: 'info' });
+    setTimeout(() => setKeyStatusMsg({ text: '', type: 'info' }), 3000);
+  };
+
+  const handleToggleAdminMode = (enabled) => {
+    setAdminModeEnabled(enabled);
+    setConfigKey('devAdminModeEnabled', enabled);
+  };
 
   const handleCopyLogs = async () => {
     try {
@@ -510,6 +575,133 @@ export default function Developer() {
             ) : (
               <p className="text-sm text-slate-500 text-center py-4">{t('dev_stats_empty')}</p>
             )}
+          </div>
+        </div>
+        {/* Discord Bot Admin & Guild Management Card */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 col-span-1 md:col-span-2 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  Управление Discord-серверами (Режим разработчика)
+                  {hasSavedKey && (
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
+                      DPAPI Защищен
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Безопасное управление серверами через 32-значный мастер-ключ (PSK). Ключ шифруется Windows DPAPI и не хранится в открытом виде.
+                </p>
+              </div>
+            </div>
+
+            {/* Admin Mode Toggle */}
+            <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 px-4 py-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+              <div className="text-right">
+                <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                  {adminModeEnabled ? 'Админ-мод активен' : 'Обычный режим'}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {adminModeEnabled ? 'Выбор любого сервера в Clan Manager' : 'Только привязанный сервер'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleAdminMode(!adminModeEnabled)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  adminModeEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    adminModeEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-indigo-500" />
+                  32-значный ключ разработчика (DEV_MASTER_KEY)
+                </span>
+                <span className={`text-[11px] font-mono ${devKeyInput.trim().length === 32 ? 'text-emerald-500 font-bold' : 'text-slate-400'}`}>
+                  {devKeyInput.trim().length} / 32 символов
+                </span>
+              </label>
+
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showDevKey ? 'text' : 'password'}
+                    value={devKeyInput}
+                    onChange={(e) => setDevKeyInput(e.target.value)}
+                    placeholder="Введите или вставьте 32-значный ключ..."
+                    maxLength={32}
+                    className="w-full px-3.5 py-2 pr-10 text-sm font-mono rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDevKey(!showDevKey)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showDevKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveDevKey}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  Сохранить ключ
+                </button>
+
+                {hasSavedKey && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveDevKey}
+                    title="Удалить ключ"
+                    className="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {keyStatusMsg.text && (
+              <div
+                className={`p-2.5 rounded-xl text-xs font-medium flex items-center gap-2 ${
+                  keyStatusMsg.type === 'error'
+                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                }`}
+              >
+                {keyStatusMsg.type === 'error' ? <AlertTriangle className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
+                <span>{keyStatusMsg.text}</span>
+              </div>
+            )}
+
+            <div className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-200/50 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>
+                  Статус: {hasSavedKey ? <strong className="text-emerald-500">Ключ активен на этом ПК</strong> : <strong className="text-amber-500">Ключ не настроен</strong>}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Передача: HMAC-SHA256 Challenge-Response (защита от перехвата)
+              </div>
+            </div>
           </div>
         </div>
       </div>

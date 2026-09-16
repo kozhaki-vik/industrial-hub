@@ -227,6 +227,8 @@ export const NetworkProvider = ({ children }) => {
       clearInterval(updateInterval);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.onerror = null;
         wsRef.current.close();
       }
     };

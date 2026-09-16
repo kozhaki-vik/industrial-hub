@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell, protocol, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell, protocol, screen, safeStorage } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import child_process from 'child_process';
@@ -654,7 +654,11 @@ app.whenReady().then(async () => {
   ipcMain.handle('shell:openFolder', async (event, folderPath) => {
     if (folderPath) {
       const allowedRoots = [app.getPath('userData'), store.get('rustPath')].filter(Boolean);
-      const isAllowed = allowedRoots.some(root => path.resolve(folderPath).startsWith(path.resolve(root)));
+      const resolvedFolder = path.resolve(folderPath);
+      const isAllowed = allowedRoots.some(root => {
+        const resolvedRoot = path.resolve(root);
+        return resolvedFolder === resolvedRoot || resolvedFolder.startsWith(resolvedRoot + path.sep);
+      });
       if (!isAllowed) {
         console.error('Blocked shell:openFolder to unauthorized path:', folderPath);
         return false;
@@ -671,6 +675,78 @@ app.whenReady().then(async () => {
   ipcMain.handle('store:delete', (event, key) => store.delete(key));
   ipcMain.handle('store:clear', () => store.clear());
   ipcMain.handle('store:getAll', () => store.store);
+
+  ipcMain.handle('dev:saveKey', (event, rawKey) => {
+    try {
+      if (!rawKey || typeof rawKey !== 'string') return { success: false, error: 'Empty key' };
+      const trimmed = rawKey.trim();
+      if (safeStorage && safeStorage.isEncryptionAvailable()) {
+        const encrypted = safeStorage.encryptString(trimmed).toString('base64');
+        store.set('dev_encrypted_key', encrypted);
+        return { success: true, method: 'dpapi' };
+      } else {
+        const fallback = Buffer.from(trimmed).toString('base64');
+        store.set('dev_encrypted_key', fallback);
+        return { success: true, method: 'base64' };
+      }
+    } catch (e) {
+      console.error('Failed to save dev key:', e);
+      return { success: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('dev:getKey', () => {
+    try {
+      const encrypted = store.get('dev_encrypted_key');
+      if (!encrypted) return null;
+      if (safeStorage && safeStorage.isEncryptionAvailable()) {
+        try {
+          return safeStorage.decryptString(Buffer.from(encrypted, 'base64'));
+        } catch (e) {
+          return Buffer.from(encrypted, 'base64').toString('utf8');
+        }
+      } else {
+        return Buffer.from(encrypted, 'base64').toString('utf8');
+      }
+    } catch (e) {
+      console.error('Failed to get dev key:', e);
+      return null;
+    }
+  });
+
+  ipcMain.handle('dev:hasKey', () => {
+    return !!store.get('dev_encrypted_key');
+  });
+
+  ipcMain.handle('dev:removeKey', () => {
+    store.delete('dev_encrypted_key');
+    return true;
+  });
+
+  ipcMain.handle('dev:signChallenge', (event, { nonce, timestamp, hwid }) => {
+    try {
+      const encrypted = store.get('dev_encrypted_key');
+      if (!encrypted) return { success: false, error: 'No key stored' };
+      let rawKey = '';
+      if (safeStorage && safeStorage.isEncryptionAvailable()) {
+        try {
+          rawKey = safeStorage.decryptString(Buffer.from(encrypted, 'base64'));
+        } catch (e) {
+          rawKey = Buffer.from(encrypted, 'base64').toString('utf8');
+        }
+      } else {
+        rawKey = Buffer.from(encrypted, 'base64').toString('utf8');
+      }
+
+      if (!rawKey) return { success: false, error: 'Failed to decrypt key' };
+      const messageToSign = `${nonce}:${timestamp}:${hwid}`;
+      const signature = crypto.createHmac('sha256', rawKey).update(messageToSign).digest('hex');
+      return { success: true, signature };
+    } catch (e) {
+      console.error('Failed to sign dev challenge:', e);
+      return { success: false, error: e.message };
+    }
+  });
   
   ipcMain.handle('autoDetectRustPath', () => {
     try {
@@ -750,6 +826,7 @@ app.whenReady().then(async () => {
         const protocol = url.protocol === 'https:' ? https : http;
         
         const req = protocol.get(urlStr, { timeout: 3000 }, (res) => {
+          res.resume();
           const time = Date.now() - start;
           if (res.statusCode >= 200 && res.statusCode < 400) {
             resolve({ status: 'ok', time, msg: `${res.statusCode} OK` });
@@ -980,22 +1057,21 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('config:readConfig', (event, rustPath, filename) => {
-    if (!rustPath || !filename) return null;
+    const realRustPath = rustPath || store.get('rustPath');
+    if (!realRustPath || !filename) return null;
     
-    // Path traversal protection
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      const safeName = path.basename(filename);
-      if (safeName !== filename) {
-        console.error('Path traversal detected in readConfig:', filename);
-        return '';
-      }
+    // Path traversal protection: ensure target path is within game directory
+    const resolvedRust = path.resolve(realRustPath);
+    let cfgPath = path.resolve(resolvedRust, 'cfg', filename);
+    if (!cfgPath.toLowerCase().startsWith(resolvedRust.toLowerCase())) {
+      console.error('Path traversal detected in readConfig:', filename);
+      return '';
     }
 
-    let cfgPath = path.join(rustPath, 'cfg', filename);
     try {
       if (!fs.existsSync(cfgPath)) {
-        const altPath = path.join(rustPath, filename);
-        if (fs.existsSync(altPath)) {
+        const altPath = path.resolve(resolvedRust, filename);
+        if (fs.existsSync(altPath) && altPath.toLowerCase().startsWith(resolvedRust.toLowerCase())) {
           cfgPath = altPath;
         } else {
           return '';
@@ -1010,25 +1086,26 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('config:writeConfig', (event, rustPath, filename, content) => {
     if (!filename) return false;
-    const realRustPath = store.get('rustPath');
+    const realRustPath = store.get('rustPath') || rustPath;
     if (!realRustPath) return false;
     
     try {
-      const sanitized = path.basename(filename);
-      const cfgDir = path.join(realRustPath, 'cfg');
-      const targetPath = path.join(cfgDir, sanitized);
+      const resolvedRust = path.resolve(realRustPath);
+      const cfgDir = path.resolve(resolvedRust, 'cfg');
+      const targetPath = path.resolve(cfgDir, filename);
       
-      if (!targetPath.startsWith(cfgDir)) {
+      if (!targetPath.toLowerCase().startsWith(resolvedRust.toLowerCase())) {
         console.error('Path traversal detected in writeConfig:', targetPath);
         return false;
       }
       
-      if (!fs.existsSync(cfgDir)) fs.mkdirSync(cfgDir, { recursive: true });
+      const parentDir = path.dirname(targetPath);
+      if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
       fs.writeFileSync(targetPath, content, 'utf8');
       return true;
     } catch (e) {
       const isPerm = e.code === 'EPERM' || e.code === 'EACCES';
-      const msg = `Failed to write config ${filename}: ${e.message}${isPerm ? ' (PERMISSION DENIED: Run app as administrator if Rust is in Program Files)' : ''}`;
+      const msg = `Failed to write config ${filename}: ${e.message}${isPerm ? ' (PERMISSION DENIED: Run app as administrator if directory is protected)' : ''}`;
       console.error(msg);
       logger.error(msg);
       return false;
@@ -1051,7 +1128,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('config:fileExists', (event, fullPath) => {
     try {
       const rustPath = store.get('rustPath') || '';
-      if (!rustPath || !path.resolve(fullPath).startsWith(path.resolve(rustPath))) {
+      if (!rustPath || !path.resolve(fullPath).toLowerCase().startsWith(path.resolve(rustPath).toLowerCase())) {
         return false;
       }
       return fs.existsSync(fullPath);
@@ -1069,11 +1146,13 @@ app.whenReady().then(async () => {
       const resolvedDest = path.resolve(destPath);
       const resolvedRust = path.resolve(rustPath);
       
-      if (!resolvedSrc.startsWith(resolvedRust) || !resolvedDest.startsWith(resolvedRust)) {
+      if (!resolvedSrc.toLowerCase().startsWith(resolvedRust.toLowerCase()) || !resolvedDest.toLowerCase().startsWith(resolvedRust.toLowerCase())) {
         console.error('Path traversal detected in copyFile');
         return false;
       }
       
+      const destDir = path.dirname(resolvedDest);
+      if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
       fs.copyFileSync(srcPath, destPath);
       return true;
     } catch (e) {
@@ -1090,7 +1169,7 @@ app.whenReady().then(async () => {
       const resolvedDir = path.resolve(dirPath);
       const resolvedRust = path.resolve(rustPath);
       
-      if (!resolvedDir.startsWith(resolvedRust)) {
+      if (!resolvedDir.toLowerCase().startsWith(resolvedRust.toLowerCase())) {
         console.error('Path traversal detected in ensureDir');
         return false;
       }

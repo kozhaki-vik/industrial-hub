@@ -57,6 +57,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return () => ipcRenderer.removeListener('assets:sync-progress', wrapped);
     }
   },
+  dev: {
+    saveKey: (key) => ipcRenderer.invoke('dev:saveKey', key),
+    getKey: () => ipcRenderer.invoke('dev:getKey'),
+    hasKey: () => ipcRenderer.invoke('dev:hasKey'),
+    removeKey: () => ipcRenderer.invoke('dev:removeKey'),
+    signChallenge: (payload) => ipcRenderer.invoke('dev:signChallenge', payload)
+  },
   ipcRenderer: {
     invoke: (channel, ...args) => {
         const ALLOWED_CHANNELS = [
@@ -68,7 +75,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
             'app:relaunch', 'app:focusWindow', 'app:reportError',
             'app:getAutoStart', 'app:setAutoStart',
             'assets:sync',
-            'logs:openFolder', 'logs:getRecent'
+            'logs:openFolder', 'logs:getRecent',
+            'dev:saveKey', 'dev:getKey', 'dev:hasKey', 'dev:removeKey', 'dev:signChallenge'
         ];
         if (!ALLOWED_CHANNELS.includes(channel)) {
             console.error(`Blocked IPC invoke to unauthorized channel: ${channel}`);

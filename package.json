@@ -1,9 +1,9 @@
 {
   "name": "industrial-hub",
   "private": true,
-  "version": "2.19.2",
+  "version": "2.19.6",
   "author": "Kozhaki",
-  "description": "Industrial Hub - Ultimate Rust Assistant",
+  "description": "Industrial Hub - Desktop Companion Application",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {

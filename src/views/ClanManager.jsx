@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNetwork } from '../contexts/NetworkContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 import SetupWizard from '../components/SetupWizard';
 import RoleSelect from '../components/RoleSelect';
@@ -10,8 +12,9 @@ import {
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
-  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, Eye, EyeOff, Copy
+  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, Eye, EyeOff, Copy, ChevronDown
 } from 'lucide-react';
+import { getConfigKey, setConfigKey } from '../services/store';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 import { showConfirm } from '../components/ConfirmModal';
@@ -329,7 +332,70 @@ export default function ClanManager() {
   const [error, setError] = useState('');
   const [logs, setLogs] = useState(['Initializing Clan Manager...']);
   const [lastLinkAttempt, setLastLinkAttempt] = useState(0);
+  const navigate = useNavigate();
+  const { addNotification } = useNotification();
   const [copiedCommand, setCopiedCommand] = useState(false);
+
+  // AFK Inactivity Tracker (5 minutes) & Tab Session Lifecycle
+  const lastActivityRef = useRef(Date.now());
+  useEffect(() => {
+    const updateActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    const trackedEvents = ['mousemove', 'mousedown', 'keydown', 'wheel', 'touchstart'];
+    trackedEvents.forEach(evt => window.addEventListener(evt, updateActivity, { passive: true }));
+
+    const afkTimer = setInterval(() => {
+      const elapsed = Date.now() - lastActivityRef.current;
+      if (elapsed >= 5 * 60 * 1000) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
+          } catch (e) {}
+        }
+        addNotification(
+          t('clan_afk_timeout', 'Сессия управления кланом закрыта из-за 5 минут неактивности. Вы перенаправлены на главную страницу.'),
+          'info'
+        );
+        navigate('/');
+      }
+    }, 5000);
+
+    return () => {
+      trackedEvents.forEach(evt => window.removeEventListener(evt, updateActivity));
+      clearInterval(afkTimer);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
+        } catch (e) {}
+      }
+    };
+  }, [ws, navigate, addNotification, t]);
+
+  // Developer Mode / Superadmin States
+  const [devAdminMode, setDevAdminMode] = useState(() => getConfigKey('devAdminModeEnabled') === true);
+  const isDevAdminActive = devAdminMode || getConfigKey('devAdminModeEnabled') === true;
+  const activeDevGuildIdRef = useRef(getConfigKey('devActiveGuildId') || null);
+  const [isDevAuthenticated, setIsDevAuthenticated] = useState(false);
+  const [devGuilds, setDevGuilds] = useState([]);
+  const [devShowServerGrid, setDevShowServerGrid] = useState(false);
+  const [isGuildDropdownOpen, setIsGuildDropdownOpen] = useState(false);
+  const [guildSearchQuery, setGuildSearchQuery] = useState('');
+  const [loadingDevGuilds, setLoadingDevGuilds] = useState(false);
+
+  useEffect(() => {
+    const checkDevMode = async () => {
+      let enabled = getConfigKey('devAdminModeEnabled') === true;
+      if (!enabled && window.electronAPI?.store) {
+        try {
+          const val = await window.electronAPI.store.get('devAdminModeEnabled');
+          if (val === true) setDevAdminMode(true);
+        } catch (e) {}
+      }
+    };
+    checkDevMode();
+  }, []);
   
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -519,6 +585,7 @@ export default function ClanManager() {
         type: 'clan',
         action: 'proxy',
         reqId,
+        targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
         payload: {
           action,
           ...payload
@@ -751,8 +818,6 @@ export default function ClanManager() {
       return;
     }
     
-    addLog('Sending initial get_status request');
-    
     const handleMessage = (e) => {
       try {
         const data = JSON.parse(e.data);
@@ -760,7 +825,78 @@ export default function ClanManager() {
           addLog(`Received: ${JSON.stringify(data)}`);
         }
         
-        if (data.type === 'clan_status_res') {
+        if (data.type === 'clan_dev_challenge') {
+          (async () => {
+            let hwid = 'dev_client';
+            try {
+              if (window.electronAPI?.ipcRenderer) {
+                hwid = await window.electronAPI.ipcRenderer.invoke('network:get-hwid');
+              } else {
+                hwid = localStorage.getItem('hub_hwid') || 'dev_client';
+              }
+            } catch (err) {}
+
+            if (window.electronAPI?.dev) {
+              const signRes = await window.electronAPI.dev.signChallenge({
+                nonce: data.nonce,
+                timestamp: data.timestamp,
+                hwid
+              });
+              if (signRes && signRes.success && signRes.signature) {
+                ws.send(JSON.stringify({
+                  type: 'clan',
+                  action: 'dev_auth_verify',
+                  signature: signRes.signature,
+                  timestamp: data.timestamp
+                }));
+                return;
+              }
+            }
+            addLog('Dev challenge sign failed. Falling back to normal mode.');
+            ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
+          })();
+        } else if (data.type === 'clan_dev_auth_res') {
+          if (data.success) {
+            setIsDevAuthenticated(true);
+            addLog('Developer session authenticated!');
+            setLoadingDevGuilds(true);
+            ws.send(JSON.stringify({ type: 'clan', action: 'dev_get_guilds' }));
+          } else {
+            addLog(`Dev auth rejected: ${data.error || 'Unknown error'}. Reverting to normal mode.`);
+            ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
+          }
+        } else if (data.type === 'clan_dev_guilds_res') {
+          setLoadingDevGuilds(false);
+          if (data.success && Array.isArray(data.guilds)) {
+            setDevGuilds(data.guilds);
+            const savedGuildId = getConfigKey('devActiveGuildId');
+            const target = data.guilds.find(g => g.id === savedGuildId);
+            if (target) {
+              activeDevGuildIdRef.current = target.id;
+              setGuildId(target.id);
+              setStatus('linked');
+              setDevShowServerGrid(false);
+              fetchConfig(target.id);
+              fetchDiscordInfo(target.id);
+            } else if (data.guilds.length === 1) {
+              const onlyGuild = data.guilds[0];
+              activeDevGuildIdRef.current = onlyGuild.id;
+              setGuildId(onlyGuild.id);
+              setStatus('linked');
+              setDevShowServerGrid(false);
+              fetchConfig(onlyGuild.id);
+              fetchDiscordInfo(onlyGuild.id);
+            } else {
+              setStatus('unlinked');
+              setDevShowServerGrid(true);
+            }
+          } else {
+            addLog(`Failed to fetch dev guilds: ${data.error}`);
+            setError(data.error || 'Не удалось получить список серверов Discord от бота');
+            setStatus('unlinked');
+            setDevShowServerGrid(true);
+          }
+        } else if (data.type === 'clan_status_res') {
           setStatus(data.linked ? 'linked' : 'unlinked');
           if (data.linked) {
             setGuildId(data.guildId);
@@ -786,13 +922,23 @@ export default function ClanManager() {
           const configError = data.error || (data.data && !data.data.success ? data.data.error : null);
           const fetchedConfig = data.data?.config;
 
-          if (configError) {
-            setError(configError);
-            reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${configError}\nGuild ID: ${guildId || 'Unknown'}`);
-          } else if (!fetchedConfig) {
-            const emptyError = 'Empty or invalid configuration returned from bot/server';
-            setError(emptyError);
-            reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${emptyError}\nGuild ID: ${guildId || 'Unknown'}`);
+          if (configError || !fetchedConfig) {
+            if (isDevAdminActive && guildId) {
+              const currentG = devGuilds.find(g => g.id === guildId);
+              const fallbackConfig = sanitizeClanConfig({
+                guildId,
+                name: currentG?.name || 'Discord Server',
+                clanTag: '',
+                leaderRoleId: null
+              });
+              setConfig(fallbackConfig);
+              lastSavedConfigRef.current = JSON.parse(JSON.stringify(fallbackConfig));
+              setError(null);
+            } else {
+              const err = configError || 'Empty or invalid configuration returned from bot/server';
+              setError(err);
+              reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${err}\nGuild ID: ${guildId || 'Unknown'}`);
+            }
           } else {
             setError(null);
             const sanitized = sanitizeClanConfig(fetchedConfig);
@@ -1115,10 +1261,52 @@ export default function ClanManager() {
     };
 
     ws.addEventListener('message', handleMessage);
-    ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
+
+    if (isDevAdminActive) {
+      addLog('Initiating developer handshake...');
+      (async () => {
+        let hwid = 'dev_client';
+        try {
+          if (window.electronAPI?.ipcRenderer) {
+            hwid = await window.electronAPI.ipcRenderer.invoke('network:get-hwid');
+          } else {
+            hwid = localStorage.getItem('hub_hwid') || 'dev_client';
+          }
+        } catch (err) {}
+        ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid }));
+      })();
+    } else {
+      addLog('Sending initial get_status request');
+      ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
+    }
     
     return () => ws.removeEventListener('message', handleMessage);
-  }, [ws, wsStatus]);
+  }, [ws, wsStatus, isDevAdminActive]);
+
+  const handleSelectDevGuild = (guild) => {
+    setIsGuildDropdownOpen(false);
+    setDevShowServerGrid(false);
+    if (!guild) return;
+    activeDevGuildIdRef.current = guild.id;
+    setConfigKey('devActiveGuildId', guild.id);
+    setGuildId(guild.id);
+    setStatus('linked');
+    setConfig(null);
+    setRosterData(null);
+    setStatsData(null);
+    setDiscordInfo(null);
+    fetchConfig(guild.id);
+    fetchDiscordInfo(guild.id);
+  };
+
+  const handleRefreshDevGuilds = () => {
+    if (ws && wsStatus === 'online') {
+      setLoadingDevGuilds(true);
+      setError(null);
+      addLog('Refreshing Discord guilds list...');
+      ws.send(JSON.stringify({ type: 'clan', action: 'dev_get_guilds' }));
+    }
+  };
 
   const handleLink = (e) => {
     e.preventDefault();
@@ -1156,12 +1344,13 @@ export default function ClanManager() {
     }
   };
 
-  const fetchConfig = () => {
+  const fetchConfig = (overrideGuildId) => {
     if (!ws || wsStatus !== 'online') {
       setError(t('clan_connecting') || 'Подключение к серверу...');
       setLoadingConfig(false);
       return;
     }
+    const targetGid = overrideGuildId || (isDevAdminActive ? activeDevGuildIdRef.current : undefined);
     setLoadingConfig(true);
     setError(null);
     addLog('Fetching config via proxy');
@@ -1169,15 +1358,18 @@ export default function ClanManager() {
       type: 'clan', 
       action: 'proxy', 
       reqId: 'get_config', 
+      targetGuildId: targetGid,
       payload: { action: 'get_config' } 
     }));
   };
 
-  const fetchDiscordInfo = () => {
+  const fetchDiscordInfo = (overrideGuildId) => {
+    const targetGid = overrideGuildId || (isDevAdminActive ? activeDevGuildIdRef.current : undefined);
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
       reqId: 'get_discord_info', 
+      targetGuildId: targetGid,
       payload: { action: 'get_discord_info' } 
     }));
   };
@@ -2030,205 +2222,595 @@ export default function ClanManager() {
     setTimeout(() => setCopiedCommand(false), 2500);
   };
 
-  if (status === 'unlinked') {
+  if (status === 'unlinked' || (isDevAdminActive && devShowServerGrid)) {
+    const filteredDevGuilds = devGuilds.filter(g => 
+      !guildSearchQuery.trim() || 
+      (g.name && g.name.toLowerCase().includes(guildSearchQuery.toLowerCase())) ||
+      (g.id && g.id.includes(guildSearchQuery.trim()))
+    );
+
     return (
-      <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
-        {/* Top Header Banner */}
-        <div className="text-center max-w-3xl mx-auto space-y-3">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            {t('clan_setup_title', 'Настройка Clan Manager')}
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl mx-auto">
-            {t('clan_setup_desc_modern', 'Свяжите приложение с вашим Discord-сервером для детального набора кандидатов, аналитики состава, динамических войсов и полной защиты клана.')}
-          </p>
-        </div>
+      <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
+        {isDevAdminActive ? (
+          <div className="space-y-6">
+            {/* Developer Mode Header Banner */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 border border-indigo-500/30 shadow-2xl relative overflow-hidden">
+              <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -left-10 -top-10 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* 2-Column Grid: Left = Benefits, Right = 3-Step Interactive Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Column: Why use the bot (7 cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            
-            {/* Feature Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* Feature 1: Fast & Detailed Recruitment */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
-                  <UserPlus className="w-4 h-4" />
+              <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2.5 max-w-2xl">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-xs">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-bold text-xs uppercase tracking-wider border border-indigo-500/30">
+                      Developer Admin Mode
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium text-xs border border-emerald-500/20">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Сессия активна
+                    </span>
+                    {guildId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDevShowServerGrid(false);
+                          setStatus('linked');
+                        }}
+                        className="px-3 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
+                      >
+                        Вернуться к текущему серверу →
+                      </button>
+                    )}
+                  </div>
+
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                    Управление Discord-серверами
+                  </h2>
+                  <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+                    Прямой доступ ко всем серверам, на которых авторизован бот. Выберите любой сервер из списка ниже для детальной настройки ролей, каналов, динамических войсов и участников.
+                  </p>
                 </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_recruit_title', 'Легкий и детальный набор')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_recruit_desc', 'Удобные анкеты кандидатов с авто-проверкой часов в Rust, подробными досье, фильтром по возрасту/блокировкам и приватными тикетами для собеседований.')}
-                </p>
-              </div>
 
-              {/* Feature 2: Dynamic Voice */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
-                  <Volume2 className="w-4 h-4" />
+                <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleRefreshDevGuilds}
+                    disabled={loadingDevGuilds}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-98 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingDevGuilds ? 'animate-spin' : ''}`} />
+                    <span>{loadingDevGuilds ? 'Загрузка...' : 'Обновить список'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => openExternalUrl(BOT_INVITE_URL)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 hover:border-slate-600 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-indigo-400" />
+                    <span>Пригласить бота</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                  </button>
                 </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_voice_title', 'Динамические войсы')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_voice_desc', 'Автоматическое создание комнат для пати при входе и их мгновенное удаление, когда они освобождаются.')}
-                </p>
               </div>
-
-              {/* Feature 3: Logging & Moderation */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
-                  <ScrollText className="w-4 h-4" />
-                </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_logging_title', 'Логирование и модерация')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_logging_desc', 'Детальный журнал всех событий клана, авто-модерация чата, система предупреждений (варнов) и прозрачный контроль прав.')}
-                </p>
-              </div>
-
-              {/* Feature 4: Player Cross-Clan History */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">
-                  <UserCheck className="w-4 h-4" />
-                </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_player_history_title', 'История игрока в кланах')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_player_history_desc', 'Единая база досье: привязанные Steam-аккаунты, история прошлых кланов, причины кика или ухода, черные списки.')}
-                </p>
-              </div>
-
-              {/* Feature 5: Transparent Votes */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 flex items-center justify-center text-cyan-600 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-900/50">
-                  <Vote className="w-4 h-4" />
-                </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_votes_title', 'Удобные голосования')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_votes_desc', 'Голосования с открытыми результатами в реальном времени: сразу видно, кто именно из бойцов и за какой вариант проголосовал.')}
-                </p>
-              </div>
-
-              {/* Feature 6: Clan Stats */}
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50">
-                  <BarChart3 className="w-4 h-4" />
-                </div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                  {t('clan_feature_stats_title', 'Статистика клана')}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t('clan_feature_stats_desc', 'Глубокая аналитика состава: активность в голосовых каналах, посещаемость вайпов, сообщения и вклад каждого участника.')}
-                </p>
-              </div>
-
             </div>
-          </div>
 
-          {/* Right Column: 3-Step Interactive Form (5 cols) */}
-          <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 p-6 space-y-6">
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                {t('clan_quick_link_title', 'Привязка в 3 шага')}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {t('clan_quick_link_desc', 'Займет не более 1 минуты')}
+            {/* Search Bar and Counter */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="relative w-full sm:w-96">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={guildSearchQuery}
+                    onChange={(e) => setGuildSearchQuery(e.target.value)}
+                    placeholder="Поиск по названию или ID сервера..."
+                    className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors shadow-2xs"
+                  />
+                  {guildSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setGuildSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium self-end sm:self-auto">
+                  <span>Обнаружено серверов:</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                    {devGuilds.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Grid of Servers or Loading / Empty States */}
+              {loadingDevGuilds ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xs animate-pulse space-y-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                        </div>
+                      </div>
+                      <div className="h-9 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              ) : devGuilds.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 border border-slate-200 dark:border-slate-800 text-center shadow-xs space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50">
+                    <Bot className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1.5 max-w-md mx-auto">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Список серверов пока пуст
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Бот подключен к серверу, но пока не добавлен ни на один Discord-сервер, либо список ещё загружается. Добавьте бота на сервер или нажмите обновить.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleRefreshDevGuilds}
+                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                    >
+                      Обновить список серверов
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openExternalUrl(BOT_INVITE_URL)}
+                      className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Пригласить бота в Discord
+                    </button>
+                  </div>
+                </div>
+              ) : filteredDevGuilds.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 text-center text-slate-500 text-xs">
+                  По запросу «{guildSearchQuery}» серверов не найдено.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredDevGuilds.map((g) => {
+                    const isSelected = g.id === guildId;
+                    return (
+                      <div
+                        key={g.id}
+                        className={`bg-white dark:bg-slate-900 rounded-2xl p-5 border transition-all flex flex-col justify-between gap-4 shadow-2xs hover:shadow-md group ${
+                          isSelected
+                            ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/15 dark:bg-indigo-950/20'
+                            : 'border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600'
+                        }`}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {g.icon ? (
+                                <img
+                                  src={g.icon}
+                                  alt=""
+                                  className="w-12 h-12 rounded-2xl object-cover shrink-0 border border-slate-200 dark:border-slate-700 shadow-2xs"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-lg font-extrabold shrink-0 shadow-2xs">
+                                  {g.name ? g.name.charAt(0).toUpperCase() : '#'}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                  {g.name}
+                                </h4>
+                                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
+                                  <span>ID: {g.id}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {g.isConfigured ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 shrink-0">
+                                Настроен
+                              </span>
+                            ) : (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium border border-slate-200 dark:border-slate-700 shrink-0">
+                                Новый
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{g.memberCount} участников</span>
+                            </div>
+                            {isSelected && (
+                              <span className="text-indigo-500 dark:text-indigo-400 font-semibold text-[11px] ml-auto">
+                                ● Текущий выбор
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDevGuild(g)}
+                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                            isSelected
+                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500'
+                              : 'bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-800 dark:text-slate-200'
+                          }`}
+                        >
+                          <span>Управлять сервером</span>
+                          <span className="transition-transform group-hover:translate-x-1">→</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Collapsible Standard Link Section */}
+            <details className="group border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-5 transition-all">
+              <summary className="cursor-pointer font-bold text-xs text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center justify-between select-none">
+                <span>Стандартная привязка клана по коду (/hub_link)</span>
+                <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180 text-slate-400" />
+              </summary>
+              <div className="pt-5 border-t border-slate-100 dark:border-slate-800 mt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
+                          <UserPlus className="w-4 h-4" />
+                        </div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                          {t('clan_feature_recruit_title', 'Легкий и детальный набор')}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {t('clan_feature_recruit_desc', 'Удобные анкеты кандидатов с авто-проверкой часов в игре, подробными досье, фильтром по возрасту/блокировкам и приватными тикетами для собеседований.')}
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
+                          <Volume2 className="w-4 h-4" />
+                        </div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                          {t('clan_feature_voice_title', 'Динамические войсы')}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {t('clan_feature_voice_desc', 'Автоматическое создание комнат для пати при входе и их мгновенное удаление, когда они освобождаются.')}
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                          <ScrollText className="w-4 h-4" />
+                        </div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                          {t('clan_feature_logging_title', 'Логирование и модерация')}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {t('clan_feature_logging_desc', 'Детальный журнал всех событий клана, авто-модерация чата, система предупреждений (варнов) и прозрачный контроль прав.')}
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">
+                          <UserCheck className="w-4 h-4" />
+                        </div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                          {t('clan_feature_player_history_title', 'История игрока в кланах')}
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {t('clan_feature_player_history_desc', 'Единая база досье: привязанные Steam-аккаунты, история прошлых кланов, причины кика или ухода, черные списки.')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700/80 p-6 space-y-6">
+                    <div className="border-b border-slate-200 dark:border-slate-700 pb-3">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                        {t('clan_quick_link_title', 'Привязка в 3 шага')}
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {t('clan_quick_link_desc', 'Займет не более 1 минуты')}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {t('clan_step1_label', 'Пригласите бота на ваш сервер')}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openExternalUrl(BOT_INVITE_URL)}
+                        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/15 transition-all cursor-pointer group"
+                      >
+                        <DiscordIcon className="w-5 h-5 text-white group-hover:scale-105 transition-transform" />
+                        <span>{t('clan_invite_btn', 'Пригласить бота в Discord')}</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {t('clan_step2_label', 'Напишите в любом канале сервера:')}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <code className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400 px-2 select-all">
+                          /hub_link
+                        </code>
+                        <button
+                          type="button"
+                          onClick={handleCopyCommand}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
+                        >
+                          {copiedCommand ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-green-500" />
+                              <span className="text-green-600 dark:text-green-400">{t('copied', 'Скопировано!')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>{t('copy', 'Копировать')}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5 pt-1">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">3</div>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {t('clan_step3_label', 'Введите полученный 6-значный код:')}
+                        </span>
+                      </div>
+                      <form onSubmit={handleLink} className="space-y-3">
+                        <div className="relative">
+                          <input 
+                            type="text" 
+                            required
+                            placeholder="000000" 
+                            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-center text-2xl tracking-[0.5em] font-mono shadow-inner transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 placeholder:tracking-normal placeholder:font-sans placeholder:text-lg"
+                            value={linkCode}
+                            onChange={(e) => setLinkCode(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                            maxLength={6}
+                          />
+                        </div>
+                        {error && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
+                        <button 
+                          type="submit" 
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl focus:ring-4 focus:ring-blue-500/20 transition-all shadow-md shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <Sparkles className="w-4 h-4 text-blue-200" />
+                          <span>{t('clan_setup_btn', 'Привязать сервер')}</span>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+        ) : (
+          /* Standard Unlinked View for Regular Users */
+          <>
+            {/* Top Header Banner */}
+            <div className="text-center max-w-3xl mx-auto space-y-3">
+              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {t('clan_setup_title', 'Настройка Clan Manager')}
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-2xl mx-auto">
+                {t('clan_setup_desc_modern', 'Свяжите приложение с вашим Discord-сервером для детального набора кандидатов, аналитики состава, динамических войсов и полной защиты клана.')}
               </p>
             </div>
 
-            {/* Step 1 */}
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">1</div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {t('clan_step1_label', 'Пригласите бота на ваш сервер')}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => openExternalUrl(BOT_INVITE_URL)}
-                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/15 transition-all cursor-pointer group"
-              >
-                <DiscordIcon className="w-5 h-5 text-white group-hover:scale-105 transition-transform" />
-                <span>{t('clan_invite_btn', 'Пригласить бота в Discord')}</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-              </button>
-            </div>
+            {/* 2-Column Grid: Left = Benefits, Right = 3-Step Interactive Form */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Left Column: Why use the bot (7 cols) */}
+              <div className="lg:col-span-7 space-y-4">
+                
+                {/* Feature Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Feature 1: Fast & Detailed Recruitment */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
+                      <UserPlus className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                      {t('clan_feature_recruit_title', 'Легкий и детальный набор')}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {t('clan_feature_recruit_desc', 'Удобные анкеты кандидатов с авто-проверкой часов в игре, подробными досье, фильтром по возрасту/блокировкам и приватными тикетами для собеседований.')}
+                    </p>
+                  </div>
 
-            {/* Step 2 */}
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">2</div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {t('clan_step2_label', 'Напишите в любом канале сервера:')}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-                <code className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400 px-2 select-all">
-                  /hub_link
-                </code>
-                <button
-                  type="button"
-                  onClick={handleCopyCommand}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
-                >
-                  {copiedCommand ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-green-500" />
-                      <span className="text-green-600 dark:text-green-400">{t('copied', 'Скопировано!')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>{t('copy', 'Копировать')}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+                  {/* Feature 2: Dynamic Voice */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                    <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
+                      <Volume2 className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                      {t('clan_feature_voice_title', 'Динамические войсы')}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {t('clan_feature_voice_desc', 'Автоматическое создание комнат для пати при входе и их мгновенное удаление, когда они освобождаются.')}
+                    </p>
+                  </div>
 
-            {/* Step 3 */}
-            <div className="space-y-2.5 pt-1">
-              <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">3</div>
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {t('clan_step3_label', 'Введите полученный 6-значный код:')}
-                </span>
-              </div>
+                  {/* Feature 3: Logging & Moderation */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                      <ScrollText className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                      {t('clan_feature_logging_title', 'Логирование и модерация')}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {t('clan_feature_logging_desc', 'Детальный журнал всех событий клана, авто-модерация чата, система предупреждений (варнов) и прозрачный контроль прав.')}
+                    </p>
+                  </div>
 
-              <form onSubmit={handleLink} noValidate className="space-y-4">
-                <div>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="000000" 
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-center text-2xl tracking-[0.5em] font-mono shadow-inner transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 placeholder:tracking-normal placeholder:font-sans placeholder:text-lg"
-                    value={linkCode}
-                    onChange={(e) => setLinkCode(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
-                    maxLength={6}
-                    autoFocus
-                  />
+                  {/* Feature 4: Player Cross-Clan History */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                      {t('clan_feature_player_history_title', 'История игрока в кланах')}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {t('clan_feature_player_history_desc', 'Единая база досье: привязанные Steam-аккаунты, история прошлых кланов, причины кика или ухода, черные списки.')}
+                    </p>
+                  </div>
+
+                  {/* Feature 5: Transparent Votes */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                    <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 flex items-center justify-center text-cyan-600 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-900/50">
+                      <Vote className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                      {t('clan_feature_votes_title', 'Удобные голосования')}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {t('clan_feature_votes_desc', 'Голосования с открытыми результатами в реальном времени: сразу видно, кто именно из бойцов и за какой вариант проголосовал.')}
+                    </p>
+                  </div>
+
+                  {/* Feature 6: Clan Stats */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5">
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50">
+                      <BarChart3 className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                      {t('clan_feature_stats_title', 'Статистика клана')}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {t('clan_feature_stats_desc', 'Глубокая аналитика состава: активность в голосовых каналах, посещаемость вайпов, сообщения и вклад каждого участника.')}
+                    </p>
+                  </div>
+
                 </div>
-                {error && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
-                <button 
-                  type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl focus:ring-4 focus:ring-blue-500/20 transition-all shadow-md shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4 text-blue-200" />
-                  <span>{t('clan_setup_btn', 'Привязать сервер')}</span>
-                </button>
-              </form>
-            </div>
+              </div>
 
-          </div>
-        </div>
+              {/* Right Column: 3-Step Interactive Form (5 cols) */}
+              <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 p-6 space-y-6">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {t('clan_quick_link_title', 'Привязка в 3 шага')}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {t('clan_quick_link_desc', 'Займет не более 1 минуты')}
+                  </p>
+                </div>
+
+                {/* Step 1 */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      {t('clan_step1_label', 'Пригласите бота на ваш сервер')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openExternalUrl(BOT_INVITE_URL)}
+                    className="w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-500/15 transition-all cursor-pointer group"
+                  >
+                    <DiscordIcon className="w-5 h-5 text-white group-hover:scale-105 transition-transform" />
+                    <span>{t('clan_invite_btn', 'Пригласить бота в Discord')}</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                  </button>
+                </div>
+
+                {/* Step 2 */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      {t('clan_step2_label', 'Напишите в любом канале сервера:')}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <code className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400 px-2 select-all">
+                      /hub_link
+                    </code>
+                    <button
+                      type="button"
+                      onClick={handleCopyCommand}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-600 shadow-2xs transition-all cursor-pointer"
+                    >
+                      {copiedCommand ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-green-500" />
+                          <span className="text-green-600 dark:text-green-400">{t('copied', 'Скопировано!')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>{t('copy', 'Копировать')}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="space-y-2.5 pt-1">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">3</div>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      {t('clan_step3_label', 'Введите полученный 6-значный код:')}
+                    </span>
+                  </div>
+                  <form onSubmit={handleLink} className="space-y-3">
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="000000" 
+                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-center text-2xl tracking-[0.5em] font-mono shadow-inner transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 placeholder:tracking-normal placeholder:font-sans placeholder:text-lg"
+                        value={linkCode}
+                        onChange={(e) => setLinkCode(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                        maxLength={6}
+                        autoFocus
+                      />
+                    </div>
+                    {error && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
+                    <button 
+                      type="submit" 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl focus:ring-4 focus:ring-blue-500/20 transition-all shadow-md shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4 text-blue-200" />
+                      <span>{t('clan_setup_btn', 'Привязать сервер')}</span>
+                    </button>
+                  </form>
+                </div>
+
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -2541,9 +3123,9 @@ export default function ClanManager() {
       tabId: 'recruitment',
       tabName: t('clan_auto_249', 'Наборы'),
       tabIcon: UserPlus,
-      title: t('clan_auto_136', 'Минимальные часы в Rust'),
+      title: t('clan_auto_136', 'Минимальные часы в игре'),
       desc: t('clan_auto_190', 'Порог часов в игре, авто-суммирование со всех указанных профилей Steam'),
-      keywords: ['часы', 'опыт', 'наиграно', 'hours', 'min hours', 'раст', 'rust hours']
+      keywords: ['часы', 'опыт', 'наиграно', 'hours', 'min hours']
     },
     {
       id: 'recruitment_silent_reject',
@@ -2569,7 +3151,7 @@ export default function ClanManager() {
       tabName: t('clan_auto_252', 'Наборы'),
       tabIcon: UserPlus,
       title: t('clan_auto_139', 'Интеграция с Battlemetrics'),
-      desc: t('clan_auto_193', 'Проверка активности игрока на серверах Rust через Battlemetrics API'),
+      desc: t('clan_auto_193', 'Проверка активности игрока на игровых серверах через Battlemetrics API'),
       keywords: ['баттлметрикс', 'батлметрикс', 'battlemetrics', 'сервера', 'bm']
     },
     {
@@ -2922,7 +3504,7 @@ export default function ClanManager() {
 
       const safeIdx = Math.min(previewVoteIndex, Math.max(0, wTemplates.length - 1));
       const activeTpl = wTemplates[safeIdx] || { 
-        name: 'Rust Server #1', 
+        name: 'Server #1', 
         day: t('clan_auto_231', t('clan_thursday', 'Четверг')), 
         time: '16:00', 
         ip: 'connect 127.0.0.1:28015', 
@@ -3011,6 +3593,136 @@ export default function ClanManager() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 min-w-0 max-w-6xl w-full">
           {/* Left Sidebar Navigation */}
           <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-hidden h-full">
+            {/* Dev Admin Mode Server Selector */}
+            {isDevAdminActive && (
+              <div className="mb-2 shrink-0 p-2 rounded-xl bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/50 border border-indigo-500/30">
+                <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                      Admin Mode
+                    </span>
+                  </div>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                    {devGuilds.length} серв.
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsGuildDropdownOpen(!isGuildDropdownOpen)}
+                    className="w-full flex items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-indigo-500/40 text-left transition-colors cursor-pointer"
+                  >
+                    {(() => {
+                      const currentG = devGuilds.find(g => g.id === guildId);
+                      return (
+                        <div className="flex items-center gap-2 min-w-0">
+                          {currentG?.icon ? (
+                            <img src={currentG.icon} alt="" className="w-5 h-5 rounded-full shrink-0" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {currentG?.name ? currentG.name.charAt(0).toUpperCase() : '#'}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-white truncate">
+                              {currentG?.name || (guildId ? `ID: ${guildId}` : 'Выберите сервер...')}
+                            </div>
+                            <div className="text-[9px] text-slate-400 truncate">
+                              {currentG?.memberCount !== undefined ? `${currentG.memberCount} уч.` : 'Discord Guild'}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isGuildDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isGuildDropdownOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-slate-900 rounded-xl shadow-2xl border border-indigo-500/40 p-2 max-h-72 flex flex-col min-w-[220px]">
+                      <div className="relative mb-2">
+                        <Search className="w-3 h-3 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={guildSearchQuery}
+                          onChange={(e) => setGuildSearchQuery(e.target.value)}
+                          placeholder="Поиск сервера..."
+                          autoFocus
+                          className="w-full pl-7 pr-2 py-1 text-xs rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div className="overflow-y-auto space-y-1 scrollbar-thin flex-1 max-h-48">
+                        {devGuilds
+                          .filter(g => !guildSearchQuery.trim() || g.name.toLowerCase().includes(guildSearchQuery.toLowerCase()) || g.id.includes(guildSearchQuery))
+                          .map((g) => {
+                            const isSelected = g.id === guildId;
+                            return (
+                              <button
+                                key={g.id}
+                                type="button"
+                                onClick={() => handleSelectDevGuild(g)}
+                                className={`w-full flex items-center justify-between gap-2 p-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-indigo-600 text-white font-semibold'
+                                    : 'text-slate-300 hover:bg-slate-800/80'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {g.icon ? (
+                                    <img src={g.icon} alt="" className="w-5 h-5 rounded-full shrink-0" />
+                                  ) : (
+                                    <div className="w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                                      {g.name.charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <div className="truncate text-xs">{g.name}</div>
+                                    <div className="text-[10px] opacity-70">{g.memberCount} участников</div>
+                                  </div>
+                                </div>
+                                {g.isConfigured && (
+                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono shrink-0 ${isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                                    БД
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                      </div>
+
+                      <div className="pt-2 mt-1 border-t border-slate-800 flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={handleRefreshDevGuilds}
+                          className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${loadingDevGuilds ? 'animate-spin' : ''}`} />
+                          Обновить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsGuildDropdownOpen(false)}
+                          className="text-[10px] text-slate-400 hover:text-slate-300 cursor-pointer"
+                        >
+                          Закрыть
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDevShowServerGrid(true)}
+                  className="mt-1.5 w-full flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 hover:text-indigo-200 text-[10px] font-bold transition-all cursor-pointer"
+                >
+                  <span>← Все серверы ({devGuilds.length})</span>
+                </button>
+              </div>
+            )}
+
             <div className="hidden md:flex items-center justify-between px-3 py-1.5 mb-1 shrink-0">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {t('clan_nav_sections') || 'Разделы'}
@@ -4635,7 +5347,7 @@ export default function ClanManager() {
                             <div>
                               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-orange-500" />
-                                {t('clan_recruitment_min_hours') || 'Минимальное количество часов в Rust'}
+                                {t('clan_recruitment_min_hours') || 'Минимальное количество часов в игре'}
                               </label>
                               <input 
                                 type="number" 
@@ -5073,7 +5785,7 @@ export default function ClanManager() {
 
                   const safeIdx = Math.min(previewVoteIndex, Math.max(0, wTemplates.length - 1));
                   const activeTpl = wTemplates[safeIdx] || { 
-                    name: 'Rustoria Main', 
+                    name: 'Main Server', 
                     day: t('clan_auto_233', t('clan_thursday', 'Четверг')), 
                     time: '16:00', 
                     ip: 'connect 127.0.0.1:28015', 
@@ -5097,7 +5809,7 @@ export default function ClanManager() {
                                   value={tpl.name || ''} 
                                   onChange={e => updateTemplate(index, 'name', e.target.value, false)} 
                                   onBlur={e => updateTemplate(index, 'name', e.target.value, true)}
-                                  placeholder="Rustoria Main" 
+                                  placeholder="Main Server" 
                                 />
                               </div>
                               <div>
@@ -6868,6 +7580,60 @@ export default function ClanManager() {
           </aside>
         )}
       </>
+    ) : isDevAdminActive && devGuilds.length > 0 ? (
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 max-w-xl w-full text-center flex flex-col items-center">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
+          <ShieldCheck className="w-7 h-7" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+          Режим администратора активен
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 max-w-md">
+          Бот подключен к {devGuilds.length} серверам. Выберите любой сервер из списка ниже, чтобы открыть панель управления:
+        </p>
+        <div className="w-full space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
+          {devGuilds.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => handleSelectDevGuild(g)}
+              className="w-full flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-slate-200 dark:border-slate-700/60 hover:border-indigo-500/40 transition-all text-left cursor-pointer group"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {g.icon ? (
+                  <img src={g.icon} alt="" className="w-9 h-9 rounded-xl shrink-0" />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                    {g.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {g.name}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {g.memberCount} участников • ID: {g.id}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {g.isConfigured ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
+                    Настроен
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">
+                    Новый
+                  </span>
+                )}
+                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">
+                  Управлять →
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
     ) : (
         <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-6 rounded-2xl font-medium border border-red-200 dark:border-red-900/50 flex flex-col items-center justify-center text-center gap-3">
           <AlertTriangle className="w-8 h-8 text-red-500 shrink-0" />
@@ -7140,7 +7906,7 @@ export default function ClanManager() {
                 { id: 'voice', title: t('clan_reset_sec_voice_title') || 'Динамические войсы', desc: t('clan_reset_sec_voice_desc') || 'Отключение Join-to-Create, сброс триггер-канала и категории временных комнат' },
                 { id: 'logging', title: t('clan_reset_sec_logging_title') || 'Логирование', desc: t('clan_reset_sec_logging_desc') || 'Сброс настроек каналов логирования и отключение отслеживаемых событий аудита' },
                 { id: 'moderation', title: t('clan_reset_sec_moderation_title') || 'Модерация', desc: t('clan_reset_sec_moderation_desc') || 'Сброс правил анти-спама, фильтрации упоминаний и белых списков' },
-                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || t('clan_rec_base', 'Набор в клан'), desc: t('clan_reset_sec_recruitment_desc') || 'Сброс требований к возрасту и часам в Rust, параметров авто-отклонений, тикетов и очистка заявок' },
+                { id: 'recruitment', title: t('clan_reset_sec_recruitment_title') || t('clan_rec_base', 'Набор в клан'), desc: t('clan_reset_sec_recruitment_desc') || 'Сброс требований к возрасту и часам в игре, параметров авто-отклонений, тикетов и очистка заявок' },
                 { id: 'applications', title: t('clan_reset_sec_applications_title') || 'Журнал заявок', desc: t('clan_reset_sec_applications_desc') || 'Очистка всех поданных анкет, истории рассмотрения заявок и архива тикетов' },
                 { id: 'ads', title: t('clan_reset_sec_ads_title') || 'Реклама и партнерство', desc: t('clan_reset_sec_ads_desc') || 'Сброс текста авто-объявлений, интервалов рассылки и привязанных каналов' },
                 { id: 'general', title: t('clan_reset_sec_general_title') || 'Основные настройки', desc: t('clan_reset_sec_general_desc') || 'Сброс названия клана, ссылки Discord и закрытие набора в клан' },

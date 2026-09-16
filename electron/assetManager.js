@@ -46,6 +46,7 @@ export class AssetManager {
       return new Promise((resolve, reject) => {
         https.get(url, { headers: { 'User-Agent': 'Industrial-Hub-Client' } }, (res) => {
           if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            res.resume();
             return resolve(this.downloadBuffer(res.headers.location));
           }
           if (res.statusCode !== 200) {

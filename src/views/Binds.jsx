@@ -163,10 +163,11 @@ export default function Binds() {
     if (result.success) {
       loadBinds();
       setManualBindKey(null);
+      addNotification(t('binds_saved_success', 'Бинд успешно сохранен'), 'success');
     } else if (result.error === 'rust_running') {
-      alert(t('rust_running_error'));
+      addNotification(t('rust_running_error'), 'error');
     } else {
-      alert(t('binds_error'));
+      addNotification(t('binds_error'), 'error');
     }
   };
 

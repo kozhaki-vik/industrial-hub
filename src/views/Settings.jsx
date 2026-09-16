@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power } from 'lucide-react';
+import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
 import { openLogFolder } from '../services/diagnostics';
@@ -184,58 +184,65 @@ export default function Settings() {
 
           {/* Language Selection */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-2">
               <Globe className="w-5 h-5 text-orange-500" />
               <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('language')}</h3>
             </div>
-            <div className="flex gap-4">
-              {['ru', 'en', 'ua'].map(lang => (
-                <label key={lang} className="flex items-center gap-2 cursor-pointer group">
-                  <input 
-                    type="radio" 
-                    name="language" 
-                    value={lang} 
-                    checked={i18n.language === lang} 
-                    onChange={handleLanguageChange}
-                    className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
-                  />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 uppercase">{lang}</span>
-                </label>
-              ))}
+            <p className="text-xs text-slate-500 mb-3">{t('settings_lang_desc', 'Выберите предпочтительный язык интерфейса программы')}</p>
+            <div className="relative max-w-xs">
+              <select 
+                value={i18n.language} 
+                onChange={handleLanguageChange}
+                className="w-full appearance-none bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-orange-500 cursor-pointer shadow-sm transition-all"
+              >
+                <option value="ru">🇷🇺 Русский (RU)</option>
+                <option value="en">🇬🇧 English (EN)</option>
+                <option value="ua">🇺🇦 Українська (UA)</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
           <div className="border-t border-slate-100 dark:border-slate-800"></div>
 
-          {/* Theme Selection */}
+          {/* Theme Selection - Slider Switch */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              {theme === 'dark' ? <Moon className="w-5 h-5 text-orange-500" /> : <Sun className="w-5 h-5 text-orange-500" />}
-              <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('theme')}</h3>
-            </div>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="theme" 
-                  value="light" 
-                  checked={theme === 'light'} 
-                  onChange={() => setTheme('light')}
-                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
-                />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('theme_light')}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="theme" 
-                  value="dark" 
-                  checked={theme === 'dark'} 
-                  onChange={() => setTheme('dark')}
-                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
-                />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('theme_dark')}</span>
-              </label>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  {theme === 'dark' ? <Moon className="w-5 h-5 text-orange-500" /> : <Sun className="w-5 h-5 text-orange-500" />}
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('theme')}</h3>
+                </div>
+                <p className="text-xs text-slate-500">
+                  {theme === 'dark' ? t('theme_dark', 'Тёмная тема оформления') : t('theme_light', 'Светлая тема оформления')}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={theme === 'dark'}
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500/30 ${
+                  theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-amber-100 border-amber-200'
+                }`}
+                title={theme === 'dark' ? t('theme_dark') : t('theme_light')}
+              >
+                <span className="sr-only">{t('theme')}</span>
+                <span
+                  className={`pointer-events-none flex h-7 w-7 transform items-center justify-center rounded-full shadow-md transition-transform duration-300 ease-in-out ${
+                    theme === 'dark'
+                      ? 'translate-x-8 bg-slate-900 text-blue-400'
+                      : 'translate-x-0 bg-white text-amber-500'
+                  }`}
+                >
+                  {theme === 'dark' ? (
+                    <Moon className="w-4 h-4 text-blue-400" />
+                  ) : (
+                    <Sun className="w-4 h-4 text-amber-500" />
+                  )}
+                </span>
+              </button>
             </div>
           </div>
 

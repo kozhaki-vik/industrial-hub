@@ -82,7 +82,7 @@ export const applyGraphicsPreset = async (presetName) => {
 
   let currentConfig = await readConfig('client.cfg') || '';
   for (const [key, value] of Object.entries(preset)) {
-    const regex = new RegExp(`^${key.replace('.', '\\.')}\\s+.*$`, 'm');
+    const regex = new RegExp(`^${key.replace('.', '\\.')}\\s+.*$`, 'gm');
     if (currentConfig.match(regex)) {
       currentConfig = currentConfig.replace(regex, `${key} "${value}"`);
     } else {
@@ -101,7 +101,7 @@ export const saveBind = async (key, command) => {
   let currentKeys = await readConfig('keys.cfg') || '';
   const bindLine = `bind ${key.toLowerCase()} "${command}"`;
   const escapedKey = key.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`^bind\\s+${escapedKey}\\s+.*$`, 'im');
+  const regex = new RegExp(`^bind\\s+${escapedKey}\\s+.*$`, 'igm');
   
   if (currentKeys.match(regex)) {
     currentKeys = currentKeys.replace(regex, bindLine);
