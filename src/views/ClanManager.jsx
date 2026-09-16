@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -325,9 +325,55 @@ const getLoggingEventGroups = (t) => [
 export default function ClanManager() {
   const { t } = useTranslation();
   const loggingEventGroups = getLoggingEventGroups(t);
-  const { ws, status: wsStatus } = useNetwork();
+  const { ws: rawWs, status: wsStatus } = useNetwork();
   const [status, setStatus] = useState('checking');
   const [guildId, setGuildId] = useState(null);
+  const guildIdRef = useRef(guildId);
+  useEffect(() => {
+    guildIdRef.current = guildId;
+  }, [guildId]);
+
+  // Developer Mode / Superadmin States
+  const [devAdminMode, setDevAdminMode] = useState(() => getConfigKey('devAdminModeEnabled') === true);
+  const isDevAdminActive = devAdminMode || getConfigKey('devAdminModeEnabled') === true;
+  const activeDevGuildIdRef = useRef(getConfigKey('devActiveGuildId') || null);
+  const [isDevAuthenticated, setIsDevAuthenticated] = useState(false);
+  const [devGuilds, setDevGuilds] = useState([]);
+  const [devShowServerGrid, setDevShowServerGrid] = useState(false);
+  const [isGuildDropdownOpen, setIsGuildDropdownOpen] = useState(false);
+  const [guildSearchQuery, setGuildSearchQuery] = useState('');
+  const [loadingDevGuilds, setLoadingDevGuilds] = useState(false);
+
+  // Transparent WebSocket wrapper that ensures all proxy calls carry the active Discord guild ID
+  const ws = useMemo(() => {
+    if (!rawWs) return null;
+    return new Proxy(rawWs, {
+      get(target, prop) {
+        if (prop === 'send') {
+          return (dataStr) => {
+            try {
+              const parsed = typeof dataStr === 'string' ? JSON.parse(dataStr) : dataStr;
+              if (parsed && parsed.type === 'clan' && parsed.action === 'proxy') {
+                const activeGid = parsed.targetGuildId || (isDevAdminActive ? activeDevGuildIdRef.current : undefined) || guildIdRef.current;
+                if (activeGid && !parsed.targetGuildId) {
+                  parsed.targetGuildId = activeGid;
+                }
+              }
+              return target.send(typeof parsed === 'string' ? parsed : JSON.stringify(parsed));
+            } catch (e) {
+              return target.send(dataStr);
+            }
+          };
+        }
+        const val = target[prop];
+        if (typeof val === 'function') {
+          return val.bind(target);
+        }
+        return val;
+      }
+    });
+  }, [rawWs, isDevAdminActive]);
+
   const [linkCode, setLinkCode] = useState('');
   const [error, setError] = useState('');
   const [logs, setLogs] = useState(['Initializing Clan Manager...']);
@@ -349,9 +395,9 @@ export default function ClanManager() {
     const afkTimer = setInterval(() => {
       const elapsed = Date.now() - lastActivityRef.current;
       if (elapsed >= 5 * 60 * 1000) {
-        if (ws && ws.readyState === WebSocket.OPEN) {
+        if (rawWs && rawWs.readyState === WebSocket.OPEN) {
           try {
-            ws.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
+            rawWs.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
           } catch (e) {}
         }
         addNotification(
@@ -365,24 +411,13 @@ export default function ClanManager() {
     return () => {
       trackedEvents.forEach(evt => window.removeEventListener(evt, updateActivity));
       clearInterval(afkTimer);
-      if (ws && ws.readyState === WebSocket.OPEN) {
+      if (rawWs && rawWs.readyState === WebSocket.OPEN) {
         try {
-          ws.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
+          rawWs.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
         } catch (e) {}
       }
     };
-  }, [ws, navigate, addNotification, t]);
-
-  // Developer Mode / Superadmin States
-  const [devAdminMode, setDevAdminMode] = useState(() => getConfigKey('devAdminModeEnabled') === true);
-  const isDevAdminActive = devAdminMode || getConfigKey('devAdminModeEnabled') === true;
-  const activeDevGuildIdRef = useRef(getConfigKey('devActiveGuildId') || null);
-  const [isDevAuthenticated, setIsDevAuthenticated] = useState(false);
-  const [devGuilds, setDevGuilds] = useState([]);
-  const [devShowServerGrid, setDevShowServerGrid] = useState(false);
-  const [isGuildDropdownOpen, setIsGuildDropdownOpen] = useState(false);
-  const [guildSearchQuery, setGuildSearchQuery] = useState('');
-  const [loadingDevGuilds, setLoadingDevGuilds] = useState(false);
+  }, [rawWs, navigate, addNotification, t]);
 
   useEffect(() => {
     const checkDevMode = async () => {
@@ -963,11 +998,14 @@ export default function ClanManager() {
           if (data.error) {
             setError(data.error);
             setSaveStatus(`error: ${data.error}`);
+            setTimeout(() => setSaveStatus(null), 5000);
           } else {
             setSaveStatus('success');
-            const sanitized = sanitizeClanConfig(data.data.config);
-            setConfig(sanitized);
-            lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
+            const sanitized = sanitizeClanConfig(data.data?.config || data.data);
+            if (sanitized) {
+              setConfig(sanitized);
+              lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
+            }
             setTimeout(() => setSaveStatus(null), 3000);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'auto_setup') {
@@ -1001,6 +1039,11 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_roster' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_roster_')))) {
           if (!data.error && data.data && data.data.success) {
             setRosterData(data.data);
+          } else {
+            setRosterData(prev => prev || { roster: [], roleNamesJson: '{}', customRolesJson: '[]' });
+            if (data.error || (data.data && data.data.error)) {
+              setError(data.error || data.data.error);
+            }
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_applications') {
           setLoadingApps(false);
@@ -1016,7 +1059,12 @@ export default function ClanManager() {
           }));
         } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_stats' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_stats_')))) {
           if (!data.error && data.data && data.data.success) {
-            setStatsData(data.data.stats);
+            setStatsData(data.data.stats || []);
+          } else {
+            setStatsData(prev => prev || []);
+            if (data.error || (data.data && data.data.error)) {
+              setError(data.error || data.data.error);
+            }
           }
         } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_discord_info' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_discord_info_')))) {
           if (!data.error && data.data && data.data.success) {
@@ -1048,6 +1096,11 @@ export default function ClanManager() {
               }));
             }
           } else {
+            setDynamicVoiceData(prev => prev || {
+              config: { enabled: false, categoryId: '', generatorChannelId: '', template: `🔊 ${t('clan_voice_party_tpl', 'Пати')} {user}`, defaultLimit: 0 },
+              activeRooms: [],
+              channels: discordInfo?.channels || []
+            });
             setError(data.error || (data.data && data.data.error));
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'update_dynamic_voice') {
@@ -1288,13 +1341,19 @@ export default function ClanManager() {
     setDevShowServerGrid(false);
     if (!guild) return;
     activeDevGuildIdRef.current = guild.id;
+    if (guildIdRef) guildIdRef.current = guild.id;
     setConfigKey('devActiveGuildId', guild.id);
     setGuildId(guild.id);
     setStatus('linked');
     setConfig(null);
     setRosterData(null);
     setStatsData(null);
+    setDynamicVoiceData(null);
+    setApplicationsData([]);
+    setClanWarnings([]);
     setDiscordInfo(null);
+    setSaveStatus(null);
+    setError(null);
     fetchConfig(guild.id);
     fetchDiscordInfo(guild.id);
   };
@@ -4726,25 +4785,36 @@ export default function ClanManager() {
 
             {activeTab === 'voice' && (
               <div className="space-y-6 max-w-5xl">
-                {loadingVoice || !dynamicVoiceData ? (
+                {loadingVoice && !dynamicVoiceData ? (
                   <VoiceRoomsSkeleton />
                 ) : (
                   <>
                     {/* Section 1: Settings Form (Join-to-Create) */}
                     <form onSubmit={saveDynamicVoiceConfig} noValidate className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-6">
-                      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                        <div>
-                          <h4 className="font-semibold text-slate-900 dark:text-white text-base">
-                            {t('clan_auto_30', 'Настройки системы Join-to-Create')}
-                          </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            {t('clan_auto_31', 'Настройте категорию и канал для автоматического создания пати')}
-                          </p>
+                      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4 flex-wrap">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <h4 className="font-semibold text-slate-900 dark:text-white text-base">
+                              {t('clan_auto_30', 'Настройки системы Join-to-Create')}
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              {t('clan_auto_31', 'Настройте категорию и канал для автоматического создания пати')}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={fetchDynamicVoice}
+                            disabled={loadingVoice}
+                            className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${loadingVoice ? 'animate-spin' : ''}`} />
+                            <span>{t('clan_auto_71', 'Обновить')}</span>
+                          </button>
                         </div>
                         <ToggleSwitch
-                          checked={!!dynamicVoiceData.config?.enabled}
+                          checked={!!dynamicVoiceData?.config?.enabled}
                           onChange={val => {
-                            const updated = { ...(dynamicVoiceData.config || {}), enabled: val };
+                            const updated = { ...(dynamicVoiceData?.config || {}), enabled: val };
                             queueAutoSaveVoice(updated, true);
                           }}
                           activeColor="orange"
