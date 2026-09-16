@@ -1081,7 +1081,7 @@ export default function ClanManager() {
           } else {
             setError(data.error || (data.data && data.data.error));
           }
-        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_dynamic_voice') {
+        } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_dynamic_voice' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_dynamic_voice')))) {
           setLoadingVoice(false);
           if (!data.error && data.data && data.data.success) {
             setDynamicVoiceData({
@@ -2048,7 +2048,7 @@ export default function ClanManager() {
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
-      reqId: 'get_dynamic_voice', 
+      reqId: `get_dynamic_voice_${Date.now()}`, 
       payload: { action: 'get_dynamic_voice' } 
     }));
   };
@@ -4783,289 +4783,295 @@ export default function ClanManager() {
               </div>
             )}
 
-            {activeTab === 'voice' && (
-              <div className="space-y-6 max-w-5xl">
-                {loadingVoice && !dynamicVoiceData ? (
-                  <VoiceRoomsSkeleton />
-                ) : (
-                  <>
-                    {/* Section 1: Settings Form (Join-to-Create) */}
-                    <form onSubmit={saveDynamicVoiceConfig} noValidate className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-6">
-                      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4 flex-wrap">
-                        <div className="flex items-center gap-3">
+            {activeTab === 'voice' && (() => {
+              const voiceConfig = dynamicVoiceData?.config || { enabled: false, categoryId: '', generatorChannelId: '', template: `🔊 ${t('clan_voice_party_tpl', 'Пати')} {user}`, defaultLimit: 0 };
+              const activeRooms = dynamicVoiceData?.activeRooms || [];
+              const voiceChannels = dynamicVoiceData?.channels || discordInfo?.channels || [];
+
+              return (
+                <div className="space-y-6 max-w-5xl">
+                  {loadingVoice && !dynamicVoiceData ? (
+                    <VoiceRoomsSkeleton />
+                  ) : (
+                    <>
+                      {/* Section 1: Settings Form (Join-to-Create) */}
+                      <form onSubmit={saveDynamicVoiceConfig} noValidate className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-6">
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4 flex-wrap">
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <h4 className="font-semibold text-slate-900 dark:text-white text-base">
+                                {t('clan_auto_30', 'Настройки системы Join-to-Create')}
+                              </h4>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {t('clan_auto_31', 'Настройте категорию и канал для автоматического создания пати')}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={fetchDynamicVoice}
+                              disabled={loadingVoice}
+                              className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${loadingVoice ? 'animate-spin' : ''}`} />
+                              <span>{t('clan_auto_71', 'Обновить')}</span>
+                            </button>
+                          </div>
+                          <ToggleSwitch
+                            checked={!!voiceConfig.enabled}
+                            onChange={val => {
+                              const updated = { ...voiceConfig, enabled: val };
+                              queueAutoSaveVoice(updated, true);
+                            }}
+                            activeColor="orange"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <ChannelSelect
+                            label={t('clan_voice_category_label')}
+                            description={t('clan_voice_category_desc')}
+                            value={voiceConfig.categoryId || ''}
+                            onChange={(val) => {
+                              const updated = { ...voiceConfig, categoryId: val };
+                              queueAutoSaveVoice(updated, true);
+                            }}
+                            discordChannels={voiceChannels}
+                            typeFilter={4}
+                          />
+
+                          <ChannelSelect
+                            label={t('clan_voice_generator_label')}
+                            description={t('clan_voice_generator_desc')}
+                            value={voiceConfig.generatorChannelId || ''}
+                            onChange={(val) => {
+                              const updated = { ...voiceConfig, generatorChannelId: val };
+                              queueAutoSaveVoice(updated, true);
+                            }}
+                            discordChannels={voiceChannels}
+                            typeFilter={2}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <h4 className="font-semibold text-slate-900 dark:text-white text-base">
-                              {t('clan_auto_30', 'Настройки системы Join-to-Create')}
-                            </h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              {t('clan_auto_31', 'Настройте категорию и канал для автоматического создания пати')}
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                              {t('clan_voice_template_label')}
+                            </label>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                              {t('clan_voice_template_desc')}
                             </p>
+                            <input
+                              type="text"
+                              value={voiceConfig.template || ''}
+                              onChange={(e) => {
+                                const updated = { ...voiceConfig, template: e.target.value };
+                                queueAutoSaveVoice(updated, false);
+                              }}
+                              onBlur={(e) => {
+                                const updated = { ...voiceConfig, template: e.target.value };
+                                queueAutoSaveVoice(updated, true);
+                              }}
+                              placeholder={t('clan_auto_109', '🔊 Пати {user}')}
+                              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                              {t('clan_voice_limit_label')}
+                            </label>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                              {t('clan_voice_limit_desc')}
+                            </p>
+                            <select
+                              value={voiceConfig.defaultLimit ?? 0}
+                              onChange={(e) => {
+                                const updated = { ...voiceConfig, defaultLimit: parseInt(e.target.value, 10) || 0 };
+                                queueAutoSaveVoice(updated, true);
+                              }}
+                              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
+                            >
+                              <option value={0}>0 — {t('clan_voice_unlimited')}</option>
+                              <option value={2}>{t('clan_auto_32', '2 места (Дуо)')}</option>
+                              <option value={3}>{t('clan_auto_33', '3 места (Трио)')}</option>
+                              <option value={4}>{t('clan_auto_34', '4 места (Квадро)')}</option>
+                              <option value={5}>{t('clan_auto_35', '5 мест (Пятерка)')}</option>
+                              <option value={6}>{t('clan_auto_36', '6 мест')}</option>
+                              <option value={8}>{t('clan_auto_37', '8 мест')}</option>
+                              <option value={10}>{t('clan_auto_38', '10 мест')}</option>
+                              <option value={12}>{t('clan_auto_39', '12 мест')}</option>
+                              <option value={16}>{t('clan_auto_40', '16 мест')}</option>
+                            </select>
+                          </div>
+                        </div>
+                      </form>
+
+                      {/* Section 2: Banner with Auto-setup & Title with ? tooltip */}
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-200 dark:border-orange-900/30">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-md shadow-orange-500/20 shrink-0">
+                            <Volume2 className="w-5 h-5" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                              {t('clan_voice_title')}
+                            </h3>
+                            <div className="group relative inline-flex">
+                              <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold cursor-default text-slate-600 dark:text-slate-300 select-none">
+                                ?
+                              </div>
+                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 p-3 bg-slate-800 text-slate-100 text-xs rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none leading-relaxed">
+                                {t('clan_voice_desc')}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 rotate-45"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAutoSetupDynamicVoice}
+                          disabled={voiceActionLoading}
+                          className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/80 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:border-orange-300 dark:hover:border-orange-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 shrink-0 cursor-pointer disabled:opacity-50"
+                        >
+                          <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
+                          <span>{voiceActionLoading ? 'Создание...' : t('clan_voice_auto_setup_btn')}</span>
+                        </button>
+                      </div>
+
+                      {/* Section 2: Active Temporary Rooms Monitoring */}
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-slate-900 dark:text-white text-base">
+                              {t('clan_voice_active_title')}
+                            </h4>
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60">
+                              {activeRooms.length}
+                            </span>
                           </div>
                           <button
                             type="button"
                             onClick={fetchDynamicVoice}
-                            disabled={loadingVoice}
-                            className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                            disabled={loadingVoice || voiceActionLoading}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                           >
                             <RefreshCw className={`w-3.5 h-3.5 ${loadingVoice ? 'animate-spin' : ''}`} />
-                            <span>{t('clan_auto_71', 'Обновить')}</span>
+                            <span>{t('clan_voice_refresh_btn')}</span>
                           </button>
                         </div>
-                        <ToggleSwitch
-                          checked={!!dynamicVoiceData?.config?.enabled}
-                          onChange={val => {
-                            const updated = { ...(dynamicVoiceData?.config || {}), enabled: val };
-                            queueAutoSaveVoice(updated, true);
-                          }}
-                          activeColor="orange"
-                        />
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <ChannelSelect
-                          label={t('clan_voice_category_label')}
-                          description={t('clan_voice_category_desc')}
-                          value={dynamicVoiceData.config?.categoryId || ''}
-                          onChange={(val) => {
-                            const updated = { ...(dynamicVoiceData.config || {}), categoryId: val };
-                            queueAutoSaveVoice(updated, true);
-                          }}
-                          discordChannels={dynamicVoiceData?.channels || discordInfo?.channels || []}
-                          typeFilter={4}
-                        />
-
-                        <ChannelSelect
-                          label={t('clan_voice_generator_label')}
-                          description={t('clan_voice_generator_desc')}
-                          value={dynamicVoiceData.config?.generatorChannelId || ''}
-                          onChange={(val) => {
-                            const updated = { ...(dynamicVoiceData.config || {}), generatorChannelId: val };
-                            queueAutoSaveVoice(updated, true);
-                          }}
-                          discordChannels={dynamicVoiceData?.channels || discordInfo?.channels || []}
-                          typeFilter={2}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            {t('clan_voice_template_label')}
-                          </label>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                            {t('clan_voice_template_desc')}
-                          </p>
-                          <input
-                            type="text"
-                            value={dynamicVoiceData.config?.template || ''}
-                            onChange={(e) => {
-                              const updated = { ...(dynamicVoiceData.config || {}), template: e.target.value };
-                              queueAutoSaveVoice(updated, false);
-                            }}
-                            onBlur={(e) => {
-                              const updated = { ...(dynamicVoiceData.config || {}), template: e.target.value };
-                              queueAutoSaveVoice(updated, true);
-                            }}
-                            placeholder={t('clan_auto_109', '🔊 Пати {user}')}
-                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            {t('clan_voice_limit_label')}
-                          </label>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                            {t('clan_voice_limit_desc')}
-                          </p>
-                          <select
-                            value={dynamicVoiceData.config?.defaultLimit ?? 0}
-                            onChange={(e) => {
-                              const updated = { ...(dynamicVoiceData.config || {}), defaultLimit: parseInt(e.target.value, 10) || 0 };
-                              queueAutoSaveVoice(updated, true);
-                            }}
-                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none text-sm transition-shadow"
-                          >
-                            <option value={0}>0 — {t('clan_voice_unlimited')}</option>
-                            <option value={2}>{t('clan_auto_32', '2 места (Дуо)')}</option>
-                            <option value={3}>{t('clan_auto_33', '3 места (Трио)')}</option>
-                            <option value={4}>{t('clan_auto_34', '4 места (Квадро)')}</option>
-                            <option value={5}>{t('clan_auto_35', '5 мест (Пятерка)')}</option>
-                            <option value={6}>{t('clan_auto_36', '6 мест')}</option>
-                            <option value={8}>{t('clan_auto_37', '8 мест')}</option>
-                            <option value={10}>{t('clan_auto_38', '10 мест')}</option>
-                            <option value={12}>{t('clan_auto_39', '12 мест')}</option>
-                            <option value={16}>{t('clan_auto_40', '16 мест')}</option>
-                          </select>
-                        </div>
-                      </div>
-                    </form>
-
-                    {/* Section 2: Banner with Auto-setup & Title with ? tooltip */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-200 dark:border-orange-900/30">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-md shadow-orange-500/20 shrink-0">
-                          <Volume2 className="w-5 h-5" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                            {t('clan_voice_title')}
-                          </h3>
-                          <div className="group relative inline-flex">
-                            <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold cursor-default text-slate-600 dark:text-slate-300 select-none">
-                              ?
-                            </div>
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 p-3 bg-slate-800 text-slate-100 text-xs rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none leading-relaxed">
-                              {t('clan_voice_desc')}
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 rotate-45"></div>
-                            </div>
+                        {activeRooms.length === 0 ? (
+                          <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                            <Radio className="w-8 h-8 mx-auto text-slate-400 mb-2 opacity-60" />
+                            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                              {t('clan_voice_no_rooms')}
+                            </p>
                           </div>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleAutoSetupDynamicVoice}
-                        disabled={voiceActionLoading}
-                        className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/80 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:border-orange-300 dark:hover:border-orange-700 rounded-xl text-xs font-semibold shadow-sm hover:shadow transition-all duration-200 shrink-0 cursor-pointer disabled:opacity-50"
-                      >
-                        <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
-                        <span>{voiceActionLoading ? 'Создание...' : t('clan_voice_auto_setup_btn')}</span>
-                      </button>
-                    </div>
-
-                    {/* Section 2: Active Temporary Rooms Monitoring */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-slate-900 dark:text-white text-base">
-                            {t('clan_voice_active_title')}
-                          </h4>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60">
-                            {dynamicVoiceData.activeRooms?.length || 0}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={fetchDynamicVoice}
-                          disabled={loadingVoice || voiceActionLoading}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-                        >
-                          <RefreshCw className={`w-3.5 h-3.5 ${loadingVoice ? 'animate-spin' : ''}`} />
-                          <span>{t('clan_voice_refresh_btn')}</span>
-                        </button>
-                      </div>
-
-                      {(!dynamicVoiceData.activeRooms || dynamicVoiceData.activeRooms.length === 0) ? (
-                        <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl">
-                          <Radio className="w-8 h-8 mx-auto text-slate-400 mb-2 opacity-60" />
-                          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                            {t('clan_voice_no_rooms')}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {dynamicVoiceData.activeRooms.map(room => (
-                            <div
-                              key={room.channelId}
-                              className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
-                            >
-                              <div className="flex justify-between items-start gap-2">
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <Volume2 className="w-4 h-4 text-orange-500 shrink-0" />
-                                    <h5 className="font-semibold text-slate-900 dark:text-white text-sm truncate max-w-[220px]" title={room.name}>
-                                      {room.name}
-                                    </h5>
-                                  </div>
-                                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                    {t('clan_voice_owner')} <span className="font-medium text-slate-700 dark:text-slate-300">{room.ownerName || 'Unknown'}</span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditingRoomLimit({
-                                        channelId: room.channelId,
-                                        name: room.name,
-                                        limit: room.userLimit || 0
-                                      });
-                                    }}
-                                    className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
-                                    title={t('clan_voice_change_limit_title') || 'Изменить лимит мест'}
-                                  >
-                                    <Sliders className="w-3 h-3" />
-                                    <span>{room.userLimit > 0 ? room.userLimit : '∞'}</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      const confirmed = await showConfirm({
-                                        title: t('clan_voice_delete_room_btn', 'Удалить комнату'),
-                                        message: `${t('clan_voice_delete_confirm', 'Удалить комнату')} "${room.name}"? ${t('clan_voice_delete_confirm2', 'Все участники будут отключены.')}`,
-                                        confirmText: t('confirm_btn', 'Удалить'),
-                                        danger: true
-                                      });
-                                      if (confirmed) {
-                                        handleManageDynamicRoom('delete_room', room.channelId);
-                                      }
-                                    }}
-                                    className="p-1.5 text-xs font-medium rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
-                                    title={t('clan_voice_delete_room_btn')}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Members list */}
-                              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex justify-between">
-                                  <span>{t('clan_room_members', 'Участники')} ({room.members?.length || 0}{room.userLimit > 0 ? ` / ${room.userLimit}` : ''}):</span>
-                                </div>
-                                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                                  {room.members?.map(m => (
-                                    <div
-                                      key={m.id}
-                                      className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-xs"
-                                    >
-                                      <div className="flex items-center gap-2 min-w-0">
-                                        <img
-                                          src={m.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-                                          alt=""
-                                          className="w-5 h-5 rounded-full shrink-0"
-                                        />
-                                        <span className="truncate text-slate-800 dark:text-slate-200 font-medium max-w-[130px]" title={m.displayName}>
-                                          {m.displayName}
-                                        </span>
-                                        {m.isMuted && (
-                                          <MicOff className="w-3 h-3 text-red-500 shrink-0" title={t('clan_voice_muted')} />
-                                        )}
-                                        {m.isDeaf && (
-                                          <VolumeX className="w-3 h-3 text-red-500 shrink-0" title={t('clan_voice_deafened')} />
-                                        )}
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleManageDynamicRoom('kick_member', room.channelId, { userId: m.id })}
-                                        className="text-red-500 hover:text-red-700 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors cursor-pointer"
-                                        title={t('clan_auto_100', 'Отключить из голосового канала')}
-                                      >
-                                        <UserX className="w-3.5 h-3.5" />
-                                      </button>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {activeRooms.map(room => (
+                              <div
+                                key={room.channelId}
+                                className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                              >
+                                <div className="flex justify-between items-start gap-2">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <Volume2 className="w-4 h-4 text-orange-500 shrink-0" />
+                                      <h5 className="font-semibold text-slate-900 dark:text-white text-sm truncate max-w-[220px]" title={room.name}>
+                                        {room.name}
+                                      </h5>
                                     </div>
-                                  ))}
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                      {t('clan_voice_owner')} <span className="font-medium text-slate-700 dark:text-slate-300">{room.ownerName || 'Unknown'}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingRoomLimit({
+                                          channelId: room.channelId,
+                                          name: room.name,
+                                          limit: room.userLimit || 0
+                                        });
+                                      }}
+                                      className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                                      title={t('clan_voice_change_limit_title') || 'Изменить лимит мест'}
+                                    >
+                                      <Sliders className="w-3 h-3" />
+                                      <span>{room.userLimit > 0 ? room.userLimit : '∞'}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        const confirmed = await showConfirm({
+                                          title: t('clan_voice_delete_room_btn', 'Удалить комнату'),
+                                          message: `${t('clan_voice_delete_confirm', 'Удалить комнату')} "${room.name}"? ${t('clan_voice_delete_confirm2', 'Все участники будут отключены.')}`,
+                                          confirmText: t('confirm_btn', 'Удалить'),
+                                          danger: true
+                                        });
+                                        if (confirmed) {
+                                          handleManageDynamicRoom('delete_room', room.channelId);
+                                        }
+                                      }}
+                                      className="p-1.5 text-xs font-medium rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                      title={t('clan_voice_delete_room_btn')}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Members list */}
+                                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex justify-between">
+                                    <span>{t('clan_room_members', 'Участники')} ({room.members?.length || 0}{room.userLimit > 0 ? ` / ${room.userLimit}` : ''}):</span>
+                                  </div>
+                                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                    {room.members?.map(m => (
+                                      <div
+                                        key={m.id}
+                                        className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-xs"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <img
+                                            src={m.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                                            alt=""
+                                            className="w-5 h-5 rounded-full shrink-0"
+                                          />
+                                          <span className="truncate text-slate-800 dark:text-slate-200 font-medium max-w-[130px]" title={m.displayName}>
+                                            {m.displayName}
+                                          </span>
+                                          {m.isMuted && (
+                                            <MicOff className="w-3 h-3 text-red-500 shrink-0" title={t('clan_voice_muted')} />
+                                          )}
+                                          {m.isDeaf && (
+                                            <VolumeX className="w-3 h-3 text-red-500 shrink-0" title={t('clan_voice_deafened')} />
+                                          )}
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleManageDynamicRoom('kick_member', room.channelId, { userId: m.id })}
+                                          className="text-red-500 hover:text-red-700 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors cursor-pointer"
+                                          title={t('clan_auto_100', 'Отключить из голосового канала')}
+                                        >
+                                          <UserX className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             {activeTab === 'recruitment' && (
               <form onSubmit={saveConfig} noValidate className="space-y-6">
@@ -6054,101 +6060,104 @@ export default function ClanManager() {
               </form>
             )}
 
-            {activeTab === 'roster' && (
-              <div className="space-y-6 max-w-4xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    {t('clan_auto_70', 'Состав клана')}
-                  </h3>
-                  <button onClick={() => setRosterData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    {t('clan_auto_71', 'Обновить')}
-                  </button>
-                </div>
-                
-                {!rosterData ? (
-                  <RosterSkeleton count={6} columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {rosterData.roster.length === 0 ? (
-                      <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
-                        {t('clan_auto_72', 'Участники не найдены. Убедитесь, что роли настроены правильно.')}
-                      </div>
-                    ) : (
-                      rosterData.roster.map(member => {
-                        let roleNamesMap = {};
-                        try {
-                          if (rosterData.roleNamesJson) roleNamesMap = JSON.parse(rosterData.roleNamesJson);
-                        } catch(e) {}
-                        
-                        const mId = member.userId || member.id;
-                        return (
-                          <div key={mId} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700 gap-3">
-                            <div className="flex items-center overflow-hidden flex-1">
-                              <img src={member.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-12 h-12 rounded-full mr-4 shadow-sm shrink-0 object-cover" />
-                              <div className="flex-1 overflow-hidden">
-                                <div className="font-medium text-slate-900 dark:text-white truncate">{member.displayName}</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{member.username}</div>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {member.roles.map(rId => {
-                                    // Find internal role key matching this ID
-                                    const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'].find(k => config[k] === rId);
-                                    if (roleKey) {
-                                      const shortKey = roleKey.replace('RoleId', ''); // e.g. leader
-                                      const roleName = roleNamesMap[shortKey] || shortKey;
-                                      return <span key={rId} className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md">{roleName}</span>
-                                    }
-                                    return null;
-                                  })}
-                                  {(() => {
-                                    const dos = dossiersData?.find(d => d.userId === mId);
-                                    if (!dos) return null;
-                                    if (dos.cheaterStatus === 'CONFIRMED' || (dos.cheaterReport && !dos.cheaterStatus)) {
-                                      return (
-                                        <span key="cheater" className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-md border border-red-200 dark:border-red-800">
-                                          🚨 {t('clan_dossier_badge_cheater_confirmed') || 'Читер'}
-                                        </span>
-                                      );
-                                    }
-                                    if (dos.cheaterStatus === 'SUSPICION') {
-                                      return (
-                                        <span key="suspicion" className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-md border border-amber-200 dark:border-amber-800">
-                                          ⚠️ {t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}
-                                        </span>
-                                      );
-                                    }
-                                    return null;
-                                  })()}
+            {activeTab === 'roster' && (() => {
+              const rosterList = Array.isArray(rosterData?.roster) ? rosterData.roster : [];
+              return (
+                <div className="space-y-6 max-w-4xl">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                      {t('clan_auto_70', 'Состав клана')}
+                    </h3>
+                    <button onClick={() => setRosterData(null)} className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                      {t('clan_auto_71', 'Обновить')}
+                    </button>
+                  </div>
+                  
+                  {!rosterData ? (
+                    <RosterSkeleton count={6} columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {rosterList.length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
+                          {t('clan_auto_72', 'Участники не найдены. Убедитесь, что роли настроены правильно.')}
+                        </div>
+                      ) : (
+                        rosterList.map(member => {
+                          let roleNamesMap = {};
+                          try {
+                            if (rosterData?.roleNamesJson) roleNamesMap = typeof rosterData.roleNamesJson === 'string' ? JSON.parse(rosterData.roleNamesJson) : rosterData.roleNamesJson;
+                          } catch(e) {}
+                          
+                          const mId = member.userId || member.id;
+                          return (
+                            <div key={mId} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700 gap-3">
+                              <div className="flex items-center overflow-hidden flex-1">
+                                <img src={member.avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="avatar" className="w-12 h-12 rounded-full mr-4 shadow-sm shrink-0 object-cover" />
+                                <div className="flex-1 overflow-hidden">
+                                  <div className="font-medium text-slate-900 dark:text-white truncate">{member.displayName}</div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{member.username}</div>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {(member.roles || []).map(rId => {
+                                      // Find internal role key matching this ID
+                                      const roleKey = ['leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId', 'mainRosterRoleId', 'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId', 'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'].find(k => config?.[k] === rId);
+                                      if (roleKey) {
+                                        const shortKey = roleKey.replace('RoleId', ''); // e.g. leader
+                                        const roleName = roleNamesMap[shortKey] || shortKey;
+                                        return <span key={rId} className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md">{roleName}</span>
+                                      }
+                                      return null;
+                                    })}
+                                    {(() => {
+                                      const dos = dossiersData?.find(d => d.userId === mId);
+                                      if (!dos) return null;
+                                      if (dos.cheaterStatus === 'CONFIRMED' || (dos.cheaterReport && !dos.cheaterStatus)) {
+                                        return (
+                                          <span key="cheater" className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-md border border-red-200 dark:border-red-800">
+                                            🚨 {t('clan_dossier_badge_cheater_confirmed') || 'Читер'}
+                                          </span>
+                                        );
+                                      }
+                                      if (dos.cheaterStatus === 'SUSPICION') {
+                                        return (
+                                          <span key="suspicion" className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-md border border-amber-200 dark:border-amber-800">
+                                            ⚠️ {t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}
+                                          </span>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const existing = dossiersData?.find(d => d.userId === mId);
-                                const profileToOpen = existing || {
-                                  userId: mId,
-                                  username: member.displayName || member.username,
-                                  avatar: member.avatarUrl,
-                                  status: 'ACTIVE'
-                                };
-                                setSelectedProfileForDossier(profileToOpen);
-                              }}
-                              className="p-2 text-slate-400 hover:text-orange-500 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
-                              title={t('clan_auto_107', 'Открыть личное дело / Архив')}
-                            >
-                              <Archive className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const existing = dossiersData?.find(d => d.userId === mId);
+                                  const profileToOpen = existing || {
+                                    userId: mId,
+                                    username: member.displayName || member.username,
+                                    avatar: member.avatarUrl,
+                                    status: 'ACTIVE'
+                                  };
+                                  setSelectedProfileForDossier(profileToOpen);
+                                }}
+                                className="p-2 text-slate-400 hover:text-orange-500 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                                title={t('clan_auto_107', 'Открыть личное дело / Архив')}
+                              >
+                                <Archive className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {activeTab === 'dossier' && (
               <div className="space-y-6 max-w-5xl">
