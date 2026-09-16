@@ -738,7 +738,7 @@ export default function MemberDossierModal({
                           <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-semibold text-xs text-slate-900 dark:text-white">
-                                {t('dossier_app_ticket_prefix', 'Заявка')} #{app.id?.slice(0, 8) || 'Ticket'}
+                                {t('dossier_app_ticket_prefix', 'Заявка')} #{app.id != null ? (typeof app.id === 'string' ? app.id.slice(0, 8) : app.id) : 'Ticket'}
                               </span>
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
                                 {app.status || 'PENDING'}
