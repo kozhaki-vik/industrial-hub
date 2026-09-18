@@ -530,18 +530,8 @@ app.whenReady().then(async () => {
     });
   });
 
-  // Trigger background asset sync after startup
-  setTimeout(() => {
-    if (assetManager) {
-      assetManager.syncAssets((prog) => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('assets:sync-progress', prog);
-        }
-      }).catch(err => {
-        console.warn('[AssetManager] Background sync warning:', err.message);
-      });
-    }
-  }, 1000);
+  // Background asset sync removed from startup (will be triggered on-demand by tabs that need it)
+  // setTimeout(() => { ... }, 1000);
 
   flushCrashQueue();
   setInterval(flushCrashQueue, 60000);

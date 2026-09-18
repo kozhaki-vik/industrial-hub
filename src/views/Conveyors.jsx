@@ -38,6 +38,13 @@ export default function Conveyors() {
   const navigate = useNavigate();
   const lang = i18n.language || 'ru';
 
+  useEffect(() => {
+    // Trigger lazy sync of assets when Conveyors tab is opened
+    if (window.electronAPI?.assets?.sync) {
+      window.electronAPI.assets.sync().catch(console.error);
+    }
+  }, []);
+
   const getCategoryLabel = useCallback((cat) => {
     if (cat && defaultCatKeys[cat.id]) {
       return t(defaultCatKeys[cat.id], cat.label);
