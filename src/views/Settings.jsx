@@ -2,10 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown, Palette } from 'lucide-react';
+import { Globe, Moon, Sun, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown, Palette } from 'lucide-react';
 import ThemeSelector from '../components/ThemeSelector';
-import { getConfigKey, setConfigKey } from '../services/store';
-import { autoDetectRustPath } from '../services/rustPath';
 import { openLogFolder } from '../services/diagnostics';
 import { useNavigate } from 'react-router-dom';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
@@ -62,8 +60,6 @@ export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { createTicket, status } = useNetwork();
   const navigate = useNavigate();
-  
-  const [rustPath, setRustPath] = React.useState(getConfigKey('rustPath') || '');
   
   // Sponsor Modal State
   const [sponsorStep, setSponsorStep] = React.useState(null);
@@ -143,24 +139,6 @@ export default function Settings() {
     setSponsorError(null);
   };
 
-  React.useEffect(() => {
-    let mounted = true;
-    if (!rustPath) {
-      autoDetectRustPath().then((detected) => {
-        if (mounted && detected) {
-          setRustPath(detected);
-          setConfigKey('rustPath', detected);
-        }
-      });
-    }
-    return () => { mounted = false; };
-  }, [rustPath]);
-
-  const handlePathChange = (e) => {
-    setRustPath(e.target.value);
-    setConfigKey('rustPath', e.target.value);
-  };
-
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     i18n.changeLanguage(newLang);
@@ -170,48 +148,27 @@ export default function Settings() {
   return (
     <div className="mb-8 max-w-5xl">
       <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-2">{t('settings_title')}</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-8">{t('settings_desc')}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">{t('settings_desc')}</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Settings Column */}
-        <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-8 h-fit">
-          
-          {/* Rust Path Configuration */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <FolderSearch className="w-5 h-5 text-orange-500" />
-              <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('rust_path')}</h3>
-            </div>
-            <p className="text-sm text-slate-500 mb-3">{t('settings_rust_path_desc')}</p>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                placeholder={t('rust_path_placeholder')} 
-                value={rustPath}
-                onChange={handlePathChange}
-                className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-300 outline-none focus:border-orange-500" 
-              />
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 dark:border-slate-800"></div>
+        <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-5 h-fit">
 
           {/* Language Selection */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-orange-500" />
               <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('language')}</h3>
             </div>
-            <p className="text-xs text-slate-500 mb-3">{t('settings_lang_desc', 'Выберите предпочтительный язык интерфейса программы')}</p>
-            <div className="relative max-w-xs">
+            <div className="relative w-48">
               <select 
                 value={i18n.language} 
                 onChange={handleLanguageChange}
-                className="w-full appearance-none bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-orange-500 cursor-pointer shadow-sm transition-all"
+                className="w-full appearance-none bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 pr-10 text-sm font-medium text-slate-800 dark:text-slate-200 outline-none focus:border-orange-500 cursor-pointer shadow-sm transition-all"
               >
-                <option value="ru">🇷🇺 Русский (RU)</option>
-                <option value="en">🇬🇧 English (EN)</option>
-                <option value="ua">🇺🇦 Українська (UA)</option>
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="ua">🇺🇦 Українська</option>
               </select>
               <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -233,6 +190,8 @@ export default function Settings() {
 
             <ThemeSelector value={theme} onChange={setTheme} />
           </div>
+
+          <div className="border-t border-slate-100 dark:border-slate-800"></div>
 
           {/* Auto-Start with Windows */}
           <div>
@@ -332,10 +291,10 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
           
           {/* Developers Group */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 h-fit">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 h-fit">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-5 h-5 text-orange-500" />
               <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('settings_team_title')}</h3>
@@ -386,7 +345,7 @@ export default function Settings() {
           </div>
 
           {/* Sponsors Group */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 h-fit">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 h-fit">
             <div className="flex items-center gap-2 mb-4">
               <Heart className="w-5 h-5 text-orange-500" />
               <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('settings_sponsors_title')}</h3>
