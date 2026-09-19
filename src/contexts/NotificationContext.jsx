@@ -7,9 +7,9 @@ export const useNotification = () => useContext(NotificationContext);
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
-  const addNotification = useCallback((message, type = 'info', duration = 10000) => {
+  const addNotification = useCallback((message, type = 'info', duration = 10000, title = null) => {
     const id = Date.now() + Math.random().toString();
-    const newNotif = { id, message, type };
+    const newNotif = { id, message, type, title };
     
     setNotifications(prev => [...prev, newNotif]);
     

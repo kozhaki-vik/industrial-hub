@@ -19,15 +19,19 @@ const ToastContainer = () => {
           <div
             key={notif.id}
             className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-lg border animate-in slide-in-from-right-8 fade-in duration-300
-              ${isSuccess 
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-200'
-                : 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/50 text-indigo-800 dark:text-indigo-200'
+              ${notif.type === 'error'
+                ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-200'
+                : isSuccess 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-200'
+                  : 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/50 text-indigo-800 dark:text-indigo-200'
               }
             `}
           >
             <div className="shrink-0 mt-0.5">
               {isSuccess ? (
                 <CheckCircle className="w-5 h-5 text-emerald-500" />
+              ) : notif.type === 'error' ? (
+                <X className="w-5 h-5 text-red-500" />
               ) : (
                 <MessageSquare className="w-5 h-5 text-indigo-500" />
               )}
@@ -35,7 +39,13 @@ const ToastContainer = () => {
             
             <div className="flex-1">
               <h4 className="text-sm font-bold mb-1">
-                {isSuccess ? t('toast_ticket_resolved', 'Обращение решено') : t('toast_support_reply', 'Ответ техподдержки')}
+                {notif.title ? notif.title : (
+                  notif.type === 'error'
+                    ? t('toast_error_default', 'Ошибка')
+                    : isSuccess 
+                      ? t('toast_success_default', 'Успешно') 
+                      : t('toast_info_default', 'Уведомление')
+                )}
               </h4>
               <p className="text-xs opacity-90 leading-relaxed whitespace-pre-wrap">
                 {notif.message}

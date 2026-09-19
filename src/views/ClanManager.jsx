@@ -416,7 +416,9 @@ export default function ClanManager() {
         }
         addNotification(
           t('clan_afk_timeout', 'Сессия управления кланом закрыта из-за 5 минут неактивности. Вы перенаправлены на главную страницу.'),
-          'info'
+          'info',
+          10000,
+          'AFK System'
         );
         navigate('/');
       }
