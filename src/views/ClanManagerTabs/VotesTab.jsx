@@ -39,31 +39,6 @@ export default function VotesTab() {
                 </div>
 
                 {(() => {
-                  let vConfig = { isAnonymous: true };
-                  try {
-                    if (config.votingConfigJson) {
-                      vConfig = { ...vConfig, ...JSON.parse(config.votingConfigJson) };
-                    }
-                  } catch(e) {}
-
-                  const toggleAnonymous = () => {
-                    const newVConfig = { ...vConfig, isAnonymous: !vConfig.isAnonymous };
-                    const updated = { ...config, votingConfigJson: JSON.stringify(newVConfig) };
-                    queueAutoSave(updated, true);
-                  };
-
-                  return (
-                    <div className="mb-6 p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-semibold text-slate-800 dark:text-white">{t('clan_vote_anonymous_title', 'Анонимное голосование')}</h4>
-                        <p className="text-xs text-slate-500 mt-1">{t('clan_vote_anonymous_desc', 'Скрывает список проголосовавших, показывая только количество голосов.')}</p>
-                      </div>
-                      <ToggleSwitch checked={vConfig.isAnonymous} onChange={toggleAnonymous} />
-                    </div>
-                  );
-                })()}
-                
-                {(() => {
                   let wTemplates = [];
                   try {
                     if (config.wipeTemplatesJson) {
@@ -79,7 +54,7 @@ export default function VotesTab() {
                   };
 
                   const addTemplate = () => {
-                    const newTemplates = [...wTemplates, { name: '', day: t('clan_auto_232', t('clan_thursday', 'Четверг')), time: '16:00', ip: '', banner: '' }];
+                    const newTemplates = [...wTemplates, { name: '', description: '', isAnonymous: true, day: t('clan_auto_232', t('clan_thursday', 'Четверг')), time: '16:00', ip: '', banner: '' }];
                     const updated = { ...config, wipeTemplatesJson: JSON.stringify(newTemplates) };
                     queueAutoSave(updated, true);
                   };
@@ -176,6 +151,27 @@ export default function VotesTab() {
                                   onChange={e => updateTemplate(index, 'banner', e.target.value, false)} 
                                   onBlur={e => updateTemplate(index, 'banner', e.target.value, true)}
                                   placeholder="https://i.imgur.com/..." 
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_vote_desc_label', 'Описание голосования')}</label>
+                                <textarea
+                                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 resize-none"
+                                  rows="3"
+                                  value={tpl.description || ''}
+                                  onChange={e => updateTemplate(index, 'description', e.target.value, false)}
+                                  onBlur={e => updateTemplate(index, 'description', e.target.value, true)}
+                                  placeholder={t('clan_vote_desc_placeholder', 'Например: Подключаемся на мейн сервер после 16:00. Всем быть в дискорде!')}
+                                />
+                              </div>
+                              <div className="md:col-span-2 flex items-center justify-between pt-2">
+                                <div>
+                                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t('clan_vote_anonymous_title', 'Анонимное голосование')}</label>
+                                  <p className="text-xs text-slate-500">{t('clan_vote_anonymous_desc', 'Скрывает список проголосовавших, показывая только количество голосов.')}</p>
+                                </div>
+                                <ToggleSwitch 
+                                  checked={tpl.isAnonymous !== false} 
+                                  onChange={() => updateTemplate(index, 'isAnonymous', tpl.isAnonymous === false, true)} 
                                 />
                               </div>
                             </div>
