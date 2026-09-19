@@ -12,42 +12,43 @@
 
 @theme {
   /* ========================================================================
-     1 & 2: БАЗОВАЯ / КЛАССИЧЕСКАЯ ТЁМНАЯ ПАЛИТРА (Deep Slate / Night)
+     1 & 2: БАЗОВАЯ / ТЁМНАЯ ТЕМА (Графитовая палитра по скриншоту)
+     Основной фон: #14191D, Карточки: #1B2024, Инпуты: #272C31, Границы: #3B4045
      ======================================================================== */
-  --color-slate-50: #f8fafc;
+  --color-slate-50: #f9fafb;
   --color-slate-100: #f1f5f9;
   --color-slate-200: #e2e8f0;
   --color-slate-300: #cbd5e1;
   --color-slate-400: #94a3b8;
   --color-slate-500: #64748b;
   --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-750: #242f3d;
-  --color-slate-800: #1e293b;
-  --color-slate-850: #162032;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
+  --color-slate-700: #3b4045;
+  --color-slate-750: #2e343a;
+  --color-slate-800: #272c31;
+  --color-slate-850: #21262a;
+  --color-slate-900: #1b2024;
+  --color-slate-950: #14191d;
 }
 
 /* ==========================================================================
-   3. ТЕМА DISCORD (Графитовая палитра на пару тонов темнее + Красный акцент)
+   3. ТЕМА DISCORD (Чистая оригинальная палитра Discord + Красный акцент)
    Активируется добавлением класса 'theme-discord' к тегу <html>.
+   Без дополнительного затемнения (оригинальные #36393f, #2f3136, #313338).
    ========================================================================== */
 html.theme-discord {
-  /* Основные фоны и поверхности (темнее предыдущего Discord варианта) */
-  --color-slate-50: #ffffff;
-  --color-slate-100: #f2f3f5;
-  --color-slate-200: #dbdee1;
-  --color-slate-300: #b5bac1;
-  --color-slate-400: #949ba4;
-  --color-slate-500: #80848e;
-  --color-slate-600: #4e5058;
-  --color-slate-700: #383a40;
-  --color-slate-750: #313338;
-  --color-slate-800: #2b2d31;
-  --color-slate-850: #282a2e;
-  --color-slate-900: #232428;
-  --color-slate-950: #1e1f22;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #b9bbbe;
+  --color-slate-400: #8e9297;
+  --color-slate-500: #72767d;
+  --color-slate-600: #4f545c;
+  --color-slate-700: #3c3f45;
+  --color-slate-750: #383a40;
+  --color-slate-800: #33353a;
+  --color-slate-850: #313338;
+  --color-slate-900: #2f3136;
+  --color-slate-950: #36393f;
 
   /* Замена оранжевого акцента на фирменный красный (RGB: 244, 81, 66 -> #F45142) */
   --color-orange-50: #fef2f2;

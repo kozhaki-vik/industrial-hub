@@ -20,22 +20,22 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
     {
       id: 'dark',
       name: t('theme_dark', 'Тёмная'),
-      desc: t('theme_dark_desc', 'Глубокая ночная тема'),
+      desc: t('theme_dark_desc', 'Тёмный графит'),
       icon: Moon,
-      surfaceColor: '#0F172A',
-      bgColor: '#020617',
-      lineColor: '#334155',
+      surfaceColor: '#1B2024',
+      bgColor: '#14191D',
+      lineColor: '#3B4045',
       accentColor: '#F97316',
       accentLabel: 'Orange'
     },
     {
       id: 'discord',
       name: t('theme_discord', 'Discord'),
-      desc: t('theme_discord_desc', 'В стиле Discord с красным акцентом'),
+      desc: t('theme_discord_desc', 'Оригинальный Discord с красным'),
       icon: MessageSquare,
-      surfaceColor: '#2B2D31',
-      bgColor: '#1E1F22',
-      lineColor: '#383A40',
+      surfaceColor: '#2F3136',
+      bgColor: '#36393F',
+      lineColor: '#4F545C',
       accentColor: '#F45142',
       accentLabel: 'Red'
     }
