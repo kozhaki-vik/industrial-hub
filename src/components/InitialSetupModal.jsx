@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Palette, Moon, Sun, Check, ArrowRight, Sparkles, Power } from 'lucide-react';
+import { Globe, Palette, Check, ArrowRight, Sparkles, Power } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { setConfigKey } from '../services/store';
+import ThemeSelector from './ThemeSelector';
 
 export default function InitialSetupModal({ isOpen, onComplete }) {
   const { t, i18n } = useTranslation();
@@ -122,63 +123,7 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
               {t('initial_setup_theme_title', 'Тема оформления')}
             </label>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {/* Dark Theme */}
-            <button
-              type="button"
-              onClick={() => handleSelectTheme('dark')}
-              className={`relative p-4 rounded-2xl border transition-all duration-200 flex items-center gap-3.5 text-left ${
-                selectedTheme === 'dark'
-                  ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
-                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-orange-400 shrink-0">
-                <Moon className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                  {t('initial_setup_theme_dark', 'Тёмная')}
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  {t('initial_setup_theme_dark_desc', 'Для ночных рейдов')}
-                </div>
-              </div>
-              {selectedTheme === 'dark' && (
-                <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-              )}
-            </button>
-
-            {/* Light Theme */}
-            <button
-              type="button"
-              onClick={() => handleSelectTheme('light')}
-              className={`relative p-4 rounded-2xl border transition-all duration-200 flex items-center gap-3.5 text-left ${
-                selectedTheme === 'light'
-                  ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
-                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-500 shrink-0">
-                <Sun className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                  {t('initial_setup_theme_light', 'Светлая')}
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  {t('initial_setup_theme_light_desc', 'Классический стиль')}
-                </div>
-              </div>
-              {selectedTheme === 'light' && (
-                <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-              )}
-            </button>
-          </div>
+          <ThemeSelector value={selectedTheme} onChange={handleSelectTheme} />
         </div>
 
         {/* AutoStart Selection */}

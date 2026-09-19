@@ -1,0 +1,126 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Sun, Moon, MessageSquare, Check } from 'lucide-react';
+
+export default function ThemeSelector({ value, onChange, className = '' }) {
+  const { t } = useTranslation();
+
+  const themes = [
+    {
+      id: 'light',
+      name: t('theme_light', 'Светлая'),
+      desc: t('theme_light_desc', 'Классический светлый стиль'),
+      icon: Sun,
+      surfaceColor: '#FFFFFF',
+      bgColor: '#F1F5F9',
+      lineColor: '#CBD5E1',
+      accentColor: '#F97316',
+      accentLabel: 'Orange'
+    },
+    {
+      id: 'dark',
+      name: t('theme_dark', 'Тёмная'),
+      desc: t('theme_dark_desc', 'Глубокая ночная тема'),
+      icon: Moon,
+      surfaceColor: '#0F172A',
+      bgColor: '#020617',
+      lineColor: '#334155',
+      accentColor: '#F97316',
+      accentLabel: 'Orange'
+    },
+    {
+      id: 'discord',
+      name: t('theme_discord', 'Discord'),
+      desc: t('theme_discord_desc', 'В стиле Discord с красным акцентом'),
+      icon: MessageSquare,
+      surfaceColor: '#2B2D31',
+      bgColor: '#1E1F22',
+      lineColor: '#383A40',
+      accentColor: '#F45142',
+      accentLabel: 'Red'
+    }
+  ];
+
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3.5 ${className}`}>
+      {themes.map((item) => {
+        const isSelected = value === item.id;
+        const IconComponent = item.icon;
+
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onChange(item.id)}
+            className={`group relative text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden ${
+              isSelected
+                ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
+                : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/50 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
+            }`}
+          >
+            {/* Visual Preview Box with 2 background colors split by bottom-left to top-right diagonal */}
+            <div className="relative w-full h-16 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-inner mb-3 transition-transform duration-200 group-hover:scale-[1.02]">
+              <svg className="w-full h-full block" viewBox="0 0 100 60" preserveAspectRatio="none">
+                {/* Верхний левый треугольник (Цвет поверхности/карточек) */}
+                <polygon points="0,0 100,0 0,60" fill={item.surfaceColor} />
+                {/* Нижний правый треугольник (Цвет глубокого фона) */}
+                <polygon points="100,0 100,60 0,60" fill={item.bgColor} />
+                {/* Разделительная линия с нижнего левого угла в правый верхний */}
+                <line
+                  x1="0"
+                  y1="60"
+                  x2="100"
+                  y2="0"
+                  stroke={item.lineColor}
+                  strokeWidth="2"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+
+              {/* Accent Color Badge */}
+              <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs border border-white/10 shadow-xs">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                  style={{ backgroundColor: item.accentColor }}
+                />
+                <span className="text-[10px] font-medium text-white/90 leading-none">
+                  {item.accentLabel}
+                </span>
+              </div>
+            </div>
+
+            {/* Title, Icon & Description */}
+            <div className="flex items-start justify-between gap-2 w-full">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                    isSelected
+                      ? 'bg-orange-500 text-white shadow-xs'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
+                  }`}
+                >
+                  <IconComponent className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span>{item.name}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                    {item.desc}
+                  </div>
+                </div>
+              </div>
+
+              {/* Selection Checkmark */}
+              {isSelected && (
+                <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                </div>
+              )}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}

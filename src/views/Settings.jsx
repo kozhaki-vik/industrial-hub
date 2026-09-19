@@ -2,7 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown } from 'lucide-react';
+import { Globe, Moon, Sun, FolderSearch, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown, Palette } from 'lucide-react';
+import ThemeSelector from '../components/ThemeSelector';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
 import { openLogFolder } from '../services/diagnostics';
@@ -205,45 +206,19 @@ export default function Settings() {
 
           <div className="border-t border-slate-100 dark:border-slate-800"></div>
 
-          {/* Theme Selection - Slider Switch */}
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  {theme === 'dark' ? <Moon className="w-5 h-5 text-orange-500" /> : <Sun className="w-5 h-5 text-orange-500" />}
-                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('theme')}</h3>
-                </div>
-                <p className="text-xs text-slate-500">
-                  {theme === 'dark' ? t('theme_dark', 'Тёмная тема оформления') : t('theme_light', 'Светлая тема оформления')}
-                </p>
+          {/* Theme Selection */}
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Palette className="w-5 h-5 text-orange-500" />
+                <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('theme', 'Тема')}</h3>
               </div>
-
-              <button
-                type="button"
-                role="switch"
-                aria-checked={theme === 'dark'}
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500/30 ${
-                  theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-amber-100 border-amber-200'
-                }`}
-                title={theme === 'dark' ? t('theme_dark') : t('theme_light')}
-              >
-                <span className="sr-only">{t('theme')}</span>
-                <span
-                  className={`pointer-events-none flex h-7 w-7 transform items-center justify-center rounded-full shadow-md transition-transform duration-300 ease-in-out ${
-                    theme === 'dark'
-                      ? 'translate-x-8 bg-slate-900 text-blue-400'
-                      : 'translate-x-0 bg-white text-amber-500'
-                  }`}
-                >
-                  {theme === 'dark' ? (
-                    <Moon className="w-4 h-4 text-blue-400" />
-                  ) : (
-                    <Sun className="w-4 h-4 text-amber-500" />
-                  )}
-                </span>
-              </button>
+              <p className="text-xs text-slate-500">
+                {t('theme_select_desc', 'Выберите визуальный стиль оформления интерфейса')}
+              </p>
             </div>
+
+            <ThemeSelector value={theme} onChange={setTheme} />
           </div>
 
           {/* Auto-Start with Windows */}
@@ -402,7 +377,7 @@ export default function Settings() {
                 }}
                 className="relative w-full overflow-hidden rounded-xl p-[2px] group"
               >
-                <div className="absolute -inset-[100%] bg-[conic-gradient(from_0deg,transparent_0_160deg,#f97316_180deg,transparent_180deg_340deg,#f97316_360deg)] animate-[spin_3s_linear_infinite] opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute -inset-[100%] bg-[conic-gradient(from_0deg,transparent_0_160deg,var(--color-orange-500,#f97316)_180deg,transparent_180deg_340deg,var(--color-orange-500,#f97316)_360deg)] animate-[spin_3s_linear_infinite] opacity-50 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex gap-4 items-center text-left bg-slate-50 dark:bg-slate-950 p-4 rounded-[10px] w-full h-full hover:bg-orange-50 dark:hover:bg-slate-900 transition-colors">
                   <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-950/60 flex items-center justify-center shrink-0 shadow-sm border border-orange-200 dark:border-orange-800/60 group-hover:border-orange-500 group-hover:scale-105 transition-all z-10">
                     <Sparkles className="w-7 h-7 text-orange-500 group-hover:text-orange-600 transition-colors" />
