@@ -4066,9 +4066,9 @@ const contextValue = {
         </div>
       ) : config ? (
         <>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 min-w-0 max-w-6xl w-full">
+          <div className="clan-manager-container bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 min-w-0 max-w-6xl w-full">
           {/* Left Sidebar Navigation */}
-          <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-hidden h-full">
+          <div className="clan-manager-sidebar w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-hidden h-full">
             {/* Dev Admin Mode Server Selector */}
             {isDevAdminActive && (
               <div className="mb-2 shrink-0 p-2 rounded-xl bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/50 border border-indigo-500/30">

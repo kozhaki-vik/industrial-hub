@@ -51,7 +51,7 @@ html.dark:not(.theme-discord) {
 /* ==========================================================================
    3. ТЕМА DISCORD (Чистая оригинальная палитра Discord + Красный акцент)
    Активируется добавлением класса 'theme-discord' к тегу <html>.
-   Без дополнительного затемнения (оригинальные #36393f, #2f3136, #313338).
+   Фон основного меню светлее (#323339), внешнее меню темнее (#2c2d32 — разделы и вокруг).
    ========================================================================== */
 html.theme-discord {
   --color-slate-50: #f8fafc;
@@ -61,12 +61,12 @@ html.theme-discord {
   --color-slate-400: #8e9297;
   --color-slate-500: #72767d;
   --color-slate-600: #4f545c;
-  --color-slate-700: #3c3f45;
+  --color-slate-700: #3f4147;
   --color-slate-750: #383a40;
-  --color-slate-800: #33353a;
-  --color-slate-850: #313338;
-  --color-slate-900: #2f3136;
-  --color-slate-950: #36393f;
+  --color-slate-800: #2c2d32;
+  --color-slate-850: #282a2e;
+  --color-slate-900: #323339; /* Более светлый фон основного меню (как в чате Discord) */
+  --color-slate-950: #2c2d32; /* Более тёмный фон внешнего меню (разделы и фон вокруг как в Discord) */
 
   /* Замена оранжевого акцента на фирменный красный (RGB: 244, 81, 66 -> #F45142) */
   --color-orange-50: #fef2f2;
@@ -80,6 +80,20 @@ html.theme-discord {
   --color-orange-800: #991b1b;
   --color-orange-900: #7f1d1d;
   --color-orange-950: #450a0a;
+}
+
+/* Стилизация Клан Менеджера в теме Discord */
+html.theme-discord .clan-manager-container {
+  background-color: var(--color-slate-900);
+}
+
+html.theme-discord .clan-manager-sidebar {
+  background-color: var(--color-slate-950);
+}
+
+html.theme-discord .clan-manager-sidebar button:not([class*="bg-blue-600"]):hover {
+  background-color: #35373c;
+  color: #dbdee1;
 }
 
 @layer base {

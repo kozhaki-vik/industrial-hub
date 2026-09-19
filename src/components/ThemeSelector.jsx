@@ -33,9 +33,9 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
       name: t('theme_discord', 'Discord'),
       desc: t('theme_discord_desc', 'Оригинальный Discord с красным'),
       icon: MessageSquare,
-      surfaceColor: '#2F3136',
-      bgColor: '#36393F',
-      lineColor: '#4F545C',
+      surfaceColor: '#323339',
+      bgColor: '#2C2D32',
+      lineColor: '#3F4147',
       accentColor: '#F45142',
       accentLabel: 'Red'
     }
