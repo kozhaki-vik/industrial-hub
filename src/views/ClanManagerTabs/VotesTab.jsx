@@ -37,6 +37,31 @@ export default function VotesTab() {
                     </button>
                   )}
                 </div>
+
+                {(() => {
+                  let vConfig = { isAnonymous: true };
+                  try {
+                    if (config.votingConfigJson) {
+                      vConfig = { ...vConfig, ...JSON.parse(config.votingConfigJson) };
+                    }
+                  } catch(e) {}
+
+                  const toggleAnonymous = () => {
+                    const newVConfig = { ...vConfig, isAnonymous: !vConfig.isAnonymous };
+                    const updated = { ...config, votingConfigJson: JSON.stringify(newVConfig) };
+                    queueAutoSave(updated, true);
+                  };
+
+                  return (
+                    <div className="mb-6 p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-800 dark:text-white">{t('clan_vote_anonymous_title', 'Анонимное голосование')}</h4>
+                        <p className="text-xs text-slate-500 mt-1">{t('clan_vote_anonymous_desc', 'Скрывает список проголосовавших, показывая только количество голосов.')}</p>
+                      </div>
+                      <ToggleSwitch checked={vConfig.isAnonymous} onChange={toggleAnonymous} />
+                    </div>
+                  );
+                })()}
                 
                 {(() => {
                   let wTemplates = [];

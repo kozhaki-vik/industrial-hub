@@ -1,7 +1,7 @@
 {
   "name": "industrial-hub",
   "private": true,
-  "version": "2.19.17",
+  "version": "2.19.18",
   "author": "Kozhaki",
   "description": "Industrial Hub - Desktop Companion Application",
   "type": "module",
@@ -43,7 +43,7 @@
   "build": {
     "appId": "com.industrialhub.app",
     "productName": "Industrial Hub",
-    "copyright": "Copyright \u00a9 Kozhaki 2026. All rights reserved.",
+    "copyright": "Copyright © Kozhaki 2026. All rights reserved.",
     "directories": {
       "output": "release"
     },
