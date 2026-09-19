@@ -75,11 +75,17 @@ export default function Settings() {
 
   // Auto-Start State
   const [autoStart, setAutoStart] = React.useState(false);
+  const [startMinimized, setStartMinimized] = React.useState(false);
 
   React.useEffect(() => {
     if (window.electronAPI?.app?.getAutoStart) {
       window.electronAPI.app.getAutoStart().then(enabled => {
         setAutoStart(!!enabled);
+      }).catch(() => {});
+    }
+    if (window.electronAPI?.app?.getStartMinimizedToTray) {
+      window.electronAPI.app.getStartMinimizedToTray().then(enabled => {
+        setStartMinimized(!!enabled);
       }).catch(() => {});
     }
   }, []);
@@ -88,6 +94,13 @@ export default function Settings() {
     setAutoStart(val);
     if (window.electronAPI?.app?.setAutoStart) {
       await window.electronAPI.app.setAutoStart(val).catch(() => {});
+    }
+  };
+
+  const handleToggleStartMinimized = async (val) => {
+    setStartMinimized(val);
+    if (window.electronAPI?.app?.setStartMinimizedToTray) {
+      await window.electronAPI.app.setStartMinimizedToTray(val).catch(() => {});
     }
   };
 
@@ -240,6 +253,34 @@ export default function Settings() {
                   type="checkbox" 
                   checked={autoStart} 
                   onChange={(e) => handleToggleAutoStart(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+              </label>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 dark:border-slate-800"></div>
+
+          {/* Start Minimized to Tray */}
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Power className="w-5 h-5 text-orange-500 opacity-70" />
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Запускать свернутой в трей
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-500">
+                  Приложение будет запускаться сразу в системном трее, минуя отображение окна
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={startMinimized} 
+                  onChange={(e) => handleToggleStartMinimized(e.target.checked)}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>

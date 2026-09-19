@@ -75,15 +75,6 @@ export default function ModerationTab() {
               const textChannels = (discordInfo?.channels || []).filter(c => c.type === 0);
               const allRoles = discordInfo?.roles || [];
 
-              const isLeadershipRole = (roleId) => {
-                return Boolean(
-                  roleId && (
-                    roleId === config?.leaderRoleId ||
-                    roleId === config?.deputyLeaderRoleId
-                  )
-                );
-              };
-
               const handleUpdateAM = (field, val, immediate = true) => {
                 const updated = {
                   ...modCfg,
@@ -630,32 +621,22 @@ export default function ModerationTab() {
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
                         {t('clan_mod_whitelist_roles_desc')}
-                        <span className="block mt-0.5 text-amber-600 dark:text-amber-400 font-medium">
-                          • {t('clan_mod_auto_exempt_hint')}
-                        </span>
                       </p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {allRoles.length === 0 ? (
                           <span className="text-xs text-slate-400 italic">{t('clan_auto_79', 'Роли не загружены')}</span>
                         ) : (
                           allRoles.map(r => {
-                            const isAuto = isLeadershipRole(r.id);
-                            const isIgnored = isAuto || (Array.isArray(am.ignoreRoles) && am.ignoreRoles.includes(r.id));
+                            const isIgnored = Array.isArray(am.ignoreRoles) && am.ignoreRoles.includes(r.id);
                             return (
                               <button
                                 key={r.id}
                                 type="button"
-                                onClick={() => {
-                                  if (isAuto) return;
-                                  handleToggleRoleWhitelist(r.id);
-                                }}
-                                title={isAuto ? t('clan_mod_auto_exempt_hint') : undefined}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${
-                                  isAuto
-                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 cursor-default'
-                                    : isIgnored
-                                    ? 'bg-blue-500 text-white border-blue-600 shadow-sm cursor-pointer'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer'
+                                onClick={() => handleToggleRoleWhitelist(r.id)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                  isIgnored
+                                    ? 'bg-blue-500 text-white border-blue-600 shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                                 }`}
                               >
                                 <span
@@ -663,13 +644,7 @@ export default function ModerationTab() {
                                   style={{ backgroundColor: r.color && r.color !== '#000000' ? r.color : '#94a3b8' }}
                                 ></span>
                                 <span>{r.name}</span>
-                                {isAuto ? (
-                                  <span className="text-[10px] font-bold px-1 py-0.2 rounded bg-amber-200/50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200">
-                                    {t('clan_mod_auto_exempt_badge') || 'Авто'}
-                                  </span>
-                                ) : isIgnored ? (
-                                  <Check className="w-3 h-3" />
-                                ) : null}
+                                {isIgnored && <Check className="w-3 h-3" />}
                               </button>
                             );
                           })

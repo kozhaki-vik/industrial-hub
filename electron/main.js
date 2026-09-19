@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell, protocol, screen, safeStorage } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell, protocol, screen, safeStorage, Tray, Menu, nativeImage } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import child_process from 'child_process';
@@ -40,6 +40,8 @@ const __dirname = path.dirname(__filename);
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow = null;
+let tray = null;
+let isQuitting = false;
 
 function getRealAppPath() {
   if (app.isPackaged) {
@@ -311,12 +313,35 @@ function createWindow() {
 
   // Focus both window and webContents on ready-to-show
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.focus();
-    if (mainWindow.webContents) {
-      mainWindow.webContents.focus();
+    if (!store.get('startMinimizedToTray', false)) {
+      mainWindow.show();
+      mainWindow.focus();
+      if (mainWindow.webContents) {
+        mainWindow.webContents.focus();
+      }
     }
   });
+
+  mainWindow.on('close', (e) => {
+    if (!isQuitting && store.get('minimizeToTray', true)) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
+  });
+
+  if (!tray) {
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png')));
+    const contextMenu = Menu.buildFromTemplate([
+      { label: 'Открыть', click: () => { mainWindow.show(); mainWindow.focus(); } },
+      { label: 'Выход', click: () => { isQuitting = true; app.quit(); } }
+    ]);
+    tray.setToolTip('Industrial Hub');
+    tray.setContextMenu(contextMenu);
+    tray.on('click', () => {
+      mainWindow.show();
+      mainWindow.focus();
+    });
+  }
 
 
   if (isDev) {
@@ -1562,6 +1587,18 @@ app.whenReady().then(async () => {
       console.error('Failed to set auto-start setting:', e);
       return { success: false, error: e.message };
     }
+  });
+
+  ipcMain.handle('app:getMinimizeToTray', () => store.get('minimizeToTray', true));
+  ipcMain.handle('app:setMinimizeToTray', (e, val) => {
+    store.set('minimizeToTray', !!val);
+    return true;
+  });
+
+  ipcMain.handle('app:getStartMinimizedToTray', () => store.get('startMinimizedToTray', false));
+  ipcMain.handle('app:setStartMinimizedToTray', (e, val) => {
+    store.set('startMinimizedToTray', !!val);
+    return true;
   });
 
   ipcMain.handle('logs:openFolder', async () => {

@@ -54,7 +54,7 @@ export default function VotesTab() {
                   };
 
                   const addTemplate = () => {
-                    const newTemplates = [...wTemplates, { name: 'Вайп на Растрории', description: 'Отметьтесь, пожалуйста, о вашем присутствии на вайпе!', isAnonymous: true, day: t('clan_auto_232', t('clan_thursday', 'Четверг')), time: '16:00', ip: 'connect 127.0.0.1:28015', banner: '' }];
+                    const newTemplates = [...wTemplates, { name: 'Вайп на Растрории', description: 'Отметьтесь, пожалуйста, о вашем присутствии на вайпе!', isAnonymous: false, day: t('clan_auto_232', t('clan_thursday', 'Четверг')), time: '16:00', ip: '', banner: '' }];
                     const updated = { ...config, wipeTemplatesJson: JSON.stringify(newTemplates) };
                     queueAutoSave(updated, true);
                   };
@@ -79,9 +79,10 @@ export default function VotesTab() {
                     name: 'Вайп на Растрории', 
                     day: t('clan_auto_233', t('clan_thursday', 'Четверг')), 
                     time: '16:00', 
-                    ip: 'connect 127.0.0.1:28015', 
+                    ip: '', 
                     description: 'Отметьтесь, пожалуйста, о вашем присутствии на вайпе!',
-                    banner: '' 
+                    banner: '',
+                    isAnonymous: false
                   };
                   
                   return (
@@ -170,8 +171,8 @@ export default function VotesTab() {
                                   <p className="text-xs text-slate-500">{t('clan_vote_anonymous_desc', 'Скрывает список проголосовавших, показывая только количество голосов.')}</p>
                                 </div>
                                 <ToggleSwitch 
-                                  checked={tpl.isAnonymous !== false} 
-                                  onChange={() => updateTemplate(index, 'isAnonymous', tpl.isAnonymous === false, true)} 
+                                  checked={tpl.isAnonymous === true} 
+                                  onChange={() => updateTemplate(index, 'isAnonymous', tpl.isAnonymous !== true, true)} 
                                 />
                               </div>
                             </div>

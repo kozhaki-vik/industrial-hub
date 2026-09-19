@@ -15,7 +15,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     reportError: (err) => ipcRenderer.invoke('app:reportError', err),
     focusWindow: () => ipcRenderer.invoke('app:focusWindow'),
     getAutoStart: () => ipcRenderer.invoke('app:getAutoStart'),
-    setAutoStart: (enabled) => ipcRenderer.invoke('app:setAutoStart', enabled)
+    setAutoStart: (enabled) => ipcRenderer.invoke('app:setAutoStart', enabled),
+    getMinimizeToTray: () => ipcRenderer.invoke('app:getMinimizeToTray'),
+    setMinimizeToTray: (val) => ipcRenderer.invoke('app:setMinimizeToTray', val),
+    getStartMinimizedToTray: () => ipcRenderer.invoke('app:getStartMinimizedToTray'),
+    setStartMinimizedToTray: (val) => ipcRenderer.invoke('app:setStartMinimizedToTray', val)
   },
   logs: {
     openFolder: () => ipcRenderer.invoke('logs:openFolder'),
@@ -74,6 +78,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
             'diagnostics:pingUrl',
             'app:relaunch', 'app:focusWindow', 'app:reportError',
             'app:getAutoStart', 'app:setAutoStart',
+            'app:getMinimizeToTray', 'app:setMinimizeToTray',
+            'app:getStartMinimizedToTray', 'app:setStartMinimizedToTray',
             'assets:sync',
             'logs:openFolder', 'logs:getRecent',
             'dev:saveKey', 'dev:getKey', 'dev:hasKey', 'dev:removeKey', 'dev:signChallenge'
