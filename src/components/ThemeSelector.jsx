@@ -25,8 +25,8 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
       surfaceColor: '#1B2024',
       bgColor: '#14191D',
       lineColor: '#3B4045',
-      accentColor: '#F97316',
-      accentLabel: 'Orange'
+      accentColor: '#3154E1',
+      accentLabel: 'Blue'
     },
     {
       id: 'discord',

@@ -1012,7 +1012,7 @@
   "theme_dark": "Dark",
   "theme_discord": "Discord",
   "theme_light_desc": "Classic clean light style",
-  "theme_dark_desc": "Dark graphite",
+  "theme_dark_desc": "Dark graphite with blue accent",
   "theme_discord_desc": "Original Discord with red accents",
   "theme_select_desc": "Select interface visual style",
   "binds_subtitle": "Hotkey configuration",

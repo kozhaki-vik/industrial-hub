@@ -15,6 +15,9 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     const root = window.document.documentElement;
 
+    // Снимаем классы специфичных тем
+    root.classList.remove('theme-dark', 'theme-discord', 'theme-light');
+
     // Включаем темный режим для темной темы и темы Discord (для Tailwind dark: селекторов)
     if (theme === 'dark' || theme === 'discord') {
       root.classList.add('dark');
@@ -22,12 +25,8 @@ export function ThemeProvider({ children }) {
       root.classList.remove('dark');
     }
 
-    // Включаем специальный класс для палитры Discord
-    if (theme === 'discord') {
-      root.classList.add('theme-discord');
-    } else {
-      root.classList.remove('theme-discord');
-    }
+    // Добавляем класс текущей темы
+    root.classList.add(`theme-${theme}`);
 
     localStorage.setItem('industrial-hub-theme', theme);
   }, [theme]);
