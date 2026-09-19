@@ -360,7 +360,7 @@ export default function Conveyors() {
                                           className="w-full aspect-square rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center p-0.5 hover:border-orange-400 dark:hover:border-orange-500 transition-colors"
                                           title={((lang === 'en' ? dbItem.nameEn : dbItem.nameRu) || dbItem.shortname)}
                                         >
-                                          <img src={dbItem.imageUrl || ''} alt="" className="max-w-full max-h-full object-contain drop-shadow-sm" onError={(e) => e.currentTarget.style.display = 'none'} />
+                                          <img loading="lazy" src={dbItem.imageUrl || ''} alt="" className="max-w-full max-h-full object-contain drop-shadow-sm" onError={(e) => e.currentTarget.style.display = 'none'} />
                                         </div>
                                       );
                                     })

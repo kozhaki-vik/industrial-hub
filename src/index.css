@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #b9bbbe;
+  --color-slate-400: #8e9297;
+  --color-slate-500: #72767d;
+  --color-slate-600: #4f545c;
+  --color-slate-700: #3c3f45;
+  --color-slate-750: #383a40;
+  --color-slate-800: #33353a;
+  --color-slate-850: #313338;
+  --color-slate-900: #2f3136;
+  --color-slate-950: #36393f;
+}
+
 @layer base {
   body {
     @apply bg-[#F8F9FA] text-slate-900 font-sans antialiased transition-colors duration-300;

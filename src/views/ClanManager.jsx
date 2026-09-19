@@ -899,24 +899,37 @@ export default function ClanManager() {
                   timestamp: data.timestamp
                 }));
                 return;
+              } else {
+                const signErr = signRes?.error || 'Мастер-ключ не сохранен';
+                setIsDevAuthenticated(false);
+                setLoadingDevGuilds(false);
+                setError(`Ошибка подписи ключа разработчика: ${signErr}. Укажите DEV_MASTER_KEY в Настройки -> Разработчик.`);
+                addLog(`Dev challenge sign failed: ${signErr}`);
               }
+            } else {
+              setIsDevAuthenticated(false);
+              setLoadingDevGuilds(false);
+              setError('Режим разработчика доступен только в настольном приложении Electron.');
             }
-            addLog('Dev challenge sign failed. Falling back to normal mode.');
-            ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
           })();
         } else if (data.type === 'clan_dev_auth_res') {
           if (data.success) {
             setIsDevAuthenticated(true);
+            setError(null);
             addLog('Developer session authenticated!');
             setLoadingDevGuilds(true);
             ws.send(JSON.stringify({ type: 'clan', action: 'dev_get_guilds' }));
           } else {
-            addLog(`Dev auth rejected: ${data.error || 'Unknown error'}. Reverting to normal mode.`);
-            ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
+            setIsDevAuthenticated(false);
+            setLoadingDevGuilds(false);
+            const errMsg = data.error || 'Ошибка авторизации';
+            setError(`Ошибка авторизации разработчика: ${errMsg}`);
+            addLog(`Dev auth rejected: ${errMsg}`);
           }
         } else if (data.type === 'clan_dev_guilds_res') {
           setLoadingDevGuilds(false);
           if (data.success && Array.isArray(data.guilds)) {
+            setError(null);
             setDevGuilds(data.guilds);
             const savedGuildId = getConfigKey('devActiveGuildId');
             const target = data.guilds.find(g => g.id === savedGuildId);
@@ -1322,6 +1335,12 @@ export default function ClanManager() {
               roles: data.data.roles
             }));
             addLog('Discord roles auto-updated from server');
+          } else if (data.event === 'channels_updated' && data.data?.channels) {
+            setDiscordInfo(prev => ({
+              ...(prev || {}),
+              channels: data.data.channels
+            }));
+            addLog('Discord channels auto-updated from server');
           }
         }
       } catch (err) {}
@@ -1376,8 +1395,23 @@ export default function ClanManager() {
     if (ws && wsStatus === 'online') {
       setLoadingDevGuilds(true);
       setError(null);
-      addLog('Refreshing Discord guilds list...');
-      ws.send(JSON.stringify({ type: 'clan', action: 'dev_get_guilds' }));
+      if (!isDevAuthenticated) {
+        addLog('Not dev authenticated yet. Initiating dev handshake...');
+        (async () => {
+          let hwid = 'dev_client';
+          try {
+            if (window.electronAPI?.ipcRenderer) {
+              hwid = await window.electronAPI.ipcRenderer.invoke('network:get-hwid');
+            } else {
+              hwid = localStorage.getItem('hub_hwid') || 'dev_client';
+            }
+          } catch (err) {}
+          ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid }));
+        })();
+      } else {
+        addLog('Refreshing Discord guilds list...');
+        ws.send(JSON.stringify({ type: 'clan', action: 'dev_get_guilds' }));
+      }
     }
   };
 
@@ -2320,10 +2354,17 @@ export default function ClanManager() {
                     <span className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-bold text-xs uppercase tracking-wider border border-indigo-500/30">
                       Developer Admin Mode
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium text-xs border border-emerald-500/20">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      Сессия активна
-                    </span>
+                    {isDevAuthenticated ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium text-xs border border-emerald-500/20">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        Сессия активна
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 font-medium text-xs border border-amber-500/20">
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                        Не авторизован
+                      </span>
+                    )}
                     {guildId && (
                       <button
                         type="button"
@@ -2369,6 +2410,31 @@ export default function ClanManager() {
                 </div>
               </div>
             </div>
+
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+                <div className="flex items-center gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>{error}</span>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/settings')}
+                    className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
+                  >
+                    В Настройки
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="text-red-400 hover:text-red-200 cursor-pointer p-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Search Bar and Counter */}
             <div className="space-y-4">

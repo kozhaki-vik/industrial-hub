@@ -760,14 +760,25 @@ export default function RecruitmentTab() {
                       <div className={`transition-opacity ${!rConfig.steamPrefixCheck ? 'opacity-50 pointer-events-none' : ''}`}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Требуемая приписка</label>
-                            <input
-                              type="text"
-                              className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
-                              placeholder="Например: [GODS]"
-                              value={rConfig.steamPrefix || ''}
-                              onChange={e => updateRConfig('steamPrefix', e.target.value)}
-                            />
+                            <div className="mb-4">
+                              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Требуемая приписка</label>
+                              <input
+                                type="text"
+                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                                placeholder="Например: [GODS]"
+                                value={rConfig.steamPrefix || ''}
+                                onChange={e => updateRConfig('steamPrefix', e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Канал для логов снятия</label>
+                              <ChannelSelect
+                                channels={discordInfo?.channels}
+                                selectedId={rConfig.steamPrefixLogChannel}
+                                onChange={(val) => updateRConfig('steamPrefixLogChannel', val)}
+                                placeholder="Выберите канал..."
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="mt-6">

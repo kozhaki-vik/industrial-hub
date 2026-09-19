@@ -187,22 +187,32 @@ export default function ModerationTab() {
                     </p>
                   </div>
 
-                  {/* Navigation Bar for Sub Tabs */}
-                  <div className="flex flex-wrap gap-2 pb-2">
-                    <button type="button" onClick={() => setModSubTab('antiMention')} className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${modSubTab === 'antiMention' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-                      {t('clan_mod_anti_mention_title') || 'Подозрительные действия'}
-                    </button>
-                    <button type="button" onClick={() => setModSubTab('badWords')} className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${modSubTab === 'badWords' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-                      {t('clan_mod_badwords_title') || 'Фильтр слов'}
-                    </button>
-                    <button type="button" onClick={() => setModSubTab('warnings')} className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${modSubTab === 'warnings' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-                      {t('clan_warn_settings_title') || 'Система варнов'}
-                    </button>
-                  </div>
+                  <div className="space-y-4">
 
                   {/* Anti-Mass-Mention Main Card */}
-                  {modSubTab === 'antiMention' && (
-                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                  <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setModSubTab(modSubTab === 'antiMention' ? null : 'antiMention')}
+                      className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {t('clan_mod_anti_mention_title') || 'Подозрительные действия'}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Контроль массовых упоминаний
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${modSubTab === 'antiMention' ? 'rotate-180' : ''}`} />
+                    </button>
+                    {modSubTab === 'antiMention' && (
+                    <div className="p-5 border-t border-slate-100 dark:border-slate-800 space-y-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                       <div>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -377,12 +387,34 @@ export default function ModerationTab() {
                       />
                     </div>
                     </div>
+                    </div>
+                    )}
                   </div>
-                  )}
 
                   {/* Bad Words Filter Main Card */}
-                  {modSubTab === 'badWords' && (
-                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                  <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setModSubTab(modSubTab === 'badWords' ? null : 'badWords')}
+                      className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl">
+                          <Ban className="w-5 h-5" />
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {t('clan_mod_badwords_title') || 'Фильтр слов'}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Управление списком запрещенных слов
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${modSubTab === 'badWords' ? 'rotate-180' : ''}`} />
+                    </button>
+                    {modSubTab === 'badWords' && (
+                    <div className="p-5 border-t border-slate-100 dark:border-slate-800 space-y-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                       <div>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -561,6 +593,7 @@ export default function ModerationTab() {
                     </div>
                   </div>
                   )}
+                  </div>
 
                   {/* Moderation Log Channel Card */}
                   <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
@@ -680,8 +713,29 @@ export default function ModerationTab() {
                   </div>
 
                   {/* Warning System (Warns) Settings Card */}
-                  {modSubTab === 'warnings' && (
-                  <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                  <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setModSubTab(modSubTab === 'warnings' ? null : 'warnings')}
+                      className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
+                          <AlertTriangle className="w-5 h-5" />
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {t('clan_warn_settings_title') || 'Система варнов'}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Настройка предупреждений и наказаний
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${modSubTab === 'warnings' ? 'rotate-180' : ''}`} />
+                    </button>
+                    {modSubTab === 'warnings' && (
+                    <div className="p-5 border-t border-slate-100 dark:border-slate-800 space-y-5">
                     <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                       <div>
                         <div className="flex items-center gap-2">
@@ -837,8 +891,10 @@ export default function ModerationTab() {
                           )}
                         </div>
                       </div>
+                    </div>
+                    )}
                   </div>
-                  )}
+                  </div>
                 </form>
               
     </>
