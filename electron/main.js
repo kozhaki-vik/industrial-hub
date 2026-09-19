@@ -1199,91 +1199,76 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('gamma:getDisplays', () => {
-    return new Promise((resolve) => {
-      if (process.platform !== 'win32') return resolve([]);
-      const helperPath = getNativeHelperPath();
-      child_process.execFile(helperPath, ['displays'], { windowsHide: true }, (error, stdout) => {
-        try {
-          const text = stdout.trim();
-          if (!text) return resolve([]);
-          const parsed = JSON.parse(text);
-          if (Array.isArray(parsed)) resolve(parsed.map(d => d.DeviceName));
-          else if (parsed && parsed.DeviceName) resolve([parsed.DeviceName]);
-          else resolve([]);
-        } catch {
-          resolve([]);
-        }
-      });
-    });
-  });
-
-  ipcMain.handle('gamma:setDisplayGamma', (event, brightnessLevel, deviceName) => {
-    if (process.platform !== 'win32') return;
-    if (!deviceName) deviceName = "\\\\.\\DISPLAY1";
+  ipcMain.handle('gamma:getDisplays', async () => {
     try {
-      const helperPath = getNativeHelperPath();
-      child_process.execFile(helperPath, ['gamma', brightnessLevel.toString(), deviceName], { windowsHide: true }, (err) => {
-        if (err) console.error('Error setting gamma via helper:', err);
-      });
+      const nativeApi = await import('./nativeApi.js');
+      return nativeApi.getDisplays();
     } catch (err) {
-      console.error('Exception setting gamma:', err);
+      console.error('Error getting displays via nativeApi:', err);
+      return ["\\\\.\\DISPLAY1"];
     }
   });
 
-  ipcMain.handle('gamma:registerHook', (event, vkCode) => {
-    if (process.platform !== 'win32') return false;
-    
-    if (currentHookProcess) {
-      try {
-        currentHookProcess.kill();
-      } catch {}
-      currentHookProcess = null;
+  // Native API Integration
+  ipcMain.handle('gamma:setDisplayGamma', async (event, brightnessLevel, deviceName) => {
+    if (process.platform !== 'win32') return;
+    try {
+      const nativeApi = await import('./nativeApi.js');
+      nativeApi.setGamma(brightnessLevel, deviceName);
+    } catch (err) {
+      console.error('Exception setting gamma via nativeApi:', err);
     }
-    
-    if (!vkCode) return false;
+  });
+
+  let currentHotkeyId = null;
+
+  ipcMain.handle('gamma:registerHook', async (event, vkCode) => {
+    if (process.platform !== 'win32' || !mainWindow) return false;
     
     try {
-      const helperPath = getNativeHelperPath();
-      currentHookProcess = child_process.spawn(helperPath, ['hook', vkCode.toString()], {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true
-      });
-
-      currentHookProcess.stdout.on('data', (data) => {
-        const output = data.toString().trim();
-        if (output.includes('HOTKEY_PRESSED') && mainWindow) {
-          mainWindow.webContents.send('gamma:hotkey_pressed');
-        }
-      });
-
-      currentHookProcess.stderr.on('data', (data) => {
-        console.error('Hook process stderr:', data.toString());
-      });
+      const nativeApi = await import('./nativeApi.js');
+      const hwnd = mainWindow.getNativeWindowHandle();
       
-      currentHookProcess.on('error', (err) => {
-        console.error('Keyboard hook error:', err);
-        currentHookProcess = null;
-      });
-
-      currentHookProcess.on('exit', () => {
-        currentHookProcess = null;
-      });
-
-      return true;
+      // Unregister previous hotkey if exists
+      if (currentHotkeyId !== null) {
+        nativeApi.unregisterGlobalHotkey(hwnd, currentHotkeyId);
+        mainWindow.unhookWindowMessage(0x0312);
+      }
+      
+      if (!vkCode) return false;
+      
+      currentHotkeyId = 1; // Arbitrary ID for the gamma hotkey
+      const success = nativeApi.registerGlobalHotkey(hwnd, currentHotkeyId, vkCode);
+      
+      if (success) {
+        mainWindow.hookWindowMessage(0x0312, (wParam, lParam) => {
+          // wParam contains the hotkey ID
+          // lParam contains modifiers in low word and vkCode in high word
+          // We can just trigger the hotkey pressed event since we only have one hotkey
+          const id = wParam.readInt32LE ? wParam.readInt32LE(0) : wParam;
+          if (id === currentHotkeyId) {
+            mainWindow.webContents.send('gamma:hotkey_pressed');
+          }
+        });
+      }
+      
+      return success;
     } catch (e) {
-      console.error('Keyboard hook error:', e);
-      currentHookProcess = null;
+      console.error('Keyboard hook error (nativeApi):', e);
       return false;
     }
   });
 
-  ipcMain.handle('gamma:unregisterHook', () => {
-    if (currentHookProcess) {
-      try {
-        currentHookProcess.kill();
-      } catch {}
-      currentHookProcess = null;
+  ipcMain.handle('gamma:unregisterHook', async () => {
+    if (!mainWindow || currentHotkeyId === null) return true;
+    try {
+      const nativeApi = await import('./nativeApi.js');
+      const hwnd = mainWindow.getNativeWindowHandle();
+      nativeApi.unregisterGlobalHotkey(hwnd, currentHotkeyId);
+      mainWindow.unhookWindowMessage(0x0312);
+      currentHotkeyId = null;
+    } catch (e) {
+      console.error('Error unregistering hook:', e);
     }
     return true;
   });

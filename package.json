@@ -1,7 +1,7 @@
 {
   "name": "industrial-hub",
   "private": true,
-  "version": "2.19.25",
+  "version": "2.19.26",
   "author": "Kozhaki",
   "description": "Industrial Hub - Desktop Companion Application",
   "type": "module",
@@ -15,7 +15,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "electron-store": "^11.0.2"
+    "electron-store": "^11.0.2",
+    "koffi": "^3.3.1"
   },
   "devDependencies": {
     "@hello-pangea/dnd": "^18.0.1",
