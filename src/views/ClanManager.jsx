@@ -3678,8 +3678,7 @@ export default function ClanManager() {
             { name: t('clan_poll_opt_late', '🟡 Опоздаю'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
             { name: t('clan_poll_opt_tomorrow', '🟠 Завтра'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
             { name: t('clan_poll_opt_absent', '🔴 Не буду'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true }
-          ],
-          footer: isAnon ? 'Анонимное голосование' : 'Открытое голосование'
+          ]
         },
         buttons: [
           { label: t('clan_auto_v2_1002', 'Буду вовремя'), emoji: '🟢', style: 'success' },
