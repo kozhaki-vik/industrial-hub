@@ -53,12 +53,14 @@ export function setGamma(gammaLevel, deviceName = "\\\\.\\DISPLAY1") {
 
 export function registerGlobalHotkey(hwndBuffer, hotkeyId, vkCode) {
   if (os.platform() !== 'win32') return false;
-  return RegisterHotKey(hwndBuffer, hotkeyId, 0, vkCode);
+  const hwnd = hwndBuffer.readBigUInt64LE(0);
+  return RegisterHotKey(hwnd, hotkeyId, 0, vkCode);
 }
 
 export function unregisterGlobalHotkey(hwndBuffer, hotkeyId) {
   if (os.platform() !== 'win32') return false;
-  return UnregisterHotKey(hwndBuffer, hotkeyId);
+  const hwnd = hwndBuffer.readBigUInt64LE(0);
+  return UnregisterHotKey(hwnd, hotkeyId);
 }
 
 let _getDisplaysImpl;
