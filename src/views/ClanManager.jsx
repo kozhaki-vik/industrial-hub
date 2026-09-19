@@ -3645,12 +3645,23 @@ export default function ClanManager() {
 
       const safeIdx = Math.min(previewVoteIndex, Math.max(0, wTemplates.length - 1));
       const activeTpl = wTemplates[safeIdx] || { 
-        name: 'Server #1', 
-        day: t('clan_auto_231', t('clan_thursday', 'Четверг')), 
+        name: 'Вайп на Растрории', 
+        day: t('clan_auto_233', t('clan_thursday', 'Четверг')), 
         time: '16:00', 
         ip: 'connect 127.0.0.1:28015', 
+        description: 'Отметьтесь, пожалуйста, о вашем присутствии на вайпе!',
         banner: '' 
       };
+
+      const isAnon = activeTpl.isAnonymous !== false;
+      let descParts = [];
+      if (activeTpl.description) descParts.push(`${activeTpl.description}\n`);
+      if (activeTpl.day || activeTpl.time) {
+          const dt = [activeTpl.day, activeTpl.time].filter(Boolean).join(' ');
+          if (dt) descParts.push(`**Время:** ${dt}`);
+      }
+      if (activeTpl.ip) descParts.push(`**Подключение (IP):** \`${activeTpl.ip}\``);
+      const fullDesc = descParts.join('\n');
 
       return {
         tabTitle: t('clan_auto_v2_1019', 'Голосование за вайп'),
@@ -3658,9 +3669,9 @@ export default function ClanManager() {
         templates: wTemplates,
         activeTemplateIndex: safeIdx,
         embed: {
-          title: `🔥 ВАЙП | ${activeTpl.name || t('clan_srv_default', 'Сервер')}`,
+          title: activeTpl.name || 'Голосование',
           color: '#e67e22',
-          description: `**Сервер:** ${activeTpl.name || t('clan_tba', 'TBA')}\n**День:** ${activeTpl.day || t('clan_thursday', 'Четверг')}\n**Время:** ${activeTpl.time || '16:00'}\n**Подключение (IP):** \`${activeTpl.ip || 'connect 127.0.0.1:28015'}\`\n\nОтметьтесь, пожалуйста, о вашем присутствии на вайпе!`,
+          description: fullDesc,
           banner: activeTpl.banner,
           fields: [
             { name: t('clan_poll_opt_on_time', '🟢 Буду вовремя'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
@@ -3668,7 +3679,7 @@ export default function ClanManager() {
             { name: t('clan_poll_opt_tomorrow', '🟠 Завтра'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
             { name: t('clan_poll_opt_absent', '🔴 Не буду'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true }
           ],
-          footer: t('clan_auto_v2_1021', 'Голосование за вайп')
+          footer: isAnon ? 'Анонимное голосование' : 'Открытое голосование'
         },
         buttons: [
           { label: t('clan_auto_v2_1002', 'Буду вовремя'), emoji: '🟢', style: 'success' },

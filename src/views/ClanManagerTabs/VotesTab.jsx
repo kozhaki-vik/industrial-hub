@@ -54,7 +54,7 @@ export default function VotesTab() {
                   };
 
                   const addTemplate = () => {
-                    const newTemplates = [...wTemplates, { name: '', description: '', isAnonymous: true, day: t('clan_auto_232', t('clan_thursday', 'Четверг')), time: '16:00', ip: '', banner: '' }];
+                    const newTemplates = [...wTemplates, { name: 'Вайп на Растрории', description: 'Отметьтесь, пожалуйста, о вашем присутствии на вайпе!', isAnonymous: true, day: t('clan_auto_232', t('clan_thursday', 'Четверг')), time: '16:00', ip: 'connect 127.0.0.1:28015', banner: '' }];
                     const updated = { ...config, wipeTemplatesJson: JSON.stringify(newTemplates) };
                     queueAutoSave(updated, true);
                   };
@@ -76,10 +76,11 @@ export default function VotesTab() {
 
                   const safeIdx = Math.min(previewVoteIndex, Math.max(0, wTemplates.length - 1));
                   const activeTpl = wTemplates[safeIdx] || { 
-                    name: 'Main Server', 
+                    name: 'Вайп на Растрории', 
                     day: t('clan_auto_233', t('clan_thursday', 'Четверг')), 
                     time: '16:00', 
                     ip: 'connect 127.0.0.1:28015', 
+                    description: 'Отметьтесь, пожалуйста, о вашем присутствии на вайпе!',
                     banner: '' 
                   };
                   
@@ -92,7 +93,7 @@ export default function VotesTab() {
                             </button>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_auto_53', 'Название сервера *')}</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_vote_title_label', 'Заголовок *')}</label>
                                 <input 
                                   type="text" 
                                   required 
@@ -100,7 +101,7 @@ export default function VotesTab() {
                                   value={tpl.name || ''} 
                                   onChange={e => updateTemplate(index, 'name', e.target.value, false)} 
                                   onBlur={e => updateTemplate(index, 'name', e.target.value, true)}
-                                  placeholder="Main Server" 
+                                  placeholder="Вайп на Растрории" 
                                 />
                               </div>
                               <div>
@@ -131,10 +132,9 @@ export default function VotesTab() {
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_server_ip_label', 'IP (connect ...) *')}</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('clan_server_ip_label_opt', 'IP (connect ...) (опционально)')}</label>
                                 <input 
                                   type="text" 
-                                  required 
                                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" 
                                   value={tpl.ip || ''} 
                                   onChange={e => updateTemplate(index, 'ip', e.target.value, false)} 
