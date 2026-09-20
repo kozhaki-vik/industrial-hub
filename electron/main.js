@@ -1315,6 +1315,7 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('app:relaunch', () => {
+    isQuitting = true;
     const options = {};
     if (process.env.PORTABLE_EXECUTABLE_FILE) {
       options.execPath = process.env.PORTABLE_EXECUTABLE_FILE;
