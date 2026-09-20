@@ -1,7 +1,7 @@
 {
   "name": "industrial-hub",
   "private": true,
-  "version": "2.19.36",
+  "version": "2.19.37",
   "author": "Kozhaki",
   "description": "Industrial Hub - Desktop Companion Application",
   "type": "module",

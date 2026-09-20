@@ -105,16 +105,16 @@ if (!gotTheLock) {
 
 function getNativeHelperPath() {
   const possiblePaths = [
-    path.join(process.resourcesPath, 'resources', 'NativeHelper.exe'),
-    path.join(process.resourcesPath, 'NativeHelper.exe'),
-    path.join(getRealAppPath(), 'resources', 'NativeHelper.exe'),
-    path.join(__dirname, '..', 'resources', 'NativeHelper.exe'),
-    path.join(process.cwd(), 'resources', 'NativeHelper.exe')
+    path.join(process.resourcesPath, 'resources', 'IndustrialHubDisplay.exe'),
+    path.join(process.resourcesPath, 'IndustrialHubDisplay.exe'),
+    path.join(getRealAppPath(), 'resources', 'IndustrialHubDisplay.exe'),
+    path.join(__dirname, '..', 'resources', 'IndustrialHubDisplay.exe'),
+    path.join(process.cwd(), 'resources', 'IndustrialHubDisplay.exe')
   ];
   for (const p of possiblePaths) {
     if (fs.existsSync(p)) return p;
   }
-  return path.join(process.resourcesPath, 'resources', 'NativeHelper.exe');
+  return path.join(process.resourcesPath, 'resources', 'IndustrialHubDisplay.exe');
 }
 
 function updateDesktopShortcut(targetExe, workingDir) {
