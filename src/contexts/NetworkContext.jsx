@@ -18,6 +18,7 @@ export const NetworkProvider = ({ children }) => {
   const [serverVersion, setServerVersion] = useState(null);
   const [updateProgress, setUpdateProgress] = useState(null);
   const [updateLogs, setUpdateLogs] = useState([]);
+  const [deferredUpdatePayload, setDeferredUpdatePayload] = useState(null);
 
   const addLog = (msg) => {
     console.log("[UpdateLog]", msg);
@@ -62,6 +63,61 @@ export const NetworkProvider = ({ children }) => {
     return stored;
   };
 
+  const getTicketHistory = () => {
+    const stored = localStorage.getItem('hub_ticket_history');
+    if (!stored) return [];
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return [];
+    }
+  };
+
+  const [ticketHistory, setTicketHistory] = useState(getTicketHistory());
+  const [unreadAdminCount, setUnreadAdminCount] = useState(0);
+
+  const markTicketsRead = () => {
+    setUnreadAdminCount(0);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'mark_tickets_read' }));
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('hub_ticket_history', JSON.stringify(ticketHistory));
+  }, [ticketHistory]);
+
+  const createTicket = (category, subject, details) => {
+    return new Promise((resolve, reject) => {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        return reject(new Error('Нет подключения к серверу'));
+      }
+      const reqId = Date.now().toString();
+      const handler = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === 'ticket_created' && data.reqId === reqId) {
+            wsRef.current.removeEventListener('message', handler);
+            if (data.error) reject(new Error(data.error));
+            else resolve(data);
+          }
+        } catch (err) {}
+      };
+      wsRef.current.addEventListener('message', handler);
+      wsRef.current.send(JSON.stringify({
+        type: 'create_ticket',
+        reqId,
+        category,
+        subject,
+        details
+      }));
+      setTimeout(() => {
+        wsRef.current?.removeEventListener('message', handler);
+        reject(new Error('Таймаут создания тикета'));
+      }, 10000);
+    });
+  };
+
   const triggerUpdateCheck = useCallback(async () => {
     if (!electron) return;
     try {
@@ -74,20 +130,11 @@ export const NetworkProvider = ({ children }) => {
         const ghApiUrl = channel === 'main' 
           ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
           : `https://api.github.com/repos/${repo}/releases?t=${Date.now()}`;
-          
-        addLog(`Fetching version from GitHub API: ${ghApiUrl}`);
-        const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
-        if (ghRes.ok) {
-          const data = await ghRes.json();
-          const release = Array.isArray(data) ? data[0] : data;
-          if (release && release.tag_name) {
-            let tagVersion = release.tag_name;
-            if (tagVersion.startsWith('v')) tagVersion = tagVersion.substring(1);
-            setServerVersion(tagVersion);
-            addLog(`Got serverVersion ${tagVersion} from GitHub`);
-          }
-        } else {
-          addLog(`Failed fetch GitHub API: ${ghRes.status}`);
+        const res = await fetch(ghApiUrl);
+        if (res.ok) {
+          let data = await res.json();
+          if (channel === 'test' && Array.isArray(data)) data = data[0];
+          setServerVersion(data.tag_name ? data.tag_name.replace(/^v/, '') : null);
         }
       } catch (e) {
         addLog(`Failed fetch GitHub API: ${e.message}`);
@@ -98,7 +145,15 @@ export const NetworkProvider = ({ children }) => {
       addLog(`checkUpdates() finished. res = ${JSON.stringify(res)}`);
       
       if (res && res.success) {
-        setUpdateProgress(prev => ({ ...prev, status: 'success' }));
+        if (res.deferredRestart) {
+          setDeferredUpdatePayload(res.restartPayload);
+          if (window.electronAPI && window.electronAPI.shell && window.electronAPI.shell.beep) {
+            window.electronAPI.shell.beep();
+          }
+          setUpdateProgress({ status: 'deferred' });
+        } else {
+          setUpdateProgress(prev => ({ ...prev, status: 'success' }));
+        }
       }
     } catch (e) {
       addLog(`triggerUpdateCheck catch: ${e.message}`);
@@ -298,7 +353,7 @@ export const NetworkProvider = ({ children }) => {
   }, []);
 
   return (
-    <NetworkContext.Provider value={{ ws: wsRef.current, status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, sendTelemetry, createTicket, ticketHistory, setTicketHistory, getTicketHistory, unreadAdminCount, setUnreadAdminCount, markTicketsRead }}>
+    <NetworkContext.Provider value={{ ws: wsRef.current, status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, sendTelemetry, createTicket, ticketHistory, setTicketHistory, getTicketHistory, unreadAdminCount, setUnreadAdminCount, markTicketsRead, deferredUpdatePayload }}>
       {children}
     </NetworkContext.Provider>
   );

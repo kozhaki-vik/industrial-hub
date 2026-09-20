@@ -6,6 +6,7 @@ import Settings from './views/Settings';
 import SplashScreen from './components/SplashScreen';
 import RustPathModal from './components/RustPathModal';
 import InitialSetupModal from './components/InitialSetupModal';
+import ReleaseNotesModal from './components/ReleaseNotesModal';
 import ConfirmModal from './components/ConfirmModal';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { getConfigKey, setConfigKey } from './services/store';
@@ -130,6 +131,7 @@ function App() {
                     isOpen={showInitialSetupModal} 
                     onComplete={handleInitialSetupComplete} 
                   />
+                  <ReleaseNotesModal />
                   <RustPathModal isOpen={showRustModal} onClose={() => setShowRustModal(false)} />
                   <ToastContainer />
                   <ConfirmModal />

@@ -1323,6 +1323,11 @@ app.whenReady().then(async () => {
     app.quit();
   });
 
+  ipcMain.handle('shell:beep', () => {
+    shell.beep();
+    return true;
+  });
+
   ipcMain.handle('shell:openExternal', async (event, url) => {
     if (url) {
       try {
@@ -1395,7 +1400,7 @@ app.whenReady().then(async () => {
     });
   };
 
-  ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion) => {
+  ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion, applyImmediately = true) => {
     const TRUSTED_PREFIX = 'https://github.com/kozhaki-vik/industrial-hub-releases/';
     if (!exeUrl || (!exeUrl.startsWith(TRUSTED_PREFIX) && !exeUrl.startsWith('https://api.github.com/'))) {
       throw new Error('Недоверенный источник обновления');
@@ -1496,7 +1501,6 @@ app.whenReady().then(async () => {
       const newAppDir = path.join(clientDir, `app-${newVersion}`);
       const exeName = 'Industrial Hub.exe';
       const targetExePath = path.join(newAppDir, exeName);
-      const shortcutPath = path.join(process.env.USERPROFILE || '', 'Desktop', 'Industrial Hub.lnk');
 
       if (fs.existsSync(newAppDir)) {
         fs.rmSync(newAppDir, { recursive: true, force: true });
@@ -1506,8 +1510,7 @@ app.whenReady().then(async () => {
       fs.copyFileSync(tempExePath, targetExePath);
       try {
         fs.unlinkSync(tempExePath);
-      } catch {
-      }
+      } catch {}
 
       try {
         const lastUpdateFile = path.join(app.getPath('userData'), 'last_update.json');
@@ -1534,6 +1537,10 @@ app.whenReady().then(async () => {
         console.error('Failed to update login item settings on update:', e);
       }
 
+      if (!applyImmediately) {
+        return { success: true, updated: 1, total: 1, requiresRestart: true, deferredRestart: true, restartPayload: { targetExePath, newAppDir, appPath } };
+      }
+
       const child = child_process.spawn(targetExePath, [
         `--cleanup-pid=${process.pid}`,
         `--cleanup-dir=${appPath}`
@@ -1552,6 +1559,29 @@ app.whenReady().then(async () => {
       console.error('Failed to apply EXE update in main:', err);
       event.sender.send('update-progress', { status: 'error', error: err.message });
       return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('network:apply-deferred-update', (event, restartPayload) => {
+    if (!restartPayload || !restartPayload.targetExePath) return false;
+    
+    try {
+      const child = child_process.spawn(restartPayload.targetExePath, [
+        `--cleanup-pid=${process.pid}`,
+        `--cleanup-dir=${restartPayload.appPath}`
+      ], {
+        detached: true,
+        stdio: 'ignore',
+        cwd: restartPayload.newAppDir,
+        windowsHide: true
+      });
+      child.unref();
+      
+      app.exit(0);
+      return true;
+    } catch (err) {
+      console.error('Failed to apply deferred update:', err);
+      return false;
     }
   });
 

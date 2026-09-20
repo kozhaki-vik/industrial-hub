@@ -2,7 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
-import { Globe, Moon, Sun, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown, Palette } from 'lucide-react';
+import { useNotification } from '../contexts/NotificationContext';
+import { Globe, Moon, Sun, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown, Palette, Bell } from 'lucide-react';
 import ThemeSelector from '../components/ThemeSelector';
 import { openLogFolder } from '../services/diagnostics';
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +60,7 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { createTicket, status } = useNetwork();
+  const { addNotification } = useNotification();
   const navigate = useNavigate();
   
   // Sponsor Modal State
@@ -72,6 +74,10 @@ export default function Settings() {
   // Auto-Start State
   const [autoStart, setAutoStart] = React.useState(false);
   const [startMinimized, setStartMinimized] = React.useState(false);
+  const [showReleaseNotes, setShowReleaseNotes] = React.useState(() => {
+    const val = localStorage.getItem('industrial-hub-show-release-notes');
+    return val === null ? true : val === 'true';
+  });
 
   React.useEffect(() => {
     if (window.electronAPI?.app?.getAutoStart) {
@@ -249,6 +255,37 @@ export default function Settings() {
 
           <div className="border-t border-slate-100 dark:border-slate-800"></div>
 
+          {/* Show Release Notes */}
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Bell className="w-5 h-5 text-orange-500 opacity-70" />
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Показывать информацию об обновлениях
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-500">
+                  Окно со списком изменений при первом запуске после обновления
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={showReleaseNotes} 
+                  onChange={(e) => {
+                    setShowReleaseNotes(e.target.checked);
+                    localStorage.setItem('industrial-hub-show-release-notes', e.target.checked);
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+              </label>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 dark:border-slate-800"></div>
+
           {/* Developer Mode */}
           <div>
             <div className="flex items-center justify-between">
@@ -264,28 +301,6 @@ export default function Settings() {
                 className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
               >
                 {t('developer_open', 'Открыть')}
-              </button>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 dark:border-slate-800"></div>
-
-          {/* Logs & Diagnostics */}
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <FolderOpen className="w-5 h-5 text-emerald-500" />
-                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('settings_logs_title', 'Логи приложения')}</h3>
-                </div>
-                <p className="text-sm text-slate-500">{t('settings_logs_desc', 'Файлы диагностики и работы программы для техподдержки')}</p>
-              </div>
-              <button 
-                onClick={() => openLogFolder()}
-                className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-medium rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center gap-1.5"
-              >
-                <FolderOpen className="w-4 h-4" />
-                <span>{t('settings_logs_open', 'Открыть папку')}</span>
               </button>
             </div>
           </div>
@@ -313,7 +328,7 @@ export default function Settings() {
                     <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://steamcommunity.com/id/Kochz/', '_blank'); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Steam">
                       <Gamepad2 className="w-5 h-5" />
                     </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kozhaki.vn'); alert(t('settings_discord_copied', { tag: '@kozhaki.vn' })); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kozhaki.vn">
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kozhaki.vn'); addNotification(t('settings_discord_copied', { tag: '@kozhaki.vn' }), 'success'); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kozhaki.vn">
                       <DiscordIcon className="w-5 h-5" />
                     </a>
                     <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://t.me/DimitryVik', '_blank'); }} className="text-slate-400 hover:text-[#229ED9] transition-colors" title="Telegram">
@@ -335,7 +350,7 @@ export default function Settings() {
                     <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://steamcommunity.com/profiles/76561198131045923', '_blank'); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Steam">
                       <Gamepad2 className="w-5 h-5" />
                     </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kaktycfps'); alert(t('settings_discord_copied', { tag: '@kaktycfps' })); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kaktycfps">
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kaktycfps'); addNotification(t('settings_discord_copied', { tag: '@kaktycfps' }), 'success'); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kaktycfps">
                       <DiscordIcon className="w-5 h-5" />
                     </a>
                   </div>

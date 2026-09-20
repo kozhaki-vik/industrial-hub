@@ -3,6 +3,7 @@ const electron = window.electronAPI ? window.electronAPI : null;
 import { getConfigKey } from '../services/store';
 
 let isUpdating = false;
+let isFirstCheck = true;
 
 export async function checkUpdates(addLog = () => {}) {
   if (isUpdating) return null;
@@ -10,6 +11,7 @@ export async function checkUpdates(addLog = () => {}) {
   if (!electron) {
     console.warn("SmartPatcher: Not running in Electron, updates disabled.");
     addLog("Not running in Electron, updates disabled.");
+    isFirstCheck = false;
     return null;
   }
 
@@ -73,6 +75,7 @@ export async function checkUpdates(addLog = () => {}) {
     addLog("Could not fetch version metadata from GitHub.");
     console.warn("SmartPatcher: Could not fetch version metadata from GitHub.");
     isUpdating = false;
+    isFirstCheck = false;
     return null;
   }
 
@@ -90,6 +93,18 @@ export async function checkUpdates(addLog = () => {}) {
   };
 
   if (serverData.version && compareVersions(serverData.version, localVersion) > 0) {
+    let applyImmediately = true;
+    if (!isFirstCheck) {
+      if (electron.config && electron.config.isRustRunning) {
+        const isRustOpen = await electron.config.isRustRunning();
+        if (isRustOpen) {
+          applyImmediately = false;
+          addLog("Rust is running. Update will be downloaded but not applied immediately.");
+        }
+      }
+    }
+    
+    isFirstCheck = false;
     addLog(`Versions differ! Will apply EXE auto-update from ${localVersion} to ${serverData.version}`);
     console.log(`SmartPatcher: Updating from ${localVersion} to ${serverData.version}...`);
     
@@ -97,9 +112,10 @@ export async function checkUpdates(addLog = () => {}) {
     
     addLog(`Invoking network:apply-exe-update with ${exeUrl}...`);
     try {
-      const result = await electron.ipcRenderer.invoke('network:apply-exe-update', exeUrl, serverData.version);
+      const result = await electron.ipcRenderer.invoke('network:apply-exe-update', exeUrl, serverData.version, applyImmediately);
       addLog(`Invoke returned: ${JSON.stringify(result)}`);
       console.log("SmartPatcher EXE Update Result:", result);
+      isUpdating = false;
       return result;
     } catch (err) {
       addLog(`Invoke threw error: ${err.message}`);
@@ -111,6 +127,7 @@ export async function checkUpdates(addLog = () => {}) {
   }
 
   isUpdating = false;
+  isFirstCheck = false;
   return null;
 }
 

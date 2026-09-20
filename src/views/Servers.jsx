@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNotification } from '../contexts/NotificationContext';
 import { ArrowLeft, Clock, Sparkles, Wrench, Target, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,10 +8,11 @@ const electron = window.electronAPI ? window.electronAPI : null;
 
 export default function Servers() {
   const { t } = useTranslation();
+  const { addNotification } = useNotification();
   const navigate = useNavigate();
 
   const handleCopy = () => {
-    alert(t('servers_ip_coming_soon'));
+    addNotification(t('servers_ip_coming_soon'), 'info');
   };
 
   const handleOpenDiscord = () => {

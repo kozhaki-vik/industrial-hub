@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNotification } from '../contexts/NotificationContext';
 import { 
   X, Star, Shield, ShieldAlert, AlertTriangle, Check, Copy, ExternalLink, 
   Search, Save, User, Clock, Calendar, FileText, Ban, Crosshair, Plane, 
@@ -22,6 +23,7 @@ export default function MemberDossierModal({
   canEdit = true
 }) {
   const { t } = useTranslation();
+  const { addNotification } = useNotification();
 
   const [activeTab, setActiveTab] = useState('dossier'); // 'dossier' | 'activity' | 'history'
   const [copiedId, setCopiedId] = useState(false);
@@ -219,10 +221,10 @@ export default function MemberDossierModal({
           }));
         }
       } else {
-        alert(res?.error || t('dossier_err_send_msg_fail', 'Не удалось отправить сообщение'));
+        addNotification(res?.error || t('dossier_err_send_msg_fail', 'Не удалось отправить сообщение'), 'error');
       }
     } catch (err) {
-      alert(err.message || t('dossier_err_send_msg_lead', 'Ошибка отправки сообщения лидеру'));
+      addNotification(err.message || t('dossier_err_send_msg_lead', 'Ошибка отправки сообщения лидеру'), 'error');
     } finally {
       setSendingLeaderMessage(false);
     }

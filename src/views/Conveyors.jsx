@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNotification } from '../contexts/NotificationContext';
 import { ArrowLeft, Copy, Trash2, Star, Plus, Settings, PlusCircle, Check, X, RefreshCw, Share2, DownloadCloud } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +36,7 @@ function getSystemCategories(t) {
 
 export default function Conveyors() {
   const { t, i18n } = useTranslation();
+  const { addNotification } = useNotification();
   const navigate = useNavigate();
   const lang = i18n.language || 'ru';
 
@@ -198,14 +200,14 @@ export default function Conveyors() {
         body: JSON.stringify({ templates: conveyors, categories: customCategories })
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.code) {
         setShareCode(data.code);
         setIsShareModalOpen(true);
       } else {
-        alert(t('error') + ': ' + (data.error || 'Unknown error'));
+        addNotification(t('error') + ': ' + (data.error || 'Unknown error'), 'error');
       }
     } catch (e) {
-      alert(t('error') + ': ' + e.message);
+      addNotification(t('error') + ': ' + e.message, 'error');
     }
   };
 
@@ -216,16 +218,13 @@ export default function Conveyors() {
       const res = await fetch(`https://industrial-hub.duckdns.org/api/conveyors/share/${importCode.trim()}`);
       const data = await res.json();
       if (data.success) {
-        // Merge or replace? We'll ask user, or just merge. For simplicity, replace or append.
-        // The prompt says: "и любой кто введёт код должен будет получить и применить файл с настройками вместо своего стандартного"
-        // Replace existing templates.
-        setConveyors(data.templates);
-        setConfigKey('conveyorTemplates', data.templates);
+        setConveyors(data.templates || []);
         setCustomCategories(data.categories || []);
+        setConfigKey('conveyorTemplates', data.templates || []);
         setConfigKey('conveyorCategories', data.categories || []);
         setIsImportModalOpen(false);
         setImportCode('');
-        alert(t('convImportSuccess', 'Успешно применено!'));
+        addNotification(t('convImportSuccess', 'Успешно применено!'), 'success');
       } else {
         setImportError(data.error || 'Code not found');
       }
@@ -283,44 +282,51 @@ export default function Conveyors() {
             </div>
           </div>
         </div>
-        <div className="ml-auto flex gap-3">
-          <button 
-            onClick={() => setIsImportModalOpen(true)}
-            title={t('convImport', 'Импорт по коду')}
-            className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-green-500 dark:hover:text-green-500 rounded-lg transition-colors shadow-sm"
-          >
-            <DownloadCloud className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={handleShareTemplates}
-            title={t('convShare', 'Поделиться шаблонами')}
-            className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-blue-500 dark:hover:text-blue-500 rounded-lg transition-colors shadow-sm"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setIsRestoreModalOpen(true)}
-            title={t('conveyors_restore_title', 'Восстановить стандартные шаблоны')}
-            className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-orange-500 dark:hover:text-orange-500 rounded-lg transition-colors shadow-sm"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setIsCatManagerOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
-          >
-            <Settings className="w-4 h-4" /> {t('convCatSettings')}
-          </button>
-          <button 
-            onClick={() => {
-              const isValidCustomCategory = customCategories.some(c => c.id === activeCategory);
-              setSelectedConveyor({ categoryId: isValidCustomCategory ? activeCategory : 'uncategorized' });
-              setIsEditing(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-md shadow-orange-500/20"
-          >
-            <Plus className="w-4 h-4" /> {t('convCreateTemplate')}
-          </button>
+        <div className="ml-auto flex items-center gap-6">
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setIsRestoreModalOpen(true)}
+              title={t('conveyors_restore_title', 'Восстановить стандартные шаблоны')}
+              className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-orange-500 dark:hover:text-orange-500 rounded-lg transition-colors shadow-sm"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => setIsCatManagerOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+            >
+              <Settings className="w-4 h-4" /> {t('convCatSettings')}
+            </button>
+            <button 
+              onClick={() => {
+                const isValidCustomCategory = customCategories.some(c => c.id === activeCategory);
+                setSelectedConveyor({ categoryId: isValidCustomCategory ? activeCategory : 'uncategorized' });
+                setIsEditing(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-md shadow-orange-500/20"
+            >
+              <Plus className="w-4 h-4" /> {t('convCreateTemplate')}
+            </button>
+          </div>
+
+          <div className="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setIsImportModalOpen(true)}
+              title={t('convImport', 'Импорт по коду')}
+              className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-green-500 dark:hover:text-green-500 rounded-lg transition-colors shadow-sm"
+            >
+              <DownloadCloud className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={handleShareTemplates}
+              title={t('convShare', 'Поделиться шаблонами')}
+              className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-blue-500 dark:hover:text-blue-500 rounded-lg transition-colors shadow-sm"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
       
@@ -712,7 +718,7 @@ export default function Conveyors() {
               className="w-full py-2 px-4 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-sm"
               onClick={() => {
                 navigator.clipboard.writeText(shareCode);
-                alert(t('convCopied', 'Скопировано!'));
+                addNotification(t('convCopied', 'Скопировано!'), 'success');
               }}
             >
               {t('convCopy', 'Скопировать')}

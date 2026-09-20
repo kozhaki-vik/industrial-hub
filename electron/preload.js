@@ -71,11 +71,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ipcRenderer: {
     invoke: (channel, ...args) => {
         const ALLOWED_CHANNELS = [
-            'network:get-hwid', 'network:apply-updates', 'network:apply-exe-update',
+            'network:get-hwid', 'network:apply-updates', 'network:apply-exe-update', 'network:apply-deferred-update',
             'diagnostics:getAppVersionInfo', 'diagnostics:getHardwareInfo',
             'diagnostics:getAppPath', 'diagnostics:getAppDataPath',
             'diagnostics:checkAppIntegrity', 'diagnostics:checkRustIntegrity',
             'diagnostics:pingUrl',
+            'shell:openExternal', 'shell:openPath', 'shell:openFolder', 'shell:beep',
             'app:relaunch', 'app:focusWindow', 'app:reportError',
             'app:getAutoStart', 'app:setAutoStart',
             'app:getMinimizeToTray', 'app:setMinimizeToTray',
@@ -98,7 +99,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
-    openPath: (path) => ipcRenderer.invoke('shell:openPath', path)
+    openPath: (path) => ipcRenderer.invoke('shell:openPath', path),
+    beep: () => ipcRenderer.invoke('shell:beep')
   }
 });
 

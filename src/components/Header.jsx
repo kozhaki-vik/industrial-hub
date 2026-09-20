@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Settings, Server, Wrench, Users, Bell } from 'lucide-react';
+import { LayoutDashboard, Settings, Server, Wrench, Users, Bell, Download } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -8,7 +8,7 @@ import TicketChatModal from './TicketChatModal';
 export default function Header() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { status, onlineCount, unreadAdminCount } = useNetwork();
+  const { status, onlineCount, unreadAdminCount, updateProgress, deferredUpdatePayload } = useNetwork();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   const isConveyorsRoute = location.pathname === '/conveyors';
@@ -49,6 +49,22 @@ export default function Header() {
 
         {/* Online Status */}
         <div className="ml-auto flex items-center gap-3">
+          {updateProgress?.status === 'deferred' && deferredUpdatePayload && (
+            <button 
+              onClick={() => {
+                if (window.electronAPI && window.electronAPI.ipcRenderer) {
+                  window.electronAPI.ipcRenderer.invoke('network:apply-deferred-update', deferredUpdatePayload);
+                }
+              }}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all rounded-full border border-orange-600 text-white shadow-md shadow-orange-500/20"
+            >
+              <Download className="w-4 h-4 animate-bounce" />
+              <span className="text-xs font-bold">
+                Обновить сейчас (Restart)
+              </span>
+            </button>
+          )}
+
           {status === 'online' && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full border border-emerald-100 dark:border-emerald-800">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
