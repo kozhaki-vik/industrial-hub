@@ -56,9 +56,9 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
   };
 
   const languages = [
-    { code: 'ru', name: 'Русский', native: 'Русский', flag: '🇷🇺' },
-    { code: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
-    { code: 'ua', name: 'Українська', native: 'Українська', flag: '🇺🇦' }
+    { code: 'ru', name: 'Русский', native: 'Русский' },
+    { code: 'en', name: 'English', native: 'English' },
+    { code: 'ua', name: 'Українська', native: 'Українська' }
   ];
 
   return (
@@ -102,7 +102,6 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
                       : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <span className="text-2xl leading-none">{item.flag}</span>
                   <span className="text-xs font-semibold">{item.native}</span>
                   {isSelected && (
                     <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center">

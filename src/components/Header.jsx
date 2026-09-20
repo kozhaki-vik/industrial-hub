@@ -1,13 +1,15 @@
 import React from 'react';
-import { LayoutDashboard, Settings, Server, Wrench, Users } from 'lucide-react';
+import { LayoutDashboard, Settings, Server, Wrench, Users, Bell } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from '../contexts/NetworkContext';
+import TicketChatModal from './TicketChatModal';
 
 export default function Header() {
   const { t } = useTranslation();
   const location = useLocation();
-  const { status, onlineCount } = useNetwork();
+  const { status, onlineCount, unreadAdminCount } = useNetwork();
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   const isConveyorsRoute = location.pathname === '/conveyors';
   const bgClasses = isConveyorsRoute 
@@ -71,8 +73,24 @@ export default function Header() {
               </span>
             </div>
           )}
+          
+          {status === 'online' && (
+            <button 
+              onClick={() => setIsChatOpen(true)}
+              className="relative p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors ml-2"
+              title="Поддержка / Чаты"
+            >
+              <Bell className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+              {unreadAdminCount > 0 && (
+                <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white dark:border-slate-950">
+                  {unreadAdminCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
+      <TicketChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </header>
   );
 }

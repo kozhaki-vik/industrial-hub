@@ -151,8 +151,12 @@ export const NetworkProvider = ({ children }) => {
         if (data.type === 'auth_success') {
           console.log('Connected to Industrial Hub Server');
           setStatus('online'); // Set online only after auth is complete
+          if (data.unreadCount !== undefined) setUnreadAdminCount(data.unreadCount);
           addLog("WS auth_success received, triggering check...");
           triggerUpdateCheck();
+          
+          // Fetch chat history
+          if (wsRef.current) wsRef.current.send(JSON.stringify({ type: 'get_ticket_history' }));
         } else if (data.type === 'online_count') {
           setOnlineCount(data.count);
         } else if (data.type === 'update_available' || data.type === 'new_version' || data.type === 'force_update') {
@@ -168,6 +172,10 @@ export const NetworkProvider = ({ children }) => {
         } else if (data.type === 'notification') {
           console.log('Received notification from server:', data);
           addNotification(data.message, data.notifType || 'info');
+          setUnreadAdminCount(prev => prev + 1);
+          setTicketHistory(prev => [...prev, { sender: 'admin', message: data.message, created_at: new Date().toISOString() }]);
+        } else if (data.type === 'ticket_history') {
+          setTicketHistory(data.history || []);
         } else {
           console.log('Message from server:', data);
         }
@@ -241,7 +249,10 @@ export const NetworkProvider = ({ children }) => {
     }
   }, []);
 
-  const createTicket = useCallback((message, logs = "") => {
+  const [ticketHistory, setTicketHistory] = useState([]);
+  const [unreadAdminCount, setUnreadAdminCount] = useState(0);
+
+  const createTicket = useCallback((message, logs = "", image_data = null) => {
     return new Promise((resolve, reject) => {
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
         return reject(new Error("Server offline"));
@@ -261,7 +272,10 @@ export const NetworkProvider = ({ children }) => {
       };
 
       wsRef.current.addEventListener('message', ticketHandler);
-      wsRef.current.send(JSON.stringify({ type: 'ticket', message, logs }));
+      wsRef.current.send(JSON.stringify({ type: 'ticket', message, logs, image_data }));
+      
+      // Optimizaton: eagerly add to local history for instant feedback
+      setTicketHistory(prev => [...prev, { sender: 'user', message, image_data, created_at: new Date().toISOString() }]);
       
       setTimeout(() => {
         wsRef.current?.removeEventListener('message', ticketHandler);
@@ -270,8 +284,21 @@ export const NetworkProvider = ({ children }) => {
     });
   }, []);
 
+  const getTicketHistory = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'get_ticket_history' }));
+    }
+  }, []);
+
+  const markTicketsRead = useCallback(() => {
+    setUnreadAdminCount(0);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'mark_tickets_read' }));
+    }
+  }, []);
+
   return (
-    <NetworkContext.Provider value={{ ws: wsRef.current, status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, sendTelemetry, createTicket }}>
+    <NetworkContext.Provider value={{ ws: wsRef.current, status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, sendTelemetry, createTicket, ticketHistory, setTicketHistory, getTicketHistory, unreadAdminCount, setUnreadAdminCount, markTicketsRead }}>
       {children}
     </NetworkContext.Provider>
   );
