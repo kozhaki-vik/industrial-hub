@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Send, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -10,6 +11,7 @@ export default function TicketChatModal({ isOpen, onClose }) {
   const [message, setMessage] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function TicketChatModal({ isOpen, onClose }) {
     
     // Check size < 1MB
     if (file.size > 1024 * 1024) {
-      alert("Image is too large. Max 1MB.");
+      setError("Image is too large. Max 1MB.");
       return;
     }
     
@@ -43,18 +45,19 @@ export default function TicketChatModal({ isOpen, onClose }) {
     if (!message.trim() && !imageFile) return;
     
     setIsSubmitting(true);
+    setError(null);
     try {
       await createTicket(message.trim() || 'Image attached', "Chat reply", imageFile);
       setMessage('');
       setImageFile(null);
     } catch (err) {
-      alert(err.message || 'Failed to send');
+      setError(err.message || 'Failed to send');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in">
       <div className="bg-white dark:bg-slate-900 w-full max-w-2xl h-[80vh] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
         
@@ -94,6 +97,12 @@ export default function TicketChatModal({ isOpen, onClose }) {
         
         {/* Input Area */}
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2">
+          {error && (
+            <div className="text-sm font-medium text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg mb-1 flex items-center justify-between">
+              <span>{error}</span>
+              <button onClick={() => setError(null)}><X className="w-4 h-4"/></button>
+            </div>
+          )}
           {imageFile && (
             <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 mb-2">
               <img src={imageFile} alt="preview" className="w-full h-full object-cover" />
@@ -128,6 +137,7 @@ export default function TicketChatModal({ isOpen, onClose }) {
         </div>
         
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
