@@ -1231,13 +1231,28 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('gamma:registerHook', (event, vkCode) => {
+  ipcMain.handle('gamma:registerHook', async (event, vkCode) => {
     if (process.platform !== 'win32') return false;
     
     if (currentHookProcess) {
       try {
         currentHookProcess.kill();
       } catch {}
+      // Wait for it to actually exit
+      await new Promise(resolve => {
+        if (!currentHookProcess) return resolve();
+        const checkInterval = setInterval(() => {
+          if (!currentHookProcess || currentHookProcess.exitCode !== null || currentHookProcess.signalCode !== null) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 50);
+        // Timeout after 500ms
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve();
+        }, 500);
+      });
       currentHookProcess = null;
     }
     

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Trash2, Star, Plus, Settings, PlusCircle, Check, X, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Copy, Trash2, Star, Plus, Settings, PlusCircle, Check, X, RefreshCw, Share2, DownloadCloud } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useNavigate } from 'react-router-dom';
 import { getConfigKey, setConfigKey } from '../services/store';
@@ -184,6 +184,56 @@ export default function Conveyors() {
     setIsTicketModalOpen(true);
   };
 
+  const [shareCode, setShareCode] = useState(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importCode, setImportCode] = useState('');
+  const [importError, setImportError] = useState('');
+
+  const handleShareTemplates = async () => {
+    try {
+      const res = await fetch('https://industrial-hub.duckdns.org/api/conveyors/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templates: conveyors, categories: customCategories })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShareCode(data.code);
+        setIsShareModalOpen(true);
+      } else {
+        alert(t('error') + ': ' + (data.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert(t('error') + ': ' + e.message);
+    }
+  };
+
+  const handleImportTemplates = async () => {
+    if (!importCode.trim()) return;
+    try {
+      setImportError('');
+      const res = await fetch(`https://industrial-hub.duckdns.org/api/conveyors/share/${importCode.trim()}`);
+      const data = await res.json();
+      if (data.success) {
+        // Merge or replace? We'll ask user, or just merge. For simplicity, replace or append.
+        // The prompt says: "и любой кто введёт код должен будет получить и применить файл с настройками вместо своего стандартного"
+        // Replace existing templates.
+        setConveyors(data.templates);
+        setConfigKey('conveyorTemplates', data.templates);
+        setCustomCategories(data.categories || []);
+        setConfigKey('conveyorCategories', data.categories || []);
+        setIsImportModalOpen(false);
+        setImportCode('');
+        alert(t('convImportSuccess', 'Успешно применено!'));
+      } else {
+        setImportError(data.error || 'Code not found');
+      }
+    } catch (e) {
+      setImportError(e.message);
+    }
+  };
+
   const SYSTEM_CATEGORIES = getSystemCategories(t);
 
   const filteredConveyors = useMemo(() => {
@@ -234,6 +284,20 @@ export default function Conveyors() {
           </div>
         </div>
         <div className="ml-auto flex gap-3">
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            title={t('convImport', 'Импорт по коду')}
+            className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-green-500 dark:hover:text-green-500 rounded-lg transition-colors shadow-sm"
+          >
+            <DownloadCloud className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={handleShareTemplates}
+            title={t('convShare', 'Поделиться шаблонами')}
+            className="flex items-center justify-center p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-blue-500 dark:hover:text-blue-500 rounded-lg transition-colors shadow-sm"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
           <button 
             onClick={() => setIsRestoreModalOpen(true)}
             title={t('conveyors_restore_title', 'Восстановить стандартные шаблоны')}
@@ -633,6 +697,73 @@ export default function Conveyors() {
         </div>
       )}
       
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsShareModalOpen(false)}>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">{t('convShareTitle', 'Ваш код для обмена')}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+              {t('convShareDesc', 'Передайте этот код другому пользователю, чтобы он мог загрузить ваши шаблоны и категории.')}
+            </p>
+            <div className="flex items-center justify-center py-4 bg-slate-100 dark:bg-slate-950 rounded-lg mb-4 text-3xl font-mono tracking-widest text-orange-500 font-bold border border-slate-200 dark:border-slate-800">
+              {shareCode}
+            </div>
+            <button 
+              className="w-full py-2 px-4 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-sm"
+              onClick={() => {
+                navigator.clipboard.writeText(shareCode);
+                alert(t('convCopied', 'Скопировано!'));
+              }}
+            >
+              {t('convCopy', 'Скопировать')}
+            </button>
+            <button 
+              className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mt-2"
+              onClick={() => setIsShareModalOpen(false)}
+            >
+              {t('cancel', 'Закрыть')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsImportModalOpen(false)}>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">{t('convImportTitle', 'Импорт шаблонов')}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+              {t('convImportDesc', 'Введите 6-значный код, чтобы загрузить чужие шаблоны. Внимание: ваши текущие шаблоны будут заменены!')}
+            </p>
+            <input 
+              type="text"
+              maxLength={6}
+              className="w-full text-center text-2xl font-mono tracking-widest py-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-orange-500 transition-colors mb-2 uppercase"
+              placeholder="12QWqw"
+              value={importCode}
+              onChange={e => setImportCode(e.target.value)}
+            />
+            {importError && (
+              <p className="text-red-500 text-xs mb-4 text-center">{importError}</p>
+            )}
+            <div className="flex flex-col gap-2 mt-2">
+              <button 
+                className="w-full py-2 px-4 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
+                onClick={handleImportTemplates}
+                disabled={importCode.length < 6}
+              >
+                {t('convImportBtn', 'Импортировать')}
+              </button>
+              <button 
+                className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                onClick={() => setIsImportModalOpen(false)}
+              >
+                {t('cancel', 'Отмена')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <SupportTicketModal 
         isOpen={isTicketModalOpen} 
         onClose={() => setIsTicketModalOpen(false)} 
