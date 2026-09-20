@@ -2,6 +2,8 @@ param (
     [string]$Version,
     [string]$FilePath,
     [bool]$IsPreRelease = $true,
+    [string]$Body = "",
+    [string]$BodyFile = "",
     [string]$Token = "[REDACTED_GITHUB_TOKEN]"
 )
 
@@ -10,7 +12,12 @@ param (
 $repo = "kozhaki-vik/industrial-hub-releases"
 $tagName = "v$Version"
 $releaseName = "Industrial Hub $tagName"
-$releaseBody = ""
+
+if ($BodyFile -and (Test-Path $BodyFile)) {
+    $releaseBody = [System.IO.File]::ReadAllText((Resolve-Path $BodyFile).Path, [System.Text.Encoding]::UTF8)
+} else {
+    $releaseBody = $Body
+}
 
 $headers = @{
     "Authorization" = "Bearer $Token"
@@ -38,7 +45,8 @@ $body = @{
     prerelease = $IsPreRelease
 } | ConvertTo-Json
 
-$releaseResponse = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases" -Method Post -Headers $headers -Body $body -ContentType "application/json"
+$utf8Body = [System.Text.Encoding]::UTF8.GetBytes($body)
+$releaseResponse = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases" -Method Post -Headers $headers -Body $utf8Body -ContentType "application/json; charset=utf-8"
 $releaseId = $releaseResponse.id
 
 $uploadUrl = $releaseResponse.upload_url.Split('{')[0]
@@ -56,8 +64,9 @@ try {
     Invoke-RestMethod -Uri $uploadUrl -Method Post -Headers $uploadHeaders -InFile $FilePath -ContentType "application/octet-stream" -ErrorAction Stop
 
     Write-Host "Publishing release..."
-    $publishBody = @{ draft = $false } | ConvertTo-Json
-    Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/$releaseId" -Method Patch -Headers $headers -Body $publishBody -ContentType "application/json"
+    $publishBody = @{ draft = $false; body = $releaseBody } | ConvertTo-Json
+    $utf8PublishBody = [System.Text.Encoding]::UTF8.GetBytes($publishBody)
+    Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/$releaseId" -Method Patch -Headers $headers -Body $utf8PublishBody -ContentType "application/json; charset=utf-8"
 
     Write-Host "Upload complete!"
 } catch {
