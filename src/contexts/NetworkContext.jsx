@@ -63,61 +63,6 @@ export const NetworkProvider = ({ children }) => {
     return stored;
   };
 
-  const getTicketHistory = () => {
-    const stored = localStorage.getItem('hub_ticket_history');
-    if (!stored) return [];
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [];
-    }
-  };
-
-  const [ticketHistory, setTicketHistory] = useState(getTicketHistory());
-  const [unreadAdminCount, setUnreadAdminCount] = useState(0);
-
-  const markTicketsRead = () => {
-    setUnreadAdminCount(0);
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'mark_tickets_read' }));
-    }
-  };
-
-  useEffect(() => {
-    localStorage.setItem('hub_ticket_history', JSON.stringify(ticketHistory));
-  }, [ticketHistory]);
-
-  const createTicket = (category, subject, details) => {
-    return new Promise((resolve, reject) => {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        return reject(new Error('Нет подключения к серверу'));
-      }
-      const reqId = Date.now().toString();
-      const handler = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.type === 'ticket_created' && data.reqId === reqId) {
-            wsRef.current.removeEventListener('message', handler);
-            if (data.error) reject(new Error(data.error));
-            else resolve(data);
-          }
-        } catch (err) {}
-      };
-      wsRef.current.addEventListener('message', handler);
-      wsRef.current.send(JSON.stringify({
-        type: 'create_ticket',
-        reqId,
-        category,
-        subject,
-        details
-      }));
-      setTimeout(() => {
-        wsRef.current?.removeEventListener('message', handler);
-        reject(new Error('Таймаут создания тикета'));
-      }, 10000);
-    });
-  };
-
   const triggerUpdateCheck = useCallback(async () => {
     if (!electron) return;
     try {

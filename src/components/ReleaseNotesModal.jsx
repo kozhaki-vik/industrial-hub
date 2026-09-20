@@ -26,8 +26,10 @@ export default function ReleaseNotesModal() {
           
           if (showReleaseNotes !== 'false') {
             setVersion(currentVersion);
-            setIsOpen(true);
-            await fetchReleaseNotes(currentVersion);
+            const hasNotes = await fetchReleaseNotes(currentVersion);
+            if (hasNotes) {
+              setIsOpen(true);
+            }
           }
         }
       } catch (err) {
@@ -50,15 +52,19 @@ export default function ReleaseNotesModal() {
       // Find the release matching the version
       const release = data.find(r => r.tag_name === `v${currentVersion}` || r.tag_name === `v${currentVersion}-test` || r.tag_name.includes(currentVersion));
       
-      if (release) {
-        setReleaseNotes(release.body || t('release_notes_empty', 'Описание релиза отсутствует.'));
-        setIsTestBranch(release.prerelease || release.tag_name.includes('test'));
-      } else {
-        setReleaseNotes(t('release_notes_not_found', 'Не удалось найти информацию об этом обновлении на GitHub.'));
+      if (release && release.body) {
+        const bodyTxt = release.body.trim();
+        // Check if there is actual meaningful text, ignore '????', default strings and very short text
+        if (bodyTxt && !bodyTxt.startsWith('????') && !bodyTxt.includes('Тестовая сборка') && !bodyTxt.includes('Стабильный релиз') && bodyTxt.length > 5) {
+          setReleaseNotes(bodyTxt);
+          setIsTestBranch(release.prerelease || release.tag_name.includes('test'));
+          return true;
+        }
       }
+      return false;
     } catch (err) {
       console.error('Error fetching release notes:', err);
-      setReleaseNotes(t('release_notes_error', 'Произошла ошибка при загрузке информации об обновлении.'));
+      return false;
     } finally {
       setIsLoading(false);
     }

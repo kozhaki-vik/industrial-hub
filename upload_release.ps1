@@ -10,7 +10,7 @@ param (
 $repo = "kozhaki-vik/industrial-hub-releases"
 $tagName = "v$Version"
 $releaseName = "Industrial Hub $tagName"
-$releaseBody = if ($IsPreRelease) { "Тестовая сборка $tagName" } else { "Стабильный релиз $tagName" }
+$releaseBody = ""
 
 $headers = @{
     "Authorization" = "Bearer $Token"
