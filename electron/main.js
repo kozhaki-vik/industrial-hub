@@ -86,6 +86,36 @@ function getRealExecutablePath() {
   return process.execPath;
 }
 
+let cachedHWID = null;
+function getSystemHWID() {
+  if (cachedHWID) return cachedHWID;
+  try {
+    let machineGuid = '';
+    if (process.platform === 'win32') {
+      try {
+        const out = child_process.execSync('reg query "HKLM\\SOFTWARE\\Microsoft\\Cryptography" /v MachineGuid', { windowsHide: true, timeout: 2000 }).toString();
+        const match = out.match(/MachineGuid\s+REG_SZ\s+([a-fA-F0-9-]+)/i);
+        if (match && match[1]) {
+          machineGuid = match[1].trim();
+        }
+      } catch (e) {
+        console.warn('Could not read MachineGuid from registry:', e.message);
+      }
+    }
+
+    const hash = crypto.createHash('sha256');
+    if (machineGuid) {
+      hash.update(machineGuid);
+    } else {
+      hash.update(os.hostname() + '_' + os.userInfo().username);
+    }
+    cachedHWID = hash.digest('hex');
+    return cachedHWID;
+  } catch {
+    return 'unknown_hwid';
+  }
+}
+
 // --- Single Instance Lock ---
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -312,8 +342,11 @@ function createWindow() {
   });
 
   // Focus both window and webContents on ready-to-show
+  const isAutoStarted = process.argv.includes('--autostart');
   mainWindow.once('ready-to-show', () => {
-    if (!store.get('startMinimizedToTray', false)) {
+    if (isAutoStarted && store.get('startMinimizedToTray', false)) {
+      console.log('App started automatically via Windows login, remaining in tray.');
+    } else {
       mainWindow.show();
       mainWindow.focus();
       if (mainWindow.webContents) {
@@ -332,14 +365,26 @@ function createWindow() {
   if (!tray) {
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png')));
     const contextMenu = Menu.buildFromTemplate([
-      { label: 'Открыть', click: () => { mainWindow.show(); mainWindow.focus(); } },
+      { 
+        label: 'Открыть', 
+        click: () => { 
+          if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.show(); 
+            mainWindow.focus(); 
+          }
+        } 
+      },
       { label: 'Выход', click: () => { isQuitting = true; app.quit(); } }
     ]);
     tray.setToolTip('Industrial Hub');
     tray.setContextMenu(contextMenu);
     tray.on('click', () => {
-      mainWindow.show();
-      mainWindow.focus();
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
     });
   }
 
@@ -440,7 +485,7 @@ function flushCrashQueue() {
 
 function sendCrashReport(errorStack) {
   try {
-    const hwid = crypto.createHash('sha256').update(os.hostname() + '_' + os.userInfo().username).digest('hex');
+    const hwid = getSystemHWID();
     const version = app.getVersion();
     
     const crashData = {
@@ -593,20 +638,21 @@ app.whenReady().then(async () => {
     await waitForPid(cleanupPid);
     
     try {
-      const folderName = path.basename(cleanupDir);
-      if (folderName.startsWith('app-') && fs.existsSync(cleanupDir)) {
-        fs.rmSync(cleanupDir, { recursive: true, force: true });
-        console.log(`Cleaned up old version directory: ${cleanupDir}`);
+      const resolvedCleanup = path.resolve(cleanupDir);
+      const expectedParent = path.resolve(clientDir);
+      const folderName = path.basename(resolvedCleanup);
+      if (resolvedCleanup.startsWith(expectedParent) && folderName.startsWith('app-') && fs.existsSync(resolvedCleanup)) {
+        fs.rmSync(resolvedCleanup, { recursive: true, force: true });
+        console.log(`Cleaned up old version directory: ${resolvedCleanup}`);
       }
     } catch (e) {
       console.error(`Failed to clean up old directory ${cleanupDir}:`, e);
     }
   }
 
-  // Cleanup old app-* folders
+  // Cleanup old app-* folders (keep newest 3, delete older ones)
   try {
     const appPath = getRealAppPath();
-    const clientDir = path.resolve(appPath, '..');
     const currentFolder = path.basename(appPath);
     if (currentFolder.startsWith('app-')) {
       const folders = fs.readdirSync(clientDir).filter(f => f.startsWith('app-'));
@@ -618,24 +664,26 @@ app.whenReady().then(async () => {
       };
       folders.sort((a, b) => parseVer(b) - parseVer(a));
 
-      const versionsDir = path.join(clientDir, 'Версии');
-      
+      // Directly delete versions older than the newest 3
       for (let i = 3; i < folders.length; i++) {
-        if (!fs.existsSync(versionsDir)) {
-          fs.mkdirSync(versionsDir, { recursive: true });
-        }
         const folder = folders[i];
         const fullPath = path.join(clientDir, folder);
-        const destPath = path.join(versionsDir, folder);
         try {
-          if (!fs.existsSync(destPath)) {
-            fs.renameSync(fullPath, destPath);
-            console.log('Moved old version folder to Версии:', folder);
-          } else {
-            fs.rmSync(fullPath, { recursive: true, force: true });
-          }
+          fs.rmSync(fullPath, { recursive: true, force: true });
+          console.log('Deleted old version folder:', folder);
         } catch (e) {
-          console.error('Failed to move old folder:', folder, e);
+          console.error('Failed to delete old folder:', folder, e);
+        }
+      }
+
+      // Also clean up legacy "Версии" folder if it exists
+      const legacyVersionsDir = path.join(clientDir, 'Версии');
+      if (fs.existsSync(legacyVersionsDir)) {
+        try {
+          fs.rmSync(legacyVersionsDir, { recursive: true, force: true });
+          console.log('Removed legacy Версии archive folder');
+        } catch (e) {
+          console.error('Failed to remove legacy Версии folder:', e);
         }
       }
     }
@@ -1305,13 +1353,7 @@ app.whenReady().then(async () => {
 
   // NETWORK HANDLERS
   ipcMain.handle('network:get-hwid', () => {
-    try {
-      const hash = crypto.createHash('sha256');
-      hash.update(os.hostname() + '_' + os.userInfo().username);
-      return hash.digest('hex');
-    } catch {
-      return 'unknown_hwid';
-    }
+    return getSystemHWID();
   });
 
   ipcMain.handle('app:relaunch', () => {
@@ -1402,6 +1444,10 @@ app.whenReady().then(async () => {
   };
 
   ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion, applyImmediately = true) => {
+    if (!newVersion || !/^\d+\.\d+\.\d+$/.test(newVersion)) {
+      throw new Error('Некорректный формат версии');
+    }
+
     const TRUSTED_PREFIX = 'https://github.com/kozhaki-vik/industrial-hub-releases/';
     if (!exeUrl || (!exeUrl.startsWith(TRUSTED_PREFIX) && !exeUrl.startsWith('https://api.github.com/'))) {
       throw new Error('Недоверенный источник обновления');
@@ -1530,7 +1576,7 @@ app.whenReady().then(async () => {
           app.setLoginItemSettings({
             openAtLogin: true,
             path: targetExePath,
-            args: []
+            args: ['--autostart']
           });
           store.set('autoStart', true);
         }
@@ -1548,8 +1594,7 @@ app.whenReady().then(async () => {
       ], {
         detached: true,
         stdio: 'ignore',
-        cwd: newAppDir,
-        windowsHide: true
+        cwd: newAppDir
       });
       child.unref();
 
@@ -1573,8 +1618,7 @@ app.whenReady().then(async () => {
       ], {
         detached: true,
         stdio: 'ignore',
-        cwd: restartPayload.newAppDir,
-        windowsHide: true
+        cwd: restartPayload.newAppDir
       });
       child.unref();
       
@@ -1604,7 +1648,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('app:getAutoStart', () => {
     try {
       const realExe = getRealExecutablePath();
-      const settings = app.getLoginItemSettings({ path: realExe });
+      const settings = app.getLoginItemSettings({ path: realExe, args: ['--autostart'] });
       const stored = store.get('autoStart');
       if (typeof stored === 'boolean') {
         return stored;
@@ -1625,7 +1669,7 @@ app.whenReady().then(async () => {
       app.setLoginItemSettings({
         openAtLogin: !!enabled,
         path: realExe,
-        args: []
+        args: enabled ? ['--autostart'] : []
       });
       store.set('autoStart', !!enabled);
       return { success: true, enabled: !!enabled };
