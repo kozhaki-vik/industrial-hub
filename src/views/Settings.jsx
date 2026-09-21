@@ -12,6 +12,7 @@ import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 import kozhakiAvatar from '../assets/team/kozhaki.jpg';
 import kaktusAvatar from '../assets/team/kaktus.png';
 import pc6Avatar from '../assets/team/pc6.jpg';
+import gooso4okAvatar from '../assets/team/gooso4ok.jpg';
 
 const UaFlag = ({ className }) => (
   <svg viewBox="0 0 24 16" className={`rounded-sm overflow-hidden ${className}`} xmlns="http://www.w3.org/2000/svg">
@@ -380,6 +381,17 @@ export default function Settings() {
                       <Gamepad2 className="w-5 h-5" />
                     </a>
                   </div>
+                </div>
+              </div>
+
+              {/* Gooso4ok */}
+              <div className="flex gap-4 items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <img src={gooso4okAvatar} alt="Gooso4ok" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">Gooso4ok</h4>
+                  <p className="text-sm text-orange-500 font-medium">{t('settings_team_sponsor')}</p>
                 </div>
               </div>
 
