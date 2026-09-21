@@ -57,6 +57,21 @@ const TelegramIcon = ({ className }) => (
   <svg role="img" viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
 );
 
+const SPONSORS_LIST = [
+  {
+    id: 'rs6',
+    name: 'RS6',
+    avatar: pc6Avatar,
+    amount: 300,
+  },
+  {
+    id: 'gooso4ok',
+    name: 'Gooso4ok',
+    avatar: gooso4okAvatar,
+    amount: 268,
+  },
+].sort((a, b) => b.amount - a.amount);
+
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
@@ -154,8 +169,7 @@ export default function Settings() {
 
   return (
     <div className="mb-8 max-w-5xl">
-      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-2">{t('settings_title')}</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">{t('settings_desc')}</p>
+      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-5">{t('settings_title')}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Settings Column */}
@@ -346,15 +360,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">KakTyc</h4>
-                  <p className="text-sm text-orange-500 font-medium mb-2">{t('settings_team_qa')}</p>
-                  <div className="flex gap-3">
-                    <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://steamcommunity.com/profiles/76561198131045923', '_blank'); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Steam">
-                      <Gamepad2 className="w-5 h-5" />
-                    </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText('@kaktycfps'); addNotification(t('settings_discord_copied', { tag: '@kaktycfps' }), 'success'); }} className="text-slate-400 hover:text-[#5865F2] transition-colors" title="Discord: @kaktycfps">
-                      <DiscordIcon className="w-5 h-5" />
-                    </a>
-                  </div>
+                  <p className="text-sm text-orange-500 font-medium">{t('settings_team_qa')}</p>
                 </div>
               </div>
             </div>
@@ -367,42 +373,15 @@ export default function Settings() {
               <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('settings_sponsors_title')}</h3>
             </div>
 
-            <div className="space-y-4">
-              {/* RS6 */}
-              <div className="flex gap-4 items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 shadow-sm border border-slate-200 dark:border-slate-700">
-                  <img src={pc6Avatar} alt="RS6" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">RS6</h4>
-                  <p className="text-sm text-orange-500 font-medium mb-2">{t('settings_team_sponsor')}</p>
-                  <div className="flex gap-3">
-                    <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://steamcommunity.com/profiles/76561199490640903', '_blank'); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" title="Steam">
-                      <Gamepad2 className="w-5 h-5" />
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Gooso4ok */}
-              <div className="flex gap-4 items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 shadow-sm border border-slate-200 dark:border-slate-700">
-                  <img src={gooso4okAvatar} alt="Gooso4ok" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">Gooso4ok</h4>
-                  <p className="text-sm text-orange-500 font-medium">{t('settings_team_sponsor')}</p>
-                </div>
-              </div>
-
-              {/* Become a sponsor */}
+            <div className="space-y-3">
+              {/* Become a sponsor (pinned at top) */}
               <button 
                 onClick={(e) => { 
                   e.preventDefault(); 
                   resetSponsorState();
                   setSponsorStep('select'); 
                 }}
-                className="relative w-full overflow-hidden rounded-xl p-[2px] group"
+                className="relative w-full overflow-hidden rounded-xl p-[2px] group cursor-pointer"
               >
                 <div className="absolute -inset-[100%] bg-[conic-gradient(from_0deg,transparent_0_160deg,var(--color-orange-500,#f97316)_180deg,transparent_180deg_340deg,var(--color-orange-500,#f97316)_360deg)] animate-[spin_3s_linear_infinite] opacity-50 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex gap-4 items-center text-left bg-slate-50 dark:bg-slate-950 p-4 rounded-[10px] w-full h-full hover:bg-orange-50 dark:hover:bg-slate-900 transition-colors">
@@ -414,6 +393,24 @@ export default function Settings() {
                   </div>
                 </div>
               </button>
+
+              {/* Scrollable Sponsors List */}
+              <div className="max-h-[280px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                {SPONSORS_LIST.map((sponsor) => (
+                  <div 
+                    key={sponsor.id} 
+                    className="flex gap-4 items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 shadow-sm border border-slate-200 dark:border-slate-700">
+                      <img src={sponsor.avatar} alt={sponsor.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">{sponsor.name}</h4>
+                      <p className="text-sm text-orange-500 font-medium">{t('settings_team_sponsor')}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

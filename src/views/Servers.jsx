@@ -17,9 +17,9 @@ export default function Servers() {
 
   const handleOpenDiscord = () => {
     if (electron && electron.shell) {
-      electron.shell.openExternal('https://discord.gg/invite');
+      electron.shell.openExternal('https://discord.gg/RtrMDH3KXQ');
     } else {
-      window.open('https://discord.gg/invite', '_blank');
+      window.open('https://discord.gg/RtrMDH3KXQ', '_blank');
     }
   };
 
