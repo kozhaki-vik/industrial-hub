@@ -12,7 +12,7 @@ import DossierTab from './ClanManagerTabs/DossierTab';
 import StatsTab from './ClanManagerTabs/StatsTab';
 import LogsTab from './ClanManagerTabs/LogsTab';
 import ModerationTab from './ClanManagerTabs/ModerationTab';
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useNotification } from '../contexts/NotificationContext';
