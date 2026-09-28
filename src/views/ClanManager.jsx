@@ -3799,7 +3799,9 @@ export default function ClanManager() {
   const isCompanionWindowVisible = isFullScreenWindow && showDiscordLivePreview && Boolean(previewData);
 
 const contextValue = {
-  BOT_INVITE_URL, ClanManager, aConfig,
+  BOT_INVITE_URL: typeof BOT_INVITE_URL !== "undefined" ? BOT_INVITE_URL : undefined,
+  ClanManager: typeof ClanManager !== "undefined" ? ClanManager : undefined,
+  aConfig: typeof aConfig !== "undefined" ? aConfig : undefined,
   activeDevGuildIdRef: typeof activeDevGuildIdRef !== "undefined" ? activeDevGuildIdRef : undefined,
   activeGid: typeof activeGid !== "undefined" ? activeGid : undefined,
   activeTab: typeof activeTab !== "undefined" ? activeTab : undefined,
