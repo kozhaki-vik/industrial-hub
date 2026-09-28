@@ -787,13 +787,14 @@ export default function ClanManager() {
     }).then(res => {
       if (res && res.success && res.dossier) {
         setDossiersData(prev => {
-          const idx = prev.findIndex(d => d.userId === res.dossier.userId);
+          const arr = prev || [];
+          const idx = arr.findIndex(d => d.userId === res.dossier.userId);
           if (idx !== -1) {
-            const copy = [...prev];
+            const copy = [...arr];
             copy[idx] = res.dossier;
             return copy;
           }
-          return [res.dossier, ...prev];
+          return [res.dossier, ...arr];
         });
         setSelectedProfileForDossier(res.dossier);
       }
@@ -1068,11 +1069,29 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_roster' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_roster_')))) {
           if (!data.error && data.data && data.data.success) {
             setRosterData(data.data);
+            if (data.data.dossiers && Array.isArray(data.data.dossiers)) {
+              setDossiersData(data.data.dossiers);
+            }
           } else {
             setRosterData(prev => prev || { roster: [], roleNamesJson: '{}', customRolesJson: '[]' });
             if (data.error || (data.data && data.data.error)) {
               setError(data.error || data.data.error);
             }
+          }
+        } else if (data.type === 'clan_proxy_res' && (typeof data.reqId === 'string' && data.reqId.startsWith('get_member_dossier_'))) {
+          if (!data.error && data.data?.success && data.data?.dossier) {
+            const fetchedDos = data.data.dossier;
+            setSelectedProfileForDossier(prev => (prev?.userId === fetchedDos.userId ? { ...prev, ...fetchedDos } : prev));
+            setDossiersData(prev => {
+              const arr = prev || [];
+              const idx = arr.findIndex(d => d.userId === fetchedDos.userId);
+              if (idx !== -1) {
+                const copy = [...arr];
+                copy[idx] = fetchedDos;
+                return copy;
+              }
+              return [fetchedDos, ...arr];
+            });
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_applications') {
           setLoadingApps(false);
@@ -2295,9 +2314,14 @@ export default function ClanManager() {
       }
     } else if (activeTab === 'dossier') {
       fetchDossiers(dossierFilter, dossierSearch);
-    } else if (activeTab === 'roster' && !rosterData) {
-      addLog('Fetching roster via proxy');
-      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_roster_${Date.now()}`, payload: { action: 'get_roster' } }));
+    } else if (activeTab === 'roster') {
+      if (!rosterData) {
+        addLog('Fetching roster via proxy');
+        ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_roster_${Date.now()}`, payload: { action: 'get_roster' } }));
+      }
+      if (!dossiersData || dossiersData.length === 0) {
+        fetchDossiers();
+      }
     } else if (activeTab === 'stats' && !statsData) {
       addLog('Fetching stats via proxy');
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
@@ -2310,6 +2334,48 @@ export default function ClanManager() {
       fetchDiscordInfo();
     }
   }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData, config?.discordLink]);
+
+  const handleCloseDossier = useCallback(() => {
+    setSelectedProfileForDossier(null);
+  }, []);
+
+  const selectedUserApplications = useMemo(() => {
+    if (!selectedProfileForDossier?.userId || !Array.isArray(applicationsData)) return [];
+    const uid = selectedProfileForDossier.userId;
+    return applicationsData.filter(a => a.userId === uid || a.applicantId === uid);
+  }, [applicationsData, selectedProfileForDossier?.userId]);
+
+  const selectedUserVotes = useMemo(() => {
+    if (!selectedProfileForDossier?.userId || !Array.isArray(activeVotes)) return [];
+    const uid = selectedProfileForDossier.userId;
+    return activeVotes.filter(v => {
+      try {
+        const voters = v.votersJson ? JSON.parse(v.votersJson) : [];
+        return voters.some(vt => (typeof vt === 'string' ? vt : vt.userId) === uid);
+      } catch(e) { return false; }
+    });
+  }, [activeVotes, selectedProfileForDossier?.userId]);
+
+  const selectedUserWarnings = useMemo(() => {
+    if (!selectedProfileForDossier?.userId || !Array.isArray(clanWarnings)) return [];
+    const uid = selectedProfileForDossier.userId;
+    return clanWarnings.filter(w => w.userId === uid);
+  }, [clanWarnings, selectedProfileForDossier?.userId]);
+
+  useEffect(() => {
+    if (!selectedProfileForDossier?.userId || !ws || wsStatus !== 'online') return;
+    if (selectedProfileForDossier.shootingRating === undefined && selectedProfileForDossier.claimedHours === undefined) {
+      ws.send(JSON.stringify({
+        type: 'clan',
+        action: 'proxy',
+        reqId: `get_member_dossier_${selectedProfileForDossier.userId}`,
+        payload: {
+          action: 'get_member_dossier',
+          userId: selectedProfileForDossier.userId
+        }
+      }));
+    }
+  }, [selectedProfileForDossier?.userId, selectedProfileForDossier?.shootingRating, selectedProfileForDossier?.claimedHours, ws, wsStatus]);
 
   if (status === 'checking') {
     return (
@@ -3733,9 +3799,7 @@ export default function ClanManager() {
   const isCompanionWindowVisible = isFullScreenWindow && showDiscordLivePreview && Boolean(previewData);
 
 const contextValue = {
-  BOT_INVITE_URL: typeof BOT_INVITE_URL !== "undefined" ? BOT_INVITE_URL : undefined,
-  ClanManager: typeof ClanManager !== "undefined" ? ClanManager : undefined,
-  aConfig: typeof aConfig !== "undefined" ? aConfig : undefined,
+  BOT_INVITE_URL, ClanManager, aConfig,
   activeDevGuildIdRef: typeof activeDevGuildIdRef !== "undefined" ? activeDevGuildIdRef : undefined,
   activeGid: typeof activeGid !== "undefined" ? activeGid : undefined,
   activeTab: typeof activeTab !== "undefined" ? activeTab : undefined,
@@ -5082,19 +5146,14 @@ const contextValue = {
       {selectedProfileForDossier && (
         <MemberDossierModal
           isOpen={Boolean(selectedProfileForDossier)}
-          onClose={() => setSelectedProfileForDossier(null)}
+          onClose={handleCloseDossier}
           profile={selectedProfileForDossier}
           onSave={handleSaveDossier}
           onSearchGlobal={handleGlobalSearchDossier}
           onSendCrossClanMessage={handleSendCrossClanMessage}
-          userApplications={(applicationsData || []).filter(a => a.userId === selectedProfileForDossier?.userId || a.applicantId === selectedProfileForDossier?.userId)}
-          userVotes={(activeVotes || []).filter(v => {
-            try {
-              const voters = v.votersJson ? JSON.parse(v.votersJson) : [];
-              return voters.some(vt => (typeof vt === 'string' ? vt : vt.userId) === selectedProfileForDossier?.userId);
-            } catch(e) { return false; }
-          })}
-          userWarnings={(clanWarnings || []).filter(w => w.userId === selectedProfileForDossier?.userId)}
+          userApplications={selectedUserApplications}
+          userVotes={selectedUserVotes}
+          userWarnings={selectedUserWarnings}
           onViewTranscript={handleViewTranscript}
           canEdit={true}
         />

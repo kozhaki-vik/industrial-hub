@@ -126,12 +126,23 @@ export default function ReleaseNotesModal() {
         {/* Footer */}
         <div className="pt-2 flex items-center justify-between shrink-0">
           <a 
-            href="https://github.com/kozhaki-vik/industrial-hub-releases/releases" 
+            href="https://discord.gg/RtrMDH3KXQ" 
             target="_blank" 
             rel="noreferrer"
-            className="text-xs text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-1 font-medium"
+            onClick={(e) => {
+              e.preventDefault();
+              const url = 'https://discord.gg/RtrMDH3KXQ';
+              if (window.electronAPI?.shell?.openExternal) {
+                window.electronAPI.shell.openExternal(url);
+              } else if (window.electronAPI?.openExternal) {
+                window.electronAPI.openExternal(url);
+              } else {
+                window.open(url, '_blank');
+              }
+            }}
+            className="text-xs text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-1 font-medium cursor-pointer"
           >
-            <span>GitHub Releases</span>
+            <span>Discord Server</span>
             <ExternalLink className="w-3 h-3" />
           </a>
           <button

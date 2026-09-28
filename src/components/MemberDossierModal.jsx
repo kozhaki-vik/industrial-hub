@@ -1,15 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../contexts/NotificationContext';
 import { 
   X, Star, Shield, ShieldAlert, AlertTriangle, Check, Copy, ExternalLink, 
-  Search, Save, User, Clock, Calendar, FileText, Ban, Crosshair, Plane, 
+  Search, Save, User, Clock, Calendar, FileText, Crosshair, Plane, 
   Hammer, Pickaxe, Award, CheckCircle2, RefreshCw, RotateCcw, Send, MessageSquare,
   ScrollText, Vote
 } from 'lucide-react';
 import { DossierModalGlobalSkeleton } from './Skeleton';
 
-export default function MemberDossierModal({
+const isValidHttpUrl = (string) => {
+  if (!string || typeof string !== 'string') return false;
+  try {
+    const url = new URL(string);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (_) {
+    return false;
+  }
+};
+
+const StarRatingRow = React.memo(function StarRatingRow({
+  value, onChange, label, icon: Icon, canEdit, t
+}) {
+  return (
+    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80">
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="w-4 h-4 text-orange-500 shrink-0" />}
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            disabled={!canEdit}
+            onClick={() => onChange(value === star ? 0 : star)}
+            className={`p-1 transition-transform hover:scale-110 cursor-pointer disabled:cursor-default ${
+              star <= value ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-200'
+            }`}
+            title={value === star ? t('dossier_unrate', 'Нажмите, чтобы снять оценку') : `${star}/5`}
+          >
+            <Star className="w-4 h-4 fill-current" />
+          </button>
+        ))}
+        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1.5 w-6 text-right">
+          {value > 0 ? `${value}/5` : '0/5'}
+        </span>
+        {canEdit && value > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange(0)}
+            className="ml-1 p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            title={t('dossier_reset_rate', 'Убрать оценку (сбросить в 0)')}
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+});
+
+function MemberDossierModal({
   isOpen,
   onClose,
   profile,
@@ -90,44 +142,32 @@ export default function MemberDossierModal({
     }
   }, [profile]);
 
-  if (!isOpen || !profile) return null;
-
-  const handleCopyUserId = () => {
-    if (profile.userId) {
+  const handleCopyUserId = useCallback(() => {
+    if (profile?.userId) {
       navigator.clipboard.writeText(profile.userId);
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 2000);
     }
-  };
+  }, [profile?.userId]);
 
-  const handleCopyText = (text, key) => {
+  const handleCopyText = useCallback((text, key) => {
     if (text) {
       navigator.clipboard.writeText(text);
       setCopiedLeaderId(key);
       setTimeout(() => setCopiedLeaderId(null), 2000);
     }
-  };
+  }, []);
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = useCallback((newStatus) => {
     setStatus(newStatus);
     if (newStatus === 'BLACKLISTED') {
       setIsBlacklisted(true);
     } else if (newStatus === 'ACTIVE') {
       setIsBlacklisted(false);
     }
-  };
+  }, []);
 
-  const isValidHttpUrl = (string) => {
-    let url;
-    try {
-      url = new URL(string);
-    } catch (_) {
-      return false;
-    }
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  };
-
-  const handleSave = async (e) => {
+  const handleSave = useCallback(async (e) => {
     if (e) e.preventDefault();
     if (!canEdit || saving) return;
 
@@ -174,20 +214,24 @@ export default function MemberDossierModal({
     } finally {
       setSaving(false);
     }
-  };
+  }, [
+    canEdit, saving, cheaterStatus, cheaterReason, cheaterProofUrl, t, status,
+    statusReason, notes, isBlacklisted, blacklistReason, shootingRating,
+    flyingRating, buildingRating, farmingRating, overallRating, onSave, profile?.userId
+  ]);
 
-  const handleRunGlobalSearch = async () => {
+  const handleRunGlobalSearch = useCallback(async () => {
     if (!onSearchGlobal || searchingGlobal) return;
     setSearchingGlobal(true);
     setGlobalSearchError(null);
     try {
-      const query = profile.steamId || profile.userId;
+      const query = profile?.steamId || profile?.userId;
       const res = await onSearchGlobal(query);
       if (res && res.success) {
         setGlobalData(res);
         const otherGuildIds = (res.profiles || [])
           .map(p => p.guildId)
-          .filter(gId => gId !== profile.guildId);
+          .filter(gId => gId !== profile?.guildId);
         if (otherGuildIds.length > 0) {
           setSelectedTargetGuildId(otherGuildIds[0]);
         }
@@ -199,16 +243,16 @@ export default function MemberDossierModal({
     } finally {
       setSearchingGlobal(false);
     }
-  };
+  }, [onSearchGlobal, searchingGlobal, profile?.steamId, profile?.userId, profile?.guildId, t]);
 
-  const handleSendMessageToLeader = async (e) => {
+  const handleSendMessageToLeader = useCallback(async (e) => {
     if (e) e.preventDefault();
     if (!onSendCrossClanMessage || !leaderMessageText.trim() || sendingLeaderMessage) return;
 
     setSendingLeaderMessage(true);
     setLeaderMessageSuccess(false);
     try {
-      const targetUserId = profile.userId;
+      const targetUserId = profile?.userId;
       const res = await onSendCrossClanMessage(targetUserId, selectedTargetGuildId, leaderMessageText.trim());
       if (res && res.success) {
         setLeaderMessageText('');
@@ -228,67 +272,39 @@ export default function MemberDossierModal({
     } finally {
       setSendingLeaderMessage(false);
     }
-  };
+  }, [onSendCrossClanMessage, leaderMessageText, sendingLeaderMessage, profile?.userId, selectedTargetGuildId, globalData, addNotification, t]);
 
-  // Parse steam accounts
-  let steamAccounts = [];
-  if (profile.steamAccountsJson) {
-    try {
-      const parsed = JSON.parse(profile.steamAccountsJson);
-      if (Array.isArray(parsed)) steamAccounts = parsed;
-    } catch (e) {}
-  }
-  if (steamAccounts.length === 0 && profile.steamId) {
-    steamAccounts.push({
-      steamId: profile.steamId,
-      name: profile.username || 'Steam Profile',
-      rustHours: profile.verifiedHours ?? null,
-      steamUrl: `https://steamcommunity.com/profiles/${profile.steamId}`,
-      bmUrl: `https://www.battlemetrics.com/players?filter[search]=${profile.steamId}`
-    });
-  }
+  // Parse steam accounts (memoized)
+  const steamAccounts = useMemo(() => {
+    let list = [];
+    if (profile?.steamAccountsJson) {
+      try {
+        const parsed = JSON.parse(profile.steamAccountsJson);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch (e) {}
+    }
+    if (list.length === 0 && profile?.steamId) {
+      list.push({
+        steamId: profile.steamId,
+        name: profile.username || 'Steam Profile',
+        rustHours: profile.verifiedHours ?? null,
+        steamUrl: `https://steamcommunity.com/profiles/${profile.steamId}`,
+        bmUrl: `https://www.battlemetrics.com/players?filter[search]=${profile.steamId}`
+      });
+    }
+    return list;
+  }, [profile?.steamAccountsJson, profile?.steamId, profile?.username, profile?.verifiedHours]);
 
-  // Helper for rendering rating stars with full reset capability
-  const renderStarRating = (value, onChange, label, icon) => {
-    const Icon = icon;
-    return (
-      <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80">
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="w-4 h-4 text-orange-500 shrink-0" />}
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              disabled={!canEdit}
-              onClick={() => onChange(value === star ? 0 : star)}
-              className={`p-1 transition-transform hover:scale-110 cursor-pointer disabled:cursor-default ${
-                star <= value ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-200'
-              }`}
-              title={value === star ? t('dossier_unrate', 'Нажмите, чтобы снять оценку') : `${star}/5`}
-            >
-              <Star className="w-4 h-4 fill-current" />
-            </button>
-          ))}
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1.5 w-6 text-right">
-            {value > 0 ? `${value}/5` : '0/5'}
-          </span>
-          {canEdit && value > 0 && (
-            <button
-              type="button"
-              onClick={() => onChange(0)}
-              className="ml-1 p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-              title={t('dossier_reset_rate', 'Убрать оценку (сбросить в 0)')}
-            >
-              <RotateCcw className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const renderStarRating = (value, onChange, label, icon) => (
+    <StarRatingRow
+      value={value}
+      onChange={onChange}
+      label={label}
+      icon={icon}
+      canEdit={canEdit}
+      t={t}
+    />
+  );
 
   const getStatusBadge = (st) => {
     switch (st) {
@@ -305,8 +321,10 @@ export default function MemberDossierModal({
     }
   };
 
+  if (!isOpen || !profile) return null;
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 p-4 animate-in fade-in">
       <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
         
         {/* Header */}
@@ -664,7 +682,7 @@ export default function MemberDossierModal({
                             value={cheaterProofUrl}
                             onChange={e => {
                               setCheaterProofUrl(e.target.value);
-                              setProofUrlError(null);
+                              setSaveError(null);
                             }}
                             placeholder={t('dossier_proof_url_ph', 'https://youtu.be/... или https://medal.tv/...')}
                             className="flex-1 px-3 py-2 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 font-mono"
@@ -1166,3 +1184,5 @@ export default function MemberDossierModal({
     </div>
   );
 }
+
+export default React.memo(MemberDossierModal);
