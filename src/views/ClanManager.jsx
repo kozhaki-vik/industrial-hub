@@ -1275,15 +1275,33 @@ export default function ClanManager() {
           setCreatingInvite(false);
           if (!data.error && data.data && data.data.success && data.data.inviteUrl) {
             const newUrl = data.data.inviteUrl;
+            const curCfg = latestConfigRef.current;
+            let currentRConfig = {};
+            try { if (curCfg?.recruitmentConfigJson) currentRConfig = JSON.parse(curCfg.recruitmentConfigJson); } catch(e) {}
+            const isRecLinkEmpty = !currentRConfig.link || !currentRConfig.link.trim();
+
             setConfig(prev => {
               if (!prev) return prev;
-              const updated = { ...prev, discordLink: newUrl };
+              let rConf = {};
+              try { if (prev.recruitmentConfigJson) rConf = JSON.parse(prev.recruitmentConfigJson); } catch(e) {}
+              const shouldUpdateRConfig = !rConf.link || !rConf.link.trim();
+              const updated = {
+                ...prev,
+                discordLink: newUrl,
+                ...(shouldUpdateRConfig ? { recruitmentConfigJson: JSON.stringify({ ...rConf, link: newUrl }) } : {})
+              };
               lastSavedConfigRef.current = JSON.parse(JSON.stringify(updated));
+              autoSaveConfig(updated, true);
               return updated;
             });
             setInviteStatus('valid');
             setInviteDetails(data.data.invite || null);
             lastVerifiedLinkRef.current = newUrl;
+            if (isRecLinkEmpty) {
+              setRecruitmentInviteStatus('valid');
+              setRecruitmentInviteDetails(data.data.invite || data.data || null);
+              lastVerifiedRecruitmentLinkRef.current = newUrl;
+            }
             setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 3000);
             addLog(`Permanent invite created: ${newUrl}`);
@@ -1318,18 +1336,34 @@ export default function ClanManager() {
           setCreatingRecruitmentInvite(false);
           if (!data.error && data.data && data.data.success) {
             const newUrl = data.data.inviteUrl;
+            const curCfg = latestConfigRef.current;
+            const isMainLinkEmpty = !curCfg?.discordLink || !curCfg?.discordLink.trim();
+
             setConfig(prev => {
               if (!prev) return prev;
               let currentRConfig = {};
               try { if (prev.recruitmentConfigJson) currentRConfig = JSON.parse(prev.recruitmentConfigJson); } catch(e) {}
               const newRConfig = { ...currentRConfig, link: newUrl };
-              const updated = { ...prev, recruitmentConfigJson: JSON.stringify(newRConfig) };
+              const shouldUpdateMainLink = !prev.discordLink || !prev.discordLink.trim();
+              const updated = {
+                ...prev,
+                recruitmentConfigJson: JSON.stringify(newRConfig),
+                ...(shouldUpdateMainLink ? { discordLink: newUrl } : {})
+              };
               lastSavedConfigRef.current = JSON.parse(JSON.stringify(updated));
+              autoSaveConfig(updated, true);
               return updated;
             });
             setRecruitmentInviteStatus('valid');
             setRecruitmentInviteDetails(data.data.invite || data.data || null);
             lastVerifiedRecruitmentLinkRef.current = newUrl;
+            if (isMainLinkEmpty) {
+              setInviteStatus('valid');
+              setInviteDetails(data.data.invite || null);
+              lastVerifiedLinkRef.current = newUrl;
+            }
+            setSaveStatus('success');
+            setTimeout(() => setSaveStatus(null), 3000);
             addLog(`Recruitment invite created: ${newUrl}`);
           } else {
             setError(data.error || (data.data && data.data.error) || 'Failed to create recruitment invite');
