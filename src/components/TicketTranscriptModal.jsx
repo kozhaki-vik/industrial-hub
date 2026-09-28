@@ -5,6 +5,8 @@ import {
   Copy, Check, Clock, CheckCircle2, XCircle, Bot
 } from 'lucide-react';
 
+import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
+
 export default function TicketTranscriptModal({
   isOpen,
   onClose,
@@ -28,29 +30,12 @@ export default function TicketTranscriptModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Lock background scrolling when modal is open
+  // Lock background scrolling safely when modal is open
   useEffect(() => {
     if (!isOpen) return;
-
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
-
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-
-    const scrollableElements = document.querySelectorAll('.clan-manager-content, .clan-manager-container, main');
-    const originalOverflows = [];
-    scrollableElements.forEach((el, i) => {
-      originalOverflows[i] = el.style.overflow;
-      el.style.overflow = 'hidden';
-    });
-
+    lockBodyScroll();
     return () => {
-      document.body.style.overflow = originalBodyOverflow;
-      document.documentElement.style.overflow = originalHtmlOverflow;
-      scrollableElements.forEach((el, i) => {
-        el.style.overflow = originalOverflows[i] || '';
-      });
+      unlockBodyScroll();
     };
   }, [isOpen]);
 
@@ -94,7 +79,7 @@ export default function TicketTranscriptModal({
 
   return (
     <div 
-      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 md:p-6 bg-black/70 animate-in fade-in duration-200 overflow-hidden"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 md:p-5 bg-black/70 animate-in fade-in duration-200 overflow-hidden"
       onWheel={(e) => {
         if (e.target === e.currentTarget) {
           e.preventDefault();
@@ -102,7 +87,7 @@ export default function TicketTranscriptModal({
       }}
     >
       <div 
-        className="relative w-[92vw] max-w-[1450px] h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="relative w-[92vw] max-w-[1300px] max-h-[88vh] h-[88vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

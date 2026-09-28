@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { DossierModalGlobalSkeleton } from './Skeleton';
 
+import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
+
 const isValidHttpUrl = (string) => {
   if (!string || typeof string !== 'string') return false;
   try {
@@ -23,34 +25,34 @@ const StarRatingRow = React.memo(function StarRatingRow({
   value, onChange, label, icon: Icon, canEdit, t
 }) {
   return (
-    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80">
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         {Icon && <Icon className="w-4 h-4 text-orange-500 shrink-0" />}
-        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</span>
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate" title={label}>{label}</span>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 shrink-0">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"
             disabled={!canEdit}
             onClick={() => onChange(value === star ? 0 : star)}
-            className={`p-1 transition-transform hover:scale-110 cursor-pointer disabled:cursor-default ${
+            className={`p-0.5 transition-transform hover:scale-110 cursor-pointer disabled:cursor-default ${
               star <= value ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-200'
             }`}
             title={value === star ? t('dossier_unrate', 'Нажмите, чтобы снять оценку') : `${star}/5`}
           >
-            <Star className="w-4 h-4 fill-current" />
+            <Star className="w-3.5 h-3.5 fill-current" />
           </button>
         ))}
-        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1.5 w-6 text-right">
+        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 w-6 text-right shrink-0">
           {value > 0 ? `${value}/5` : '0/5'}
         </span>
         {canEdit && value > 0 && (
           <button
             type="button"
             onClick={() => onChange(0)}
-            className="ml-1 p-1 text-slate-400 hover:text-red-500 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            className="ml-1 p-0.5 text-slate-400 hover:text-red-500 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
             title={t('dossier_reset_rate', 'Убрать оценку (сбросить в 0)')}
           >
             <RotateCcw className="w-3 h-3" />
@@ -142,29 +144,12 @@ function MemberDossierModal({
     }
   }, [profile]);
 
-  // Lock background scrolling when modal is open
+  // Lock background scrolling safely when modal is open
   useEffect(() => {
     if (!isOpen) return;
-
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
-
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-
-    const scrollableElements = document.querySelectorAll('.clan-manager-content, .clan-manager-container, main');
-    const originalOverflows = [];
-    scrollableElements.forEach((el, i) => {
-      originalOverflows[i] = el.style.overflow;
-      el.style.overflow = 'hidden';
-    });
-
+    lockBodyScroll();
     return () => {
-      document.body.style.overflow = originalBodyOverflow;
-      document.documentElement.style.overflow = originalHtmlOverflow;
-      scrollableElements.forEach((el, i) => {
-        el.style.overflow = originalOverflows[i] || '';
-      });
+      unlockBodyScroll();
     };
   }, [isOpen]);
 
@@ -351,14 +336,14 @@ function MemberDossierModal({
 
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 p-3 sm:p-5 md:p-6 animate-in fade-in overflow-hidden"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 p-3 sm:p-4 md:p-5 animate-in fade-in overflow-hidden"
       onWheel={(e) => {
         if (e.target === e.currentTarget) {
           e.preventDefault();
         }
       }}
     >
-      <div className="bg-white dark:bg-slate-900 w-[92vw] max-w-[1450px] h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 w-[92vw] max-w-[1300px] max-h-[88vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-950/40 shrink-0">
@@ -455,306 +440,314 @@ function MemberDossierModal({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6 scrollbar-thin">
+        <div className="p-4 sm:p-5 md:p-6 overflow-y-auto flex-1 space-y-5 scrollbar-thin overscroll-contain">
           {activeTab === 'dossier' && (
-            <form onSubmit={handleSave} className="space-y-6">
-              
-              {/* Profile Details (Steam / Age / Hours / Exp) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                 
-                {/* Steam Accounts Card */}
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-blue-500" />{t('dossier_steam_accounts', 'Steam Аккаунты кандидата')}</h4>
-                  {steamAccounts.length === 0 ? (
-                    <div className="text-xs text-slate-400 italic">{t('dossier_steam_unlinked', 'Steam не привязан или не указан в анкете')}</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {steamAccounts.map((acc, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs">
-                          <div>
-                            <div className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[200px]">
-                              {acc.name || acc.steamId}
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                              {t('dossier_rust_hours_label', 'Часы Rust:')} <span className="font-semibold text-orange-600 dark:text-orange-400">{acc.rustHours !== null && acc.rustHours !== undefined ? `${acc.rustHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_hours_hidden', 'Скрыты')}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {acc.steamUrl && (
-                              <a
-                                href={acc.steamUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded text-[11px] font-medium flex items-center gap-1"
-                              >
-                                Steam <ExternalLink className="w-3 h-3" />
-                              </a>
-                            )}
-                            {acc.bmUrl && (
-                              <a
-                                href={acc.bmUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 rounded text-[11px] font-medium flex items-center gap-1"
-                              >
-                                BM <ExternalLink className="w-3 h-3" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Claimed vs Verified hours summary */}
-                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
-                    <span className="text-slate-500">{t('dossier_claimed_in_app', 'Заявлено в анкете:')}</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.claimedHours ? `${profile.claimedHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_not_specified', 'Не указано')}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">{t('dossier_verified_steam_api', 'Подтверждено Steam API:')}</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                      {profile.verifiedHours !== null && profile.verifiedHours !== undefined ? `${profile.verifiedHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_profile_hidden', 'Профиль скрыт')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Age & Experience / Application Card */}
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3 flex flex-col">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-orange-500" />
-                    {t('dossier_app_data', 'Данные из анкеты')}
-                  </h4>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">{t('dossier_age_label', 'Возраст:')}</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.age ? `${profile.age} ${t('clan_years', 'лет')}` : t('dossier_not_specified_m', 'Не указан')}</span>
-                  </div>
-                  <div className="flex-1 flex flex-col text-xs space-y-1">
-                    <span className="text-slate-500 font-medium">{t('dossier_exp_label', 'Опыт / Прайм-тайм / О себе:')}</span>
-                    <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 text-xs leading-relaxed flex-1 overflow-y-auto max-h-[120px] whitespace-pre-line">
-                      {profile.experience || t('dossier_not_filled', 'Не заполнено')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Skill Ratings (1-5 stars) */}
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-3">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                    <Award className="w-4 h-4 text-amber-500" />
-                    {t('dossier_skill_rating_title', 'Оценка навыков участника (1 – 5 звёзд)')}
-                  </h4>
-                  <span className="text-xs text-slate-400">{t('dossier_click_star_hint', 'Нажмите на звезду для изменения')}</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {renderStarRating(shootingRating, setShootingRating, t('dossier_skill_pvp', 'Стрельба (PvP)'), Crosshair)}
-                  {renderStarRating(flyingRating, setFlyingRating, t('dossier_skill_pilot', 'Пилотирование (Коптер/Scrap)'), Plane)}
-                  {renderStarRating(buildingRating, setBuildingRating, t('dossier_skill_build', 'Строительство (Билдинг)'), Hammer)}
-                  {renderStarRating(farmingRating, setFarmingRating, t('dossier_skill_farm', 'Фарм (Ресурсы/Компоненты)'), Pickaxe)}
-                </div>
-
-                <div className="pt-2">
-                  {renderStarRating(overallRating, setOverallRating, t('dossier_skill_overall', '⭐ Общая оценка бойца'), Star)}
-                </div>
-              </div>
-
-              {/* Officer Notes / Comments */}
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-blue-500" />
-                  {t('dossier_officer_notes', 'Заметки офицеров / Личное дело')}
-                </label>
-                <textarea
-                  disabled={!canEdit}
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  placeholder={t('dossier_officer_notes_ph', 'Опишите поведение игрока, пунктуальность, участие в рейдах, нарушения или достижения...')}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50 min-h-[90px]"
-                />
-              </div>
-
-              {/* Status and Discipline */}
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-orange-500" />
-                  {t('dossier_status_discipline', 'Статус участника и дисциплина')}
-                </h4>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: 'ACTIVE', label: t('dossier_in_clan', 'В клане'), color: 'emerald' },
-                    { id: 'LEFT', label: t('dossier_archived', 'Вышел (Архив)'), color: 'slate' },
-                    { id: 'KICKED', label: t('dossier_kicked', 'Исключен'), color: 'amber' },
-                    { id: 'BLACKLISTED', label: t('dossier_blacklisted', 'Черный список'), color: 'red' }
-                  ].map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      disabled={!canEdit}
-                      onClick={() => handleStatusChange(opt.id)}
-                      className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                        status === opt.id
-                          ? opt.color === 'emerald'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : opt.color === 'amber'
-                            ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
-                            : opt.color === 'red'
-                            ? 'bg-red-600 text-white border-red-600 shadow-sm'
-                            : 'bg-slate-700 text-white border-slate-700 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-
-                {status !== 'ACTIVE' && (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {status === 'BLACKLISTED' ? t('dossier_blacklist_reason_label', 'Причина занесения в Черный Список *') : t('dossier_leave_reason_label', 'Причина выхода / исключения')}
-                    </label>
-                    <input
-                      type="text"
-                      disabled={!canEdit}
-                      value={status === 'BLACKLISTED' ? blacklistReason : statusReason}
-                      onChange={e => {
-                        if (status === 'BLACKLISTED') {
-                          setBlacklistReason(e.target.value);
-                          setStatusReason(e.target.value);
-                        } else {
-                          setStatusReason(e.target.value);
-                        }
-                      }}
-                      placeholder={status === 'BLACKLISTED' ? t('dossier_blacklist_reason_ph', 'Например: Токсичность, оскорбление клана, слив баз...') : t('dossier_leave_reason_ph', 'Причина...')}
-                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50"
-                    />
-                  </div>
-                )}
-
-                {/* Cheater Selection Section */}
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <ShieldAlert className={`w-4 h-4 shrink-0 ${cheaterStatus === 'CONFIRMED' ? 'text-red-500' : cheaterStatus === 'SUSPICION' ? 'text-amber-500' : 'text-slate-400'}`} />
-                      <div>
-                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{t('dossier_anticheat_title', 'Проверка на читы и софт')}</div>
-                        <div className="text-[11px] text-slate-500">{t('dossier_anticheat_desc', 'Подозрение или подтвержденный читер с фиксацией доказательств')}</div>
-                      </div>
-                    </div>
+                {/* Left Column (7 cols): Steam Accounts + Age/Exp + Skills */}
+                <div className="lg:col-span-7 space-y-4">
+                  {/* Profile Details (Steam / Age / Hours / Exp) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     
-                    {/* 3-State Selector */}
-                    <div className="inline-flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 gap-1 shrink-0">
-                      <button
-                        type="button"
-                        disabled={!canEdit}
-                        onClick={() => setCheaterStatus('NONE')}
-                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
-                          cheaterStatus === 'NONE'
-                            ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
-                        }`}
-                      >
-                        {t('dossier_cheater_none', 'Чист')}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!canEdit}
-                        onClick={() => setCheaterStatus('SUSPICION')}
-                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
-                          cheaterStatus === 'SUSPICION'
-                            ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
-                            : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
-                        }`}
-                      >
-                        ⚠️ {t('dossier_cheater_suspicion', 'Подозрение')}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!canEdit}
-                        onClick={() => setCheaterStatus('CONFIRMED')}
-                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
-                          cheaterStatus === 'CONFIRMED'
-                            ? 'bg-red-600 text-white shadow-sm shadow-red-600/20'
-                            : 'text-slate-500 hover:text-red-600 dark:hover:text-red-400'
-                        }`}
-                      >
-                        🚨 {t('dossier_cheater_confirmed', 'Читер')}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Detail fields when SUSPICION or CONFIRMED */}
-                  {cheaterStatus !== 'NONE' && (
-                    <div className="p-3.5 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 space-y-3 animate-in fade-in duration-150">
-                      <div>
-                        <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
-                          {t('dossier_why_cheater', 'Почему считаете читером *')}
-                        </label>
-                        <textarea
-                          rows={2}
-                          disabled={!canEdit}
-                          value={cheaterReason}
-                          onChange={e => setCheaterReason(e.target.value)}
-                          placeholder={t('dossier_why_cheater_ph', 'Опишите подозрительные моменты: неестественный трекинг, стрельба сквозь текстуры, префайры без инфы...')}
-                          className="w-full px-3 py-2 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
-                          {t('dossier_proof_url_label', 'Ссылка на доказательства (одна ссылка) *')}
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="url"
-                            disabled={!canEdit}
-                            value={cheaterProofUrl}
-                            onChange={e => {
-                              setCheaterProofUrl(e.target.value);
-                              setSaveError(null);
-                            }}
-                            placeholder={t('dossier_proof_url_ph', 'https://youtu.be/... или https://medal.tv/...')}
-                            className="flex-1 px-3 py-2 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 font-mono"
-                          />
-                          {cheaterProofUrl && isValidHttpUrl(cheaterProofUrl) && (
-                            <a
-                              href={cheaterProofUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
-                              title={t('dossier_verify_link', 'Проверить ссылку')}
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                              <span>{t('common_open', 'Открыть')}</span>
-                            </a>
-                          )}
+                    {/* Steam Accounts Card */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-blue-500" />{t('dossier_steam_accounts', 'Steam Аккаунты кандидата')}</h4>
+                      {steamAccounts.length === 0 ? (
+                        <div className="text-xs text-slate-400 italic">{t('dossier_steam_unlinked', 'Steam не привязан или не указан в анкете')}</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {steamAccounts.map((acc, idx) => (
+                            <div key={idx} className="p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs">
+                              <div className="min-w-0 mr-2">
+                                <div className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[170px]">
+                                  {acc.name || acc.steamId}
+                                </div>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  {t('dossier_rust_hours_label', 'Часы Rust:')} <span className="font-semibold text-orange-600 dark:text-orange-400">{acc.rustHours !== null && acc.rustHours !== undefined ? `${acc.rustHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_hours_hidden', 'Скрыты')}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {acc.steamUrl && (
+                                  <a
+                                    href={acc.steamUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded text-[11px] font-medium flex items-center gap-1"
+                                  >
+                                    Steam <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {acc.bmUrl && (
+                                  <a
+                                    href={acc.bmUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 rounded text-[11px] font-medium flex items-center gap-1"
+                                  >
+                                    BM <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <span className="text-[10px] text-slate-400 mt-1 block">
-                          {t('dossier_proof_url_hint', 'Веб-ссылка на видеозапись или скриншот на хостинге.')}
+                      )}
+
+                      {/* Claimed vs Verified hours summary */}
+                      <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                        <span className="text-slate-500">{t('dossier_claimed_in_app', 'Заявлено в анкете:')}</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.claimedHours ? `${profile.claimedHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_not_specified', 'Не указано')}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">{t('dossier_verified_steam_api', 'Подтверждено Steam API:')}</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          {profile.verifiedHours !== null && profile.verifiedHours !== undefined ? `${profile.verifiedHours} ${t('clan_hours_short', 'ч.')}` : t('dossier_profile_hidden', 'Профиль скрыт')}
                         </span>
                       </div>
                     </div>
+
+                    {/* Age & Experience / Application Card */}
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5 flex flex-col">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-orange-500" />
+                        {t('dossier_app_data', 'Данные из анкеты')}
+                      </h4>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">{t('dossier_age_label', 'Возраст:')}</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.age ? `${profile.age} ${t('clan_years', 'лет')}` : t('dossier_not_specified_m', 'Не указан')}</span>
+                      </div>
+                      <div className="flex-1 flex flex-col text-xs space-y-1">
+                        <span className="text-slate-500 font-medium">{t('dossier_exp_label', 'Опыт / Прайм-тайм / О себе:')}</span>
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 text-xs leading-relaxed flex-1 overflow-y-auto max-h-[110px] whitespace-pre-line">
+                          {profile.experience || t('dossier_not_filled', 'Не заполнено')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Skill Ratings (1-5 stars) in 2 columns */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                        <Award className="w-4 h-4 text-amber-500" />
+                        {t('dossier_skill_rating_title', 'Оценка навыков участника (1 – 5 звёзд)')}
+                      </h4>
+                      <span className="text-[11px] text-slate-400">{t('dossier_click_star_hint', 'Нажмите на звезду для изменения')}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {renderStarRating(shootingRating, setShootingRating, t('dossier_skill_pvp', 'Стрельба (PvP)'), Crosshair)}
+                      {renderStarRating(flyingRating, setFlyingRating, t('dossier_skill_pilot', 'Пилотирование (Коптер/Scrap)'), Plane)}
+                      {renderStarRating(buildingRating, setBuildingRating, t('dossier_skill_build', 'Строительство (Билдинг)'), Hammer)}
+                      {renderStarRating(farmingRating, setFarmingRating, t('dossier_skill_farm', 'Фарм (Ресурсы/Компоненты)'), Pickaxe)}
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                      {renderStarRating(overallRating, setOverallRating, t('dossier_skill_overall', '⭐ Общая оценка бойца'), Star)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column (5 cols): Officer Notes + Status & Discipline */}
+                <div className="lg:col-span-5 space-y-4">
+                  {/* Officer Notes / Comments */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-blue-500" />
+                      {t('dossier_officer_notes', 'Заметки офицеров / Личное дело')}
+                    </label>
+                    <textarea
+                      disabled={!canEdit}
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      placeholder={t('dossier_officer_notes_ph', 'Опишите поведение игрока, пунктуальность, участие в рейдах, нарушения или достижения...')}
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50 min-h-[90px] max-h-[140px] resize-y"
+                    />
+                  </div>
+
+                  {/* Status and Discipline */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-orange-500" />
+                      {t('dossier_status_discipline', 'Статус участника и дисциплина')}
+                    </h4>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {[
+                        { id: 'ACTIVE', label: t('dossier_in_clan', 'В клане'), color: 'emerald' },
+                        { id: 'LEFT', label: t('dossier_archived', 'Вышел (Архив)'), color: 'slate' },
+                        { id: 'KICKED', label: t('dossier_kicked', 'Исключен'), color: 'amber' },
+                        { id: 'BLACKLISTED', label: t('dossier_blacklisted', 'Черный список'), color: 'red' }
+                      ].map(opt => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          disabled={!canEdit}
+                          onClick={() => handleStatusChange(opt.id)}
+                          className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer text-center ${
+                            status === opt.id
+                              ? opt.color === 'emerald'
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                : opt.color === 'amber'
+                                ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                                : opt.color === 'red'
+                                ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                                : 'bg-slate-700 text-white border-slate-700 shadow-sm'
+                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {status !== 'ACTIVE' && (
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300 mb-1">
+                          {status === 'BLACKLISTED' ? t('dossier_blacklist_reason_label', 'Причина занесения в Черный Список *') : t('dossier_leave_reason_label', 'Причина выхода / исключения')}
+                        </label>
+                        <input
+                          type="text"
+                          disabled={!canEdit}
+                          value={status === 'BLACKLISTED' ? blacklistReason : statusReason}
+                          onChange={e => {
+                            if (status === 'BLACKLISTED') {
+                              setBlacklistReason(e.target.value);
+                              setStatusReason(e.target.value);
+                            } else {
+                              setStatusReason(e.target.value);
+                            }
+                          }}
+                          placeholder={status === 'BLACKLISTED' ? t('dossier_blacklist_reason_ph', 'Например: Токсичность, оскорбление клана, слив баз...') : t('dossier_leave_reason_ph', 'Причина...')}
+                          className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-orange-500/50"
+                        />
+                      </div>
+                    )}
+
+                    {/* Cheater Selection Section */}
+                    <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className={`w-4 h-4 shrink-0 ${cheaterStatus === 'CONFIRMED' ? 'text-red-500' : cheaterStatus === 'SUSPICION' ? 'text-amber-500' : 'text-slate-400'}`} />
+                          <div>
+                            <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{t('dossier_anticheat_title', 'Проверка на читы и софт')}</div>
+                            <div className="text-[10px] text-slate-500">{t('dossier_anticheat_desc', 'Подозрение или подтвержденный читер')}</div>
+                          </div>
+                        </div>
+                        
+                        {/* 3-State Selector */}
+                        <div className="inline-flex rounded-xl p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 gap-1 shrink-0">
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => setCheaterStatus('NONE')}
+                            className={`px-2 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
+                              cheaterStatus === 'NONE'
+                                ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                            }`}
+                          >
+                            {t('dossier_cheater_none', 'Чист')}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => setCheaterStatus('SUSPICION')}
+                            className={`px-2 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
+                              cheaterStatus === 'SUSPICION'
+                                ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
+                                : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
+                            }`}
+                          >
+                            ⚠️ {t('dossier_cheater_suspicion', 'Подозрение')}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => setCheaterStatus('CONFIRMED')}
+                            className={`px-2 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
+                              cheaterStatus === 'CONFIRMED'
+                                ? 'bg-red-600 text-white shadow-sm shadow-red-600/20'
+                                : 'text-slate-500 hover:text-red-600 dark:hover:text-red-400'
+                            }`}
+                          >
+                            🚨 {t('dossier_cheater_confirmed', 'Читер')}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Detail fields when SUSPICION or CONFIRMED */}
+                      {cheaterStatus !== 'NONE' && (
+                        <div className="p-3 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 space-y-2.5 animate-in fade-in duration-150">
+                          <div>
+                            <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
+                              {t('dossier_why_cheater', 'Почему считаете читером *')}
+                            </label>
+                            <textarea
+                              rows={2}
+                              disabled={!canEdit}
+                              value={cheaterReason}
+                              onChange={e => setCheaterReason(e.target.value)}
+                              placeholder={t('dossier_why_cheater_ph', 'Опишите подозрительные моменты: неестественный трекинг, стрельба сквозь текстуры...')}
+                              className="w-full px-3 py-1.5 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 resize-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
+                              {t('dossier_proof_url_label', 'Ссылка на доказательства (одна ссылка) *')}
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="url"
+                                disabled={!canEdit}
+                                value={cheaterProofUrl}
+                                onChange={e => {
+                                  setCheaterProofUrl(e.target.value);
+                                  setSaveError(null);
+                                }}
+                                placeholder={t('dossier_proof_url_ph', 'https://youtu.be/... или https://medal.tv/...')}
+                                className="flex-1 px-3 py-1.5 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 font-mono"
+                              />
+                              {cheaterProofUrl && isValidHttpUrl(cheaterProofUrl) && (
+                                <a
+                                  href={cheaterProofUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                                  title={t('dossier_verify_link', 'Проверить ссылку')}
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  <span>{t('common_open', 'Открыть')}</span>
+                                </a>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 mt-0.5 block">
+                              {t('dossier_proof_url_hint', 'Веб-ссылка на видеозапись или скриншот на хостинге.')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {saveError && (
+                    <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{saveError}</span>
+                    </div>
+                  )}
+
+                  {saveSuccess && (
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>{t('dossier_saved_success', 'Досье успешно обновлено!')}</span>
+                    </div>
                   )}
                 </div>
               </div>
-
-              {saveError && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{saveError}</span>
-                </div>
-              )}
-
-              {saveSuccess && (
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-xl text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>{t('dossier_saved_success', 'Досье успешно обновлено!')}</span>
-                </div>
-              )}
             </form>
           )}
 
