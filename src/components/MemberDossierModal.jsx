@@ -142,6 +142,32 @@ function MemberDossierModal({
     }
   }, [profile]);
 
+  // Lock background scrolling when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    const scrollableElements = document.querySelectorAll('.clan-manager-content, .clan-manager-container, main');
+    const originalOverflows = [];
+    scrollableElements.forEach((el, i) => {
+      originalOverflows[i] = el.style.overflow;
+      el.style.overflow = 'hidden';
+    });
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      scrollableElements.forEach((el, i) => {
+        el.style.overflow = originalOverflows[i] || '';
+      });
+    };
+  }, [isOpen]);
+
   const handleCopyUserId = useCallback(() => {
     if (profile?.userId) {
       navigator.clipboard.writeText(profile.userId);
@@ -324,8 +350,15 @@ function MemberDossierModal({
   if (!isOpen || !profile) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 p-4 animate-in fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 p-3 sm:p-5 md:p-6 animate-in fade-in overflow-hidden"
+      onWheel={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+        }
+      }}
+    >
+      <div className="bg-white dark:bg-slate-900 w-[92vw] max-w-[1450px] h-[90vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-950/40 shrink-0">
@@ -516,7 +549,7 @@ function MemberDossierModal({
                   <span className="text-xs text-slate-400">{t('dossier_click_star_hint', 'Нажмите на звезду для изменения')}</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {renderStarRating(shootingRating, setShootingRating, t('dossier_skill_pvp', 'Стрельба (PvP)'), Crosshair)}
                   {renderStarRating(flyingRating, setFlyingRating, t('dossier_skill_pilot', 'Пилотирование (Коптер/Scrap)'), Plane)}
                   {renderStarRating(buildingRating, setBuildingRating, t('dossier_skill_build', 'Строительство (Билдинг)'), Hammer)}

@@ -2377,6 +2377,33 @@ export default function ClanManager() {
     }
   }, [selectedProfileForDossier?.userId, selectedProfileForDossier?.shootingRating, selectedProfileForDossier?.claimedHours, ws, wsStatus]);
 
+  // Lock background scrolling whenever any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = Boolean(selectedProfileForDossier || transcriptModal?.isOpen || selectedUserForWarns || editingRoomLimit);
+    if (!isAnyModalOpen) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    const scrollableElements = document.querySelectorAll('.clan-manager-content, .clan-manager-container, main');
+    const originalOverflows = [];
+    scrollableElements.forEach((el, i) => {
+      originalOverflows[i] = el.style.overflow;
+      el.style.overflow = 'hidden';
+    });
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      scrollableElements.forEach((el, i) => {
+        el.style.overflow = originalOverflows[i] || '';
+      });
+    };
+  }, [selectedProfileForDossier, transcriptModal?.isOpen, selectedUserForWarns, editingRoomLimit]);
+
   if (status === 'checking') {
     return (
       <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
@@ -4877,8 +4904,11 @@ const contextValue = {
 
       {/* User Warnings Details & Management Modal */}
       {selectedUserForWarns && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden">
+        <div 
+          className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-hidden animate-in fade-in"
+          onWheel={(e) => { if (e.target === e.currentTarget) e.preventDefault(); }}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-[90vw] max-w-4xl h-[85vh] p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-3">

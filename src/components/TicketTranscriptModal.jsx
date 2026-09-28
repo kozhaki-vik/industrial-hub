@@ -28,6 +28,32 @@ export default function TicketTranscriptModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Lock background scrolling when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    const scrollableElements = document.querySelectorAll('.clan-manager-content, .clan-manager-container, main');
+    const originalOverflows = [];
+    scrollableElements.forEach((el, i) => {
+      originalOverflows[i] = el.style.overflow;
+      el.style.overflow = 'hidden';
+    });
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      scrollableElements.forEach((el, i) => {
+        el.style.overflow = originalOverflows[i] || '';
+      });
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleCopyId = () => {
@@ -67,9 +93,16 @@ export default function TicketTranscriptModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 md:p-6 bg-black/70 animate-in fade-in duration-200 overflow-hidden"
+      onWheel={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+        }
+      }}
+    >
       <div 
-        className="relative w-full max-w-5xl h-[88vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="relative w-[92vw] max-w-[1450px] h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
