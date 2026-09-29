@@ -26,7 +26,7 @@ import {
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
-  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, Eye, EyeOff, Copy, ChevronDown
+  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, ArrowLeft, Eye, EyeOff, Copy, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
@@ -452,7 +452,8 @@ export default function ClanManager() {
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
-  const [activeTab, setActiveTab] = useState('general');
+  const [viewMode, setViewMode] = useState('clan'); // 'clan' (Daily Clan operations) | 'botConfig' (Technical Bot & Server setup)
+  const [activeTab, setActiveTab] = useState('roster');
   const [modSubTab, setModSubTab] = useState('antiMention');
   const [isModExpanded, setIsModExpanded] = useState(true);
   const [rosterData, setRosterData] = useState(null);
@@ -2359,6 +2360,16 @@ export default function ClanManager() {
       if (!dossiersData || dossiersData.length === 0) {
         fetchDossiers();
       }
+      if (!statsData) {
+        ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
+      }
+      if (!discordInfo) {
+        fetchDiscordInfo();
+      }
+      if (!dynamicVoiceData) {
+        fetchDynamicVoice();
+      }
+      fetchClanWarnings();
     } else if (activeTab === 'stats' && !statsData) {
       addLog('Fetching stats via proxy');
       ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
@@ -3069,20 +3080,43 @@ export default function ClanManager() {
     );
   }
 
-  const tabs = [
-    { id: 'general', label: t('clan_tab_general', 'Основное'), icon: Settings },
-    { id: 'roles', label: t('clan_tab_roles', 'Роли'), icon: Users },
-    { id: 'channels', label: t('clan_tab_channels', 'Каналы'), icon: Hash },
-    { id: 'recruitment', label: t('clan_tab_recruitment', 'Наборы'), icon: UserPlus },
-    { id: 'votes', label: t('clan_tab_votes', 'Голосования'), icon: Vote },
-    { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
-    { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
-    { id: 'permissions', label: t('clan_tab_permissions', 'Права Доступа'), icon: ShieldCheck },
+  const clanTabs = [
     { id: 'roster', label: t('clan_tab_roster', 'Состав'), icon: UserCheck },
-    { id: 'dossier', label: t('clan_tab_archive') || 'Архив', icon: Archive },
+    { id: 'votes', label: t('clan_tab_votes', 'Голосования'), icon: Vote },
+    { id: 'recruitment', label: t('clan_tab_recruitment', 'Наборы'), icon: UserPlus },
     { id: 'stats', label: t('clan_tab_stats', 'Статистика'), icon: BarChart3 },
     { id: 'ads', label: t('clan_tab_ads', 'Реклама'), icon: Megaphone },
-    { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
+    { id: 'dossier', label: t('clan_tab_archive') || 'Архив', icon: Archive },
+  ];
+
+  const botConfigGroups = [
+    {
+      title: t('clan_cfg_group_structure', 'Сервер и роли'),
+      tabs: [
+        { id: 'general', label: t('clan_tab_general', 'Основное'), icon: Settings },
+        { id: 'roles', label: t('clan_tab_roles', 'Роли'), icon: Users },
+        { id: 'channels', label: t('clan_tab_channels', 'Каналы'), icon: Hash },
+        { id: 'permissions', label: t('clan_tab_permissions', 'Права Доступа'), icon: ShieldCheck },
+      ]
+    },
+    {
+      title: t('clan_cfg_group_security', 'Модерация и логи'),
+      tabs: [
+        { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
+        { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
+      ]
+    },
+    {
+      title: t('clan_cfg_group_automation', 'Автоматизация'),
+      tabs: [
+        { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
+      ]
+    }
+  ];
+
+  const tabs = [
+    ...clanTabs,
+    ...botConfigGroups.flatMap(g => g.tabs)
   ];
 
   const modSubTabs = [
@@ -4196,12 +4230,16 @@ const contextValue = {
   wTemplates: typeof wTemplates !== "undefined" ? wTemplates : undefined,
   warnActionLoading: typeof warnActionLoading !== "undefined" ? warnActionLoading : undefined,
   warnModerator: typeof warnModerator !== "undefined" ? warnModerator : undefined,
-  ws: typeof ws !== "undefined" ? ws : undefined
+  ws: typeof ws !== "undefined" ? ws : undefined,
+  viewMode: typeof viewMode !== "undefined" ? viewMode : undefined,
+  setViewMode: typeof setViewMode !== "undefined" ? setViewMode : undefined,
+  clanTabs: typeof clanTabs !== "undefined" ? clanTabs : undefined,
+  botConfigGroups: typeof botConfigGroups !== "undefined" ? botConfigGroups : undefined
 };
 
   return (
     <ClanManagerContext.Provider value={contextValue}>
-      <div className={`flex items-start justify-center gap-6 h-[calc(100vh-8rem)] w-full mx-auto animate-main-fade-in ${isCompanionWindowVisible ? 'max-w-[1780px]' : 'max-w-6xl'}`}>
+      <div className={`flex items-start justify-center gap-6 min-h-[calc(100vh-8rem)] w-full mx-auto animate-main-fade-in ${isCompanionWindowVisible ? 'max-w-[1780px]' : 'max-w-[1720px]'}`}>
       {loadingConfig ? (
         <div className="w-full flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
           <RefreshCw className="w-5 h-5 animate-spin mr-2.5 text-orange-500" />
@@ -4209,9 +4247,9 @@ const contextValue = {
         </div>
       ) : config ? (
         <>
-          <div className="clan-manager-container bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 min-w-0 max-w-6xl w-full">
+          <div className="clan-manager-container bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 min-h-[750px] min-w-0 w-full">
           {/* Left Sidebar Navigation */}
-          <div className="clan-manager-sidebar w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-hidden h-full">
+          <div className="clan-manager-sidebar w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-col justify-between overflow-x-auto md:overflow-y-auto h-full">
             {/* Dev Admin Mode Server Selector */}
             {isDevAdminActive && (
               <div className="mb-2 shrink-0 p-2 rounded-xl bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/50 border border-indigo-500/30">
@@ -4387,73 +4425,171 @@ const contextValue = {
               </div>
             </div>
 
-            {tabs.map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              const isModeration = tab.id === 'moderation';
-              const showModSub = isModeration && isModExpanded;
+            {viewMode === 'clan' ? (
+              <div className="flex flex-col flex-1 min-h-0 justify-between">
+                <div className="space-y-1">
+                  <div className="hidden md:flex items-center justify-between px-3 py-1.5 mb-1 shrink-0">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      {t('clan_nav_clan_operations', 'Управление кланом')}
+                    </span>
+                    {saveStatus && (
+                      <span className={`text-[10px] font-medium ${saveStatus === 'success' ? 'text-green-500' : saveStatus.startsWith('error') ? 'text-red-500' : 'text-blue-500 animate-pulse'}`}>
+                        {saveStatus === 'success' ? `✓ ${t('clan_saved_success') || 'Сохранено'}` : saveStatus === 'saving' ? (t('clan_roles_syncing') || 'Синхронизация...') : (t('clan_error') || 'Ошибка')}
+                      </span>
+                    )}
+                  </div>
 
-              return (
-                <React.Fragment key={tab.id}>
+                  {clanTabs.map(tab => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                          <span className="truncate">{tab.label}</span>
+                        </div>
+                        {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
+                          <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                            {rosterData.roster.length}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Bottom button: switch to bot configuration */}
+                <div className="pt-3 mt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
                   <button
+                    type="button"
                     onClick={() => {
-                      if (isModeration) {
-                        if (activeTab === 'moderation') {
-                          setIsModExpanded(prev => !prev);
-                        } else {
-                          setActiveTab('moderation');
-                          setIsModExpanded(true);
-                        }
-                      } else {
-                        setActiveTab(tab.id);
+                      setViewMode('botConfig');
+                      if (!['general', 'roles', 'channels', 'permissions', 'moderation', 'logs', 'voice'].includes(activeTab)) {
+                        setActiveTab('general');
                       }
                     }}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
-                    }`}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 transition-all shadow-2xs group cursor-pointer"
+                    title={t('clan_btn_bot_config_tooltip', 'Перейти к технической настройке бота и сервера')}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
-                      <span className="truncate">{tab.label}</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                        <Settings className="w-4 h-4" />
+                      </div>
+                      <div className="text-left min-w-0">
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{t('clan_btn_bot_config', 'Настройки бота')}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{t('clan_btn_bot_config_desc', 'Роли, каналы, защита')}</div>
+                      </div>
                     </div>
-                    {isModeration && (
-                      <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${showModSub ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
-                    )}
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-200 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col flex-1 min-h-0 space-y-2">
+                {/* Back to Clan Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('clan');
+                    if (!['roster', 'votes', 'recruitment', 'stats', 'ads', 'dossier'].includes(activeTab)) {
+                      setActiveTab('roster');
+                    }
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 mb-1 rounded-xl bg-blue-50 hover:bg-blue-100/90 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-xs border border-blue-200 dark:border-blue-900/50 transition-all cursor-pointer shadow-2xs"
+                >
+                  <ArrowLeft className="w-4 h-4 shrink-0" />
+                  <span>{t('clan_btn_back_to_clan', '← Назад к клану')}</span>
+                </button>
 
-                  {/* Moderation Sub-Variations under Moderation tab */}
-                  {showModSub && (
-                    <div className="pl-3.5 pr-1 py-1 space-y-1 flex flex-col transition-all">
-                      {modSubTabs.map(sub => {
-                        const isSubActive = activeTab === 'moderation' && modSubTab === sub.id;
-                        const SubIcon = sub.icon;
+                {/* Grouped Tabs */}
+                <div className="space-y-3 overflow-y-auto pr-1 scrollbar-thin flex-1">
+                  {botConfigGroups.map((group, gIdx) => (
+                    <div key={gIdx} className="space-y-1">
+                      <div className="px-3 pt-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {group.title}
+                      </div>
+                      {group.tabs.map(tab => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        const isModeration = tab.id === 'moderation';
+                        const showModSub = isModeration && isModExpanded;
+
                         return (
-                          <button
-                            key={sub.id}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveTab('moderation');
-                              setModSubTab(sub.id);
-                            }}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
-                              isSubActive
-                                ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-500 pl-2.5 shadow-2xs'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
-                            }`}
-                          >
-                            {SubIcon && <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />}
-                            <span className="truncate">{sub.label}</span>
-                          </button>
+                          <React.Fragment key={tab.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isModeration) {
+                                  if (activeTab === 'moderation') {
+                                    setIsModExpanded(prev => !prev);
+                                  } else {
+                                    setActiveTab('moderation');
+                                    setIsModExpanded(true);
+                                  }
+                                } else {
+                                  setActiveTab(tab.id);
+                                }
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                                isActive
+                                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {Icon && <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                                <span className="truncate">{tab.label}</span>
+                              </div>
+                              {isModeration && (
+                                <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${showModSub ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
+                              )}
+                            </button>
+
+                            {/* Moderation Sub-Variations under Moderation tab */}
+                            {showModSub && (
+                              <div className="pl-3 pr-1 py-0.5 space-y-1 flex flex-col transition-all">
+                                {modSubTabs.map(sub => {
+                                  const isSubActive = activeTab === 'moderation' && modSubTab === sub.id;
+                                  const SubIcon = sub.icon;
+                                  return (
+                                    <button
+                                      key={sub.id}
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveTab('moderation');
+                                        setModSubTab(sub.id);
+                                      }}
+                                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
+                                        isSubActive
+                                          ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-500 pl-2 shadow-2xs'
+                                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                                      }`}
+                                    >
+                                      {SubIcon && <SubIcon className={`w-3 h-3 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />}
+                                      <span className="truncate">{sub.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tab Content */}
@@ -4534,6 +4670,12 @@ const contextValue = {
                           <button
                             type="button"
                             onClick={() => {
+                              const isBotTab = ['general', 'roles', 'channels', 'permissions', 'moderation', 'logs', 'voice'].includes(item.tabId);
+                              if (isBotTab) {
+                                setViewMode('botConfig');
+                              } else {
+                                setViewMode('clan');
+                              }
                               if (item.tabId === 'moderation') {
                                 setIsModExpanded(true);
                                 if (item.modSubTab) setModSubTab(item.modSubTab);

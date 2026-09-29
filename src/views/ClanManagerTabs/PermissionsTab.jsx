@@ -186,7 +186,7 @@ export default function PermissionsTab() {
   }, [currentChannelData, selectedRole]);
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="w-full space-y-6">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">

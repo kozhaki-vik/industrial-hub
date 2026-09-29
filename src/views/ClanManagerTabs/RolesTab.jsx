@@ -270,7 +270,7 @@ export default function RolesTab() {
   const isAnyCreating = creatingRoleKey !== null;
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="w-full space-y-6">
       {/* Roles Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
