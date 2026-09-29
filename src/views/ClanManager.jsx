@@ -453,6 +453,8 @@ export default function ClanManager() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
+  const [modSubTab, setModSubTab] = useState('antiMention');
+  const [isModExpanded, setIsModExpanded] = useState(true);
   const [rosterData, setRosterData] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [discordInfo, setDiscordInfo] = useState(null);
@@ -3083,6 +3085,13 @@ export default function ClanManager() {
     { id: 'voice', label: t('clan_tab_voice') || 'Динамические войсы', icon: Volume2 },
   ];
 
+  const modSubTabs = [
+    { id: 'antiMention', label: t('clan_mod_sub_anti_mention', 'Массовые упоминания'), icon: Users },
+    { id: 'badWords', label: t('clan_mod_sub_bad_words', 'Фильтр слов'), icon: Ban },
+    { id: 'warnings', label: t('clan_mod_sub_warnings', 'Система варнов'), icon: AlertTriangle },
+    { id: 'whitelist', label: t('clan_mod_sub_whitelist', 'Исключения и логи'), icon: ShieldCheck }
+  ];
+
   const botSearchIndex = [
     // General
     {
@@ -3536,6 +3545,7 @@ export default function ClanManager() {
     {
       id: 'mod_warn_system',
       tabId: 'moderation',
+      modSubTab: 'warnings',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
       title: t('clan_auto_153', 'Клановая система предупреждений (Clan Warnings)'),
@@ -3545,6 +3555,7 @@ export default function ClanManager() {
     {
       id: 'mod_warn_limit_val',
       tabId: 'moderation',
+      modSubTab: 'warnings',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
       title: t('clan_auto_154', 'Порог предупреждений до наказания (3, 4 или 5)'),
@@ -3554,6 +3565,7 @@ export default function ClanManager() {
     {
       id: 'mod_auto_action',
       tabId: 'moderation',
+      modSubTab: 'warnings',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
       title: t('clan_auto_155', 'Автоматическое наказание (Таймаут, Кик, Бан)'),
@@ -3563,6 +3575,7 @@ export default function ClanManager() {
     {
       id: 'mod_bad_words_list',
       tabId: 'moderation',
+      modSubTab: 'badWords',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
       title: t('clan_auto_156', 'Черный список слов (Bad Words Blacklist)'),
@@ -3572,6 +3585,7 @@ export default function ClanManager() {
     {
       id: 'mod_anti_mention_prot',
       tabId: 'moderation',
+      modSubTab: 'antiMention',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
       title: t('clan_auto_157', 'Защита от спама упоминаниями (Anti-Mention)'),
@@ -3581,6 +3595,7 @@ export default function ClanManager() {
     {
       id: 'mod_exempt_roles_list',
       tabId: 'moderation',
+      modSubTab: 'whitelist',
       tabName: t('clan_tab_moderation') || 'Модерация',
       tabIcon: ShieldAlert,
       title: t('clan_auto_158', 'Белый список исключений из модерации (Exempt)'),
@@ -4013,6 +4028,11 @@ const contextValue = {
   mainLink: typeof mainLink !== "undefined" ? mainLink : undefined,
   matchByNameIdx: typeof matchByNameIdx !== "undefined" ? matchByNameIdx : undefined,
   modMember: typeof modMember !== "undefined" ? modMember : undefined,
+  modSubTab: typeof modSubTab !== "undefined" ? modSubTab : undefined,
+  setModSubTab: typeof setModSubTab !== "undefined" ? setModSubTab : undefined,
+  isModExpanded: typeof isModExpanded !== "undefined" ? isModExpanded : undefined,
+  setIsModExpanded: typeof setIsModExpanded !== "undefined" ? setIsModExpanded : undefined,
+  modSubTabs: typeof modSubTabs !== "undefined" ? modSubTabs : undefined,
   modTag: typeof modTag !== "undefined" ? modTag : undefined,
   movingRoles: typeof movingRoles !== "undefined" ? movingRoles : undefined,
   msg: typeof msg !== "undefined" ? msg : undefined,
@@ -4370,19 +4390,68 @@ const contextValue = {
             {tabs.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
+              const isModeration = tab.id === 'moderation';
+              const showModSub = isModeration && isModExpanded;
+
               return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
-                  }`}
-                >
-                  {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
-                  <span className="truncate">{tab.label}</span>
-                </button>
+                <React.Fragment key={tab.id}>
+                  <button
+                    onClick={() => {
+                      if (isModeration) {
+                        if (activeTab === 'moderation') {
+                          setIsModExpanded(prev => !prev);
+                        } else {
+                          setActiveTab('moderation');
+                          setIsModExpanded(true);
+                        }
+                      } else {
+                        setActiveTab(tab.id);
+                      }
+                    }}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                      <span className="truncate">{tab.label}</span>
+                    </div>
+                    {isModeration && (
+                      <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${showModSub ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
+                    )}
+                  </button>
+
+                  {/* Moderation Sub-Variations under Moderation tab */}
+                  {showModSub && (
+                    <div className="pl-3.5 pr-1 py-1 space-y-1 flex flex-col transition-all">
+                      {modSubTabs.map(sub => {
+                        const isSubActive = activeTab === 'moderation' && modSubTab === sub.id;
+                        const SubIcon = sub.icon;
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveTab('moderation');
+                              setModSubTab(sub.id);
+                            }}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
+                              isSubActive
+                                ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-500 pl-2.5 shadow-2xs'
+                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                            }`}
+                          >
+                            {SubIcon && <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />}
+                            <span className="truncate">{sub.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
@@ -4465,6 +4534,10 @@ const contextValue = {
                           <button
                             type="button"
                             onClick={() => {
+                              if (item.tabId === 'moderation') {
+                                setIsModExpanded(true);
+                                if (item.modSubTab) setModSubTab(item.modSubTab);
+                              }
                               setActiveTab(item.tabId);
                             }}
                             className="w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-blue-600 dark:bg-slate-800 dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 hover:text-white dark:hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
@@ -5103,6 +5176,8 @@ const contextValue = {
                 onClick={() => {
                   setSelectedUserForWarns(null);
                   setActiveTab('moderation');
+                  setModSubTab('warnings');
+                  setIsModExpanded(true);
                 }}
                 className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 cursor-pointer"
               >
