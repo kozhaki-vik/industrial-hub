@@ -466,7 +466,7 @@ export default function VotesTab() {
             <span>{t('clan_auto_52', 'Шаблоны голосований и вайпов')}</span>
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {t('clan_votes_desc', 'Быстрый визуальный конструктор голосований для клана с моментальным Live-Embed')}
+            {t('clan_votes_desc', 'Быстрый визуальный конструктор голосований для клана с предпросмотром в реальном времени')}
           </p>
         </div>
 
@@ -500,6 +500,7 @@ export default function VotesTab() {
                 <span>{t('clan_vote_mode_compare', 'Сравнить')}</span>
               </button>
             )}
+            {!(isFullScreenWindow && showDiscordLivePreview) && (
 
             <button
               type="button"
@@ -511,8 +512,9 @@ export default function VotesTab() {
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>{t('clan_vote_mode_preview', 'Live Embed')}</span>
+              <span>{t('clan_vote_mode_preview', 'Предпросмотр')}</span>
             </button>
+            )}
           </div>
 
           <button
@@ -533,8 +535,8 @@ export default function VotesTab() {
 
       {/* Mode 2: Live Embed Preview */}
       {activeTabMode === 'preview' && (
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-          <div className="w-full lg:w-1/2 space-y-4">
+        <div className="flex flex-col xl:flex-row gap-6 items-start">
+          <div className="w-full flex-1 min-w-0 space-y-4">
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
               <label className="block text-xs font-semibold text-slate-500 mb-2">
                 {t('clan_vote_select_preview_target', 'Выберите шаблон для живого предпросмотра:')}
@@ -564,8 +566,9 @@ export default function VotesTab() {
               />
             )}
           </div>
+          {!(isFullScreenWindow && showDiscordLivePreview) && (
 
-          <div className="w-full lg:w-1/2">
+          <div className="w-full flex-1 min-w-0">
             <div className="sticky top-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
                 {t('clan_vote_live_embed_title', 'Как это выглядит в Discord канале:')}
@@ -577,6 +580,7 @@ export default function VotesTab() {
               />
             </div>
           </div>
+          )}
         </div>
       )}
 
