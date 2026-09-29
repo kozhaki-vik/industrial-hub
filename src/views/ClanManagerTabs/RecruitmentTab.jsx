@@ -106,44 +106,6 @@ export default function RecruitmentTab() {
     return counts;
   }, [applicationsData]);
 
-  // --- Filtered applications ---
-  const filteredApplications = useMemo(() => {
-    if (!Array.isArray(applicationsData)) return [];
-    const query = (appSearch || '').trim().toLowerCase();
-    return applicationsData.filter(a => {
-      const matchesStatus = appFilter === 'ALL' || a.status === appFilter;
-      if (!matchesStatus) return false;
-      if (!query) return true;
-      const username = (a.username || '').toLowerCase();
-      const userId = (a.userId || '').toLowerCase();
-      const steamId = (a.steamId || '').toLowerCase();
-      const reviewedBy = (a.reviewedBy || '').toLowerCase();
-      const rejectReason = (a.rejectReason || '').toLowerCase();
-      const experience = (a.experience || '').toLowerCase();
-      return username.includes(query) ||
-             userId.includes(query) ||
-             steamId.includes(query) ||
-             reviewedBy.includes(query) ||
-             rejectReason.includes(query) ||
-             experience.includes(query);
-    });
-  }, [applicationsData, appFilter, appSearch]);
-
-  // --- Pagination (15 items per page to prevent massive DOM footprint) ---
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 15;
-  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
-
-  // Reset to page 1 on filter or search change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [appFilter, appSearch]);
-
-  const paginatedApplications = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredApplications.slice(start, start + pageSize);
-  }, [filteredApplications, currentPage, pageSize]);
-
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6">
       {/* Header */}

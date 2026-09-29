@@ -1036,7 +1036,9 @@ export default function ClanManager() {
             } else {
               const err = configError || 'Empty or invalid configuration returned from bot/server';
               setError(err);
-              reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${err}\nGuild ID: ${guildId || 'Unknown'}`);
+              if (!err.includes('Слишком много запросов') && !err.includes('429')) {
+                reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${err}\nGuild ID: ${guildId || 'Unknown'}`);
+              }
             }
           } else {
             setError(null);
