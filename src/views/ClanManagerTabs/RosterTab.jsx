@@ -80,7 +80,7 @@ const RosterTableRow = React.memo(function RosterTableRow({
   const roleEmoji = topRole?.shortKey ? ROLE_EMOJIS[topRole.shortKey.toLowerCase()] || '🏷️' : '🏷️';
 
   return (
-    <tr className="border-b border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/70 transition-colors group">
+    <tr onClick={() => onOpenDossier(mId, member)} className="cursor-pointer border-b border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/70 transition-colors group">
       {/* 1. № */}
       <td className="px-4 py-3.5 text-xs font-mono font-semibold text-slate-400 dark:text-slate-500 text-center w-12 shrink-0">
         {index + 1}
@@ -170,46 +170,13 @@ const RosterTableRow = React.memo(function RosterTableRow({
         )}
       </td>
 
-      {/* 7. Досье (Отдельная колонка) */}
-      <td className="px-4 py-3.5 whitespace-nowrap text-center">
-        {dossierInfo && (dossierInfo.cheaterStatus === 'CONFIRMED' || (dossierInfo.cheaterReport && !dossierInfo.cheaterStatus)) ? (
-          <button
-            type="button"
-            onClick={() => onOpenDossier(mId, member)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 text-xs font-bold border border-red-300 dark:border-red-800 transition-colors cursor-pointer shadow-2xs"
-            title={t('clan_dossier_badge_cheater_confirmed', 'Читер — открыть дело')}
-          >
-            <span>🚨</span>
-            <span>{t('clan_dossier_badge_cheater_confirmed', 'Читер')}</span>
-          </button>
-        ) : dossierInfo && dossierInfo.cheaterStatus === 'SUSPICION' ? (
-          <button
-            type="button"
-            onClick={() => onOpenDossier(mId, member)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-bold border border-amber-300 dark:border-amber-800 transition-colors cursor-pointer shadow-2xs"
-            title={t('clan_dossier_badge_cheater_suspicion', 'Подозрение — открыть дело')}
-          >
-            <span>⚠️</span>
-            <span>{t('clan_dossier_badge_cheater_suspicion', 'Подозрение')}</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onOpenDossier(mId, member)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
-            title={t('clan_auto_107', 'Открыть личное дело / Архив')}
-          >
-            <Archive className="w-3.5 h-3.5" />
-            <span>{t('clan_roster_dossier_btn', 'Досье')}</span>
-          </button>
-        )}
-      </td>
+
 
       {/* 8. Варны (Отдельная колонка) */}
       <td className="px-4 py-3.5 whitespace-nowrap text-center">
         <button
           type="button"
-          onClick={() => onOpenWarns({ userId: mId, displayName: member.displayName || member.username, username: member.username, avatarUrl: member.avatarUrl, warnCount })}
+          onClick={(e) => { e.stopPropagation(); onOpenWarns({ userId: mId, displayName: member.displayName || member.username, username: member.username, avatarUrl: member.avatarUrl, warnCount }); }}
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border shadow-2xs ${
             warnCount > 0
               ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 dark:text-amber-300 border-amber-300 dark:border-amber-700'
@@ -349,7 +316,7 @@ export default function RosterTab() {
       'electrician', 'builder', 'pilot', 'sponsor', 'vip'
     ];
 
-    return rosterList.map(member => {
+    return rosterList.filter(m => !m.bot && (!m.user || !m.user.bot)).map(member => {
       const mId = member.userId || member.id;
       const mRoles = member.roles || [];
 
@@ -677,10 +644,7 @@ export default function RosterTab() {
                   <span>{t('clan_roster_col_status', 'Статус в Discord')}</span>
                 </th>
 
-                {/* 7. Досье (Отдельная колонка) */}
-                <th scope="col" className="px-4 py-3.5 text-center">
-                  <span>{t('clan_roster_col_dossier', 'Досье')}</span>
-                </th>
+
 
                 {/* 8. Варны (Отдельная колонка) */}
                 <th
@@ -703,7 +667,7 @@ export default function RosterTab() {
             <tbody>
               {processedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400 dark:text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <div>{t('clan_auto_72', 'Участники не найдены. Убедитесь, что роли настроены правильно.')}</div>
                   </td>
