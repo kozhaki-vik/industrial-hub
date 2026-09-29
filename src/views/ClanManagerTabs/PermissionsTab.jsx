@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
-import { Check, X, Slash, Shield, ChevronDown, Lock } from 'lucide-react';
+import { Check, X, Slash, Shield, Lock } from 'lucide-react';
 
 const PERMISSIONS_LIST = [
   { id: 'ViewChannel', label: 'Просматривать канал', bit: 1024n },
@@ -33,6 +33,47 @@ const PERMISSIONS_LIST = [
   { id: 'MoveMembers', label: 'Перемещать участников', bit: 16777216n },
 ];
 
+const PermissionRow = React.memo(function PermissionRow({
+  perm,
+  state,
+  onToggle
+}) {
+  return (
+    <div className="flex items-center justify-between py-3 px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors group">
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{perm.label}</span>
+      
+      <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 gap-1">
+        <button
+          type="button"
+          onClick={() => onToggle(perm.id, 'allow')}
+          className={`w-8 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${state === 'allow' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-emerald-500'}`}
+          title="Разрешить"
+        >
+          <Check className="w-4 h-4" strokeWidth={state === 'allow' ? 3 : 2} />
+        </button>
+        
+        <button
+          type="button"
+          onClick={() => onToggle(perm.id, 'inherit')}
+          className={`w-8 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${state === 'inherit' ? 'bg-slate-300 dark:bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-600 dark:text-slate-300'}`}
+          title="Наследовать"
+        >
+          <Slash className="w-4 h-4" strokeWidth={state === 'inherit' ? 3 : 2} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onToggle(perm.id, 'deny')}
+          className={`w-8 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${state === 'deny' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-rose-500'}`}
+          title="Запретить"
+        >
+          <X className="w-4 h-4" strokeWidth={state === 'deny' ? 3 : 2} />
+        </button>
+      </div>
+    </div>
+  );
+});
+
 export default function PermissionsTab() {
   const { config, discordInfo, fetchDiscordInfo, sendProxyAction, t } = useContext(ClanManagerContext);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -41,24 +82,24 @@ export default function PermissionsTab() {
 
   // Fetch latest overwrites on mount
   useEffect(() => {
-    fetchDiscordInfo();
-  }, []);
+    if (typeof fetchDiscordInfo === 'function') fetchDiscordInfo();
+  }, [fetchDiscordInfo]);
 
-  const roles = discordInfo?.roles || [];
+  const roles = useMemo(() => discordInfo?.roles || [], [discordInfo?.roles]);
   
   // Collect all configured roles
-  const roleKeys = [
-    'leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId', 'mainRosterRoleId',
-    'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId',
-    'builderRoleId', 'pilotRoleId'
-  ];
-  
-  const configuredRoleIds = roleKeys.map(k => config?.[k]).filter(Boolean);
-  // Remove duplicates and find role objects
-  const availableRoles = [...new Set(configuredRoleIds)]
-    .map(id => roles.find(r => r.id === id))
-    .filter(Boolean)
-    .sort((a, b) => b.position - a.position); // Sort by highest role first
+  const availableRoles = useMemo(() => {
+    const roleKeys = [
+      'leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId', 'mainRosterRoleId',
+      'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId',
+      'builderRoleId', 'pilotRoleId'
+    ];
+    const configuredRoleIds = roleKeys.map(k => config?.[k]).filter(Boolean);
+    return [...new Set(configuredRoleIds)]
+      .map(id => roles.find(r => r.id === id))
+      .filter(Boolean)
+      .sort((a, b) => b.position - a.position);
+  }, [config, roles]);
 
   // Select first role by default
   useEffect(() => {
@@ -68,22 +109,32 @@ export default function PermissionsTab() {
   }, [availableRoles, selectedRole]);
 
   // Collect all configured channels
-  let channelsConfig = {};
-  if (config?.channelsConfigJson) {
-    try { channelsConfig = JSON.parse(config.channelsConfigJson); } catch (e) {}
-  }
-  let logCfg = {};
-  if (config?.loggingConfigJson) {
-    try { logCfg = typeof config.loggingConfigJson === 'string' ? JSON.parse(config.loggingConfigJson) : config.loggingConfigJson; } catch(e) {}
-  }
+  const availableChannels = useMemo(() => {
+    let channelsConfig = {};
+    if (config?.channelsConfigJson) {
+      try {
+        channelsConfig = typeof config.channelsConfigJson === 'string'
+          ? JSON.parse(config.channelsConfigJson)
+          : config.channelsConfigJson;
+      } catch {}
+    }
+    let logCfg = {};
+    if (config?.loggingConfigJson) {
+      try {
+        logCfg = typeof config.loggingConfigJson === 'string'
+          ? JSON.parse(config.loggingConfigJson)
+          : config.loggingConfigJson;
+      } catch {}
+    }
 
-  const channelKeys = ['ticketsCategory', 'applications', 'autoRejectedApplications', 'rejectedApplications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
-  const configuredChannelIds = channelKeys.map(k => channelsConfig[k]).filter(Boolean);
-  if (logCfg.defaultChannelId) configuredChannelIds.push(logCfg.defaultChannelId);
-  
-  const availableChannels = [...new Set(configuredChannelIds)]
-    .map(id => discordInfo?.channels?.find(c => c.id === id))
-    .filter(Boolean);
+    const channelKeys = ['ticketsCategory', 'applications', 'autoRejectedApplications', 'rejectedApplications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
+    const configuredChannelIds = channelKeys.map(k => channelsConfig[k]).filter(Boolean);
+    if (logCfg.defaultChannelId) configuredChannelIds.push(logCfg.defaultChannelId);
+    
+    return [...new Set(configuredChannelIds)]
+      .map(id => discordInfo?.channels?.find(c => c.id === id))
+      .filter(Boolean);
+  }, [config?.channelsConfigJson, config?.loggingConfigJson, discordInfo?.channels]);
 
   // Select first channel by default
   useEffect(() => {
@@ -92,11 +143,11 @@ export default function PermissionsTab() {
     }
   }, [availableChannels, selectedChannel]);
 
-  const handleTogglePermission = async (permId, targetState) => {
+  const handleTogglePermission = useCallback(async (permId, targetState) => {
     if (!selectedRole || !selectedChannel) return;
 
     const updatePayload = {
-        [permId]: targetState === 'inherit' ? null : (targetState === 'allow')
+      [permId]: targetState === 'inherit' ? null : (targetState === 'allow')
     };
 
     setLoading(true);
@@ -106,32 +157,30 @@ export default function PermissionsTab() {
       permissions: updatePayload
     });
     
-    if (res && res.success) {
-      // Refresh to get new state
+    if (res && res.success && typeof fetchDiscordInfo === 'function') {
       await fetchDiscordInfo();
     }
     setLoading(false);
-  };
+  }, [selectedRole, selectedChannel, sendProxyAction, fetchDiscordInfo]);
 
-  const currentChannelData = availableChannels.find(c => c.id === selectedChannel);
-  
-  // Compute current permissions
-  const getPermissionState = (bit) => {
+  const currentChannelData = useMemo(() => {
+    return availableChannels.find(c => c.id === selectedChannel);
+  }, [availableChannels, selectedChannel]);
+
+  const getPermissionState = useCallback((bit) => {
     if (!currentChannelData || !currentChannelData.overwrites || !selectedRole) return 'inherit';
     const ow = currentChannelData.overwrites[selectedRole];
     if (!ow) return 'inherit';
     
     try {
-        const allowMask = BigInt(ow.allow);
-        const denyMask = BigInt(ow.deny);
-        
-        if ((allowMask & bit) === bit) return 'allow';
-        if ((denyMask & bit) === bit) return 'deny';
-    } catch (e) {
-        // Fallback if BigInt fails for some reason
-    }
+      const allowMask = BigInt(ow.allow);
+      const denyMask = BigInt(ow.deny);
+      
+      if ((allowMask & bit) === bit) return 'allow';
+      if ((denyMask & bit) === bit) return 'deny';
+    } catch {}
     return 'inherit';
-  };
+  }, [currentChannelData, selectedRole]);
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -156,11 +205,12 @@ export default function PermissionsTab() {
               {availableRoles.map(r => (
                 <button
                   key={r.id}
+                  type="button"
                   onClick={() => setSelectedRole(r.id)}
-                  className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center justify-between ${selectedRole === r.id ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 font-medium' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'}`}
+                  className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center justify-between cursor-pointer ${selectedRole === r.id ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 font-medium' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'}`}
                 >
                   <span className="flex items-center gap-2 truncate">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color ? `#${r.color.toString(16).padStart(6, '0')}` : '#999' }}></div>
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: r.color ? `#${r.color.toString(16).padStart(6, '0')}` : '#999' }}></div>
                     <span className="truncate">{r.name}</span>
                   </span>
                 </button>
@@ -177,8 +227,9 @@ export default function PermissionsTab() {
               {availableChannels.map(c => (
                 <button
                   key={c.id}
+                  type="button"
                   onClick={() => setSelectedChannel(c.id)}
-                  className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center justify-between ${selectedChannel === c.id ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 font-medium' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'}`}
+                  className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-colors flex items-center justify-between cursor-pointer ${selectedChannel === c.id ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 font-medium' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'}`}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <span className="text-slate-400">#</span>
@@ -220,41 +271,14 @@ export default function PermissionsTab() {
               </div>
             ) : (
               <div className="space-y-1">
-                {PERMISSIONS_LIST.map((perm) => {
-                  const state = getPermissionState(perm.bit);
-                  
-                  return (
-                    <div key={perm.id} className="flex items-center justify-between py-3 px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors group">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{perm.label}</span>
-                      
-                      <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 gap-1">
-                        <button
-                          onClick={() => handleTogglePermission(perm.id, 'allow')}
-                          className={`w-8 h-8 flex items-center justify-center rounded-md transition-all ${state === 'allow' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-emerald-500'}`}
-                          title="Разрешить"
-                        >
-                          <Check className="w-4 h-4" strokeWidth={state === 'allow' ? 3 : 2} />
-                        </button>
-                        
-                        <button
-                          onClick={() => handleTogglePermission(perm.id, 'inherit')}
-                          className={`w-8 h-8 flex items-center justify-center rounded-md transition-all ${state === 'inherit' ? 'bg-slate-300 dark:bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                          title="Наследовать"
-                        >
-                          <Slash className="w-4 h-4" strokeWidth={state === 'inherit' ? 3 : 2} />
-                        </button>
-
-                        <button
-                          onClick={() => handleTogglePermission(perm.id, 'deny')}
-                          className={`w-8 h-8 flex items-center justify-center rounded-md transition-all ${state === 'deny' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-rose-500'}`}
-                          title="Запретить"
-                        >
-                          <X className="w-4 h-4" strokeWidth={state === 'deny' ? 3 : 2} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {PERMISSIONS_LIST.map((perm) => (
+                  <PermissionRow
+                    key={perm.id}
+                    perm={perm}
+                    state={getPermissionState(perm.bit)}
+                    onToggle={handleTogglePermission}
+                  />
+                ))}
               </div>
             )}
           </div>
