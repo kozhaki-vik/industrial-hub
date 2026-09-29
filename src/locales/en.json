@@ -852,6 +852,7 @@
   "clan_sync_verifying_hint": "Bot updates the role name, verifies changes, and retries in case of an error.",
   "clan_system": "System",
   "clan_tab_ads": "Ads",
+  "clan_tab_applications": "Applications",
   "clan_tab_archive": "Archive",
   "clan_tab_channels": "Channels",
   "clan_tab_dossier": "Archive",

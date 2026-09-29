@@ -12,6 +12,7 @@ import DossierTab from './ClanManagerTabs/DossierTab';
 import StatsTab from './ClanManagerTabs/StatsTab';
 import LogsTab from './ClanManagerTabs/LogsTab';
 import ModerationTab from './ClanManagerTabs/ModerationTab';
+import ApplicationsTab from './ClanManagerTabs/ApplicationsTab';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -458,6 +459,8 @@ export default function ClanManager() {
   const [isModExpanded, setIsModExpanded] = useState(true);
   const [rosterData, setRosterData] = useState(null);
   const [statsData, setStatsData] = useState(null);
+  const [activityStatsData, setActivityStatsData] = useState(null);
+  const [loadingActivityStats, setLoadingActivityStats] = useState(false);
   const [discordInfo, setDiscordInfo] = useState(null);
   const [activeVotes, setActiveVotes] = useState(null);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
@@ -768,6 +771,59 @@ export default function ClanManager() {
     fetchUserWarnings(stat.userId);
   };
 
+  const fetchActivityStats = useCallback(() => {
+    if (!ws || wsStatus !== 'online') return;
+    setLoadingActivityStats(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: `get_clan_activity_stats_${Date.now()}`,
+      payload: { action: 'get_clan_activity_stats' }
+    }));
+  }, [ws, wsStatus]);
+
+  // Persistent text-only cache of members' display names, usernames, and roles (so nicknames survive after member leaves)
+  const getCachedMemberMeta = useCallback((userId) => {
+    if (!userId) return null;
+    try {
+      const stored = localStorage.getItem(`ih_clan_members_meta_${activeGid || 'global'}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed[userId] || null;
+      }
+    } catch (e) {}
+    return null;
+  }, [activeGid]);
+
+  const saveCachedMembersMeta = useCallback((membersList) => {
+    if (!Array.isArray(membersList) || membersList.length === 0) return;
+    try {
+      const key = `ih_clan_members_meta_${activeGid || 'global'}`;
+      const existing = JSON.parse(localStorage.getItem(key) || '{}');
+      let changed = false;
+      membersList.forEach(m => {
+        const uid = m.userId || m.id;
+        if (uid) {
+          const uName = m.username || m.user?.username || m.userName;
+          const dName = m.displayName || m.lastSteamName;
+          if (!existing[uid] || (uName && existing[uid].username !== uName) || (dName && existing[uid].displayName !== dName)) {
+            existing[uid] = {
+              userId: uid,
+              username: uName || existing[uid]?.username || 'Участник',
+              displayName: dName || existing[uid]?.displayName || uName || 'Участник',
+              steamId: m.steamId || existing[uid]?.steamId || null,
+              lastSeen: m.lastSeen || existing[uid]?.lastSeen || Date.now()
+            };
+            changed = true;
+          }
+        }
+      });
+      if (changed) {
+        localStorage.setItem(key, JSON.stringify(existing));
+      }
+    } catch (e) {}
+  }, [activeGid]);
+
   const fetchDossiers = (filterStatus = 'ALL', search = '') => {
     if (!ws || wsStatus !== 'online') return;
     setLoadingDossiers(true);
@@ -1073,8 +1129,12 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_roster' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_roster_')))) {
           if (!data.error && data.data && data.data.success) {
             setRosterData(data.data);
+            if (data.data.roster && Array.isArray(data.data.roster)) {
+              saveCachedMembersMeta(data.data.roster);
+            }
             if (data.data.dossiers && Array.isArray(data.data.dossiers)) {
               setDossiersData(data.data.dossiers);
+              saveCachedMembersMeta(data.data.dossiers);
             }
           } else {
             setRosterData(prev => prev || { roster: [], roleNamesJson: '{}', customRolesJson: '[]' });
@@ -1085,6 +1145,7 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && (typeof data.reqId === 'string' && data.reqId.startsWith('get_member_dossier_'))) {
           if (!data.error && data.data?.success && data.data?.dossier) {
             const fetchedDos = data.data.dossier;
+            saveCachedMembersMeta([fetchedDos]);
             setSelectedProfileForDossier(prev => (prev?.userId === fetchedDos.userId ? { ...prev, ...fetchedDos } : prev));
             setDossiersData(prev => {
               const arr = prev || [];
@@ -1101,6 +1162,7 @@ export default function ClanManager() {
           setLoadingApps(false);
           if (!data.error && data.data && data.data.success) {
             setApplicationsData(data.data.applications || []);
+            saveCachedMembersMeta(data.data.applications || []);
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_ticket_transcript') {
           setTranscriptModal(prev => ({
@@ -1112,11 +1174,20 @@ export default function ClanManager() {
         } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_stats' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_stats_')))) {
           if (!data.error && data.data && data.data.success) {
             setStatsData(data.data.stats || []);
+            saveCachedMembersMeta(data.data.stats || []);
+            if (data.data.activityStats) {
+              setActivityStatsData(data.data.activityStats);
+            }
           } else {
             setStatsData(prev => prev || []);
             if (data.error || (data.data && data.data.error)) {
               setError(data.error || data.data.error);
             }
+          }
+        } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_clan_activity_stats' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_clan_activity_stats_')))) {
+          setLoadingActivityStats(false);
+          if (!data.error && data.data && data.data.success && data.data.activityStats) {
+            setActivityStatsData(data.data.activityStats);
           }
         } else if (data.type === 'clan_proxy_res' && (data.reqId === 'get_discord_info' || (typeof data.reqId === 'string' && data.reqId.startsWith('get_discord_info_')))) {
           if (!data.error && data.data && data.data.success) {
@@ -2336,6 +2407,8 @@ export default function ClanManager() {
       if (config.discordLink.trim() && config.discordLink.trim() !== lastVerifiedLinkRef.current) {
         verifyInvite(config.discordLink);
       }
+    } else if (activeTab === 'applications') {
+      fetchApplications();
     } else if (activeTab === 'recruitment') {
       fetchApplications();
       if (config?.recruitmentConfigJson) {
@@ -2352,6 +2425,7 @@ export default function ClanManager() {
       }
     } else if (activeTab === 'dossier') {
       fetchDossiers(dossierFilter, dossierSearch);
+      fetchClanWarnings();
     } else if (activeTab === 'roster') {
       if (!rosterData) {
         addLog('Fetching roster via proxy');
@@ -2370,15 +2444,18 @@ export default function ClanManager() {
         fetchDynamicVoice();
       }
       fetchClanWarnings();
-    } else if (activeTab === 'stats' && !statsData) {
-      addLog('Fetching stats via proxy');
-      ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
+    } else if (activeTab === 'stats') {
+      if (!statsData) {
+        addLog('Fetching stats via proxy');
+        ws.send(JSON.stringify({ type: 'clan', action: 'proxy', reqId: `get_stats_${Date.now()}`, payload: { action: 'get_stats' } }));
+      }
+      fetchActivityStats();
     } else if (activeTab === 'voice' && !dynamicVoiceData) {
       fetchDynamicVoice();
     } else if (activeTab === 'moderation') {
       if (!discordInfo) fetchDiscordInfo();
       fetchClanWarnings();
-    } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions' || activeTab === 'logs' || activeTab === 'recruitment' || activeTab === 'votes' || activeTab === 'ads') && !discordInfo) {
+    } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions' || activeTab === 'logs' || activeTab === 'recruitment' || activeTab === 'applications' || activeTab === 'votes' || activeTab === 'ads') && !discordInfo) {
       fetchDiscordInfo();
     }
   }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData, config?.discordLink]);
@@ -3084,6 +3161,7 @@ export default function ClanManager() {
     { id: 'roster', label: t('clan_tab_roster', 'Состав'), icon: UserCheck },
     { id: 'votes', label: t('clan_tab_votes', 'Голосования'), icon: Vote },
     { id: 'recruitment', label: t('clan_tab_recruitment', 'Наборы'), icon: UserPlus },
+    { id: 'applications', label: t('clan_tab_applications', 'Заявки в клан'), icon: ScrollText },
     { id: 'stats', label: t('clan_tab_stats', 'Статистика'), icon: BarChart3 },
     { id: 'ads', label: t('clan_tab_ads', 'Реклама'), icon: Megaphone },
     { id: 'dossier', label: t('clan_tab_archive') || 'Архив', icon: Archive },
@@ -3457,6 +3535,17 @@ export default function ClanManager() {
       title: t('clan_auto_140', 'Максимум дней с последнего VAC-бана'),
       desc: t('clan_auto_194', 'Порог давности игровых блокировок Steam для допуска кандидатов'),
       keywords: ['vac дни', 'дней с бана', 'давность бана', 'читер', 'vac days']
+    },
+
+    // Applications
+    {
+      id: 'applications_journal',
+      tabId: 'applications',
+      tabName: t('clan_tab_applications', 'Заявки в клан'),
+      tabIcon: ScrollText,
+      title: t('sidx_applications_title', 'Журнал заявок в клан'),
+      desc: t('sidx_applications_desc', 'Список всех поданных анкет кандидатов, статус тикетов и стенограммы собеседований'),
+      keywords: ['заявки', 'анкеты', 'кандидаты', 'журнал', 'тикеты', 'applications', 'tickets', 'transcripts']
     },
 
     // Permissions
@@ -4234,7 +4323,12 @@ const contextValue = {
   viewMode: typeof viewMode !== "undefined" ? viewMode : undefined,
   setViewMode: typeof setViewMode !== "undefined" ? setViewMode : undefined,
   clanTabs: typeof clanTabs !== "undefined" ? clanTabs : undefined,
-  botConfigGroups: typeof botConfigGroups !== "undefined" ? botConfigGroups : undefined
+  botConfigGroups: typeof botConfigGroups !== "undefined" ? botConfigGroups : undefined,
+  activityStatsData: typeof activityStatsData !== "undefined" ? activityStatsData : undefined,
+  loadingActivityStats: typeof loadingActivityStats !== "undefined" ? loadingActivityStats : undefined,
+  fetchActivityStats: typeof fetchActivityStats !== "undefined" ? fetchActivityStats : undefined,
+  getCachedMemberMeta: typeof getCachedMemberMeta !== "undefined" ? getCachedMemberMeta : undefined,
+  saveCachedMembersMeta: typeof saveCachedMembersMeta !== "undefined" ? saveCachedMembersMeta : undefined
 };
 
   return (
@@ -4706,6 +4800,8 @@ const contextValue = {
             {activeTab === 'voice' && <VoiceTab />}
 
             {activeTab === 'recruitment' && <RecruitmentTab />}
+
+            {activeTab === 'applications' && <ApplicationsTab />}
 
             {activeTab === 'votes' && <VotesTab />}
 

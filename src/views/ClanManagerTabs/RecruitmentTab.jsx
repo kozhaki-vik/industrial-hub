@@ -1,174 +1,26 @@
 import React, { useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
-  Trash2, RefreshCw, Sliders, Hash, UserPlus,
+  RefreshCw, Sliders, Hash, UserPlus,
   UserCheck, Check, AlertTriangle, ScrollText, Bot, Clock,
-  Search, ExternalLink, Eye, EyeOff, X, ChevronLeft, ChevronRight
+  ExternalLink, Eye, EyeOff, X, ArrowRight
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import { ToggleSwitch } from '../ClanManager';
-import { ApplicationsTableSkeleton } from '../../components/Skeleton';
-
-// --- Memoized application row to eliminate re-rendering rows on sibling updates ---
-const ApplicationRow = React.memo(function ApplicationRow({
-  app,
-  t,
-  getSteamProfileUrl,
-  openExternalUrl,
-  handleViewTranscript
-}) {
-  const steamUrl = getSteamProfileUrl ? getSteamProfileUrl(app.steamId) : null;
-  const displaySteamId = steamUrl
-    ? String(app.steamId).replace(/^https?:\/\/steamcommunity\.com\/(profiles|id)\//i, '').replace(/\/+$/, '')
-    : null;
-
-  return (
-    <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-      <td className="px-4 py-3">
-        <div className="flex items-center space-x-2.5">
-          {app.avatar ? (
-            <img src={app.avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0" />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-[10px] shrink-0 text-slate-700 dark:text-slate-300">
-              {(app.username || app.userId || '').slice(0, 2).toUpperCase()}
-            </div>
-          )}
-          <div className="min-w-0">
-            <div className="font-semibold text-slate-800 dark:text-slate-200 truncate">{app.username || t('clan_candidate', 'Кандидат')}</div>
-            <div className="text-[10px] text-slate-400 font-mono truncate">{app.userId}</div>
-          </div>
-        </div>
-      </td>
-      <td className="px-3 py-3">
-        {!steamUrl ? (
-          <span className="text-slate-400">—</span>
-        ) : (
-          <button
-            type="button"
-            onClick={() => openExternalUrl(steamUrl)}
-            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-[11px] font-medium group max-w-[120px] cursor-pointer"
-            title={steamUrl}
-          >
-            <svg className="w-3 h-3 fill-current shrink-0 opacity-80 group-hover:opacity-100" viewBox="0 0 24 24">
-              <path d="M12 0a12 12 0 0 0-12 12c0 5.6 3.86 10.3 9.08 11.63l2.84-4.14a4.42 4.42 0 0 1-.39-.14l-3.9 1.63a7.48 7.48 0 0 1-.84-3.77c0-2.3 1.05-4.36 2.7-5.74L8.7 7.7a7.52 7.52 0 0 1 7.02-1.74l2.45-3.57A12 12 0 0 0 12 0zm3.83 5.96a5.53 5.53 0 0 0-3.32 1.15l3.22 1.34a2.22 2.22 0 1 1-1.35 3.23l-3.26-1.36a5.53 5.53 0 1 0 4.71-4.36zm-6.2 8.65l2.67 1.11a3.02 3.02 0 0 0 1.25-.26l-1.92 2.8a3.03 3.03 0 0 1-2-3.65z"/>
-            </svg>
-            <span className="truncate">{displaySteamId}</span>
-            <ExternalLink className="w-2.5 h-2.5 shrink-0 opacity-60 group-hover:opacity-100" />
-          </button>
-        )}
-      </td>
-      <td className="px-3 py-3 font-medium text-slate-700 dark:text-slate-300">
-        {app.age ? `${app.age} ${t('clan_years', 'лет')}` : '—'}
-      </td>
-      <td className="px-3 py-3">
-        <div className="flex items-center space-x-1">
-          <span className="font-medium text-slate-800 dark:text-slate-200">{app.hours || 0} {t('clan_hours_short', 'ч.')}</span>
-          {app.verifiedHours !== null && app.verifiedHours !== undefined && (
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-bold" title={t('clan_auto_106', 'Верифицировано в Steam')}>
-              ✓
-            </span>
-          )}
-        </div>
-      </td>
-      <td className="px-3 py-3">
-        {app.status === 'PENDING' && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
-            ⏳ {t('clan_recruitment_app_status_pending') || 'Ожидает'}
-          </span>
-        )}
-        {app.status === 'ACCEPTED' && (
-          <span 
-            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs" 
-            title={t('clan_recruitment_app_status_accepted') || 'Принята'}
-          >
-            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-          </span>
-        )}
-        {app.status === 'REJECTED' && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40">
-            ❌ {t('clan_recruitment_app_status_rejected') || 'Отклонена'}
-          </span>
-        )}
-        {app.status === 'AUTO_REJECTED' && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200/60 dark:border-purple-800/40">
-            🤖 {t('clan_recruitment_app_status_auto_rejected') || 'Авто-отказ'}
-          </span>
-        )}
-      </td>
-      <td className="px-3 py-3 max-w-[180px] truncate text-[11px]">
-        {app.rejectReason ? (
-          <span className="text-rose-600 dark:text-rose-400" title={app.rejectReason}>
-            {app.rejectReason}
-          </span>
-        ) : app.reviewedBy ? (
-          <span className="text-slate-500">
-            {t('clan_auto_51', 'Рассмотрел:')} <span className="font-medium text-slate-700 dark:text-slate-300">{app.reviewedBy}</span>
-          </span>
-        ) : (
-          <span className="text-slate-400">—</span>
-        )}
-      </td>
-      <td className="px-3 py-3 text-center">
-        <button
-          type="button"
-          onClick={() => handleViewTranscript(app)}
-          className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 dark:hover:text-white border border-slate-200 dark:border-slate-700 transition-all text-[11px] font-medium shadow-2xs group cursor-pointer"
-          title={t('clan_recruitment_app_view_transcript') || 'Просмотр транскрипта'}
-        >
-          <ScrollText className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
-          <span>{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</span>
-        </button>
-      </td>
-      <td className="px-4 py-3 text-right font-mono text-[11px] text-slate-500 whitespace-nowrap">
-        {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : '—'}
-      </td>
-    </tr>
-  );
-});
 
 export default function RecruitmentTab() {
   const {
-    config, discordInfo, rosterData, applicationsData, loadingApps,
-    appFilter, setAppFilter, appSearch, setAppSearch,
-    fetchApplications, handleClearApplications, handleViewTranscript,
+    config, discordInfo, rosterData, applicationsData,
     handleCreateRecruitmentInvite, creatingRecruitmentInvite,
     recruitmentInviteStatus, setRecruitmentInviteStatus,
     checkingRecruitmentInvite, verifyRecruitmentInvite,
     isFullScreenWindow, showDiscordLivePreview, setShowDiscordLivePreview,
     queueAutoSave, saveConfig, sendProxyAction, addLog,
-    getSteamProfileUrl, openExternalUrl, t
+    openExternalUrl, setActiveTab, t
   } = useContext(ClanManagerContext);
 
   const [checkingPrefix, setCheckingPrefix] = useState(false);
   const [missingPrefixes, setMissingPrefixes] = useState([]);
-
-  // --- Search Input Debounce (prevents typing stutter) ---
-  const [searchInput, setSearchInput] = useState(appSearch || '');
-  const searchTimerRef = useRef(null);
-
-  useEffect(() => {
-    setSearchInput(appSearch || '');
-  }, [appSearch]);
-
-  const handleSearchChange = useCallback((val) => {
-    setSearchInput(val);
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => {
-      setAppSearch(val);
-    }, 250);
-  }, [setAppSearch]);
-
-  const handleClearSearch = useCallback(() => {
-    setSearchInput('');
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    setAppSearch('');
-  }, [setAppSearch]);
-
-  useEffect(() => {
-    return () => {
-      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    };
-  }, []);
 
   // --- Memoized Configurations ---
   const defaultRejectMsg = useMemo(() => {
@@ -667,177 +519,33 @@ export default function RecruitmentTab() {
           </div>
         </div>
 
-        {/* 3. Журнал и история заявок в клан */}
-        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center space-x-3">
-              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40">
-                <ScrollText className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                  {t('clan_recruitment_apps_title') || 'Журнал заявок в клан'}
-                  <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    {statusCounts.ALL}
-                  </span>
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('clan_recruitment_apps_desc') || 'История всех поступивших заявок: принятые, отклоненные руководством и отфильтрованные ботом.'}
-                </p>
-              </div>
+        {/* 3. Журнал заявок вынесен в отдельный раздел */}
+        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/40">
+              <ScrollText className="w-5 h-5" />
             </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={fetchApplications}
-                disabled={loadingApps}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loadingApps ? 'animate-spin text-orange-500' : ''}`} />
-                <span>{t('clan_recruitment_apps_refresh') || 'Обновить'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleClearApplications}
-                disabled={loadingApps || statusCounts.ALL === 0}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/20 rounded-xl text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                title={t('clan_recruitment_apps_clear') || 'Очистить журнал'}
-              >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                <span>{t('clan_recruitment_apps_clear') || 'Очистить журнал'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
-            {/* Debounced Search input */}
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder={t('clan_recruitment_app_search_placeholder') || 'Поиск по нику, Discord ID, Steam...'}
-                className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all"
-              />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                  title={t('clan_auto_105', 'Очистить поиск')}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Status Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2">
-              {[
-                { id: 'ALL', label: t('clan_recruitment_apps_filter_all') || 'Все', count: statusCounts.ALL },
-                { id: 'PENDING', label: t('clan_recruitment_apps_filter_pending') || 'Ожидают', count: statusCounts.PENDING },
-                { id: 'ACCEPTED', label: t('clan_recruitment_apps_filter_accepted') || 'Приняты', count: statusCounts.ACCEPTED },
-                { id: 'REJECTED', label: t('clan_recruitment_apps_filter_rejected') || 'Отклонены', count: statusCounts.REJECTED },
-                { id: 'AUTO_REJECTED', label: t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ', count: statusCounts.AUTO_REJECTED }
-              ].map(f => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setAppFilter(f.id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    appFilter === f.id
-                      ? 'bg-orange-500 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  <span>{f.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    appFilter === f.id ? 'bg-orange-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                  }`}>
-                    {f.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Table or Empty state */}
-          {loadingApps && (!applicationsData || applicationsData.length === 0) ? (
-            <ApplicationsTableSkeleton rows={5} />
-          ) : filteredApplications.length === 0 ? (
-            <div className="text-center py-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-              <UserCheck className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {appSearch 
-                  ? `${t('clan_apps_search_empty', 'По запросу «')}${appSearch}${t('clan_apps_search_empty2', '» заявок не найдено.')}` 
-                  : (t('clan_recruitment_apps_empty') || 'Заявок в выбранной категории пока нет.')
-                }
+            <div>
+              <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                {t('clan_tab_applications', 'Заявки в клан')}
+                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300">
+                  {Array.isArray(applicationsData) ? applicationsData.length : 0}
+                </span>
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('clan_recruitment_apps_moved_desc', 'Журнал и история поступивших анкет теперь вынесены в отдельный раздел «Заявки в клан».')}
               </p>
             </div>
-          ) : (
-            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
-              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                <thead className="bg-slate-50 dark:bg-slate-800/70 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none">
-                  <tr>
-                    <th className="px-4 py-3">{t('clan_recruitment_app_col_candidate') || t('clan_candidate', 'Кандидат')}</th>
-                    <th className="px-3 py-3">{t('clan_recruitment_app_col_steam') || 'Steam'}</th>
-                    <th className="px-3 py-3">{t('clan_recruitment_app_col_age') || 'Возраст'}</th>
-                    <th className="px-3 py-3">{t('clan_recruitment_app_col_hours') || 'Часы'}</th>
-                    <th className="px-3 py-3">{t('clan_recruitment_app_col_status') || 'Статус'}</th>
-                    <th className="px-3 py-3">{t('clan_recruitment_app_col_details') || 'Детали'}</th>
-                    <th className="px-3 py-3 text-center">{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</th>
-                    <th className="px-4 py-3 text-right">{t('clan_recruitment_app_col_date') || 'Дата'}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {paginatedApplications.map(app => (
-                    <ApplicationRow
-                      key={app.id}
-                      app={app}
-                      t={t}
-                      getSteamProfileUrl={getSteamProfileUrl}
-                      openExternalUrl={openExternalUrl}
-                      handleViewTranscript={handleViewTranscript}
-                    />
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Pagination Toolbar */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/30">
-                  <div>
-                    {t('clan_pagination_showing', 'Показано')} {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredApplications.length)} {t('clan_pagination_of', 'из')} {filteredApplications.length}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={currentPage <= 1}
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                      <span>{t('clan_pagination_prev', 'Назад')}</span>
-                    </button>
-                    <span className="px-2 font-semibold text-slate-700 dark:text-slate-300">
-                      {currentPage} / {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
-                    >
-                      <span>{t('clan_pagination_next', 'Вперед')}</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+          </div>
+          {setActiveTab && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('applications')}
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <span>{t('clan_open_applications_btn', 'Открыть журнал заявок')}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
 
