@@ -3878,7 +3878,7 @@ export default function ClanManager() {
         banner: '' 
       };
 
-      const isAnon = activeTpl.isAnonymous !== false;
+      const isAnon = activeTpl.isAnonymous === true;
       let descParts = [];
       if (activeTpl.description) descParts.push(`${activeTpl.description}\n`);
       if (activeTpl.day || activeTpl.time) {
@@ -3898,11 +3898,16 @@ export default function ClanManager() {
           color: '#e67e22',
           description: fullDesc,
           banner: activeTpl.banner,
-          fields: [
-            { name: t('clan_poll_opt_on_time', '🟢 Буду вовремя'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
-            { name: t('clan_poll_opt_late', '🟡 Опоздаю'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
-            { name: t('clan_poll_opt_tomorrow', '🟠 Завтра'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true },
-            { name: t('clan_poll_opt_absent', '🔴 Не буду'), value: t('clan_poll_votes_zero', '0 голосов'), inline: true }
+          fields: isAnon ? [
+            { name: t('clan_poll_opt_on_time', '🟢 Буду вовремя'), value: '6 голосов', inline: true },
+            { name: t('clan_poll_opt_late', '🟡 Опоздаю'), value: '2 голоса', inline: true },
+            { name: t('clan_poll_opt_tomorrow', '🟠 Завтра'), value: '1 голос', inline: true },
+            { name: t('clan_poll_opt_absent', '🔴 Не буду'), value: '3 голоса', inline: true }
+          ] : [
+            { name: t('clan_poll_opt_on_time', '🟢 Буду вовремя'), value: '6 голосов\n@Alex @Steve @Edgar @Tim @John @Mark', inline: true },
+            { name: t('clan_poll_opt_late', '🟡 Опоздаю'), value: '2 голоса\n@Leo @Paul', inline: true },
+            { name: t('clan_poll_opt_tomorrow', '🟠 Завтра'), value: '1 голос\n@Luke', inline: true },
+            { name: t('clan_poll_opt_absent', '🔴 Не буду'), value: '3 голоса\n@Dave @Carl @Bob', inline: true }
           ]
         },
         buttons: [

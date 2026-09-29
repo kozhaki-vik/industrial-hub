@@ -18,7 +18,7 @@ const VoteTemplateCard = React.memo(function VoteTemplateCard({
   isSelectedForPreview
 }) {
   return (
-    <div className={`p-5 border rounded-2xl transition-all relative ${
+    <div onClickCapture={() => { if (!isSelectedForPreview) onSelectForPreview(index); }} onFocusCapture={() => { if (!isSelectedForPreview) onSelectForPreview(index); }} className={`p-5 border rounded-2xl transition-all relative ${
       isSelectedForPreview
         ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-950/20 ring-2 ring-blue-500/20 shadow-sm'
         : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs hover:border-slate-300 dark:hover:border-slate-700'
@@ -34,19 +34,6 @@ const VoteTemplateCard = React.memo(function VoteTemplateCard({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => onSelectForPreview(index)}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer ${
-              isSelectedForPreview
-                ? 'bg-blue-600 text-white shadow-2xs'
-                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
-            }`}
-            title={t('clan_vote_preview_btn', 'Предпросмотр этого шаблона')}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>{isSelectedForPreview ? t('clan_vote_preview_active', 'Выбран') : t('clan_vote_preview', 'Превью')}</span>
-          </button>
 
           <button
             type="button"

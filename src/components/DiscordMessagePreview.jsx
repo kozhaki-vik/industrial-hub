@@ -166,16 +166,8 @@ export default function DiscordMessagePreview({
           <span className="font-bold text-sm text-[#f2f3f5] truncate tracking-wide">
             {channelName.replace(/^[#️⃣\s]+/, '').toLowerCase() || 'general'}
           </span>
-          <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-[#4e5058]" />
-          <span className="hidden sm:inline-block text-xs text-[#949ba4] truncate font-normal">
-            {tabTitle ? `${tabTitle} • ${t('preview_realtime', 'Предпросмотр в реальном времени')}` : t('preview_bot_msg', 'Предпросмотр сообщения бота')}
-          </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Live Preview
-          </span>
           {onClose && (
             <button
               type="button"
