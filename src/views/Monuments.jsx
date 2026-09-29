@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import React, { useState, useMemo } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { ArrowLeft, Search, AlertCircle, Map as MapIcon, Shield, PlayCircle, Camera } from 'lucide-react';
@@ -143,7 +144,7 @@ export default function Monuments() {
                 <div className="bg-orange-50 dark:bg-orange-900/10 border-l-4 border-orange-500 p-4 rounded-r-lg my-6">
                   <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" />
-                    <p className="text-orange-800 dark:text-orange-200 m-0 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: t('mon_note_rad').replace('Примечание о радиации:', '<strong>Примечание о радиации:</strong>').replace('Radiation Note:', '<strong>Radiation Note:</strong>').replace('Примітка щодо радіації:', '<strong>Примітка щодо радіації:</strong>')}}>
+                    <p className="text-orange-800 dark:text-orange-200 m-0 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(t('mon_note_rad').replace('Примечание о радиации:', '<strong>Примечание о радиации:</strong>').replace('Radiation Note:', '<strong>Radiation Note:</strong>').replace('Примітка щодо радіації:', '<strong>Примітка щодо радіації:</strong>'))}}>
                     </p>
                   </div>
                 </div>

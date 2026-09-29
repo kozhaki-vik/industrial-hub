@@ -49,7 +49,7 @@ export default function RecruitmentTab() {
       if (config?.recruitmentConfigJson) {
         rc = { ...rc, ...JSON.parse(config.recruitmentConfigJson) };
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
 
     if (!rc.autoRejectMessage || !rc.autoRejectMessage.trim()) {
       rc.autoRejectMessage = defaultRejectMsg;
@@ -71,7 +71,7 @@ export default function RecruitmentTab() {
       if (config?.channelsConfigJson) {
         cc = JSON.parse(config.channelsConfigJson);
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
     return cc;
   }, [config?.channelsConfigJson]);
 

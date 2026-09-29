@@ -230,9 +230,15 @@ function getAdaptiveWindowBounds() {
     minHeight = 650;
   }
 
-  // Защита: размер окна никогда не должен превышать доступную рабочую область экрана
-  targetWidth = Math.min(targetWidth, Math.max(minWidth, screenWidth - 30));
-  targetHeight = Math.min(targetHeight, Math.max(minHeight, screenHeight - 30));
+  // Защита: размер окна и его минимальные границы никогда не должны превышать доступную рабочую область экрана
+  const maxSafeWidth = Math.max(800, screenWidth - 30);
+  const maxSafeHeight = Math.max(500, screenHeight - 30);
+  
+  minWidth = Math.min(minWidth, maxSafeWidth);
+  minHeight = Math.min(minHeight, maxSafeHeight);
+  
+  targetWidth = Math.min(targetWidth, Math.max(minWidth, maxSafeWidth));
+  targetHeight = Math.min(targetHeight, Math.max(minHeight, maxSafeHeight));
 
   return {
     width: targetWidth,
@@ -408,7 +414,7 @@ function createWindow() {
             localStorage.setItem('industrial-hub-config', JSON.stringify(cfg));
             console.log("Channel forcefully set to main by installer");
           }
-        } catch(e) {}
+        } catch (e) { console.error('[Auto-caught Error]', e); }
       `);
     }
   });
@@ -546,7 +552,7 @@ app.whenReady().then(async () => {
       if (path.basename(appPath).startsWith('app-') && path.basename(parentDir).toLowerCase() === 'client') {
         return parentDir;
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
 
     const appData = process.env.APPDATA || (process.platform === 'win32' ? path.join(os.homedir(), 'AppData', 'Roaming') : app.getPath('userData'));
     return path.join(appData, 'IndustrialHubClient', 'client');
@@ -569,7 +575,7 @@ app.whenReady().then(async () => {
         console.log('[AssetManager] Migrated items from legacy cache to', itemsDir);
       }
     }
-  } catch (e) {}
+  } catch (e) { console.error('[Auto-caught Error]', e); }
 
   // Pre-seed cache from local assets/items if available and itemsDir is empty
   try {
@@ -929,9 +935,18 @@ app.whenReady().then(async () => {
     try {
       const currentSessionSec = Math.floor((Date.now() - sessionStartTime) / 1000);
       const uptimeFile = path.join(app.getPath('userData'), 'total_uptime.json');
+      fs.promises.writeFile(uptimeFile, JSON.stringify({ totalSeconds: totalUptimeBase + currentSessionSec }), 'utf8').catch(()=>{});
+    } catch {}
+  }, 300000); // 5 minutes
+
+  app.on('before-quit', () => {
+    try {
+      const currentSessionSec = Math.floor((Date.now() - sessionStartTime) / 1000);
+      const uptimeFile = path.join(app.getPath('userData'), 'total_uptime.json');
       fs.writeFileSync(uptimeFile, JSON.stringify({ totalSeconds: totalUptimeBase + currentSessionSec }), 'utf8');
     } catch {}
-  }, 5000);
+  });
+
 
   let cachedHardwareInfo = null;
 
@@ -1610,6 +1625,14 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('network:apply-deferred-update', (event, restartPayload) => {
     if (!restartPayload || !restartPayload.targetExePath) return false;
+    // Security Fix: Validate targetExePath is within temp dir and is an ih_update exe
+    const safePath = path.resolve(restartPayload.targetExePath);
+    const tempDir = path.resolve(os.tmpdir());
+    if (!safePath.startsWith(tempDir) || !safePath.toLowerCase().endsWith('.exe')) {
+      console.error('Blocked potentially malicious executable execution:', safePath);
+      return false;
+    }
+
     
     try {
       const child = child_process.spawn(restartPayload.targetExePath, [
@@ -1718,6 +1741,17 @@ app.whenReady().then(async () => {
     
     for (const file of files) {
       const destPath = path.join(appPath, file.path);
+      // Security Fix: Path Traversal
+      if (!path.resolve(destPath).startsWith(path.resolve(appPath))) {
+        console.error('Path traversal blocked:', destPath);
+        continue;
+      }
+      // Security Fix: URL validation
+      const TRUSTED_PREFIX = 'https://github.com/kozhaki-vik/industrial-hub-releases/';
+      if (!baseUrl.startsWith(TRUSTED_PREFIX) && !baseUrl.startsWith('https://api.github.com/')) {
+        console.error('Untrusted baseUrl blocked:', baseUrl);
+        return { success: false, error: 'Untrusted update source' };
+      }
       let needsDownload = true;
       if (fs.existsSync(destPath)) {
         const localBuffer = fs.readFileSync(destPath);

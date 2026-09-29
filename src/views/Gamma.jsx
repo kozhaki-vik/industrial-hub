@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import React, { useState } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { ArrowLeft, Monitor, Sun, Moon, ShieldCheck, MessageCircle } from 'lucide-react';
@@ -116,7 +117,7 @@ export default function Gamma() {
             <div className="absolute inset-0 z-10 backdrop-blur-sm bg-white/40 dark:bg-slate-900/60 flex items-center justify-center p-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 max-w-md text-center animate-in fade-in zoom-in duration-300">
                 <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">{t('gamma_suggest_title')}</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-6" dangerouslySetInnerHTML={{ __html: t('gamma_suggest_desc') }}></p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-6" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(t('gamma_suggest_desc'))}}></p>
                 <div className="flex gap-3 justify-center">
                   <button 
                     onClick={() => {

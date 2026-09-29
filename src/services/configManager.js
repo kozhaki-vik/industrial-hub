@@ -141,11 +141,11 @@ export const ensureOriginalBackup = async () => {
     const rustPath = getConfigKey('rustPath');
 
     if (window.electronAPI?.config && rustPath) {
-      const backupsDir = `${rustPath}\\cfg\\industrial_hub_backups`;
+      const backupsDir = `${rustPath}/cfg/industrial_hub_backups`;
       await window.electronAPI.config.ensureDir(backupsDir);
 
-      const originalPath = `${backupsDir}\\keys_original_backup.cfg`;
-      const currentKeysPath = `${rustPath}\\cfg\\keys.cfg`;
+      const originalPath = `${backupsDir}/keys_original_backup.cfg`;
+      const currentKeysPath = `${rustPath}/cfg/keys.cfg`;
       
       const exists = await window.electronAPI.config.fileExists(currentKeysPath);
       if (exists) {
@@ -172,11 +172,11 @@ export const createBackup = async (name = i18n.t('binds_backup_manual', 'Руч�
   const rustPath = getConfigKey('rustPath');
 
   if (window.electronAPI?.config && rustPath) {
-    const backupsDir = `${rustPath}\\cfg\\industrial_hub_backups`;
+    const backupsDir = `${rustPath}/cfg/industrial_hub_backups`;
     await window.electronAPI.config.ensureDir(backupsDir);
 
-    const backupPath = `${backupsDir}\\${filename}`;
-    const currentKeysPath = `${rustPath}\\cfg\\keys.cfg`;
+    const backupPath = `${backupsDir}/${filename}`;
+    const currentKeysPath = `${rustPath}/cfg/keys.cfg`;
 
     const exists = await window.electronAPI.config.fileExists(currentKeysPath);
     if (exists) {
@@ -212,8 +212,8 @@ export const restoreBackup = async (filename) => {
   const rustPath = getConfigKey('rustPath');
 
   if (window.electronAPI?.config && rustPath) {
-    const backupPath = `${rustPath}\\cfg\\industrial_hub_backups\\${filename}`;
-    const currentKeysPath = `${rustPath}\\cfg\\keys.cfg`;
+    const backupPath = `${rustPath}/cfg/industrial_hub_backups\\${filename}`;
+    const currentKeysPath = `${rustPath}/cfg/keys.cfg`;
 
     const exists = await window.electronAPI.config.fileExists(backupPath);
     if (exists) {
@@ -236,11 +236,11 @@ export const ensureOriginalGraphicsBackup = async () => {
     const rustPath = getConfigKey('rustPath');
 
     if (window.electronAPI?.config && rustPath) {
-      const backupsDir = `${rustPath}\\cfg\\industrial_hub_backups`;
+      const backupsDir = `${rustPath}/cfg/industrial_hub_backups`;
       await window.electronAPI.config.ensureDir(backupsDir);
 
-      const originalPath = `${backupsDir}\\client_original_backup.cfg`;
-      const currentClientPath = `${rustPath}\\cfg\\client.cfg`;
+      const originalPath = `${backupsDir}/client_original_backup.cfg`;
+      const currentClientPath = `${rustPath}/cfg/client.cfg`;
       
       const exists = await window.electronAPI.config.fileExists(currentClientPath);
       if (exists) {
@@ -267,11 +267,11 @@ export const createGraphicsBackup = async (name = i18n.t('graphics_backup_manual
   const rustPath = getConfigKey('rustPath');
 
   if (window.electronAPI?.config && rustPath) {
-    const backupsDir = `${rustPath}\\cfg\\industrial_hub_backups`;
+    const backupsDir = `${rustPath}/cfg/industrial_hub_backups`;
     await window.electronAPI.config.ensureDir(backupsDir);
 
-    const backupPath = `${backupsDir}\\${filename}`;
-    const currentClientPath = `${rustPath}\\cfg\\client.cfg`;
+    const backupPath = `${backupsDir}/${filename}`;
+    const currentClientPath = `${rustPath}/cfg/client.cfg`;
 
     const exists = await window.electronAPI.config.fileExists(currentClientPath);
     if (exists) {
@@ -307,8 +307,8 @@ export const restoreGraphicsBackup = async (filename) => {
   const rustPath = getConfigKey('rustPath');
 
   if (window.electronAPI?.config && rustPath) {
-    const backupPath = `${rustPath}\\cfg\\industrial_hub_backups\\${filename}`;
-    const currentClientPath = `${rustPath}\\cfg\\client.cfg`;
+    const backupPath = `${rustPath}/cfg/industrial_hub_backups\\${filename}`;
+    const currentClientPath = `${rustPath}/cfg/client.cfg`;
 
     const exists = await window.electronAPI.config.fileExists(backupPath);
     if (exists) {

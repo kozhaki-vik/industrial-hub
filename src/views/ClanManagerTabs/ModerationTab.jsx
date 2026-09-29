@@ -91,7 +91,7 @@ export default function ModerationTab() {
                     }
                   };
                 }
-              } catch (e) {}
+              } catch (e) { console.error('[Auto-caught Error]', e); }
 
               const am = modCfg.antiMention;
               const bw = modCfg.badWords;

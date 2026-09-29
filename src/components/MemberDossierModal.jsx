@@ -292,7 +292,7 @@ function MemberDossierModal({
       try {
         const parsed = JSON.parse(profile.steamAccountsJson);
         if (Array.isArray(parsed)) list = parsed;
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
     }
     if (list.length === 0 && profile?.steamId) {
       list.push({
@@ -843,7 +843,7 @@ function MemberDossierModal({
                         const voters = v.votersJson ? JSON.parse(v.votersJson) : [];
                         const found = voters.find(vt => vt.userId === profile.userId || vt === profile.userId);
                         if (found && typeof found === 'object') myChoice = found.choice || found.option;
-                      } catch (e) {}
+                      } catch (e) { console.error('[Auto-caught Error]', e); }
 
                       return (
                         <div

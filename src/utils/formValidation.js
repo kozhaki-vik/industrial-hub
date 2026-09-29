@@ -29,7 +29,7 @@ export function scrollToAndHighlight(element, shouldFocus = true) {
     setTimeout(() => {
       try {
         element.focus({ preventScroll: true });
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
     }, 150);
   }
 

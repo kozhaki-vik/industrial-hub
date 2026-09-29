@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import React, { useState } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { ArrowLeft, Zap, Battery, ShieldAlert, Cpu, ExternalLink, Edit3, AlertCircle } from 'lucide-react';
@@ -94,7 +95,7 @@ export default function Electricity() {
             <div className="bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500 p-5 rounded-r-xl">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-indigo-500 mt-0.5 shrink-0" />
-                <p className="text-indigo-800 dark:text-indigo-200 m-0 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: t('elec_note_important') + ' ' + selectedScheme.note}}>
+                <p className="text-indigo-800 dark:text-indigo-200 m-0 text-sm leading-relaxed" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(t('elec_note_important') + ' ' + selectedScheme.note)}}>
                 </p>
               </div>
             </div>

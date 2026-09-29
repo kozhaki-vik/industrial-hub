@@ -17,7 +17,7 @@ let isLoaded = false;
 if (localStorage.getItem('industrial-hub-config')) {
   try {
     currentConfig = { ...currentConfig, ...JSON.parse(localStorage.getItem('industrial-hub-config')) };
-  } catch (e) {}
+  } catch (e) { console.error('[Auto-caught Error]', e); }
 }
 
 export const loadConfigAsync = async () => {

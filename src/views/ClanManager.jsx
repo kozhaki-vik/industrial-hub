@@ -18,6 +18,8 @@ import { useNavigate } from 'react-router-dom';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
+import { useDevMode } from './hooks/useDevMode';
+import { useClanNetwork } from './hooks/useClanNetwork';
 import SetupWizard from '../components/SetupWizard';
 import RoleSelect from '../components/RoleSelect';
 import ChannelSelect from '../components/ChannelSelect';
@@ -85,13 +87,13 @@ export const isBotConfigured = (cfg) => {
         const channelKeys = ['ticketsCategory', 'logs', 'applications', 'autoRejectedApplications', 'rejectedApplications', 'leaderboard', 'news', 'votes', 'ads', 'roster', 'waitingRoom'];
         hasChannels = channelKeys.some(k => typeof ch[k] === 'string' && ch[k].trim().length > 0);
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
   }
   if (!hasChannels && cfg.loggingConfigJson) {
     try {
       const lCfg = typeof cfg.loggingConfigJson === 'string' ? JSON.parse(cfg.loggingConfigJson) : cfg.loggingConfigJson;
       if (lCfg?.defaultChannelId) hasChannels = true;
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
   }
 
   return hasRoles || hasChannels;
@@ -219,7 +221,7 @@ const sanitizeClanConfig = (cfg) => {
       if (changed) {
         sanitized.roleNamesJson = JSON.stringify(roleNames);
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
   }
 
   return sanitized;
@@ -350,45 +352,27 @@ export default function ClanManager() {
   }, [guildId]);
 
   // Developer Mode / Superadmin States
-  const [devAdminMode, setDevAdminMode] = useState(() => getConfigKey('devAdminModeEnabled') === true);
-  const isDevAdminActive = devAdminMode || getConfigKey('devAdminModeEnabled') === true;
-  const activeDevGuildIdRef = useRef(getConfigKey('devActiveGuildId') || null);
-  const [isDevAuthenticated, setIsDevAuthenticated] = useState(false);
-  const [devGuilds, setDevGuilds] = useState([]);
-  const [devShowServerGrid, setDevShowServerGrid] = useState(false);
-  const [isGuildDropdownOpen, setIsGuildDropdownOpen] = useState(false);
-  const [guildSearchQuery, setGuildSearchQuery] = useState('');
-  const [loadingDevGuilds, setLoadingDevGuilds] = useState(false);
+  const {
+    devAdminMode,
+    setDevAdminMode,
+    isDevAdminActive,
+    activeDevGuildIdRef,
+    isDevAuthenticated,
+    setIsDevAuthenticated,
+    devGuilds,
+    setDevGuilds,
+    devShowServerGrid,
+    setDevShowServerGrid,
+    isGuildDropdownOpen,
+    setIsGuildDropdownOpen,
+    guildSearchQuery,
+    setGuildSearchQuery,
+    loadingDevGuilds,
+    setLoadingDevGuilds
+  } = useDevMode();
 
   // Transparent WebSocket wrapper that ensures all proxy calls carry the active Discord guild ID
-  const ws = useMemo(() => {
-    if (!rawWs) return null;
-    return new Proxy(rawWs, {
-      get(target, prop) {
-        if (prop === 'send') {
-          return (dataStr) => {
-            try {
-              const parsed = typeof dataStr === 'string' ? JSON.parse(dataStr) : dataStr;
-              if (parsed && parsed.type === 'clan' && parsed.action === 'proxy') {
-                const activeGid = parsed.targetGuildId || (isDevAdminActive ? activeDevGuildIdRef.current : undefined) || guildIdRef.current;
-                if (activeGid && !parsed.targetGuildId) {
-                  parsed.targetGuildId = activeGid;
-                }
-              }
-              return target.send(typeof parsed === 'string' ? parsed : JSON.stringify(parsed));
-            } catch (e) {
-              return target.send(dataStr);
-            }
-          };
-        }
-        const val = target[prop];
-        if (typeof val === 'function') {
-          return val.bind(target);
-        }
-        return val;
-      }
-    });
-  }, [rawWs, isDevAdminActive]);
+  const ws = useClanNetwork(rawWs, isDevAdminActive, activeDevGuildIdRef, guildIdRef);
 
   const [linkCode, setLinkCode] = useState('');
   const [error, setError] = useState('');
@@ -414,7 +398,7 @@ export default function ClanManager() {
         if (rawWs && rawWs.readyState === WebSocket.OPEN) {
           try {
             rawWs.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
-          } catch (e) {}
+          } catch (e) { console.error('[Auto-caught Error]', e); }
         }
         addNotification(
           t('clan_afk_timeout', 'Сессия управления кланом закрыта из-за 5 минут неактивности. Вы перенаправлены на главную страницу.'),
@@ -432,24 +416,12 @@ export default function ClanManager() {
       if (rawWs && rawWs.readyState === WebSocket.OPEN) {
         try {
           rawWs.send(JSON.stringify({ type: 'clan', action: 'session_leave' }));
-        } catch (e) {}
+        } catch (e) { console.error('[Auto-caught Error]', e); }
       }
     };
   }, [rawWs, navigate, addNotification, t]);
 
-  useEffect(() => {
-    const checkDevMode = async () => {
-      let enabled = getConfigKey('devAdminModeEnabled') === true;
-      if (!enabled && window.electronAPI?.store) {
-        try {
-          const val = await window.electronAPI.store.get('devAdminModeEnabled');
-          if (val === true) setDevAdminMode(true);
-        } catch (e) {}
-      }
-    };
-    checkDevMode();
-  }, []);
-  
+
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
@@ -630,7 +602,7 @@ export default function ClanManager() {
             cleanup();
             resolve(msg.data || msg);
           }
-        } catch (e) {}
+        } catch (e) { console.error('[Auto-caught Error]', e); }
       };
 
       const cleanup = () => {
@@ -793,7 +765,7 @@ export default function ClanManager() {
         const parsed = JSON.parse(stored);
         return parsed[userId] || null;
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
     return null;
   }, [currentActiveGuildId]);
 
@@ -823,7 +795,7 @@ export default function ClanManager() {
       if (changed) {
         localStorage.setItem(key, JSON.stringify(existing));
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
   }, [currentActiveGuildId]);
 
   const fetchDossiers = (filterStatus = 'ALL', search = '') => {
@@ -948,7 +920,7 @@ export default function ClanManager() {
               } else {
                 hwid = localStorage.getItem('hub_hwid') || 'dev_client';
               }
-            } catch (err) {}
+            } catch (err) { console.error('[Auto-caught Error]', err); }
 
             if (window.electronAPI?.dev) {
               const signRes = await window.electronAPI.dev.signChallenge({
@@ -1331,7 +1303,7 @@ export default function ClanManager() {
                   if (prev.loggingConfigJson) {
                     logCfg = typeof prev.loggingConfigJson === 'string' ? JSON.parse(prev.loggingConfigJson) : prev.loggingConfigJson;
                   }
-                } catch (e) {}
+                } catch (e) { console.error('[Auto-caught Error]', e); }
                 logCfg.defaultChannelId = newChannelId;
                 if (logCfg.enabled === undefined) logCfg.enabled = true;
                 const updatedConfig = {
@@ -1353,13 +1325,13 @@ export default function ClanManager() {
             const newUrl = data.data.inviteUrl;
             const curCfg = latestConfigRef.current;
             let currentRConfig = {};
-            try { if (curCfg?.recruitmentConfigJson) currentRConfig = JSON.parse(curCfg.recruitmentConfigJson); } catch(e) {}
+            try { if (curCfg?.recruitmentConfigJson) currentRConfig = JSON.parse(curCfg.recruitmentConfigJson); } catch (e) { console.error('[Auto-caught Error]', e); }
             const isRecLinkEmpty = !currentRConfig.link || !currentRConfig.link.trim();
 
             setConfig(prev => {
               if (!prev) return prev;
               let rConf = {};
-              try { if (prev.recruitmentConfigJson) rConf = JSON.parse(prev.recruitmentConfigJson); } catch(e) {}
+              try { if (prev.recruitmentConfigJson) rConf = JSON.parse(prev.recruitmentConfigJson); } catch (e) { console.error('[Auto-caught Error]', e); }
               const shouldUpdateRConfig = !rConf.link || !rConf.link.trim();
               const updated = {
                 ...prev,
@@ -1395,7 +1367,7 @@ export default function ClanManager() {
 
             const curCfg = latestConfigRef.current;
             let rcLink = '';
-            try { if (curCfg?.recruitmentConfigJson) rcLink = JSON.parse(curCfg.recruitmentConfigJson)?.link; } catch(e) {}
+            try { if (curCfg?.recruitmentConfigJson) rcLink = JSON.parse(curCfg.recruitmentConfigJson)?.link; } catch (e) { console.error('[Auto-caught Error]', e); }
             const currentRecLink = (rcLink || curCfg?.discordLink || '').trim();
             if (currentRecLink && currentRecLink === lastVerifiedLinkRef.current) {
               setRecruitmentInviteStatus(status);
@@ -1418,7 +1390,7 @@ export default function ClanManager() {
             setConfig(prev => {
               if (!prev) return prev;
               let currentRConfig = {};
-              try { if (prev.recruitmentConfigJson) currentRConfig = JSON.parse(prev.recruitmentConfigJson); } catch(e) {}
+              try { if (prev.recruitmentConfigJson) currentRConfig = JSON.parse(prev.recruitmentConfigJson); } catch (e) { console.error('[Auto-caught Error]', e); }
               const newRConfig = { ...currentRConfig, link: newUrl };
               const shouldUpdateMainLink = !prev.discordLink || !prev.discordLink.trim();
               const updated = {
@@ -1475,7 +1447,7 @@ export default function ClanManager() {
             addLog('Discord channels auto-updated from server');
           }
         }
-      } catch (err) {}
+      } catch (err) { console.error('[Auto-caught Error]', err); }
     };
 
     ws.addEventListener('message', handleMessage);
@@ -1490,7 +1462,7 @@ export default function ClanManager() {
           } else {
             hwid = localStorage.getItem('hub_hwid') || 'dev_client';
           }
-        } catch (err) {}
+        } catch (err) { console.error('[Auto-caught Error]', err); }
         ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid }));
       })();
     } else {
@@ -1537,7 +1509,7 @@ export default function ClanManager() {
             } else {
               hwid = localStorage.getItem('hub_hwid') || 'dev_client';
             }
-          } catch (err) {}
+          } catch (err) { console.error('[Auto-caught Error]', err); }
           ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid }));
         })();
       } else {
@@ -1672,7 +1644,7 @@ export default function ClanManager() {
         r.title = newName ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${newName}` : t('clan_rec_base', 'Набор в клан');
         updatedRecruitment = JSON.stringify(r);
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
 
     const updated = {
       ...config,
@@ -1702,7 +1674,7 @@ export default function ClanManager() {
       let r = {};
       try {
         if (updatedConfig.recruitmentConfigJson) r = JSON.parse(updatedConfig.recruitmentConfigJson);
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
       if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || r.title.includes('GODS')) {
         r.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${clanName}`;
         updatedConfig.recruitmentConfigJson = JSON.stringify(r);
@@ -1726,7 +1698,7 @@ export default function ClanManager() {
   const syncPermissions = () => {
     setSaveStatus('saving');
     let channelsConfig = {};
-    try { if (config.channelsConfigJson) channelsConfig = JSON.parse(config.channelsConfigJson); } catch (e) {}
+    try { if (config.channelsConfigJson) channelsConfig = JSON.parse(config.channelsConfigJson); } catch (e) { console.error('[Auto-caught Error]', e); }
     
     // permissions structure stored in channelsConfig.permissions
     const permissions = { ...(channelsConfig.permissions || {}) };
@@ -1735,7 +1707,7 @@ export default function ClanManager() {
     try {
       const l = typeof config.loggingConfigJson === 'string' ? JSON.parse(config.loggingConfigJson) : config.loggingConfigJson;
       defaultLogChannelId = l?.defaultChannelId || null;
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
 
     const getChannelId = (cKey) => channelsConfig[cKey] || (cKey === 'logs' ? defaultLogChannelId : null);
 
@@ -1866,7 +1838,7 @@ export default function ClanManager() {
       let customRoles = [];
       try {
         if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
       const idx = customRoles.findIndex(r => r.id === customId);
       if (idx !== -1) {
         customRoles[idx].name = val;
@@ -1876,7 +1848,7 @@ export default function ClanManager() {
       let roleNames = {};
       try {
         if (config.roleNamesJson) roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
       roleNames[key] = val;
       setConfig({ ...config, roleNamesJson: JSON.stringify(roleNames) });
     }
@@ -1893,7 +1865,7 @@ export default function ClanManager() {
       let customRoles = [];
       try {
         if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
       const idx = customRoles.findIndex(r => r.id === customId);
       if (idx !== -1) {
         customRoles[idx].name = currentName;
@@ -1904,7 +1876,7 @@ export default function ClanManager() {
       let roleNames = {};
       try {
         if (config.roleNamesJson) roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
       roleNames[key] = currentName;
       updatedConfig.roleNamesJson = JSON.stringify(roleNames);
       roleId = updatedConfig[dbKey];
@@ -1941,7 +1913,7 @@ export default function ClanManager() {
       let customRoles = [];
       try {
         if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
       const idx = customRoles.findIndex(r => r.id === customId);
       if (idx !== -1) {
         customRoles[idx].roleId = selectedRoleId;
@@ -1958,7 +1930,7 @@ export default function ClanManager() {
       let roleNames = {};
       try {
         if (config.roleNamesJson) roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
       if (newDiscordName) {
         roleNames[key] = newDiscordName;
       }
@@ -1986,7 +1958,7 @@ export default function ClanManager() {
           if (config?.roleNamesJson) {
             roleNames = typeof config.roleNamesJson === 'string' ? JSON.parse(config.roleNamesJson) : config.roleNamesJson;
           }
-        } catch (e) {}
+        } catch (e) { console.error('[Auto-caught Error]', e); }
         const fromConfig = roleNames[r.key];
         roleName = (fromConfig !== undefined && !fromConfig.toLowerCase().includes('clan manager') ? fromConfig : (r.defaultName || r.defaultRu || '')).trim() || t('role_new_default', 'Новая роль');
       }
@@ -2031,7 +2003,7 @@ export default function ClanManager() {
     let customRoles = [];
     try {
       if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
     
     const newId = `custom_${Date.now()}`;
     const newRole = {
@@ -2062,7 +2034,7 @@ export default function ClanManager() {
     let customRoles = [];
     try {
       if (config.customRolesJson) customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
     
     const filtered = customRoles.filter(r => r.id !== customId);
     const updatedConfig = {
@@ -2087,7 +2059,7 @@ export default function ClanManager() {
       if (config.deletedRolesJson) {
         deletedRoles = typeof config.deletedRolesJson === 'string' ? JSON.parse(config.deletedRolesJson) : config.deletedRolesJson;
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
 
     if (!deletedRoles.includes(roleKey)) {
       deletedRoles.push(roleKey);
@@ -2128,7 +2100,7 @@ export default function ClanManager() {
       if (config.customRolesJson) {
         customRoles = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
     if (!Array.isArray(customRoles)) customRoles = [];
 
     const customRoleByRoleId = new Map();
@@ -2418,7 +2390,7 @@ export default function ClanManager() {
           const rc = JSON.parse(config.recruitmentConfigJson);
           const linkToCheck = rc.link || config.discordLink;
           if (linkToCheck) verifyRecruitmentInvite(linkToCheck);
-        } catch (e) {}
+        } catch (e) { console.error('[Auto-caught Error]', e); }
       } else if (config?.discordLink) {
         verifyRecruitmentInvite(config.discordLink);
       }
@@ -3834,7 +3806,7 @@ export default function ClanManager() {
       if (config.channelsConfigJson) {
         cConfig = JSON.parse(config.channelsConfigJson);
       }
-    } catch (e) {}
+    } catch (e) { console.error('[Auto-caught Error]', e); }
 
     if (activeTab === 'recruitment') {
       let rConfig = {
@@ -3848,7 +3820,7 @@ export default function ClanManager() {
         if (config.recruitmentConfigJson) {
           rConfig = { ...rConfig, ...JSON.parse(config.recruitmentConfigJson) };
         }
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
 
       if (config?.name) {
         if (!rConfig.title || rConfig.title === t('clan_rec_gods', 'Набор в клан GODS') || rConfig.title === t('clan_rec_base', 'Набор в клан')) {
@@ -3889,7 +3861,7 @@ export default function ClanManager() {
         if (config.wipeTemplatesJson) {
           wTemplates = JSON.parse(config.wipeTemplatesJson);
         }
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
 
       const voteChannel = discordInfo?.channels?.find(c => c.id === cConfig.votes);
       const channelName = voteChannel ? voteChannel.name : t('clan_default_vote_ch', 'голосования');
@@ -3951,7 +3923,7 @@ export default function ClanManager() {
         if (config.adConfigJson) {
           aConfig = { ...aConfig, ...JSON.parse(config.adConfigJson) };
         }
-      } catch (e) {}
+      } catch (e) { console.error('[Auto-caught Error]', e); }
 
       const adsChannel = discordInfo?.channels?.find(c => c.id === cConfig.ads);
       const channelName = adsChannel ? adsChannel.name : t('clan_default_ads_ch', 'реклама');
