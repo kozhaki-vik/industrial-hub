@@ -783,22 +783,24 @@ export default function ClanManager() {
   }, [ws, wsStatus]);
 
   // Persistent text-only cache of members' display names, usernames, and roles (so nicknames survive after member leaves)
+  const currentActiveGuildId = (isDevAdminActive && activeDevGuildIdRef.current) || guildId || 'global';
+
   const getCachedMemberMeta = useCallback((userId) => {
     if (!userId) return null;
     try {
-      const stored = localStorage.getItem(`ih_clan_members_meta_${activeGid || 'global'}`);
+      const stored = localStorage.getItem(`ih_clan_members_meta_${currentActiveGuildId}`);
       if (stored) {
         const parsed = JSON.parse(stored);
         return parsed[userId] || null;
       }
     } catch (e) {}
     return null;
-  }, [activeGid]);
+  }, [currentActiveGuildId]);
 
   const saveCachedMembersMeta = useCallback((membersList) => {
     if (!Array.isArray(membersList) || membersList.length === 0) return;
     try {
-      const key = `ih_clan_members_meta_${activeGid || 'global'}`;
+      const key = `ih_clan_members_meta_${currentActiveGuildId}`;
       const existing = JSON.parse(localStorage.getItem(key) || '{}');
       let changed = false;
       membersList.forEach(m => {
@@ -822,7 +824,7 @@ export default function ClanManager() {
         localStorage.setItem(key, JSON.stringify(existing));
       }
     } catch (e) {}
-  }, [activeGid]);
+  }, [currentActiveGuildId]);
 
   const fetchDossiers = (filterStatus = 'ALL', search = '') => {
     if (!ws || wsStatus !== 'online') return;
@@ -3986,7 +3988,7 @@ const contextValue = {
   ClanManager: typeof ClanManager !== "undefined" ? ClanManager : undefined,
   aConfig: typeof aConfig !== "undefined" ? aConfig : undefined,
   activeDevGuildIdRef: typeof activeDevGuildIdRef !== "undefined" ? activeDevGuildIdRef : undefined,
-  activeGid: typeof activeGid !== "undefined" ? activeGid : undefined,
+  currentActiveGuildId: typeof currentActiveGuildId !== "undefined" ? currentActiveGuildId : undefined,
   activeTab: typeof activeTab !== "undefined" ? activeTab : undefined,
   activeTpl: typeof activeTpl !== "undefined" ? activeTpl : undefined,
   activeVotes: typeof activeVotes !== "undefined" ? activeVotes : undefined,
