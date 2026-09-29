@@ -53,9 +53,9 @@ function AppMain() {
   const isClan = location.pathname === '/clan';
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] dark:bg-slate-950 transition-colors duration-300 animate-main-fade-in">
+    <div className={`min-h-screen bg-[#F8F9FA] dark:bg-slate-950 transition-colors duration-300 animate-main-fade-in ${isClan ? 'h-screen overflow-hidden flex flex-col' : ''}`}>
       <Header />
-      <main className={`w-full mx-auto px-6 py-8 ${isClan ? 'max-w-[1780px]' : 'max-w-6xl'}`}>
+      <main className={`w-full mx-auto px-6 ${isClan ? 'max-w-[1780px] flex-1 py-4 min-h-0 overflow-hidden flex flex-col' : 'max-w-6xl py-8'}`}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
