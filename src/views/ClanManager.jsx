@@ -4502,11 +4502,6 @@ const contextValue = {
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       {t('clan_nav_clan_operations', 'Управление кланом')}
                     </span>
-                    {saveStatus && (
-                      <span className={`text-[10px] font-medium ${saveStatus === 'success' ? 'text-green-500' : saveStatus.startsWith('error') ? 'text-red-500' : 'text-blue-500 animate-pulse'}`}>
-                        {saveStatus === 'success' ? `✓ ${t('clan_saved_success') || 'Сохранено'}` : saveStatus === 'saving' ? (t('clan_roles_syncing') || 'Синхронизация...') : (t('clan_error') || 'Ошибка')}
-                      </span>
-                    )}
                   </div>
 
                   {clanTabs.map(tab => {
