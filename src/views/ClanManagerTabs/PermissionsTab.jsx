@@ -36,18 +36,21 @@ const PERMISSIONS_LIST = [
 const PermissionRow = React.memo(function PermissionRow({
   perm,
   state,
-  onToggle
+  onToggle,
+  t
 }) {
   return (
     <div className="flex items-center justify-between py-3 px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors group">
-      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{perm.label}</span>
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        {t ? t(`clan_perm_${perm.id}`, perm.label) : perm.label}
+      </span>
       
       <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 gap-1">
         <button
           type="button"
           onClick={() => onToggle(perm.id, 'allow')}
           className={`w-8 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${state === 'allow' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-emerald-500'}`}
-          title="Разрешить"
+          title={t ? t('clan_perm_allow', 'Разрешить') : 'Разрешить'}
         >
           <Check className="w-4 h-4" strokeWidth={state === 'allow' ? 3 : 2} />
         </button>
@@ -56,7 +59,7 @@ const PermissionRow = React.memo(function PermissionRow({
           type="button"
           onClick={() => onToggle(perm.id, 'inherit')}
           className={`w-8 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${state === 'inherit' ? 'bg-slate-300 dark:bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-600 dark:text-slate-300'}`}
-          title="Наследовать"
+          title={t ? t('clan_perm_inherit', 'Наследовать') : 'Наследовать'}
         >
           <Slash className="w-4 h-4" strokeWidth={state === 'inherit' ? 3 : 2} />
         </button>
@@ -65,7 +68,7 @@ const PermissionRow = React.memo(function PermissionRow({
           type="button"
           onClick={() => onToggle(perm.id, 'deny')}
           className={`w-8 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${state === 'deny' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-rose-500'}`}
-          title="Запретить"
+          title={t ? t('clan_perm_deny', 'Запретить') : 'Запретить'}
         >
           <X className="w-4 h-4" strokeWidth={state === 'deny' ? 3 : 2} />
         </button>
@@ -191,7 +194,7 @@ export default function PermissionsTab() {
             {t('clan_auto_21', 'Настройка прав доступа')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-3xl">
-            Точная настройка прав ролей в каналах Discord. Изменения применяются моментально.
+            {t('clan_perms_desc', 'Точная настройка прав ролей в каналах Discord. Изменения применяются моментально.')}
           </p>
         </div>
       </div>
@@ -200,7 +203,7 @@ export default function PermissionsTab() {
         {/* Left Column: Selectors */}
         <div className="w-full lg:w-1/3 space-y-6">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4">1. Выберите роль</h4>
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('clan_perms_step_role', '1. Выберите роль')}</h4>
             <div className="space-y-1.5 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
               {availableRoles.map(r => (
                 <button
@@ -216,13 +219,13 @@ export default function PermissionsTab() {
                 </button>
               ))}
               {availableRoles.length === 0 && (
-                <div className="text-sm text-slate-500 text-center py-4">Роли не настроены. Сначала выберите роли во вкладке "Роли".</div>
+                <div className="text-sm text-slate-500 text-center py-4">{t('clan_perms_no_roles', 'Роли не настроены. Сначала выберите роли во вкладке "Роли".')}</div>
               )}
             </div>
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4">2. Выберите канал</h4>
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('clan_perms_step_channel', '2. Выберите канал')}</h4>
             <div className="space-y-1.5 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
               {availableChannels.map(c => (
                 <button
@@ -238,7 +241,7 @@ export default function PermissionsTab() {
                 </button>
               ))}
               {availableChannels.length === 0 && (
-                <div className="text-sm text-slate-500 text-center py-4">Каналы не настроены. Сначала привяжите их во вкладке "Каналы".</div>
+                <div className="text-sm text-slate-500 text-center py-4">{t('clan_perms_no_channels', 'Каналы не настроены. Сначала привяжите их во вкладке "Каналы".')}</div>
               )}
             </div>
           </div>
@@ -255,11 +258,14 @@ export default function PermissionsTab() {
             
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-lg font-semibold text-slate-800 dark:text-white">Права канала</h4>
+                <h4 className="text-lg font-semibold text-slate-800 dark:text-white">{t('clan_perms_channel_perms', 'Права канала')}</h4>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {selectedRole && selectedChannel 
-                    ? `Настройка прав для роли ${availableRoles.find(r => r.id === selectedRole)?.name} в канале #${availableChannels.find(c => c.id === selectedChannel)?.name}`
-                    : 'Выберите роль и канал для настройки'}
+                    ? t('clan_perms_configuring_role_channel', 'Настройка прав для роли {{role}} в канале #{{channel}}', {
+                        role: availableRoles.find(r => r.id === selectedRole)?.name,
+                        channel: availableChannels.find(c => c.id === selectedChannel)?.name
+                      })
+                    : t('clan_perms_select_hint', 'Выберите роль и канал для настройки')}
                 </p>
               </div>
             </div>
@@ -267,7 +273,7 @@ export default function PermissionsTab() {
             {(!selectedRole || !selectedChannel) ? (
               <div className="text-center py-12 text-slate-500">
                 <Lock className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                Выберите роль и канал слева
+                {t('clan_perms_select_both', 'Выберите роль и канал слева')}
               </div>
             ) : (
               <div className="space-y-1">
@@ -277,6 +283,7 @@ export default function PermissionsTab() {
                     perm={perm}
                     state={getPermissionState(perm.bit)}
                     onToggle={handleTogglePermission}
+                    t={t}
                   />
                 ))}
               </div>

@@ -226,7 +226,7 @@ export default function ModerationTab() {
 
               <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  {am.enabled ? (t('clan_mod_enabled') || 'Включено') : (t('clan_mod_disabled') || 'Выключено')}
+                  {am.enabled ? t('clan_mod_enabled', 'Включено') : t('clan_mod_disabled', 'Выключено')}
                 </span>
                 <ToggleSwitch
                   checked={Boolean(am.enabled)}
@@ -409,7 +409,7 @@ export default function ModerationTab() {
 
               <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  {bw.enabled ? (t('clan_mod_enabled') || 'Включено') : (t('clan_mod_disabled') || 'Выключено')}
+                  {bw.enabled ? t('clan_mod_enabled', 'Включено') : t('clan_mod_disabled', 'Выключено')}
                 </span>
                 <ToggleSwitch
                   checked={Boolean(bw.enabled)}
@@ -595,7 +595,7 @@ export default function ModerationTab() {
               </div>
               <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  {warns?.enabled !== false ? (t('clan_mod_enabled') || 'Включено') : (t('clan_mod_disabled') || 'Выключено')}
+                  {warns?.enabled !== false ? t('clan_mod_enabled', 'Включено') : t('clan_mod_disabled', 'Выключено')}
                 </span>
                 <ToggleSwitch
                   checked={warns?.enabled !== false}

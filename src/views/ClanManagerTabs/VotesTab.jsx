@@ -35,7 +35,7 @@ const VoteTemplateCard = React.memo(function VoteTemplateCard({
             value={tpl.name || ''} 
             onChange={e => onUpdate(index, 'name', e.target.value, false)} 
             onBlur={e => onUpdate(index, 'name', e.target.value, true)}
-            placeholder="Вайп на Растрории" 
+            placeholder={t('clan_vote_title_placeholder', 'Вайп на Растрории')} 
           />
         </div>
         <div>

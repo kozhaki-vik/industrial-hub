@@ -60,7 +60,7 @@ export default function Header() {
             >
               <Download className="w-4 h-4 animate-bounce" />
               <span className="text-xs font-bold">
-                Обновить сейчас (Restart)
+                {t('update_restart_now', 'Обновить сейчас')}
               </span>
             </button>
           )}
@@ -69,7 +69,7 @@ export default function Header() {
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full border border-emerald-100 dark:border-emerald-800">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                {t('online_count')} {onlineCount.toLocaleString('ru-RU')}
+                {t('online_count')} {onlineCount.toLocaleString()}
               </span>
             </div>
           )}
@@ -77,7 +77,7 @@ export default function Header() {
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-full border border-amber-100 dark:border-amber-800">
               <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
               <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                Connecting...
+                {t('status_connecting', 'Подключение...')}
               </span>
             </div>
           )}
@@ -85,7 +85,7 @@ export default function Header() {
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-100 dark:border-red-800">
               <div className="w-2 h-2 rounded-full bg-red-500" />
               <span className="text-xs font-semibold text-red-700 dark:text-red-400">
-                Offline
+                {t('status_offline', 'Не в сети')}
               </span>
             </div>
           )}
@@ -94,7 +94,7 @@ export default function Header() {
             <button 
               onClick={() => setIsChatOpen(true)}
               className="relative p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors ml-2"
-              title="Поддержка / Чаты"
+              title={t('support_chats', 'Поддержка / Чаты')}
             >
               <Bell className="w-5 h-5 text-slate-600 dark:text-slate-300" />
               {unreadAdminCount > 0 && (

@@ -2472,12 +2472,12 @@ export default function ClanManager() {
                     {isDevAuthenticated ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium text-xs border border-emerald-500/20">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        Сессия активна
+                        {t('dev_session_active', 'Сессия активна')}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 font-medium text-xs border border-amber-500/20">
                         <span className="w-2 h-2 rounded-full bg-amber-400" />
-                        Не авторизован
+                        {t('dev_not_auth', 'Не авторизован')}
                       </span>
                     )}
                     {guildId && (
@@ -2489,16 +2489,16 @@ export default function ClanManager() {
                         }}
                         className="px-3 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
                       >
-                        Вернуться к текущему серверу →
+                        {t('dev_return_curr_guild', 'Вернуться к текущему серверу →')}
                       </button>
                     )}
                   </div>
 
                   <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                    Управление Discord-серверами
+                    {t('dev_guilds_mgmt_title', 'Управление Discord-серверами')}
                   </h2>
                   <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
-                    Прямой доступ ко всем серверам, на которых авторизован бот. Выберите любой сервер из списка ниже для детальной настройки ролей, каналов, динамических войсов и участников.
+                    {t('dev_guilds_mgmt_desc', 'Прямой доступ ко всем серверам, на которых авторизован бот. Выберите любой сервер из списка ниже для детальной настройки ролей, каналов, динамических войсов и участников.')}
                   </p>
                 </div>
 
@@ -2510,7 +2510,7 @@ export default function ClanManager() {
                     className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-98 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
                   >
                     <RefreshCw className={`w-4 h-4 ${loadingDevGuilds ? 'animate-spin' : ''}`} />
-                    <span>{loadingDevGuilds ? 'Загрузка...' : 'Обновить список'}</span>
+                    <span>{loadingDevGuilds ? t('loading', 'Загрузка...') : t('dev_refresh_list', 'Обновить список')}</span>
                   </button>
 
                   <button
@@ -2519,7 +2519,7 @@ export default function ClanManager() {
                     className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 hover:border-slate-600 transition-all cursor-pointer"
                   >
                     <Plus className="w-4 h-4 text-indigo-400" />
-                    <span>Пригласить бота</span>
+                    <span>{t('dev_invite_bot', 'Пригласить бота')}</span>
                     <ExternalLink className="w-3.5 h-3.5 opacity-60" />
                   </button>
                 </div>
@@ -2538,7 +2538,7 @@ export default function ClanManager() {
                     onClick={() => navigate('/settings')}
                     className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
                   >
-                    В Настройки
+                    {t('dev_to_settings', 'В Настройки')}
                   </button>
                   <button
                     type="button"
@@ -2560,7 +2560,7 @@ export default function ClanManager() {
                     type="text"
                     value={guildSearchQuery}
                     onChange={(e) => setGuildSearchQuery(e.target.value)}
-                    placeholder="Поиск по названию или ID сервера..."
+                    placeholder={t('dev_search_guild_placeholder', 'Поиск по названию или ID сервера...')}
                     className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors shadow-2xs"
                   />
                   {guildSearchQuery && (
@@ -2575,7 +2575,7 @@ export default function ClanManager() {
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium self-end sm:self-auto">
-                  <span>Обнаружено серверов:</span>
+                  <span>{t('dev_guilds_found', 'Обнаружено серверов:')}</span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
                     {devGuilds.length}
                   </span>
@@ -2605,10 +2605,10 @@ export default function ClanManager() {
                   </div>
                   <div className="space-y-1.5 max-w-md mx-auto">
                     <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                      Список серверов пока пуст
+                      {t('dev_guilds_empty_title', 'Список серверов пока пуст')}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Бот подключен к серверу, но пока не добавлен ни на один Discord-сервер, либо список ещё загружается. Добавьте бота на сервер или нажмите обновить.
+                      {t('dev_guilds_empty_desc', 'Бот подключен к серверу, но пока не добавлен ни на один Discord-сервер, либо список ещё загружается. Добавьте бота на сервер или нажмите обновить.')}
                     </p>
                   </div>
                   <div className="flex items-center justify-center gap-3 pt-2">
@@ -2617,20 +2617,20 @@ export default function ClanManager() {
                       onClick={handleRefreshDevGuilds}
                       className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
                     >
-                      Обновить список серверов
+                      {t('dev_refresh_guilds_btn', 'Обновить список серверов')}
                     </button>
                     <button
                       type="button"
                       onClick={() => openExternalUrl(BOT_INVITE_URL)}
                       className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                     >
-                      Пригласить бота в Discord
+                      {t('dev_invite_bot_btn', 'Пригласить бота в Discord')}
                     </button>
                   </div>
                 </div>
               ) : filteredDevGuilds.length === 0 ? (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 text-center text-slate-500 text-xs">
-                  По запросу «{guildSearchQuery}» серверов не найдено.
+                  {t('dev_no_guilds_matched', 'По запросу «{{query}}» серверов не найдено.', { query: guildSearchQuery })}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -2671,11 +2671,11 @@ export default function ClanManager() {
                             
                             {g.isConfigured ? (
                               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 shrink-0">
-                                Настроен
+                                {t('dev_guild_configured', 'Настроен')}
                               </span>
                             ) : (
                               <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium border border-slate-200 dark:border-slate-700 shrink-0">
-                                Новый
+                                {t('dev_guild_new', 'Новый')}
                               </span>
                             )}
                           </div>
@@ -2683,11 +2683,11 @@ export default function ClanManager() {
                           <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800/80">
                             <div className="flex items-center gap-1.5">
                               <Users className="w-3.5 h-3.5 text-slate-400" />
-                              <span>{g.memberCount} участников</span>
+                              <span>{t('dev_guild_members_count', '{{count}} участников', { count: g.memberCount })}</span>
                             </div>
                             {isSelected && (
                               <span className="text-indigo-500 dark:text-indigo-400 font-semibold text-[11px] ml-auto">
-                                ● Текущий выбор
+                                {t('dev_guild_curr_choice', '● Текущий выбор')}
                               </span>
                             )}
                           </div>
@@ -2702,7 +2702,7 @@ export default function ClanManager() {
                               : 'bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-800 dark:text-slate-200'
                           }`}
                         >
-                          <span>Управлять сервером</span>
+                          <span>{t('dev_guild_manage_btn', 'Управлять сервером')}</span>
                           <span className="transition-transform group-hover:translate-x-1">→</span>
                         </button>
                       </div>
@@ -2715,7 +2715,7 @@ export default function ClanManager() {
             {/* Collapsible Standard Link Section */}
             <details className="group border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-5 transition-all">
               <summary className="cursor-pointer font-bold text-xs text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center justify-between select-none">
-                <span>Стандартная привязка клана по коду (/hub_link)</span>
+                <span>{t('dev_standard_link_summary', 'Стандартная привязка клана по коду (/hub_link)')}</span>
                 <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180 text-slate-400" />
               </summary>
               <div className="pt-5 border-t border-slate-100 dark:border-slate-800 mt-4">
@@ -4249,7 +4249,7 @@ const contextValue = {
                               {currentG?.name || (guildId ? `ID: ${guildId}` : 'Выберите сервер...')}
                             </div>
                             <div className="text-[9px] text-slate-400 truncate">
-                              {currentG?.memberCount !== undefined ? `${currentG.memberCount} уч.` : 'Discord Guild'}
+                              {currentG?.memberCount !== undefined ? `${currentG.memberCount} ${t('clan_stats_members_short', 'уч.')}` : 'Discord Guild'}
                             </div>
                           </div>
                         </div>
@@ -4266,7 +4266,7 @@ const contextValue = {
                           type="text"
                           value={guildSearchQuery}
                           onChange={(e) => setGuildSearchQuery(e.target.value)}
-                          placeholder="Поиск сервера..."
+                          placeholder={t('dev_search_guild_short_placeholder', 'Поиск сервера...')}
                           autoFocus
                           className="w-full pl-7 pr-2 py-1 text-xs rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                         />
@@ -4298,12 +4298,12 @@ const contextValue = {
                                   )}
                                   <div className="min-w-0">
                                     <div className="truncate text-xs">{g.name}</div>
-                                    <div className="text-[10px] opacity-70">{g.memberCount} участников</div>
+                                    <div className="text-[10px] opacity-70">{t('dev_guild_members_count', '{{count}} участников', { count: g.memberCount })}</div>
                                   </div>
                                 </div>
                                 {g.isConfigured && (
                                   <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono shrink-0 ${isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                                    БД
+                                    {t('db_badge', 'БД')}
                                   </span>
                                 )}
                               </button>
@@ -4318,14 +4318,14 @@ const contextValue = {
                           className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
                         >
                           <RefreshCw className={`w-3 h-3 ${loadingDevGuilds ? 'animate-spin' : ''}`} />
-                          Обновить
+                          {t('refresh', 'Обновить')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setIsGuildDropdownOpen(false)}
                           className="text-[10px] text-slate-400 hover:text-slate-300 cursor-pointer"
                         >
-                          Закрыть
+                          {t('close', 'Закрыть')}
                         </button>
                       </div>
                     </div>
@@ -4337,7 +4337,7 @@ const contextValue = {
                   onClick={() => setDevShowServerGrid(true)}
                   className="mt-1.5 w-full flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 hover:text-indigo-200 text-[10px] font-bold transition-all cursor-pointer"
                 >
-                  <span>← Все серверы ({devGuilds.length})</span>
+                  <span>← {t('dev_all_servers_btn', 'Все серверы ({{count}})', { count: devGuilds.length })}</span>
                 </button>
               </div>
             )}
@@ -4605,10 +4605,10 @@ const contextValue = {
           <ShieldCheck className="w-7 h-7" />
         </div>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
-          Режим администратора активен
+          {t('dev_admin_active_title', 'Режим администратора активен')}
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-          Бот подключен к {devGuilds.length} серверам. Выберите любой сервер из списка ниже, чтобы открыть панель управления:
+          {t('dev_admin_active_desc', 'Бот подключен к {{count}} серверам. Выберите любой сервер из списка ниже, чтобы открыть панель управления:', { count: devGuilds.length })}
         </p>
         <div className="w-full space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
           {devGuilds.map((g) => (
@@ -4631,22 +4631,22 @@ const contextValue = {
                     {g.name}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {g.memberCount} участников • ID: {g.id}
+                    {t('dev_guild_members_count', '{{count}} участников', { count: g.memberCount })} • ID: {g.id}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {g.isConfigured ? (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-                    Настроен
+                    {t('dev_guild_configured', 'Настроен')}
                   </span>
                 ) : (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">
-                    Новый
+                    {t('dev_guild_new', 'Новый')}
                   </span>
                 )}
                 <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">
-                  Управлять →
+                  {t('dev_guild_manage_arrow', 'Управлять →')}
                 </div>
               </div>
             </button>

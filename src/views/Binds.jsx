@@ -248,8 +248,8 @@ export default function Binds() {
               <BookOpen className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate" title={t('bind_sig_' + item.id)}>
-                {t('bind_sig_' + item.id)}
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate" title={t('bind_sig_' + item.id, item.name)}>
+                {t('bind_sig_' + item.id, item.name)}
               </h4>
             </div>
           </div>

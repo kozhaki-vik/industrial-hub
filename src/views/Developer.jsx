@@ -586,15 +586,15 @@ export default function Developer() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  Управление Discord-серверами (Режим разработчика)
+                  {t('dev_discord_mgmt_title', 'Управление Discord-серверами (Режим разработчика)')}
                   {hasSavedKey && (
                     <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-                      DPAPI Защищен
+                      {t('dev_dpapi_protected', 'DPAPI Защищен')}
                     </span>
                   )}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Безопасное управление серверами через 32-значный мастер-ключ (PSK). Ключ шифруется Windows DPAPI и не хранится в открытом виде.
+                  {t('dev_dpapi_desc', 'Безопасное управление серверами через 32-значный мастер-ключ (PSK). Ключ шифруется Windows DPAPI и не хранится в открытом виде.')}
                 </p>
               </div>
             </div>
@@ -603,10 +603,10 @@ export default function Developer() {
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 px-4 py-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
               <div className="text-right">
                 <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                  {adminModeEnabled ? 'Админ-мод активен' : 'Обычный режим'}
+                  {adminModeEnabled ? t('dev_admin_mode_active', 'Админ-мод активен') : t('dev_normal_mode', 'Обычный режим')}
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {adminModeEnabled ? 'Выбор любого сервера в Clan Manager' : 'Только привязанный сервер'}
+                  {adminModeEnabled ? t('dev_admin_mode_hint', 'Выбор любого сервера в Clan Manager') : t('dev_normal_mode_hint', 'Только привязанный сервер')}
                 </div>
               </div>
               <button
@@ -630,10 +630,10 @@ export default function Developer() {
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Key className="w-3.5 h-3.5 text-indigo-500" />
-                  32-значный ключ разработчика (DEV_MASTER_KEY)
+                  {t('dev_master_key_label', '32-значный ключ разработчика (DEV_MASTER_KEY)')}
                 </span>
                 <span className={`text-[11px] font-mono ${devKeyInput.trim().length === 32 ? 'text-emerald-500 font-bold' : 'text-slate-400'}`}>
-                  {devKeyInput.trim().length} / 32 символов
+                  {devKeyInput.trim().length} / 32 {t('symbols', 'символов')}
                 </span>
               </label>
 
@@ -643,7 +643,7 @@ export default function Developer() {
                     type={showDevKey ? 'text' : 'password'}
                     value={devKeyInput}
                     onChange={(e) => setDevKeyInput(e.target.value)}
-                    placeholder="Введите или вставьте 32-значный ключ..."
+                    placeholder={t('dev_key_input_placeholder', 'Введите или вставьте 32-значный ключ...')}
                     maxLength={32}
                     className="w-full px-3.5 py-2 pr-10 text-sm font-mono rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
                   />
@@ -662,14 +662,14 @@ export default function Developer() {
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1.5 cursor-pointer"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  Сохранить ключ
+                  {t('dev_save_key', 'Сохранить ключ')}
                 </button>
 
                 {hasSavedKey && (
                   <button
                     type="button"
                     onClick={handleRemoveDevKey}
-                    title="Удалить ключ"
+                    title={t('dev_delete_key', 'Удалить ключ')}
                     className="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -695,11 +695,11 @@ export default function Developer() {
               <div className="flex items-center gap-2">
                 <Server className="w-4 h-4 text-slate-400 shrink-0" />
                 <span>
-                  Статус: {hasSavedKey ? <strong className="text-emerald-500">Ключ активен на этом ПК</strong> : <strong className="text-amber-500">Ключ не настроен</strong>}
+                  {t('status', 'Статус')}: {hasSavedKey ? <strong className="text-emerald-500">{t('dev_key_active', 'Ключ активен на этом ПК')}</strong> : <strong className="text-amber-500">{t('dev_key_not_configured', 'Ключ не настроен')}</strong>}
                 </span>
               </div>
               <div className="text-[11px] text-slate-400">
-                Передача: HMAC-SHA256 Challenge-Response (защита от перехвата)
+                {t('dev_transfer_protocol_hint', 'Передача: HMAC-SHA256 Challenge-Response (защита от перехвата)')}
               </div>
             </div>
           </div>

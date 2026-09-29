@@ -249,11 +249,11 @@ export default function Settings() {
                 <div className="flex items-center gap-2 mb-1">
                   <Power className="w-5 h-5 text-orange-500 opacity-70" />
                   <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Запускать свернутой в трей
+                    {t('settings_start_minimized_title', 'Запускать свернутой в трей')}
                   </h3>
                 </div>
                 <p className="text-sm text-slate-500">
-                  Приложение будет запускаться сразу в системном трее, минуя отображение окна
+                  {t('settings_start_minimized_desc', 'Приложение будет запускаться сразу в системном трее, минуя отображение окна')}
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -277,11 +277,11 @@ export default function Settings() {
                 <div className="flex items-center gap-2 mb-1">
                   <Bell className="w-5 h-5 text-orange-500 opacity-70" />
                   <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Показывать информацию об обновлениях
+                    {t('settings_show_release_notes_title', 'Показывать информацию об обновлениях')}
                   </h3>
                 </div>
                 <p className="text-sm text-slate-500">
-                  Окно со списком изменений при первом запуске после обновления
+                  {t('settings_show_release_notes_desc', 'Окно со списком изменений при первом запуске после обновления')}
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer select-none">

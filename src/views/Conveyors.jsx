@@ -204,10 +204,10 @@ export default function Conveyors() {
         setShareCode(data.code);
         setIsShareModalOpen(true);
       } else {
-        addNotification(t('error') + ': ' + (data.error || 'Unknown error'), 'error');
+        addNotification(t('error', 'Ошибка') + ': ' + (data.error || 'Unknown error'), 'error');
       }
     } catch (e) {
-      addNotification(t('error') + ': ' + e.message, 'error');
+      addNotification(t('error', 'Ошибка') + ': ' + e.message, 'error');
     }
   };
 

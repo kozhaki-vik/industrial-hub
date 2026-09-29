@@ -869,7 +869,7 @@ export default function RecruitmentTab() {
                 <input
                   type="text"
                   className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Например: [GODS]"
+                  placeholder={t('clan_recruitment_steam_prefix_placeholder', 'Например: [GODS]')}
                   value={rConfig.steamPrefix || ''}
                   onChange={e => updateRConfig('steamPrefix', e.target.value, false)}
                   onBlur={e => updateRConfig('steamPrefix', e.target.value, true)}

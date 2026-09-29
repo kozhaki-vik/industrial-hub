@@ -29,7 +29,7 @@ export default function TicketChatModal({ isOpen, onClose }) {
     
     // Check size < 1MB
     if (file.size > 1024 * 1024) {
-      setError("Image is too large. Max 1MB.");
+      setError(t('chat_image_too_large', 'Изображение слишком большое. Максимум 1 МБ.'));
       return;
     }
     
@@ -47,11 +47,11 @@ export default function TicketChatModal({ isOpen, onClose }) {
     setIsSubmitting(true);
     setError(null);
     try {
-      await createTicket(message.trim() || 'Image attached', "Chat reply", imageFile);
+      await createTicket(message.trim() || t('chat_image_attached', 'Изображение прикреплено'), "Chat reply", imageFile);
       setMessage('');
       setImageFile(null);
     } catch (err) {
-      setError(err.message || 'Failed to send');
+      setError(err.message || t('chat_failed_to_send', 'Не удалось отправить'));
     } finally {
       setIsSubmitting(false);
     }
@@ -64,7 +64,7 @@ export default function TicketChatModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
           <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
-            Поддержка / Чаты
+            {t('support_chats', 'Поддержка / Чаты')}
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
             <X className="w-6 h-6" />
@@ -75,13 +75,13 @@ export default function TicketChatModal({ isOpen, onClose }) {
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-slate-50/50 dark:bg-slate-950/50">
           {ticketHistory.length === 0 ? (
             <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500">
-              Нет истории сообщений. Создайте тикет или отправьте сообщение здесь.
+              {t('chat_no_history', 'Нет истории сообщений. Создайте тикет или отправьте сообщение здесь.')}
             </div>
           ) : (
             ticketHistory.map((msg, idx) => (
               <div key={idx} className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'self-end items-end' : 'self-start items-start'}`}>
                 <span className="text-xs text-slate-400 mb-1 ml-1 mr-1">
-                  {msg.sender === 'user' ? 'Вы' : 'Администратор'} • {new Date(msg.created_at).toLocaleString('ru-RU')}
+                  {msg.sender === 'user' ? t('chat_sender_you', 'Вы') : t('chat_sender_admin', 'Администратор')} • {new Date(msg.created_at).toLocaleString()}
                 </span>
                 <div className={`p-3 rounded-2xl ${msg.sender === 'user' ? 'bg-orange-500 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-none'}`}>
                   {msg.message}
@@ -122,7 +122,7 @@ export default function TicketChatModal({ isOpen, onClose }) {
               type="text"
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder="Написать сообщение..."
+              placeholder={t('chat_input_placeholder', 'Написать сообщение...')}
               className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-slate-100"
             />
             
