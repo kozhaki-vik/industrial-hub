@@ -240,7 +240,8 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
 
 
   return (
-    {/* 2. ОСНОВНОЙ ГРАФИК: ОБЩАЯ АКТИВНОСТЬ ЛЮДЕЙ В КЛАНЕ С ОТМЕТКОЙ В 30 МИНУТ (Большая часть экрана) */}
+    <>
+      {/* 2. ОСНОВНОЙ ГРАФИК: ОБЩАЯ АКТИВНОСТЬ ЛЮДЕЙ В КЛАНЕ С ОТМЕТКОЙ В 30 МИНУТ (Большая часть экрана) */}
       <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
         {/* Controls Toolbar for Main Chart */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -570,6 +571,7 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
           )}
         </div>
       </div>
+    </>
   );
 });
 
