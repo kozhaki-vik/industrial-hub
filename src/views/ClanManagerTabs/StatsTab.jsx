@@ -310,9 +310,9 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
                 onChange={(e) => setSelectedDayKey(e.target.value)}
                 className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none cursor-pointer pr-1"
               >
-                <option value={todayKey}>{t('clan_day_today', 'Сегодня')} ({todayKey})</option>
+                <option value={todayKey} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">{t('clan_day_today', 'Сегодня')} ({todayKey})</option>
                 {(act.availableDays || []).filter(d => d !== todayKey).slice(0, 14).map(d => (
-                  <option key={d} value={d}>
+                  <option key={d} value={d} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                     {new Date(d).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' })} ({d})
                   </option>
                 ))}
@@ -327,9 +327,9 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
                 onChange={(e) => setCompareMode(e.target.value)}
                 className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none cursor-pointer pr-1"
               >
-                <option value="none">{t('clan_compare_none', 'Без сравнения')}</option>
-                <option value="week">{t('clan_compare_week', 'С прошлой неделей')}</option>
-                <option value="month_avg">{t('clan_compare_month_avg', 'Со средним за месяц')}</option>
+                <option value="none" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">{t('clan_compare_none', 'Без сравнения')}</option>
+                <option value="week" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">{t('clan_compare_week', 'С прошлой неделей')}</option>
+                <option value="month_avg" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">{t('clan_compare_month_avg', 'Со средним за месяц')}</option>
               </select>
             </div>
           </div>

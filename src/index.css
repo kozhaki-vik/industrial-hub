@@ -215,3 +215,14 @@ html.theme-discord .clan-manager-sidebar button:not([class*="bg-blue-600"]):hove
   background: rgba(100, 116, 139, 0.7);
 }
 
+
+/* Fix select options in dark mode globally */
+.dark option {
+  background-color: var(--color-slate-800, #1e293b);
+  color: var(--color-slate-100, #f1f5f9);
+}
+
+/* Enable dark mode for native UI elements (scrollbars, selects) */
+html.dark {
+  color-scheme: dark;
+}
