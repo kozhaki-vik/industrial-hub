@@ -150,10 +150,19 @@ const ITEMS_PER_PAGE = 20;
 
 
 const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, buildSmoothPath }) {
+  // Selected day for main chart: e.g. "today" or date string "YYYY-MM-DD"
+  const todayKey = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const [selectedDayKey, setSelectedDayKey] = useState(todayKey);
 
+  // Comparison mode: 'none', 'week' (same day last week), 'month_avg' (average over month)
+  const [compareMode, setCompareMode] = useState('week');
 
+  // Metric for main chart: 'all' (activity score), 'voice' (voice online), 'messages' (message volume)
+  const [activeMetric, setActiveMetric] = useState('all');
 
-  // Build baseline fallback data if server data is still populating
+  // Hover state for main chart tooltip
+  const [hoverIndex, setHoverIndex] = useState(null);
+  const chartSvgRef = useRef(null);
   const daysData = act.days || {};
   const currentDayData = daysData[selectedDayKey] || {
     buckets30m: new Array(48).fill(0),
@@ -591,15 +600,6 @@ export default function StatsTab() {
     getCachedMemberMeta
   } = useContext(ClanManagerContext);
 
-  // Selected day for main chart: e.g. "today" or date string "YYYY-MM-DD"
-  const todayKey = useMemo(() => new Date().toISOString().split('T')[0], []);
-  const [selectedDayKey, setSelectedDayKey] = useState(todayKey);
-
-  // Comparison mode: 'none', 'week' (same day last week), 'month_avg' (average over month)
-  const [compareMode, setCompareMode] = useState('week');
-
-  // Metric for main chart: 'all' (activity score), 'voice' (voice online), 'messages' (message volume)
-  const [activeMetric, setActiveMetric] = useState('all');
 
   // Members dynamics timeframe: 7 (week) or 30 (month)
   const [membersPeriod, setMembersPeriod] = useState(7);
@@ -608,9 +608,6 @@ export default function StatsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Hover state for main chart tooltip
-  const [hoverIndex, setHoverIndex] = useState(null);
-  const chartSvgRef = useRef(null);
 
   // Safe reference to activity stats
   const act = activityStatsData || {};
