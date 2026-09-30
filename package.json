@@ -1,66 +1,68 @@
 {
-  "name": "industrial-hub",
-  "private": true,
-  "version": "2.23.19",
-  "author": "Kozhaki",
-  "description": "Industrial Hub - Desktop Companion Application",
-  "type": "module",
-  "main": "electron/main.js",
-  "scripts": {
-    "dev:vite": "vite",
-    "dev:electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
-    "dev": "concurrently -k \"npm run dev:vite\" \"npm run dev:electron\"",
-    "build": "vite build",
-    "lint": "oxlint",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "dompurify": "^3.4.16",
-    "electron-store": "^11.0.2"
-  },
-  "devDependencies": {
-    "@hello-pangea/dnd": "^18.0.1",
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
-    "autoprefixer": "^10.5.4",
-    "concurrently": "^10.0.4",
-    "cross-env": "^10.1.0",
-    "electron": "^43.2.0",
-    "electron-builder": "^26.15.3",
-    "i18next": "^26.3.6",
-    "lucide-react": "^1.28.0",
-    "oxlint": "^1.75.0",
-    "postcss": "^8.5.25",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-i18next": "^17.0.11",
-    "react-router-dom": "^7.18.2",
-    "tailwindcss": "^4.3.3",
-    "vite": "^8.2.0",
-    "wait-on": "^9.1.0"
-  },
-  "build": {
-    "appId": "com.industrialhub.app",
-    "productName": "Industrial Hub",
-    "copyright": "Copyright © Kozhaki 2026. All rights reserved.",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      "resources/**/*.dll",
-      "resources/**/*.exe"
-    ],
-    "win": {
-      "target": "portable",
-      "icon": "icon256.png"
-    },
-    "portable": {}
-  }
+    "name":  "industrial-hub",
+    "private":  true,
+    "version":  "2.23.20",
+    "author":  "Kozhaki",
+    "description":  "Industrial Hub - Desktop Companion Application",
+    "type":  "module",
+    "main":  "electron/main.js",
+    "scripts":  {
+                    "dev:vite":  "vite",
+                    "dev:electron":  "wait-on tcp:5173 \u0026\u0026 cross-env NODE_ENV=development electron .",
+                    "dev":  "concurrently -k \"npm run dev:vite\" \"npm run dev:electron\"",
+                    "build":  "vite build",
+                    "lint":  "oxlint",
+                    "preview":  "vite preview"
+                },
+    "dependencies":  {
+                         "dompurify":  "^3.4.16",
+                         "electron-store":  "^11.0.2"
+                     },
+    "devDependencies":  {
+                            "@hello-pangea/dnd":  "^18.0.1",
+                            "@tailwindcss/postcss":  "^4.3.3",
+                            "@types/react":  "^19.2.17",
+                            "@types/react-dom":  "^19.2.3",
+                            "@vitejs/plugin-react":  "^6.0.4",
+                            "autoprefixer":  "^10.5.4",
+                            "concurrently":  "^10.0.4",
+                            "cross-env":  "^10.1.0",
+                            "electron":  "^43.2.0",
+                            "electron-builder":  "^26.15.3",
+                            "i18next":  "^26.3.6",
+                            "lucide-react":  "^1.28.0",
+                            "oxlint":  "^1.75.0",
+                            "postcss":  "^8.5.25",
+                            "react":  "^19.2.8",
+                            "react-dom":  "^19.2.8",
+                            "react-i18next":  "^17.0.11",
+                            "react-router-dom":  "^7.18.2",
+                            "tailwindcss":  "^4.3.3",
+                            "vite":  "^8.2.0",
+                            "wait-on":  "^9.1.0"
+                        },
+    "build":  {
+                  "appId":  "com.industrialhub.app",
+                  "productName":  "Industrial Hub",
+                  "copyright":  "Copyright © Kozhaki 2026. All rights reserved.",
+                  "directories":  {
+                                      "output":  "release"
+                                  },
+                  "files":  [
+                                "dist/**/*",
+                                "electron/**/*",
+                                "package.json"
+                            ],
+                  "extraResources":  [
+                                         "resources/**/*.dll",
+                                         "resources/**/*.exe"
+                                     ],
+                  "win":  {
+                              "target":  "portable",
+                              "icon":  "icon256.png"
+                          },
+                  "portable":  {
+
+                               }
+              }
 }
