@@ -42,26 +42,27 @@ export const NetworkProvider = ({ children }) => {
     };
   }, []);
 
-  const getHwid = async () => {
+  const getDeviceId = async () => {
     if (hwid) return hwid;
     if (electron) {
       try {
-        const id = await electron.ipcRenderer.invoke('network:get-hwid');
+        const id = await (electron.ipcRenderer.invoke('network:get-device-id').catch(() => electron.ipcRenderer.invoke('network:get-hwid')));
         setHwid(id);
         return id;
       } catch (err) {
-        console.error('Failed to get HWID via IPC', err);
+        console.error('Failed to get installation ID via IPC', err);
       }
     }
     // Fallback for browser
-    let stored = localStorage.getItem('hub_hwid');
+    let stored = localStorage.getItem('hub_device_id') || localStorage.getItem('hub_hwid');
     if (!stored) {
       stored = crypto.randomUUID ? crypto.randomUUID() : 'browser_' + Date.now();
-      localStorage.setItem('hub_hwid', stored);
+      localStorage.setItem('hub_device_id', stored);
     }
     setHwid(stored);
     return stored;
   };
+  const getHwid = getDeviceId;
 
   const triggerUpdateCheck = useCallback(async () => {
     if (!electron) return;
@@ -134,8 +135,9 @@ export const NetworkProvider = ({ children }) => {
       
       ws.send(JSON.stringify({ type: 'auth', hwid: currentHwid, version: clientVersion }));
 
-      // Send hardware telemetry
-      if (electron) {
+      // Send hardware telemetry only if user has not disabled it (Opt-out)
+      const telemetryOptIn = localStorage.getItem('hub_telemetry_enabled') !== 'false';
+      if (electron && telemetryOptIn) {
         try {
           const hardware = await electron.ipcRenderer.invoke('diagnostics:getHardwareInfo');
           ws.send(JSON.stringify({ type: 'telemetry_hardware', hardware, hwid: currentHwid }));

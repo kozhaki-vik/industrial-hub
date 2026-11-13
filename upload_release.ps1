@@ -4,8 +4,26 @@ param (
     [bool]$IsPreRelease = $true,
     [string]$Body = "",
     [string]$BodyFile = "",
-    [string]$Token = "[REDACTED_GITHUB_TOKEN]"
+    [string]$Token = $env:GITHUB_TOKEN
 )
+
+# If Token is not set via environment variable, attempt to load from local .env
+if (-not $Token) {
+    $envFile = Join-Path $PSScriptRoot ".env"
+    if (Test-Path $envFile) {
+        Get-Content $envFile | ForEach-Object {
+            $line = $_.Trim()
+            if ($line -and -not $line.StartsWith("#") -and $line -match "^GITHUB_TOKEN\s*=\s*(.*)$") {
+                $Token = $matches[1].Trim().Trim('"').Trim("'")
+            }
+        }
+    }
+}
+
+if (-not $Token) {
+    Write-Error "GITHUB_TOKEN is not set. Please set GITHUB_TOKEN in your .env file or environment variable."
+    exit 1
+}
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 

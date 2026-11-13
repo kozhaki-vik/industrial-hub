@@ -192,7 +192,7 @@ export const reportClanErrorToTelegram = (errorTitle, errorDetails) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hwid: localStorage.getItem('hub_hwid') || 'UnknownClient',
-          version: '2.7.57',
+          version: '2.23.22',
           errorStack: fullErrorText
         })
       }).catch(() => {});
@@ -611,10 +611,12 @@ export default function ClanManager() {
       };
 
       ws.addEventListener('message', onMsg);
+      const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
       ws.send(JSON.stringify({
         type: 'clan',
         action: 'proxy',
         reqId,
+        clan_secret: clanSecret,
         targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
         payload: {
           action,
@@ -913,12 +915,12 @@ export default function ClanManager() {
         
         if (data.type === 'clan_dev_challenge') {
           (async () => {
-            let hwid = 'dev_client';
+            let deviceId = 'dev_client';
             try {
               if (window.electronAPI?.ipcRenderer) {
-                hwid = await window.electronAPI.ipcRenderer.invoke('network:get-hwid');
+                deviceId = await (window.electronAPI.ipcRenderer.invoke('network:get-device-id').catch(() => window.electronAPI.ipcRenderer.invoke('network:get-hwid')));
               } else {
-                hwid = localStorage.getItem('hub_hwid') || 'dev_client';
+                deviceId = localStorage.getItem('hub_device_id') || localStorage.getItem('hub_hwid') || 'dev_client';
               }
             } catch (err) { console.error('[Auto-caught Error]', err); }
 
@@ -926,7 +928,7 @@ export default function ClanManager() {
               const signRes = await window.electronAPI.dev.signChallenge({
                 nonce: data.nonce,
                 timestamp: data.timestamp,
-                hwid
+                hwid: deviceId
               });
               if (signRes && signRes.success && signRes.signature) {
                 ws.send(JSON.stringify({
@@ -997,6 +999,11 @@ export default function ClanManager() {
           }
         } else if (data.type === 'clan_status_res') {
           setStatus(data.linked ? 'linked' : 'unlinked');
+          if (data.clan_secret) {
+            localStorage.setItem('hub_clan_secret', data.clan_secret);
+          } else if (!data.linked) {
+            localStorage.removeItem('hub_clan_secret');
+          }
           if (data.linked) {
             setGuildId(data.guildId);
             fetchConfig();
@@ -1004,6 +1011,9 @@ export default function ClanManager() {
           }
         } else if (data.type === 'clan_link_res') {
           if (data.success) {
+            if (data.clan_secret) {
+              localStorage.setItem('hub_clan_secret', data.clan_secret);
+            }
             setStatus('linked');
             setGuildId(data.guildId);
             fetchConfig();
@@ -1012,6 +1022,7 @@ export default function ClanManager() {
             setError(data.error || 'Failed to link');
           }
         } else if (data.type === 'clan_unlink_res') {
+          localStorage.removeItem('hub_clan_secret');
           setStatus('unlinked');
           setGuildId(null);
           setConfig(null);
@@ -1457,19 +1468,20 @@ export default function ClanManager() {
     if (isDevAdminActive) {
       addLog('Initiating developer handshake...');
       (async () => {
-        let hwid = 'dev_client';
+        let deviceId = 'dev_client';
         try {
           if (window.electronAPI?.ipcRenderer) {
-            hwid = await window.electronAPI.ipcRenderer.invoke('network:get-hwid');
+            deviceId = await (window.electronAPI.ipcRenderer.invoke('network:get-device-id').catch(() => window.electronAPI.ipcRenderer.invoke('network:get-hwid')));
           } else {
-            hwid = localStorage.getItem('hub_hwid') || 'dev_client';
+            deviceId = localStorage.getItem('hub_device_id') || localStorage.getItem('hub_hwid') || 'dev_client';
           }
         } catch (err) { console.error('[Auto-caught Error]', err); }
-        ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid }));
+        ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid: deviceId }));
       })();
     } else {
       addLog('Sending initial get_status request');
-      ws.send(JSON.stringify({ type: 'clan', action: 'get_status' }));
+      const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
+      ws.send(JSON.stringify({ type: 'clan', action: 'get_status', clan_secret: clanSecret }));
     }
     
     return () => ws.removeEventListener('message', handleMessage);
@@ -1504,15 +1516,15 @@ export default function ClanManager() {
       if (!isDevAuthenticated) {
         addLog('Not dev authenticated yet. Initiating dev handshake...');
         (async () => {
-          let hwid = 'dev_client';
+          let deviceId = 'dev_client';
           try {
             if (window.electronAPI?.ipcRenderer) {
-              hwid = await window.electronAPI.ipcRenderer.invoke('network:get-hwid');
+              deviceId = await (window.electronAPI.ipcRenderer.invoke('network:get-device-id').catch(() => window.electronAPI.ipcRenderer.invoke('network:get-hwid')));
             } else {
-              hwid = localStorage.getItem('hub_hwid') || 'dev_client';
+              deviceId = localStorage.getItem('hub_device_id') || localStorage.getItem('hub_hwid') || 'dev_client';
             }
           } catch (err) { console.error('[Auto-caught Error]', err); }
-          ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid }));
+          ws.send(JSON.stringify({ type: 'clan', action: 'dev_auth_init', hwid: deviceId }));
         })();
       } else {
         addLog('Refreshing Discord guilds list...');
@@ -1553,7 +1565,8 @@ export default function ClanManager() {
     if (confirmed) {
       addLog('Sending unlink request');
       hasPromptedRef.current = false;
-      ws.send(JSON.stringify({ type: 'clan', action: 'unlink' }));
+      const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
+      ws.send(JSON.stringify({ type: 'clan', action: 'unlink', clan_secret: clanSecret }));
     }
   };
 
@@ -1567,10 +1580,12 @@ export default function ClanManager() {
     setLoadingConfig(true);
     setError(null);
     addLog('Fetching config via proxy');
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
       reqId: 'get_config', 
+      clan_secret: clanSecret,
       targetGuildId: targetGid,
       payload: { action: 'get_config' } 
     }));
@@ -1578,10 +1593,12 @@ export default function ClanManager() {
 
   const fetchDiscordInfo = (overrideGuildId) => {
     const targetGid = overrideGuildId || (isDevAdminActive ? activeDevGuildIdRef.current : undefined);
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
       reqId: 'get_discord_info', 
+      clan_secret: clanSecret,
       targetGuildId: targetGid,
       payload: { action: 'get_discord_info' } 
     }));
@@ -3510,7 +3527,7 @@ export default function ClanManager() {
       tabIcon: UserPlus,
       title: t('clan_auto_140', 'Максимум дней с последнего VAC-бана'),
       desc: t('clan_auto_194', 'Порог давности игровых блокировок Steam для допуска кандидатов'),
-      keywords: ['vac дни', 'дней с бана', 'давность бана', 'читер', 'vac days']
+      keywords: ['vac дни', 'дней с бана', 'давность бана', 'нарушитель', 'vac days']
     },
 
     // Applications
@@ -3607,7 +3624,7 @@ export default function ClanManager() {
       tabName: t('clan_tab_archive') || 'Архив',
       tabIcon: Archive,
       title: t('clan_auto_149', 'Черный список игроков (Blacklist)'),
-      desc: t('clan_auto_203', 'Внесение недобросовестных игроков, читеров или нарушителей в клановый бан-лист'),
+      desc: t('clan_auto_203', 'Внесение недобросовестных игроков или нарушителей правил в клановый бан-лист'),
       keywords: ['черный список', 'чс', 'банлист', 'предатели', 'blacklist']
     },
 

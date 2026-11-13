@@ -40,7 +40,7 @@
    - **Main-релиз:** `.\upload_release.ps1 -Version "X.Y.0" -FilePath "release\Industrial Hub X.Y.0.exe" -IsPreRelease $false`
 * Скрипт создаёт draft, загружает .exe, публикует → Webhook → клиенты получают уведомление.
 * Cache-Buster: `?t=${Date.now()}` при запросе GitHub API (кэш Fastly 60 сек).
-* Test = Pre-release, Main = Release. PIN для Test ветки: `2136`.
+* Test = Pre-release, Main = Release. Доступ к Test ветке защищен ключом разработчика `DEV_MASTER_KEY`.
 
 ## Подпись кода и безопасность
 * **Основной сертификат (10 лет, до 09.2036):**

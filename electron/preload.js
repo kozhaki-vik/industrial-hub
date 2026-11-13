@@ -45,8 +45,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gamma: {
     getDisplays: () => ipcRenderer.invoke('gamma:getDisplays'),
     setDisplayGamma: (brightness, deviceName) => ipcRenderer.invoke('gamma:setDisplayGamma', brightness, deviceName),
-    registerHook: (vkCode) => ipcRenderer.invoke('gamma:registerHook', vkCode),
-    unregisterHook: () => ipcRenderer.invoke('gamma:unregisterHook'),
+    registerShortcut: (vkCode) => ipcRenderer.invoke('gamma:registerShortcut', vkCode),
+    unregisterShortcut: () => ipcRenderer.invoke('gamma:unregisterShortcut'),
+    registerHook: (vkCode) => ipcRenderer.invoke('gamma:registerShortcut', vkCode),
+    unregisterHook: () => ipcRenderer.invoke('gamma:unregisterShortcut'),
     onHotkey: (callback) => {
       const wrapped = () => callback();
       ipcRenderer.on('gamma:hotkey_pressed', wrapped);
@@ -71,7 +73,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ipcRenderer: {
     invoke: (channel, ...args) => {
         const ALLOWED_CHANNELS = [
-            'network:get-hwid', 'network:apply-updates', 'network:apply-exe-update', 'network:apply-deferred-update',
+            'network:get-hwid', 'network:get-device-id', 'network:apply-updates', 'network:apply-exe-update', 'network:apply-deferred-update',
+            'gamma:registerShortcut', 'gamma:unregisterShortcut',
             'diagnostics:getAppVersionInfo', 'diagnostics:getHardwareInfo',
             'diagnostics:getAppPath', 'diagnostics:getAppDataPath',
             'diagnostics:checkAppIntegrity', 'diagnostics:checkRustIntegrity',

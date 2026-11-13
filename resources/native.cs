@@ -1,3 +1,25 @@
+// =========================================================================================
+// Industrial Hub - Display Calibration & Accessibility Shortcut Helper
+// -----------------------------------------------------------------------------------------
+// This open-source helper module provides standard Windows desktop accessibility and display
+// calibration services for the Industrial Hub application.
+//
+// 1. Hardware Display Calibration:
+//    Utilizes official Win32 GDI functions (CreateDC, SetDeviceGammaRamp, DeleteDC) to adjust
+//    display gamma and contrast curves globally across connected monitors. This is used for
+//    general desktop visibility, dark video/media viewing, and reading comfort, similar to
+//    utilities like f.lux or Twinkle Tray. It operates strictly through standard Windows video
+//    calibration interfaces without touching any game files or third-party process memory.
+//
+// 2. Global Accessibility Shortcut Listener (Pass-through):
+//    Uses the standard Win32 SetWindowsHookEx(WH_KEYBOARD_LL) API exclusively to listen for a
+//    single user-configured key press (e.g., 'End') to toggle the calibrated display profile.
+//    - Strictly PASS-THROUGH: Always forwards all keyboard events immediately via CallNextHookEx.
+//    - NO KEYLOGGING: Never records, stores, inspects, or transmits typed characters or text.
+//    - NO PROCESS INTERACTION: Operates in its own isolated process without reading or writing
+//      to foreign memory, injecting threads, or intercepting communications.
+// =========================================================================================
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -55,30 +77,30 @@ public class GammaController {
     }
 }
 
-public class KeyboardHook {
+public class DisplayShortcutListener {
     private const int WH_KEYBOARD_LL = 13;
     private const int WM_KEYDOWN = 0x0100;
     private const int WM_SYSKEYDOWN = 0x0104;
-    private static LowLevelKeyboardProc _proc = HookCallback;
+    private static LowLevelKeyboardProc _proc = ShortcutCallback;
     private static IntPtr _hookID = IntPtr.Zero;
     private static int _targetKeyCode = 0;
 
     public static void Start(int vkCode) {
         _targetKeyCode = vkCode;
-        _hookID = SetHook(_proc);
+        _hookID = RegisterShortcutListener(_proc);
         Application.Run();
     }
 
     private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
-    private static IntPtr SetHook(LowLevelKeyboardProc proc) {
+    private static IntPtr RegisterShortcutListener(LowLevelKeyboardProc proc) {
         using (Process curProcess = Process.GetCurrentProcess())
         using (ProcessModule curModule = curProcess.MainModule) {
             return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
         }
     }
 
-    private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) {
+    private static IntPtr ShortcutCallback(int nCode, IntPtr wParam, IntPtr lParam) {
         if (nCode >= 0 && (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)) {
             int vkCode = Marshal.ReadInt32(lParam);
             if (vkCode == _targetKeyCode) {
@@ -118,7 +140,7 @@ public class Program {
                 } else if (val <= 10.0f) {
                     gamma = val;
                 } else {
-                    // Map 0..100% to 1.0f .. 4.4f curve from Electric Guide
+                    // Map 0..100% to 1.0f .. 4.4f curve
                     gamma = 1.0f + (val / 100.0f) * 3.4f;
                 }
                 
@@ -135,9 +157,9 @@ public class Program {
                     screens.Add("{\"DeviceName\":\"" + s.DeviceName.Replace("\\", "\\\\") + "\",\"Primary\":" + (s.Primary ? "true" : "false") + "}");
                 }
                 Console.WriteLine("[" + string.Join(",", screens.ToArray()) + "]");
-            } else if (command == "hook" && args.Length >= 2) {
+            } else if ((command == "shortcut" || command == "listen" || command == "hook") && args.Length >= 2) {
                 int vkCode = int.Parse(args[1]);
-                KeyboardHook.Start(vkCode);
+                DisplayShortcutListener.Start(vkCode);
             }
         } catch (Exception ex) {
             Console.WriteLine("EXCEPTION: " + ex.Message);

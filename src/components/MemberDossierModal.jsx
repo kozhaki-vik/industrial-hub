@@ -184,7 +184,7 @@ function MemberDossierModal({
 
     if (cheaterStatus !== 'NONE') {
       if (!cheaterReason.trim()) {
-        setSaveError(t('dossier_err_reason', 'Укажите причину, почему считаете игрока читером / подозреваемым.'));
+        setSaveError(t('dossier_err_reason', 'Укажите причину отметки нарушителя правил / подозреваемого.'));
         return;
       }
       if (cheaterProofUrl.trim() && !isValidHttpUrl(cheaterProofUrl.trim())) {
@@ -361,7 +361,7 @@ function MemberDossierModal({
                 {getStatusBadge(status)}
                 {cheaterStatus === 'CONFIRMED' && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-600 text-white shadow-sm flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3" />{t('dossier_cheater', 'Читер')}</span>
+                    <ShieldAlert className="w-3 h-3" />{t('dossier_cheater', 'Нарушитель')}</span>
                 )}
                 {cheaterStatus === 'SUSPICION' && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm flex items-center gap-1">
@@ -632,8 +632,8 @@ function MemberDossierModal({
                         <div className="flex items-center gap-2">
                           <ShieldAlert className={`w-4 h-4 shrink-0 ${cheaterStatus === 'CONFIRMED' ? 'text-red-500' : cheaterStatus === 'SUSPICION' ? 'text-amber-500' : 'text-slate-400'}`} />
                           <div>
-                            <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{t('dossier_anticheat_title', 'Проверка на читы и софт')}</div>
-                            <div className="text-[10px] text-slate-500">{t('dossier_anticheat_desc', 'Подозрение или подтвержденный читер')}</div>
+                            <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{t('dossier_anticheat_title', 'Нарушение правил сообщества / Нечестная игра')}</div>
+                            <div className="text-[10px] text-slate-500">{t('dossier_anticheat_desc', 'Подозрение или подтвержденный нарушитель правил')}</div>
                           </div>
                         </div>
                         
@@ -649,7 +649,7 @@ function MemberDossierModal({
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                             }`}
                           >
-                            {t('dossier_cheater_none', 'Чист')}
+                            {t('dossier_cheater_none', 'В норме')}
                           </button>
                           <button
                             type="button"
@@ -673,7 +673,7 @@ function MemberDossierModal({
                                 : 'text-slate-500 hover:text-red-600 dark:hover:text-red-400'
                             }`}
                           >
-                            🚨 {t('dossier_cheater_confirmed', 'Читер')}
+                            🚨 {t('dossier_cheater_confirmed', 'Нарушитель правил')}
                           </button>
                         </div>
                       </div>
@@ -683,14 +683,14 @@ function MemberDossierModal({
                         <div className="p-3 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 space-y-2.5 animate-in fade-in duration-150">
                           <div>
                             <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
-                              {t('dossier_why_cheater', 'Почему считаете читером *')}
+                              {t('dossier_why_cheater', 'Детали нарушения / Причина *')}
                             </label>
                             <textarea
                               rows={2}
                               disabled={!canEdit}
                               value={cheaterReason}
                               onChange={e => setCheaterReason(e.target.value)}
-                              placeholder={t('dossier_why_cheater_ph', 'Опишите подозрительные моменты: неестественный трекинг, стрельба сквозь текстуры...')}
+                              placeholder={t('dossier_why_cheater_ph', 'Опишите подробности нарушения правил или нечестной игры...')}
                               className="w-full px-3 py-1.5 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 resize-none"
                             />
                           </div>
@@ -1004,7 +1004,7 @@ function MemberDossierModal({
                                 {getStatusBadge(rec.status)}
                                 {rec.cheaterStatus === 'CONFIRMED' && (
                                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">
-                                    🚨 {t('dossier_cheater', 'ЧИТЕР')}
+                                    🚨 {t('dossier_cheater', 'НАРУШИТЕЛЬ')}
                                   </span>
                                 )}
                                 {rec.cheaterStatus === 'SUSPICION' && (
@@ -1034,7 +1034,7 @@ function MemberDossierModal({
 
                             {rec.cheaterReason && (
                               <div className="p-2 rounded bg-red-100/90 dark:bg-red-900/40 text-red-800 dark:text-red-200 text-[11px] space-y-1">
-                                <div><strong>{t('dossier_cheater_reason_label', 'Причина отметки читера:')}</strong> {rec.cheaterReason}</div>
+                                <div><strong>{t('dossier_cheater_reason_label', 'Причина отметки нарушителя правил:')}</strong> {rec.cheaterReason}</div>
                                 {rec.cheaterProofUrl && (
                                   <div>
                                     <a

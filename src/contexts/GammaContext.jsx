@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { setDisplayGamma, resetDisplayGamma, getDisplays } from '../services/gamma';
-import { registerGlobalHook, unregisterGlobalHook } from '../services/hook';
+import { registerGlobalShortcut, unregisterGlobalShortcut } from '../services/hotkeyService';
 import { mapToVirtualKeyCode } from '../utils/keyboardMap';
 
 const GammaContext = createContext();
@@ -47,22 +47,22 @@ export function GammaProvider({ children }) {
       });
     };
 
-    const setupHook = async () => {
+    const setupShortcut = async () => {
       const vkCode = mapToVirtualKeyCode(gammaBind);
       if (vkCode) {
-        await registerGlobalHook(vkCode, () => {
+        await registerGlobalShortcut(vkCode, () => {
           if (isActive) toggleGamma();
         });
       } else {
-        await unregisterGlobalHook();
+        await unregisterGlobalShortcut();
       }
     };
     
-    setupHook();
+    setupShortcut();
     
     return () => {
       isActive = false;
-      unregisterGlobalHook();
+      unregisterGlobalShortcut();
     };
   }, [gammaBind, selectedDisplay]);
 

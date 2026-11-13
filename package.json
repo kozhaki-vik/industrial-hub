@@ -54,7 +54,6 @@
                                 "package.json"
                             ],
                   "extraResources":  [
-                                         "resources/**/*.dll",
                                          "resources/**/*.exe"
                                      ],
                   "win":  {

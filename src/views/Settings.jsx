@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNetwork } from '../contexts/NetworkContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { Globe, Moon, Sun, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown, Palette, Bell } from 'lucide-react';
+import { Globe, Moon, Sun, Code2, Users, Heart, Gamepad2, Sparkles, FolderOpen, Power, ChevronDown, Palette, Bell, Activity } from 'lucide-react';
 import ThemeSelector from '../components/ThemeSelector';
 import { openLogFolder } from '../services/diagnostics';
 import { useNavigate } from 'react-router-dom';
@@ -94,6 +94,15 @@ export default function Settings() {
     const val = localStorage.getItem('industrial-hub-show-release-notes');
     return val === null ? true : val === 'true';
   });
+  const [telemetryEnabled, setTelemetryEnabled] = React.useState(() => {
+    const val = localStorage.getItem('hub_telemetry_enabled');
+    return val === null ? true : val !== 'false';
+  });
+
+  const handleToggleTelemetry = (checked) => {
+    setTelemetryEnabled(checked);
+    localStorage.setItem('hub_telemetry_enabled', checked ? 'true' : 'false');
+  };
 
   React.useEffect(() => {
     if (window.electronAPI?.app?.getAutoStart) {
@@ -122,32 +131,48 @@ export default function Settings() {
     }
   };
 
-  // Developer Mode PIN State
+  // Developer Key State
   const [showPinModal, setShowPinModal] = React.useState(false);
   const [pinInput, setPinInput] = React.useState('');
   const [pinError, setPinError] = React.useState('');
   const pinInputRef = React.useRef(null);
 
-  const handleOpenDeveloper = () => {
+  const handleOpenDeveloper = async () => {
+    if (window.electronAPI?.dev) {
+      try {
+        const hasSaved = await window.electronAPI.dev.hasKey();
+        if (hasSaved) {
+          sessionStorage.setItem('dev_authenticated', 'true');
+          navigate('/developer');
+          return;
+        }
+      } catch {}
+    }
     setShowPinModal(true);
     setPinError('');
     setPinInput('');
   };
 
-  const submitPin = () => {
-    if (!pinInput || pinInput.trim() === '') {
+  const submitPin = async () => {
+    const trimmed = (pinInput || '').trim();
+    if (!trimmed) {
       if (pinInputRef.current) {
         scrollToAndHighlight(pinInputRef.current);
       }
-      setPinError(t('fill_pin', 'Введите ПИН-код'));
+      setPinError(t('fill_dev_key', 'Введите 32-значный ключ DEV_MASTER_KEY'));
       return;
     }
-    if (pinInput === '2136') {
+    if (trimmed.length === 32 && /^[a-fA-F0-9]{32}$/.test(trimmed)) {
+      if (window.electronAPI?.dev) {
+        try {
+          await window.electronAPI.dev.saveKey(trimmed);
+        } catch {}
+      }
       sessionStorage.setItem('dev_authenticated', 'true');
       setShowPinModal(false);
       navigate('/developer');
     } else {
-      setPinError(t('invalid_pin', 'Неверный ПИН-код'));
+      setPinError(t('invalid_dev_key', 'Неверный ключ (требуется 32-значный hex-ключ)'));
       if (pinInputRef.current) {
         scrollToAndHighlight(pinInputRef.current);
       }
@@ -292,6 +317,34 @@ export default function Settings() {
                     setShowReleaseNotes(e.target.checked);
                     localStorage.setItem('industrial-hub-show-release-notes', e.target.checked);
                   }}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+              </label>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 dark:border-slate-800"></div>
+
+          {/* Anonymous Telemetry Toggle (Opt-out) */}
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Activity className="w-5 h-5 text-orange-500 opacity-70" />
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {t('settings_telemetry_title', 'Анонимная диагностическая телеметрия')}
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-500">
+                  {t('settings_telemetry_desc', 'Разрешить отправку анонимных характеристик ПК (модель CPU, GPU, RAM) для анализа стабильности и совместимости')}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={telemetryEnabled} 
+                  onChange={(e) => handleToggleTelemetry(e.target.checked)}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
@@ -578,15 +631,15 @@ export default function Settings() {
       {showPinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-main-fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl relative">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('settings_pin_title', 'Ввод ПИН-кода')}</h3>
-            <p className="text-sm text-slate-500 mb-4">{t('settings_dev_pin_desc', 'Введите ПИН-код для перехода в режим разработчика.')}</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('settings_dev_auth_title', 'Авторизация разработчика')}</h3>
+            <p className="text-sm text-slate-500 mb-4">{t('settings_dev_key_desc', 'Введите 32-значный мастер-ключ DEV_MASTER_KEY для перехода в режим разработчика.')}</p>
             
             <input 
               ref={pinInputRef}
               type="password"
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value)}
-              placeholder={t('settings_pin_placeholder', 'ПИН-код')}
+              placeholder={t('settings_dev_key_placeholder', '32-значный ключ разработчика...')}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 mb-2"
               onKeyDown={(e) => e.key === 'Enter' && submitPin()}
               autoFocus

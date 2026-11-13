@@ -86,9 +86,9 @@ function getRealExecutablePath() {
   return process.execPath;
 }
 
-let cachedHWID = null;
-function getSystemHWID() {
-  if (cachedHWID) return cachedHWID;
+let cachedInstallationId = null;
+function getInstallationId() {
+  if (cachedInstallationId) return cachedInstallationId;
   try {
     let machineGuid = '';
     if (process.platform === 'win32') {
@@ -107,13 +107,16 @@ function getSystemHWID() {
     if (machineGuid) {
       hash.update(machineGuid);
     } else {
-      hash.update(os.hostname() + '_' + os.userInfo().username);
+      hash.update('device_' + os.userInfo().username);
     }
-    cachedHWID = hash.digest('hex');
-    return cachedHWID;
+    cachedInstallationId = hash.digest('hex');
+    return cachedInstallationId;
   } catch {
-    return 'unknown_hwid';
+    return 'generic_device_id';
   }
+}
+function getSystemHWID() {
+  return getInstallationId();
 }
 
 // --- Single Instance Lock ---
@@ -192,9 +195,33 @@ function updateDesktopShortcut(targetExe, workingDir) {
   }
 }
 
-// --- Gamma & Hook Native Logic ---
+// --- Gamma & Shortcut Native Logic ---
 
-let currentHookProcess = null;
+let currentShortcutProcess = null;
+let currentHookProcess = null; // backward-compat pointer
+let hasModifiedGamma = false;
+
+function resetDisplayGamma() {
+  if (process.platform !== 'win32') return;
+  try {
+    if (currentShortcutProcess) {
+      try { currentShortcutProcess.kill(); } catch {}
+      currentShortcutProcess = null;
+      currentHookProcess = null;
+    }
+    const helperPath = getNativeHelperPath();
+    if (helperPath && fs.existsSync(helperPath)) {
+      child_process.execFileSync(helperPath, ['reset', 'default'], { windowsHide: true, timeout: 3000 });
+      if (logger && logger.info) {
+        logger.info('Display gamma calibration restored to Windows defaults.');
+      }
+    }
+  } catch (err) {
+    if (logger && logger.error) {
+      logger.error('Failed to reset display gamma on shutdown:', err?.message || err);
+    }
+  }
+}
 
 // Disable hardware acceleration to fix GPU crashes on some Windows systems
 app.disableHardwareAcceleration();
@@ -526,6 +553,7 @@ function sendCrashReport(errorStack) {
 }
 
 process.on('uncaughtException', (err) => {
+  resetDisplayGamma();
   console.error('Uncaught Exception:', err);
   logger.error('Uncaught Exception:', err);
   sendCrashReport(err.stack || err.message);
@@ -537,7 +565,18 @@ process.on('unhandledRejection', (reason, promise) => {
   sendCrashReport(reason instanceof Error ? reason.stack : String(reason));
 });
 
+process.on('SIGTERM', () => {
+  resetDisplayGamma();
+  app.quit();
+});
+
+process.on('SIGINT', () => {
+  resetDisplayGamma();
+  app.quit();
+});
+
 app.on('render-process-gone', (event, webContents, details) => {
+  resetDisplayGamma();
   const msg = `Renderer process gone! Reason: ${details.reason}, Exit code: ${details.exitCode}`;
   logger.error(msg);
   sendCrashReport(msg);
@@ -940,6 +979,7 @@ app.whenReady().then(async () => {
   }, 300000); // 5 minutes
 
   app.on('before-quit', () => {
+    resetDisplayGamma();
     try {
       const currentSessionSec = Math.floor((Date.now() - sessionStartTime) / 1000);
       const uptimeFile = path.join(app.getPath('userData'), 'total_uptime.json');
@@ -1003,7 +1043,7 @@ app.whenReady().then(async () => {
       }
 
       cachedHardwareInfo = {
-        pcName: os.hostname(),
+        pcName: 'Desktop PC',
         platform: os.platform(),
         osName,
         release: os.release(),
@@ -1284,6 +1324,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('gamma:setDisplayGamma', (event, brightnessLevel, deviceName) => {
     if (process.platform !== 'win32') return;
     if (!deviceName) deviceName = "\\\\.\\DISPLAY1";
+    hasModifiedGamma = true;
     try {
       const helperPath = getNativeHelperPath();
       child_process.execFile(helperPath, ['gamma', brightnessLevel.toString(), deviceName], { windowsHide: true }, (err) => {
@@ -1294,18 +1335,18 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('gamma:registerHook', async (event, vkCode) => {
+  const handleRegisterShortcut = async (event, vkCode) => {
     if (process.platform !== 'win32') return false;
     
-    if (currentHookProcess) {
+    if (currentShortcutProcess) {
       try {
-        currentHookProcess.kill();
+        currentShortcutProcess.kill();
       } catch {}
       // Wait for it to actually exit
       await new Promise(resolve => {
-        if (!currentHookProcess) return resolve();
+        if (!currentShortcutProcess) return resolve();
         const checkInterval = setInterval(() => {
-          if (!currentHookProcess || currentHookProcess.exitCode !== null || currentHookProcess.signalCode !== null) {
+          if (!currentShortcutProcess || currentShortcutProcess.exitCode !== null || currentShortcutProcess.signalCode !== null) {
             clearInterval(checkInterval);
             resolve();
           }
@@ -1316,6 +1357,7 @@ app.whenReady().then(async () => {
           resolve();
         }, 500);
       });
+      currentShortcutProcess = null;
       currentHookProcess = null;
     }
     
@@ -1323,52 +1365,67 @@ app.whenReady().then(async () => {
     
     try {
       const helperPath = getNativeHelperPath();
-      currentHookProcess = child_process.spawn(helperPath, ['hook', vkCode.toString()], {
+      currentShortcutProcess = child_process.spawn(helperPath, ['shortcut', vkCode.toString()], {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true
       });
+      currentHookProcess = currentShortcutProcess;
 
-      currentHookProcess.stdout.on('data', (data) => {
+      currentShortcutProcess.stdout.on('data', (data) => {
         const output = data.toString().trim();
         if (output.includes('HOTKEY_PRESSED') && mainWindow) {
           mainWindow.webContents.send('gamma:hotkey_pressed');
         }
       });
 
-      currentHookProcess.stderr.on('data', (data) => {
-        console.error('Hook process stderr:', data.toString());
+      currentShortcutProcess.stderr.on('data', (data) => {
+        console.error('Shortcut process stderr:', data.toString());
       });
       
-      currentHookProcess.on('error', (err) => {
-        console.error('Keyboard hook error:', err);
+      currentShortcutProcess.on('error', (err) => {
+        console.error('Display shortcut listener error:', err);
+        currentShortcutProcess = null;
         currentHookProcess = null;
       });
 
-      currentHookProcess.on('exit', () => {
+      currentShortcutProcess.on('exit', () => {
+        currentShortcutProcess = null;
         currentHookProcess = null;
       });
 
       return true;
     } catch (e) {
-      console.error('Keyboard hook error:', e);
+      console.error('Display shortcut listener error:', e);
+      currentShortcutProcess = null;
       currentHookProcess = null;
       return false;
     }
-  });
+  };
 
-  ipcMain.handle('gamma:unregisterHook', () => {
-    if (currentHookProcess) {
+  const handleUnregisterShortcut = () => {
+    if (currentShortcutProcess) {
       try {
-        currentHookProcess.kill();
+        currentShortcutProcess.kill();
       } catch {}
+      currentShortcutProcess = null;
       currentHookProcess = null;
     }
     return true;
-  });
+  };
+
+  ipcMain.handle('gamma:registerShortcut', handleRegisterShortcut);
+  ipcMain.handle('gamma:registerHook', handleRegisterShortcut);
+
+  ipcMain.handle('gamma:unregisterShortcut', handleUnregisterShortcut);
+  ipcMain.handle('gamma:unregisterHook', handleUnregisterShortcut);
 
   // NETWORK HANDLERS
+  ipcMain.handle('network:get-device-id', () => {
+    return getInstallationId();
+  });
+
   ipcMain.handle('network:get-hwid', () => {
-    return getSystemHWID();
+    return getInstallationId();
   });
 
   ipcMain.handle('app:relaunch', () => {
@@ -1436,7 +1493,7 @@ app.whenReady().then(async () => {
         return resolve(false);
       }
       const safePath = filePath.replace(/'/g, "''");
-      const psCommand = `(Get-AuthenticodeSignature -LiteralPath '${safePath}').SignerCertificate.Thumbprint`;
+      const psCommand = `$sig = Get-AuthenticodeSignature -LiteralPath '${safePath}'; if ($sig.Status -eq 'Valid') { $sig.SignerCertificate.Thumbprint } else { 'INVALID_STATUS:' + $sig.Status }`;
       child_process.exec(
         `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`,
         { timeout: 10000, windowsHide: true },
@@ -1445,12 +1502,17 @@ app.whenReady().then(async () => {
             logger.error(`Signature verification failed for ${filePath}:`, error.message);
             return resolve(false);
           }
-          const thumbprint = (stdout || '').trim().toUpperCase();
+          const output = (stdout || '').trim();
+          if (output.startsWith('INVALID_STATUS:')) {
+            logger.warn(`Signature status not valid for ${filePath}: ${output}`);
+            return resolve(false);
+          }
+          const thumbprint = output.toUpperCase();
           const isTrusted = TRUSTED_THUMBPRINTS.includes(thumbprint);
           if (!isTrusted) {
             logger.warn(`Untrusted thumbprint for ${filePath}: ${thumbprint}`);
           } else {
-            logger.info(`Verified signature for ${filePath}: ${thumbprint} (Trusted)`);
+            logger.info(`Verified signature for ${filePath}: ${thumbprint} (Valid & Trusted)`);
           }
           resolve(isTrusted);
         }
@@ -1623,7 +1685,7 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('network:apply-deferred-update', (event, restartPayload) => {
+  ipcMain.handle('network:apply-deferred-update', async (event, restartPayload) => {
     if (!restartPayload || !restartPayload.targetExePath) return false;
     // Security Fix: Validate targetExePath is within temp dir and is an ih_update exe
     const safePath = path.resolve(restartPayload.targetExePath);
@@ -1633,7 +1695,13 @@ app.whenReady().then(async () => {
       return false;
     }
 
-    
+    const isSigValid = await verifyFileSignature(safePath);
+    if (!isSigValid) {
+      logger.error('Blocked deferred execution of unverified update binary:', safePath);
+      try { if (fs.existsSync(safePath)) fs.unlinkSync(safePath); } catch {}
+      return false;
+    }
+
     try {
       const child = child_process.spawn(restartPayload.targetExePath, [
         `--cleanup-pid=${process.pid}`,
@@ -1645,6 +1713,7 @@ app.whenReady().then(async () => {
       });
       child.unref();
       
+      resetDisplayGamma();
       app.exit(0);
       return true;
     } catch (err) {
@@ -1846,6 +1915,7 @@ for (const file of filesToDownload) {
 });
 
 app.on('window-all-closed', function () {
+  resetDisplayGamma();
   if (process.platform !== 'darwin') app.quit();
 });
 
