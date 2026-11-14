@@ -153,26 +153,22 @@ export default function Settings() {
     setPinInput('');
   };
 
-  const submitPin = async () => {
+  const submitPin = () => {
     const trimmed = (pinInput || '').trim();
     if (!trimmed) {
       if (pinInputRef.current) {
         scrollToAndHighlight(pinInputRef.current);
       }
-      setPinError(t('fill_dev_key', 'Введите 32-значный ключ DEV_MASTER_KEY'));
+      setPinError(t('fill_pin', 'Введите ПИН-код'));
       return;
     }
-    if (trimmed.length === 32 && /^[a-fA-F0-9]{32}$/.test(trimmed)) {
-      if (window.electronAPI?.dev) {
-        try {
-          await window.electronAPI.dev.saveKey(trimmed);
-        } catch {}
-      }
+    if (trimmed === '2136') {
       sessionStorage.setItem('dev_authenticated', 'true');
       setShowPinModal(false);
       navigate('/developer');
+      return;
     } else {
-      setPinError(t('invalid_dev_key', 'Неверный ключ (требуется 32-значный hex-ключ)'));
+      setPinError(t('invalid_pin', 'Неверный ПИН-код'));
       if (pinInputRef.current) {
         scrollToAndHighlight(pinInputRef.current);
       }
@@ -631,15 +627,16 @@ export default function Settings() {
       {showPinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-main-fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl relative">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('settings_dev_auth_title', 'Авторизация разработчика')}</h3>
-            <p className="text-sm text-slate-500 mb-4">{t('settings_dev_key_desc', 'Введите 32-значный мастер-ключ DEV_MASTER_KEY для перехода в режим разработчика.')}</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('settings_pin_title', 'Ввод ПИН-кода')}</h3>
+            <p className="text-sm text-slate-500 mb-4">{t('settings_dev_pin_desc', 'Введите ПИН-код для перехода в режим разработчика.')}</p>
             
             <input 
               ref={pinInputRef}
               type="password"
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value)}
-              placeholder={t('settings_dev_key_placeholder', '32-значный ключ разработчика...')}
+              placeholder={t('settings_pin_placeholder', 'ПИН-код')}
+              maxLength={10}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 mb-2"
               onKeyDown={(e) => e.key === 'Enter' && submitPin()}
               autoFocus
