@@ -160,17 +160,17 @@ const DossierTableRow = React.memo(function DossierTableRow({
         )}
       </td>
 
-      {/* 8. Читерство */}
+      {/* 8. Нарушения */}
       <td className="px-4 py-3.5 whitespace-nowrap text-center">
-        {(dossier.cheaterStatus === 'CONFIRMED' || (dossier.cheaterReport && !dossier.cheaterStatus)) ? (
+        {(dossier.violationStatus === 'CONFIRMED' || dossier.cheaterStatus === 'CONFIRMED' || ((dossier.violationReport || dossier.cheaterReport) && !dossier.violationStatus && !dossier.cheaterStatus)) ? (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-xs font-bold border border-rose-300 dark:border-rose-800 shadow-2xs">
             <span>🚨</span>
-            <span>{t('clan_dossier_badge_cheater_confirmed') || 'Читер'}</span>
+            <span>{t('clan_dossier_badge_violator_confirmed') || t('clan_dossier_badge_cheater_confirmed') || 'Нарушитель'}</span>
           </span>
-        ) : dossier.cheaterStatus === 'SUSPICION' ? (
+        ) : (dossier.violationStatus === 'SUSPICION' || dossier.cheaterStatus === 'SUSPICION') ? (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold border border-amber-300 dark:border-amber-800 shadow-2xs">
             <span>⚠️</span>
-            <span>{t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}</span>
+            <span>{t('clan_dossier_badge_violator_suspicion') || t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}</span>
           </span>
         ) : (
           <span className="text-slate-400 text-xs">—</span>
@@ -284,16 +284,16 @@ const DossierCard = React.memo(function DossierCard({ dossier, onOpen, getCached
             </span>
           )}
 
-          {(dossier.cheaterStatus === 'CONFIRMED' || (dossier.cheaterReport && !dossier.cheaterStatus)) && (
+          {(dossier.violationStatus === 'CONFIRMED' || dossier.cheaterStatus === 'CONFIRMED' || ((dossier.violationReport || dossier.cheaterReport) && !dossier.violationStatus && !dossier.cheaterStatus)) && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[10px] font-bold border border-red-200 dark:border-red-800">
               <AlertTriangle className="w-3 h-3 text-red-500" />
-              <span>{t('clan_dossier_badge_cheater_confirmed') || 'Читер'}</span>
+              <span>{t('clan_dossier_badge_violator_confirmed') || t('clan_dossier_badge_cheater_confirmed') || 'Нарушитель'}</span>
             </span>
           )}
-          {dossier.cheaterStatus === 'SUSPICION' && (
+          {(dossier.violationStatus === 'SUSPICION' || dossier.cheaterStatus === 'SUSPICION') && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold border border-amber-200 dark:border-amber-800">
               <AlertTriangle className="w-3 h-3 text-amber-500" />
-              <span>{t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}</span>
+              <span>{t('clan_dossier_badge_violator_suspicion') || t('clan_dossier_badge_cheater_suspicion') || 'Подозрение'}</span>
             </span>
           )}
         </div>
@@ -532,7 +532,7 @@ export default function DossierTab() {
                   <th className="px-4 py-3 text-center">{t('clan_dossier_col_hours', 'Часы в игре')}</th>
                   <th className="px-4 py-3 text-center">{t('clan_dossier_col_age', 'Возраст')}</th>
                   <th className="px-4 py-3 text-center">{t('clan_dossier_col_rating', 'Оценка')}</th>
-                  <th className="px-4 py-3 text-center">{t('clan_dossier_col_cheater', 'Читерство')}</th>
+                  <th className="px-4 py-3 text-center">{t('clan_dossier_col_violator', 'Нарушения')}</th>
                   <th className="px-4 py-3 text-center">{t('clan_roster_dossier_btn', 'Досье')}</th>
                   <th className="px-4 py-3 text-center">{t('clan_warns_btn', 'Варны')}</th>
                 </tr>

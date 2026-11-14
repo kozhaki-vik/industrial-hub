@@ -51,20 +51,28 @@ export default function ReleaseNotesModal() {
   const fetchReleaseNotes = async (currentVersion) => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://api.github.com/repos/kozhaki-vik/industrial-hub-releases/releases');
-      if (!response.ok) throw new Error('Failed to fetch releases');
-      const data = await response.json();
-      
-      // Find the release matching the version
-      const release = data.find(r => r.tag_name === `v${currentVersion}` || r.tag_name === `v${currentVersion}-test` || r.tag_name.includes(currentVersion));
-      
-      if (release && release.body) {
-        const bodyTxt = release.body.trim();
-        // Check if there is actual meaningful text, ignore '????', default strings and very short text
-        if (bodyTxt && !bodyTxt.startsWith('????') && !bodyTxt.includes('Тестовая сборка') && !bodyTxt.includes('Стабильный релиз') && bodyTxt.length > 5) {
-          setReleaseNotes(bodyTxt);
-          setIsTestBranch(release.prerelease || release.tag_name.includes('test'));
-          return true;
+      const repos = ['kozhaki-vik/industrial-hub', 'kozhaki-vik/industrial-hub-releases'];
+      for (const repo of repos) {
+        try {
+          const response = await fetch(`https://api.github.com/repos/${repo}/releases`);
+          if (!response.ok) continue;
+          const data = await response.json();
+          if (!Array.isArray(data)) continue;
+
+          // Find the release matching the version
+          const release = data.find(r => r.tag_name === `v${currentVersion}` || r.tag_name === `v${currentVersion}-test` || r.tag_name.includes(currentVersion));
+          
+          if (release && release.body) {
+            const bodyTxt = release.body.trim();
+            // Check if there is actual meaningful text, ignore '????', default strings and very short text
+            if (bodyTxt && !bodyTxt.startsWith('????') && !bodyTxt.includes('Тестовая сборка') && !bodyTxt.includes('Стабильный релиз') && bodyTxt.length > 5) {
+              setReleaseNotes(bodyTxt);
+              setIsTestBranch(release.prerelease || release.tag_name.includes('test'));
+              return true;
+            }
+          }
+        } catch {
+          // try next repo
         }
       }
       return false;

@@ -35,40 +35,50 @@ export async function checkUpdates(addLog = () => {}) {
   let serverData = null;
 
   try {
-    const repo = 'kozhaki-vik/industrial-hub-releases';
-    const ghApiUrl = channel === 'main' 
-      ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
-      : `https://api.github.com/repos/${repo}/releases?t=${Date.now()}`;
+    const repos = ['kozhaki-vik/industrial-hub', 'kozhaki-vik/industrial-hub-releases'];
+    for (const repo of repos) {
+      const ghApiUrl = channel === 'main' 
+        ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
+        : `https://api.github.com/repos/${repo}/releases?t=${Date.now()}`;
 
-    const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
-    if (ghRes.ok) {
-      let ghData = await ghRes.json();
-      
-      // If test channel, get the very first release from the array (can be prerelease or release)
-      if (channel === 'test' && Array.isArray(ghData)) {
-        ghData = ghData[0];
-      }
+      try {
+        const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
+        if (ghRes.ok) {
+          let ghData = await ghRes.json();
+          
+          // If test channel, get the very first release from the array (can be prerelease or release)
+          if (channel === 'test' && Array.isArray(ghData)) {
+            ghData = ghData[0];
+          }
 
-      if (ghData && ghData.tag_name) {
-        const tagVersion = ghData.tag_name.replace(/^v/, '');
-        // Find the first .exe asset
-        const asset = ghData.assets ? ghData.assets.find(a => a.name.endsWith('.exe')) : null;
-        
-        if (tagVersion && asset && asset.browser_download_url) {
-          serverData = {
-            version: tagVersion,
-            clientUrl: asset.browser_download_url
-          };
-          addLog(`GitHub API success! Found version ${tagVersion}`);
+          if (ghData && ghData.tag_name) {
+            const tagVersion = ghData.tag_name.replace(/^v/, '');
+            // Prioritize portable executable over installer setup
+            const asset = ghData.assets
+              ? (ghData.assets.find(a => a.name.endsWith('.exe') && !a.name.toLowerCase().includes('setup') && !a.name.toLowerCase().includes('unins'))
+                 || ghData.assets.find(a => a.name.endsWith('.exe')))
+              : null;
+            
+            if (tagVersion && asset && asset.browser_download_url) {
+              serverData = {
+                version: tagVersion,
+                clientUrl: asset.browser_download_url
+              };
+              addLog(`GitHub API success! Found version ${tagVersion} from ${repo}`);
+              break;
+            } else {
+              addLog(`GitHub release in ${repo} found, but missing suitable .exe asset or tag_name.`);
+            }
+          }
         } else {
-          addLog("GitHub release found, but missing .exe asset or tag_name.");
+          addLog(`GitHub API (${repo}) returned ${ghRes.status}`);
         }
+      } catch (repoErr) {
+        addLog(`GitHub check failed for ${repo}: ${repoErr.message}`);
       }
-    } else {
-      addLog(`GitHub API returned ${ghRes.status}`);
     }
   } catch (e) {
-    addLog(`GitHub check failed: ${e.message}`);
+    addLog(`Update check loop failed: ${e.message}`);
   }
 
   if (!serverData) {

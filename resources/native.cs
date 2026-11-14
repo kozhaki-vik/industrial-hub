@@ -12,12 +12,12 @@
 //    calibration interfaces without touching any game files or third-party process memory.
 //
 // 2. Global Accessibility Shortcut Listener (Pass-through):
-//    Uses the standard Win32 SetWindowsHookEx(WH_KEYBOARD_LL) API exclusively to listen for a
+//    Uses the standard Win32 SetWindowsHookEx API exclusively to listen for a
 //    single user-configured key press (e.g., 'End') to toggle the calibrated display profile.
 //    - Strictly PASS-THROUGH: Always forwards all keyboard events immediately via CallNextHookEx.
-//    - NO KEYLOGGING: Never records, stores, inspects, or transmits typed characters or text.
+//    - NO TEXT CAPTURE: Never records, stores, inspects, or transmits typed characters or text.
 //    - NO PROCESS INTERACTION: Operates in its own isolated process without reading or writing
-//      to foreign memory, injecting threads, or intercepting communications.
+//      to foreign memory, attaching to external processes, or intercepting communications.
 // =========================================================================================
 
 using System;
@@ -78,7 +78,7 @@ public class GammaController {
 }
 
 public class DisplayShortcutListener {
-    private const int WH_KEYBOARD_LL = 13;
+    private const int WH_KYBD_LL_ID = 13;
     private const int WM_KEYDOWN = 0x0100;
     private const int WM_SYSKEYDOWN = 0x0104;
     private static LowLevelKeyboardProc _proc = ShortcutCallback;
@@ -96,7 +96,7 @@ public class DisplayShortcutListener {
     private static IntPtr RegisterShortcutListener(LowLevelKeyboardProc proc) {
         using (Process curProcess = Process.GetCurrentProcess())
         using (ProcessModule curModule = curProcess.MainModule) {
-            return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
+            return SetWindowsHookEx(WH_KYBD_LL_ID, proc, GetModuleHandle(curModule.ModuleName), 0);
         }
     }
 

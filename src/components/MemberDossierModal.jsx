@@ -93,10 +93,10 @@ function MemberDossierModal({
   const [isBlacklisted, setIsBlacklisted] = useState(false);
   const [blacklistReason, setBlacklistReason] = useState('');
   
-  // Cheater state: 'NONE' | 'SUSPICION' | 'CONFIRMED'
-  const [cheaterStatus, setCheaterStatus] = useState('NONE');
-  const [cheaterReason, setCheaterReason] = useState('');
-  const [cheaterProofUrl, setCheaterProofUrl] = useState('');
+  // Violation / Fair Play state: 'NONE' | 'SUSPICION' | 'CONFIRMED'
+  const [violationStatus, setViolationStatus] = useState('NONE');
+  const [violationReason, setViolationReason] = useState('');
+  const [violationProofUrl, setViolationProofUrl] = useState('');
 
   // Ratings
   const [shootingRating, setShootingRating] = useState(0);
@@ -124,10 +124,10 @@ function MemberDossierModal({
       setIsBlacklisted(Boolean(profile.isBlacklisted || profile.status === 'BLACKLISTED'));
       setBlacklistReason(profile.blacklistReason || '');
       
-      const initialCheaterStatus = profile.cheaterStatus || (profile.cheaterReport ? 'CONFIRMED' : 'NONE');
-      setCheaterStatus(initialCheaterStatus);
-      setCheaterReason(profile.cheaterReason || '');
-      setCheaterProofUrl(profile.cheaterProofUrl || '');
+      const initialViolationStatus = profile.violationStatus || profile.cheaterStatus || ((profile.violationReport || profile.cheaterReport) ? 'CONFIRMED' : 'NONE');
+      setViolationStatus(initialViolationStatus);
+      setViolationReason(profile.violationReason || profile.cheaterReason || '');
+      setViolationProofUrl(profile.violationProofUrl || profile.cheaterProofUrl || '');
 
       setShootingRating(Number(profile.shootingRating) || 0);
       setFlyingRating(Number(profile.flyingRating) || 0);
@@ -182,12 +182,12 @@ function MemberDossierModal({
     if (e) e.preventDefault();
     if (!canEdit || saving) return;
 
-    if (cheaterStatus !== 'NONE') {
-      if (!cheaterReason.trim()) {
+    if (violationStatus !== 'NONE') {
+      if (!violationReason.trim()) {
         setSaveError(t('dossier_err_reason', 'Укажите причину отметки нарушителя правил / подозреваемого.'));
         return;
       }
-      if (cheaterProofUrl.trim() && !isValidHttpUrl(cheaterProofUrl.trim())) {
+      if (violationProofUrl.trim() && !isValidHttpUrl(violationProofUrl.trim())) {
         setSaveError(t('dossier_err_proof_url', 'Ссылка на доказательства должна быть корректным веб-адресом (начинаться с https:// или http://).'));
         return;
       }
@@ -204,10 +204,15 @@ function MemberDossierModal({
         notes,
         isBlacklisted: status === 'BLACKLISTED' ? true : isBlacklisted,
         blacklistReason: status === 'BLACKLISTED' ? (blacklistReason || statusReason) : blacklistReason,
-        cheaterReport: cheaterStatus !== 'NONE',
-        cheaterStatus,
-        cheaterReason: cheaterStatus !== 'NONE' ? cheaterReason.trim() : null,
-        cheaterProofUrl: cheaterStatus !== 'NONE' ? cheaterProofUrl.trim() : null,
+        violationReport: violationStatus !== 'NONE',
+        violationStatus,
+        violationReason: violationStatus !== 'NONE' ? violationReason.trim() : null,
+        violationProofUrl: violationStatus !== 'NONE' ? violationProofUrl.trim() : null,
+        // Backward compatibility with legacy schema/servers
+        cheaterReport: violationStatus !== 'NONE',
+        cheaterStatus: violationStatus,
+        cheaterReason: violationStatus !== 'NONE' ? violationReason.trim() : null,
+        cheaterProofUrl: violationStatus !== 'NONE' ? violationProofUrl.trim() : null,
         shootingRating,
         flyingRating,
         buildingRating,
@@ -226,7 +231,7 @@ function MemberDossierModal({
       setSaving(false);
     }
   }, [
-    canEdit, saving, cheaterStatus, cheaterReason, cheaterProofUrl, t, status,
+    canEdit, saving, violationStatus, violationReason, violationProofUrl, t, status,
     statusReason, notes, isBlacklisted, blacklistReason, shootingRating,
     flyingRating, buildingRating, farmingRating, overallRating, onSave, profile?.userId
   ]);
@@ -359,11 +364,11 @@ function MemberDossierModal({
                   {profile.username || t('dossier_member', 'Участник клана')}
                 </h3>
                 {getStatusBadge(status)}
-                {cheaterStatus === 'CONFIRMED' && (
+                {violationStatus === 'CONFIRMED' && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-600 text-white shadow-sm flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3" />{t('dossier_cheater', 'Нарушитель')}</span>
+                    <ShieldAlert className="w-3 h-3" />{t('dossier_violator', t('dossier_cheater', 'Нарушитель'))}</span>
                 )}
-                {cheaterStatus === 'SUSPICION' && (
+                {violationStatus === 'SUSPICION' && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />{t('dossier_suspect', 'Подозрение')}</span>
                 )}
@@ -626,14 +631,14 @@ function MemberDossierModal({
                       </div>
                     )}
 
-                    {/* Cheater Selection Section */}
+                    {/* Violation / Fair Play Selection Section */}
                     <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <ShieldAlert className={`w-4 h-4 shrink-0 ${cheaterStatus === 'CONFIRMED' ? 'text-red-500' : cheaterStatus === 'SUSPICION' ? 'text-amber-500' : 'text-slate-400'}`} />
+                          <ShieldAlert className={`w-4 h-4 shrink-0 ${violationStatus === 'CONFIRMED' ? 'text-red-500' : violationStatus === 'SUSPICION' ? 'text-amber-500' : 'text-slate-400'}`} />
                           <div>
-                            <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{t('dossier_anticheat_title', 'Нарушение правил сообщества / Нечестная игра')}</div>
-                            <div className="text-[10px] text-slate-500">{t('dossier_anticheat_desc', 'Подозрение или подтвержденный нарушитель правил')}</div>
+                            <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{t('dossier_fairplay_title', t('dossier_anticheat_title', 'Нарушение правил сообщества / Нечестная игра'))}</div>
+                            <div className="text-[10px] text-slate-500">{t('dossier_fairplay_desc', t('dossier_anticheat_desc', 'Подозрение или подтвержденный нарушитель правил'))}</div>
                           </div>
                         </div>
                         
@@ -642,55 +647,55 @@ function MemberDossierModal({
                           <button
                             type="button"
                             disabled={!canEdit}
-                            onClick={() => setCheaterStatus('NONE')}
+                            onClick={() => setViolationStatus('NONE')}
                             className={`px-2 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
-                              cheaterStatus === 'NONE'
+                              violationStatus === 'NONE'
                                 ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                             }`}
                           >
-                            {t('dossier_cheater_none', 'В норме')}
+                            {t('dossier_violator_none', t('dossier_cheater_none', 'В норме'))}
                           </button>
                           <button
                             type="button"
                             disabled={!canEdit}
-                            onClick={() => setCheaterStatus('SUSPICION')}
+                            onClick={() => setViolationStatus('SUSPICION')}
                             className={`px-2 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
-                              cheaterStatus === 'SUSPICION'
+                              violationStatus === 'SUSPICION'
                                 ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
                                 : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
                             }`}
                           >
-                            ⚠️ {t('dossier_cheater_suspicion', 'Подозрение')}
+                            ⚠️ {t('dossier_violator_suspicion', t('dossier_cheater_suspicion', 'Подозрение'))}
                           </button>
                           <button
                             type="button"
                             disabled={!canEdit}
-                            onClick={() => setCheaterStatus('CONFIRMED')}
+                            onClick={() => setViolationStatus('CONFIRMED')}
                             className={`px-2 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
-                              cheaterStatus === 'CONFIRMED'
+                              violationStatus === 'CONFIRMED'
                                 ? 'bg-red-600 text-white shadow-sm shadow-red-600/20'
                                 : 'text-slate-500 hover:text-red-600 dark:hover:text-red-400'
                             }`}
                           >
-                            🚨 {t('dossier_cheater_confirmed', 'Нарушитель правил')}
+                            🚨 {t('dossier_violator_confirmed', t('dossier_cheater_confirmed', 'Нарушитель правил'))}
                           </button>
                         </div>
                       </div>
 
                       {/* Detail fields when SUSPICION or CONFIRMED */}
-                      {cheaterStatus !== 'NONE' && (
+                      {violationStatus !== 'NONE' && (
                         <div className="p-3 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 space-y-2.5 animate-in fade-in duration-150">
                           <div>
                             <label className="block text-xs font-semibold text-red-900 dark:text-red-300 mb-1">
-                              {t('dossier_why_cheater', 'Детали нарушения / Причина *')}
+                              {t('dossier_why_violator', t('dossier_why_cheater', 'Детали нарушения / Причина *'))}
                             </label>
                             <textarea
                               rows={2}
                               disabled={!canEdit}
-                              value={cheaterReason}
-                              onChange={e => setCheaterReason(e.target.value)}
-                              placeholder={t('dossier_why_cheater_ph', 'Опишите подробности нарушения правил или нечестной игры...')}
+                              value={violationReason}
+                              onChange={e => setViolationReason(e.target.value)}
+                              placeholder={t('dossier_why_violator_ph', t('dossier_why_cheater_ph', 'Опишите подробности нарушения правил или нечестной игры...'))}
                               className="w-full px-3 py-1.5 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 resize-none"
                             />
                           </div>
@@ -703,17 +708,17 @@ function MemberDossierModal({
                               <input
                                 type="url"
                                 disabled={!canEdit}
-                                value={cheaterProofUrl}
+                                value={violationProofUrl}
                                 onChange={e => {
-                                  setCheaterProofUrl(e.target.value);
+                                  setViolationProofUrl(e.target.value);
                                   setSaveError(null);
                                 }}
                                 placeholder={t('dossier_proof_url_ph', 'https://youtu.be/... или https://medal.tv/...')}
                                 className="flex-1 px-3 py-1.5 border border-red-200 dark:border-red-800 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-red-500/50 font-mono"
                               />
-                              {cheaterProofUrl && isValidHttpUrl(cheaterProofUrl) && (
+                              {violationProofUrl && isValidHttpUrl(violationProofUrl) && (
                                 <a
-                                  href={cheaterProofUrl}
+                                  href={violationProofUrl}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
@@ -993,7 +998,7 @@ function MemberDossierModal({
                           <div
                             key={idx}
                             className={`p-4 rounded-2xl border text-xs space-y-3 ${
-                              rec.isBlacklisted || rec.status === 'BLACKLISTED' || rec.cheaterReport
+                              rec.isBlacklisted || rec.status === 'BLACKLISTED' || rec.violationReport || rec.cheaterReport
                                 ? 'bg-red-50/60 dark:bg-red-950/20 border-red-200 dark:border-red-900/60'
                                 : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-700'
                             }`}
@@ -1002,12 +1007,12 @@ function MemberDossierModal({
                               <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                                 <span className="text-sm">{rec.guild?.name || `${t('clan_server_id_prefix', 'Сервер ID:')} ${rec.guildId}`}</span>
                                 {getStatusBadge(rec.status)}
-                                {rec.cheaterStatus === 'CONFIRMED' && (
+                                {(rec.violationStatus === 'CONFIRMED' || rec.cheaterStatus === 'CONFIRMED') && (
                                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">
-                                    🚨 {t('dossier_cheater', 'НАРУШИТЕЛЬ')}
+                                    🚨 {t('dossier_violator', t('dossier_cheater', 'НАРУШИТЕЛЬ'))}
                                   </span>
                                 )}
-                                {rec.cheaterStatus === 'SUSPICION' && (
+                                {(rec.violationStatus === 'SUSPICION' || rec.cheaterStatus === 'SUSPICION') && (
                                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white">
                                     ⚠️ {t('dossier_suspicion_upper', 'ПОДОЗРЕНИЕ')}
                                   </span>
@@ -1032,18 +1037,18 @@ function MemberDossierModal({
                               )}
                             </div>
 
-                            {rec.cheaterReason && (
+                            {(rec.violationReason || rec.cheaterReason) && (
                               <div className="p-2 rounded bg-red-100/90 dark:bg-red-900/40 text-red-800 dark:text-red-200 text-[11px] space-y-1">
-                                <div><strong>{t('dossier_cheater_reason_label', 'Причина отметки нарушителя правил:')}</strong> {rec.cheaterReason}</div>
-                                {rec.cheaterProofUrl && (
+                                <div><strong>{t('dossier_violator_reason_label', t('dossier_cheater_reason_label', 'Причина отметки нарушителя правил:'))}</strong> {rec.violationReason || rec.cheaterReason}</div>
+                                {(rec.violationProofUrl || rec.cheaterProofUrl) && (
                                   <div>
                                     <a
-                                      href={rec.cheaterProofUrl}
+                                      href={rec.violationProofUrl || rec.cheaterProofUrl}
                                       target="_blank"
                                       rel="noreferrer"
                                       className="text-red-700 dark:text-red-300 underline font-semibold flex items-center gap-1"
                                     >
-                                      <span>{t('dossier_proofs_label', 'Доказательства:')} {rec.cheaterProofUrl}</span>
+                                      <span>{t('dossier_proofs_label', 'Доказательства:')} {rec.violationProofUrl || rec.cheaterProofUrl}</span>
                                       <ExternalLink className="w-3 h-3" />
                                     </a>
                                   </div>

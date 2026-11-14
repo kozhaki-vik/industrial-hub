@@ -23,21 +23,24 @@ Industrial Hub is an open-source Windows desktop utility and community managemen
 - **Installation Identifier (`device-id`):** To calculate active online installations, maintain WebSocket connection state, and sync user configuration preferences (such as shared schematics or clan bookmarks), the application uses a local installation identifier (`device-id`) stored in `C:\ProgramData\IndustrialHub\device-id` (with a resilient fallback in user application storage). This identifier is generated locally without reading hardware serial numbers and without running background system scripts (such as PowerShell or WMI queries). It cannot be reversed to discover your hardware components, IP address, or user account name.
 - **Connection Heartbeat:** Periodic lightweight ping/pong messages are exchanged with the gateway server (`industrial-hub.duckdns.org`) solely to detect network disconnections and keep session state alive.
 
-### 2.2 Optional Anonymous Hardware Diagnostics
-When enabled, the application collects non-identifying system environment details to ensure compatibility and troubleshoot performance:
+### 2.2 Optional Anonymous Diagnostics & Telemetry
+When enabled (Opt-In), the application collects non-identifying system environment details and basic route navigation events to ensure compatibility and improve application UI stability:
 - **Processor Model** (e.g., `AMD Ryzen 7 7800X3D`)
-- **Graphics Card Model** (e.g., `NVIDIA GeForce RTX 4070`)
 - **Total Physical RAM** (e.g., `32 GB`)
 - **Operating System Version and Architecture** (e.g., `Windows 11 x64`)
+- **Anonymous Section Navigation:** High-level section navigation events (such as `/conveyors` or `/gamma`) without recording user inputs, form data, or keystrokes.
 
 > [!NOTE]
-> Diagnostic telemetry explicitly **excludes** computer network hostnames (`hostname`), MAC addresses, drive serial numbers, local IP addresses, and user profile usernames.
+> Diagnostic telemetry explicitly **excludes** computer network hostnames (`hostname`), MAC addresses, drive serial numbers, local IP addresses, graphics card hardware queries, and user profile usernames. Both hardware diagnostics and section usage telemetry are completely suppressed when the user opts out.
 
-### 2.3 User-Initiated Discord Integration
+### 2.3 Critical Application Crash Reporting
+- If a critical uncaught frontend error occurs (e.g. within the Clan Manager view), an anonymized error stack trace and application version number may be sent to our monitoring endpoint (`/api/crash`) to diagnose and resolve software regressions. No personal files, sensitive data, or tokens are included in crash reports.
+
+### 2.4 User-Initiated Discord Integration
 - If you voluntarily choose to link a Discord server via the Clan Manager module, the application processes server channel identifiers, role IDs, and public member identifiers necessary to display clan rosters and manage administrative tickets.
 - No private Discord credentials, bot secrets, or user passwords are collected or stored by the client application.
 
-### 2.4 Support Tickets
+### 2.5 Support Tickets
 - When you submit a feedback form or support ticket, only the text message you write and basic client version metadata are transmitted to our support queue.
 
 ---
@@ -47,7 +50,7 @@ When enabled, the application collects non-identifying system environment detail
 You maintain full control over diagnostic telemetry:
 1. **Initial Setup:** During the first-run onboarding wizard (`Initial Setup`), you are presented with a direct toggle to disable anonymous diagnostic telemetry before any data is sent.
 2. **Settings Menu:** You can toggle anonymous telemetry on or off at any time under **Settings → System & Diagnostics → Anonymous Diagnostic Telemetry**.
-3. **Local Storage:** When opted out (`hub_telemetry_enabled = "false"`), no hardware diagnostic payloads are ever transmitted to the server.
+3. **Local Storage:** When opted out (`hub_telemetry_enabled = "false"`), all hardware diagnostic payloads and route navigation telemetry are completely blocked and never transmitted to the server.
 
 ---
 

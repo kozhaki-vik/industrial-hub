@@ -19,9 +19,9 @@
 - **Dynamic Voice & Ticket Automation:** Create temporary voice channels on demand and organize player recruitment tickets.
 - **Roster & Activity Analytics:** Track attendance, role changes, and member statistics with rich interactive visual charts.
 
-### 📐 Engineering Schematics & Calculators
-- **Conveyor & Electricity Planners:** Design, simulate, and export industrial pipeline and electrical circuits.
-- **Monument Exploration Guides:** Interactive maps and loot guides for survival game monuments.
+### 📐 Industrial Conveyors & Binds Manager
+- **Conveyor Pipeline Designer:** Design, simulate, and export industrial conveyor filter and piping configurations.
+- **Binds & Configuration Manager:** Generate, customize, and safely export game binds and auto-detected client configs.
 - **Clipboard Integration:** Export generated configuration strings and binds safely using the standard Windows Clipboard API.
 
 ---

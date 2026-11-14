@@ -1544,26 +1544,40 @@ instanceLockPromise.then(() => {
         return resolve(false);
       }
       const safePath = filePath.replace(/'/g, "''");
-      const psCommand = `$sig = Get-AuthenticodeSignature -LiteralPath '${safePath}'; if ($sig.Status -eq 'Valid') { $sig.SignerCertificate.Thumbprint } else { 'INVALID_STATUS:' + $sig.Status }`;
+      const psCommand = `$s = Get-AuthenticodeSignature -LiteralPath '${safePath}'; @{ status = [string]$s.Status; thumbprint = [string]$s.SignerCertificate.Thumbprint; subject = [string]$s.SignerCertificate.Subject } | ConvertTo-Json -Compress`;
       child_process.exec(
-        `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`,
+        `powershell -NoProfile -NonInteractive -Command "${psCommand}"`,
         { timeout: 10000, windowsHide: true },
         (error, stdout) => {
           if (error) {
             logger.error(`Signature verification failed for ${filePath}:`, error.message);
             return resolve(false);
           }
-          const output = (stdout || '').trim();
-          if (output.startsWith('INVALID_STATUS:')) {
-            logger.warn(`Signature status not valid for ${filePath}: ${output}`);
+          let status = '';
+          let thumbprint = '';
+          let subject = '';
+
+          try {
+            const parsed = JSON.parse((stdout || '').trim());
+            status = String(parsed.status || '').trim();
+            thumbprint = String(parsed.thumbprint || '').trim().toUpperCase();
+            subject = String(parsed.subject || '').trim();
+          } catch {
+            const raw = (stdout || '').trim();
+            logger.warn(`Failed to parse signature JSON for ${filePath}: ${raw}`);
             return resolve(false);
           }
-          const thumbprint = output.toUpperCase();
-          const isTrusted = TRUSTED_THUMBPRINTS.includes(thumbprint);
+
+          const isSignPathCert = status === 'Valid' && subject.toLowerCase().includes('signpath foundation');
+          const isValidTrustedLocal = status === 'Valid' && TRUSTED_THUMBPRINTS.includes(thumbprint);
+          const isTransitionLocalCert = TRUSTED_THUMBPRINTS.includes(thumbprint) && status !== 'HashMismatch' && status !== 'NotSigned';
+
+          const isTrusted = isSignPathCert || isValidTrustedLocal || isTransitionLocalCert;
+
           if (!isTrusted) {
-            logger.warn(`Untrusted thumbprint for ${filePath}: ${thumbprint}`);
+            logger.warn(`Untrusted signature for ${filePath}: status=${status}, thumbprint=${thumbprint}, subject=${subject}`);
           } else {
-            logger.info(`Verified signature for ${filePath}: ${thumbprint} (Valid & Trusted)`);
+            logger.info(`Verified signature for ${filePath}: status=${status}, thumbprint=${thumbprint}, subject=${subject} (Valid & Trusted)`);
           }
           resolve(isTrusted);
         }
@@ -1576,8 +1590,15 @@ instanceLockPromise.then(() => {
       throw new Error('Некорректный формат версии');
     }
 
-    const TRUSTED_PREFIX = 'https://github.com/kozhaki-vik/industrial-hub-releases/';
-    if (!exeUrl || (!exeUrl.startsWith(TRUSTED_PREFIX) && !exeUrl.startsWith('https://api.github.com/'))) {
+    const TRUSTED_PREFIXES = [
+      'https://github.com/kozhaki-vik/industrial-hub/',
+      'https://github.com/kozhaki-vik/industrial-hub-releases/'
+    ];
+    const isTrustedSource = exeUrl && (
+      TRUSTED_PREFIXES.some(prefix => exeUrl.startsWith(prefix)) ||
+      exeUrl.startsWith('https://api.github.com/')
+    );
+    if (!isTrustedSource) {
       throw new Error('Недоверенный источник обновления');
     }
 

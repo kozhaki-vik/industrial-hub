@@ -258,6 +258,9 @@ export const NetworkProvider = ({ children }) => {
   }, []);
 
   const sendTelemetry = useCallback((data) => {
+    if (localStorage.getItem('hub_telemetry_enabled') === 'false') {
+      return;
+    }
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'telemetry', ...data }));
     }
