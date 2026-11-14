@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { checkUpdates } from '../utils/SmartPatcher';
+import { compareSemver } from '../utils/semver';
 import { useNotification } from './NotificationContext';
 
 const NetworkContext = createContext(null);
@@ -73,15 +74,35 @@ export const NetworkProvider = ({ children }) => {
       try {
         const { getConfigKey } = await import('../services/store');
         const channel = getConfigKey('updateChannel') || 'main';
-        const repo = 'kozhaki-vik/industrial-hub-releases';
-        const ghApiUrl = channel === 'main' 
-          ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
-          : `https://api.github.com/repos/${repo}/releases?t=${Date.now()}`;
-        const res = await fetch(ghApiUrl);
-        if (res.ok) {
-          let data = await res.json();
-          if (channel === 'test' && Array.isArray(data)) data = data[0];
-          setServerVersion(data.tag_name ? data.tag_name.replace(/^v/, '') : null);
+        const repos = ['kozhaki-vik/industrial-hub', 'kozhaki-vik/industrial-hub-releases'];
+        let foundVersion = null;
+
+        for (const repo of repos) {
+          const ghApiUrl = channel === 'main' 
+            ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
+            : `https://api.github.com/repos/${repo}/releases?per_page=10&t=${Date.now()}`;
+          const res = await fetch(ghApiUrl, { cache: 'no-store' });
+          if (res.ok) {
+            let data = await res.json();
+            if (channel === 'test' && Array.isArray(data)) {
+              const nonDrafts = data.filter(r => r && !r.draft);
+              nonDrafts.sort((a, b) => {
+                const va = (a.tag_name || '').replace(/^v/, '');
+                const vb = (b.tag_name || '').replace(/^v/, '');
+                return compareSemver(vb, va);
+              });
+              if (nonDrafts.length > 0 && nonDrafts[0].tag_name) {
+                foundVersion = nonDrafts[0].tag_name.replace(/^v/, '');
+                break;
+              }
+            } else if (data && !data.draft && data.tag_name) {
+              foundVersion = data.tag_name.replace(/^v/, '');
+              break;
+            }
+          }
+        }
+        if (foundVersion) {
+          setServerVersion(foundVersion);
         }
       } catch (e) {
         addLog(`Failed fetch GitHub API: ${e.message}`);

@@ -1,6 +1,7 @@
 const electron = window.electronAPI ? window.electronAPI : null;
 
 import { getConfigKey } from '../services/store';
+import { compareSemver } from './semver';
 
 let isUpdating = false;
 let isFirstCheck = true;
@@ -39,37 +40,49 @@ export async function checkUpdates(addLog = () => {}) {
     for (const repo of repos) {
       const ghApiUrl = channel === 'main' 
         ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
-        : `https://api.github.com/repos/${repo}/releases?t=${Date.now()}`;
+        : `https://api.github.com/repos/${repo}/releases?per_page=10&t=${Date.now()}`;
 
       try {
         const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
         if (ghRes.ok) {
           let ghData = await ghRes.json();
-          
-          // If test channel, get the very first release from the array (can be prerelease or release)
+          let candidateReleases = [];
+
           if (channel === 'test' && Array.isArray(ghData)) {
-            ghData = ghData[0];
+            // Filter non-draft releases
+            candidateReleases = ghData.filter(r => r && !r.draft);
+            // Sort by semver descending
+            candidateReleases.sort((a, b) => {
+              const va = (a.tag_name || '').replace(/^v/, '');
+              const vb = (b.tag_name || '').replace(/^v/, '');
+              return compareSemver(vb, va);
+            });
+          } else if (ghData && !ghData.draft) {
+            candidateReleases = [ghData];
           }
 
-          if (ghData && ghData.tag_name) {
-            const tagVersion = ghData.tag_name.replace(/^v/, '');
-            // Prioritize portable executable over installer setup
-            const asset = ghData.assets
-              ? (ghData.assets.find(a => a.name.endsWith('.exe') && !a.name.toLowerCase().includes('setup') && !a.name.toLowerCase().includes('unins'))
-                 || ghData.assets.find(a => a.name.endsWith('.exe')))
-              : null;
-            
-            if (tagVersion && asset && asset.browser_download_url) {
-              serverData = {
-                version: tagVersion,
-                clientUrl: asset.browser_download_url
-              };
-              addLog(`GitHub API success! Found version ${tagVersion} from ${repo}`);
-              break;
-            } else {
-              addLog(`GitHub release in ${repo} found, but missing suitable .exe asset or tag_name.`);
+          for (const release of candidateReleases) {
+            if (release && release.tag_name) {
+              const tagVersion = release.tag_name.replace(/^v/, '');
+              // Prioritize portable executable over installer setup
+              const asset = release.assets
+                ? (release.assets.find(a => a.name.endsWith('.exe') && !a.name.toLowerCase().includes('setup') && !a.name.toLowerCase().includes('unins'))
+                   || release.assets.find(a => a.name.endsWith('.exe')))
+                : null;
+
+              if (tagVersion && asset && asset.browser_download_url) {
+                serverData = {
+                  version: tagVersion,
+                  clientUrl: asset.browser_download_url,
+                  isPreRelease: !!release.prerelease
+                };
+                addLog(`GitHub API success! Found version ${tagVersion}${release.prerelease ? ' (Pre-release)' : ''} from ${repo}`);
+                break;
+              }
             }
           }
+
+          if (serverData) break;
         } else {
           addLog(`GitHub API (${repo}) returned ${ghRes.status}`);
         }
@@ -92,17 +105,7 @@ export async function checkUpdates(addLog = () => {}) {
   addLog(`Local version = ${localVersion}, Server version = ${serverData.version}`);
   console.log(`SmartPatcher: Local version = ${localVersion}, Server version = ${serverData.version}`);
 
-  const compareVersions = (v1, v2) => {
-    const p1 = v1.split('.').map(Number);
-    const p2 = v2.split('.').map(Number);
-    for (let i = 0; i < 3; i++) {
-      if ((p1[i] || 0) > (p2[i] || 0)) return 1;
-      if ((p1[i] || 0) < (p2[i] || 0)) return -1;
-    }
-    return 0;
-  };
-
-  if (serverData.version && compareVersions(serverData.version, localVersion) > 0) {
+  if (serverData.version && compareSemver(serverData.version, localVersion) > 0) {
     let applyImmediately = true;
     if (!isFirstCheck) {
       if (electron.config && electron.config.isRustRunning) {
@@ -140,4 +143,3 @@ export async function checkUpdates(addLog = () => {}) {
   isFirstCheck = false;
   return null;
 }
-

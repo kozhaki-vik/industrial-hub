@@ -43,6 +43,67 @@ let mainWindow = null;
 let tray = null;
 let isQuitting = false;
 
+function parseSemver(v) {
+  if (!v) return null;
+  const clean = String(v).trim().replace(/^v/, '');
+  const match = clean.match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$/);
+  if (!match) {
+    const numMatch = clean.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+    if (!numMatch) return null;
+    return {
+      major: parseInt(numMatch[1], 10),
+      minor: parseInt(numMatch[2] || '0', 10),
+      patch: parseInt(numMatch[3] || '0', 10),
+      prerelease: null
+    };
+  }
+  return {
+    major: parseInt(match[1], 10),
+    minor: parseInt(match[2], 10),
+    patch: parseInt(match[3], 10),
+    prerelease: match[4] || null
+  };
+}
+
+function compareSemver(v1, v2) {
+  const s1 = parseSemver(v1);
+  const s2 = parseSemver(v2);
+  if (!s1 && !s2) return 0;
+  if (!s1) return -1;
+  if (!s2) return 1;
+
+  if (s1.major !== s2.major) return s1.major > s2.major ? 1 : -1;
+  if (s1.minor !== s2.minor) return s1.minor > s2.minor ? 1 : -1;
+  if (s1.patch !== s2.patch) return s1.patch > s2.patch ? 1 : -1;
+
+  if (!s1.prerelease && s2.prerelease) return 1;
+  if (s1.prerelease && !s2.prerelease) return -1;
+  if (!s1.prerelease && !s2.prerelease) return 0;
+
+  const p1Parts = s1.prerelease.split('.');
+  const p2Parts = s2.prerelease.split('.');
+  const len = Math.max(p1Parts.length, p2Parts.length);
+  for (let i = 0; i < len; i++) {
+    const p1 = p1Parts[i];
+    const p2 = p2Parts[i];
+    if (p1 === undefined) return -1;
+    if (p2 === undefined) return 1;
+    if (p1 === p2) continue;
+
+    const n1 = parseInt(p1, 10);
+    const n2 = parseInt(p2, 10);
+    const p1IsNum = !isNaN(n1) && String(n1) === p1;
+    const p2IsNum = !isNaN(n2) && String(n2) === p2;
+
+    if (p1IsNum && p2IsNum) return n1 > n2 ? 1 : -1;
+    if (p1IsNum && !p2IsNum) return -1;
+    if (!p1IsNum && p2IsNum) return 1;
+
+    return p1.localeCompare(p2);
+  }
+  return 0;
+}
+
 function getRealAppPath() {
   if (app.isPackaged) {
     if (process.env.PORTABLE_EXECUTABLE_DIR) {
@@ -51,6 +112,13 @@ function getRealAppPath() {
     return path.dirname(process.execPath);
   }
   return process.cwd();
+}
+
+function getAppRootDir() {
+  const appPath = getRealAppPath();
+  return path.basename(appPath).startsWith('app-')
+    ? path.resolve(appPath, '..')
+    : appPath;
 }
 
 function getRealExecutablePath() {
@@ -62,15 +130,24 @@ function getRealExecutablePath() {
     if (fs.existsSync(candidate)) return candidate;
   }
 
-  // Check client directory under AppData\Roaming\IndustrialHubClient\client
+  // If running from an installed or portable unpacked directory
+  if (process.execPath && !process.execPath.toLowerCase().includes('\\temp\\') && !process.execPath.toLowerCase().includes('/temp/')) {
+    return process.execPath;
+  }
+
+  return process.execPath;
+}
+
+function getLatestInstalledExePath() {
+  const currentExec = getRealExecutablePath();
+  const rootDir = getAppRootDir();
+
   try {
-    const appData = app.getPath('appData');
-    const clientDir = path.join(appData, 'IndustrialHubClient', 'client');
-    if (fs.existsSync(clientDir)) {
-      const dirs = fs.readdirSync(clientDir).filter(d => d.startsWith('app-'));
+    if (fs.existsSync(rootDir)) {
+      const dirs = fs.readdirSync(rootDir).filter(d => d.startsWith('app-') && fs.statSync(path.join(rootDir, d)).isDirectory());
       if (dirs.length > 0) {
-        dirs.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-        const latestExe = path.join(clientDir, dirs[0], 'Industrial Hub.exe');
+        dirs.sort((a, b) => compareSemver(b.replace(/^app-/, ''), a.replace(/^app-/, '')));
+        const latestExe = path.join(rootDir, dirs[0], 'Industrial Hub.exe');
         if (fs.existsSync(latestExe)) {
           return latestExe;
         }
@@ -78,12 +155,7 @@ function getRealExecutablePath() {
     }
   } catch {}
 
-  // Fallback: only use process.execPath if it is NOT in Temp
-  if (process.execPath && !process.execPath.toLowerCase().includes('\\temp\\') && !process.execPath.toLowerCase().includes('/temp/')) {
-    return process.execPath;
-  }
-
-  return process.execPath;
+  return currentExec;
 }
 
 let cachedInstallationId = null;
@@ -245,16 +317,18 @@ function getNativeHelperPath() {
   return path.join(process.resourcesPath, 'resources', 'IndustrialHubDisplay.exe');
 }
 
-function updateDesktopShortcut(targetExe, workingDir) {
+function updateApplicationShortcuts(targetExe, workingDir) {
+  if (process.platform !== 'win32') return;
   try {
-    const target = targetExe || getRealExecutablePath();
+    const target = targetExe || getLatestInstalledExePath();
     if (!target || target.toLowerCase().includes('\\temp\\') || target.toLowerCase().includes('/temp/')) {
-      console.warn('[Shortcut] Refusing to set desktop shortcut to temporary directory:', target);
+      console.warn('[Shortcut] Refusing to set shortcut to temporary directory:', target);
       return;
     }
     const cwd = workingDir || path.dirname(target);
-    const desktopDirs = new Set();
 
+    // 1. Desktop directories
+    const desktopDirs = new Set();
     try {
       const p = app.getPath('desktop');
       if (p) desktopDirs.add(p);
@@ -279,15 +353,60 @@ function updateDesktopShortcut(targetExe, workingDir) {
             icon: target,
             iconIndex: 0
           });
-          console.log(`[Shortcut] Successfully updated desktop shortcut at ${shortcutFile} -> ${target}`);
+          console.log(`[Shortcut] Updated desktop shortcut at ${shortcutFile} -> ${target}`);
         } catch (err) {
           console.warn(`[Shortcut] Could not write shortcut to ${shortcutFile}:`, err.message);
         }
       }
     }
+
+    // 2. Start Menu directories
+    const startMenuDirs = new Set();
+    if (process.env.APPDATA) {
+      startMenuDirs.add(path.join(process.env.APPDATA, 'Microsoft', 'Windows', 'Start Menu', 'Programs'));
+    }
+    const progData = process.env.ProgramData || 'C:\\ProgramData';
+    startMenuDirs.add(path.join(progData, 'Microsoft', 'Windows', 'Start Menu', 'Programs'));
+
+    for (const baseDir of startMenuDirs) {
+      if (!fs.existsSync(baseDir)) continue;
+
+      const targetLinks = [
+        path.join(baseDir, 'Industrial Hub.lnk'),
+        path.join(baseDir, 'Industrial Hub', 'Industrial Hub.lnk')
+      ];
+
+      for (const shortcutFile of targetLinks) {
+        const parentDir = path.dirname(shortcutFile);
+        if (fs.existsSync(shortcutFile) || (fs.existsSync(parentDir) && parentDir !== baseDir)) {
+          try {
+            shell.writeShortcutLink(shortcutFile, 'replace', {
+              target,
+              cwd,
+              description: 'Industrial Hub - Ultimate Rust Assistant',
+              icon: target,
+              iconIndex: 0
+            });
+            console.log(`[Shortcut] Updated Start Menu shortcut at ${shortcutFile} -> ${target}`);
+          } catch (err) {
+            console.warn(`[Shortcut] Could not write Start Menu shortcut to ${shortcutFile}:`, err.message);
+          }
+        }
+      }
+
+      // Clean up obsolete lowercase industrial-hub.lnk if present
+      const oldLowerLnk = path.join(baseDir, 'industrial-hub.lnk');
+      if (fs.existsSync(oldLowerLnk)) {
+        try { fs.unlinkSync(oldLowerLnk); } catch {}
+      }
+    }
   } catch (e) {
-    console.error('[Shortcut] Failed to update desktop shortcut:', e);
+    console.error('[Shortcut] Failed to update application shortcuts:', e);
   }
+}
+
+function updateDesktopShortcut(targetExe, workingDir) {
+  updateApplicationShortcuts(targetExe, workingDir);
 }
 
 // --- Gamma & Shortcut Native Logic ---
@@ -682,54 +801,57 @@ instanceLockPromise.then(() => {
 
   app.whenReady().then(async () => {
   logger.init();
-  const getClientDir = () => {
+
+  // Item icons cache directory: ALWAYS unified in app.getPath('userData')/items
+  const itemsDir = path.join(app.getPath('userData'), 'items');
+
+  // Auto-migrate from legacy cache locations if present and target has no icons
+  try {
+    if (!fs.existsSync(itemsDir)) {
+      fs.mkdirSync(itemsDir, { recursive: true });
+    }
+
+    const currentCount = fs.readdirSync(itemsDir).filter(f => /\.(png|jpg|webp)$/i.test(f)).length;
+    if (currentCount === 0) {
+      const candidateLegacyDirs = [
+        path.join(process.env.APPDATA || (process.platform === 'win32' ? path.join(os.homedir(), 'AppData', 'Roaming') : app.getPath('userData')), 'IndustrialHubClient', 'client', 'items'),
+        path.join(app.getPath('userData'), 'cache', 'items'),
+        path.join(__dirname, '../src/assets/items')
+      ];
+
+      for (const legacyDir of candidateLegacyDirs) {
+        if (fs.existsSync(legacyDir) && legacyDir !== itemsDir) {
+          const legacyFiles = fs.readdirSync(legacyDir).filter(f => /\.(png|jpg|webp)$/i.test(f));
+          if (legacyFiles.length > 0) {
+            for (const f of legacyFiles) {
+              const srcFile = path.join(legacyDir, f);
+              const destFile = path.join(itemsDir, f);
+              if (!fs.existsSync(destFile)) {
+                try { fs.copyFileSync(srcFile, destFile); } catch {}
+              }
+            }
+            console.log(`[AssetManager] Migrated ${legacyFiles.length} items from ${legacyDir} to ${itemsDir}`);
+            break;
+          }
+        }
+      }
+    }
+
+    // Clean up old legacy app-* binaries in IndustrialHubClient to free up disk space
     try {
-      const appPath = getRealAppPath();
-      const parentDir = path.resolve(appPath, '..');
-      if (path.basename(appPath).startsWith('app-') && path.basename(parentDir).toLowerCase() === 'client') {
-        return parentDir;
-      }
-    } catch (e) { console.error('[Auto-caught Error]', e); }
-
-    const appData = process.env.APPDATA || (process.platform === 'win32' ? path.join(os.homedir(), 'AppData', 'Roaming') : app.getPath('userData'));
-    return path.join(appData, 'IndustrialHubClient', 'client');
-  };
-
-  const clientDir = getClientDir();
-  const itemsDir = path.join(clientDir, 'items');
-
-  // Auto-migrate from legacy cache if present and target is empty
-  try {
-    const legacyCache = path.join(app.getPath('userData'), 'cache', 'items');
-    if (fs.existsSync(legacyCache) && legacyCache !== itemsDir) {
-      if (!fs.existsSync(itemsDir) || fs.readdirSync(itemsDir).length === 0) {
-        fs.mkdirSync(itemsDir, { recursive: true });
-        for (const f of fs.readdirSync(legacyCache)) {
-          if (/\.(png|jpg|webp)$/i.test(f)) {
-            fs.copyFileSync(path.join(legacyCache, f), path.join(itemsDir, f));
-          }
+      const oldClientDir = path.join(process.env.APPDATA || '', 'IndustrialHubClient', 'client');
+      if (fs.existsSync(oldClientDir)) {
+        const oldAppFolders = fs.readdirSync(oldClientDir).filter(f => f.startsWith('app-'));
+        for (const oldFolder of oldAppFolders) {
+          try {
+            fs.rmSync(path.join(oldClientDir, oldFolder), { recursive: true, force: true });
+            console.log(`[AssetManager] Cleaned up obsolete legacy folder: ${oldFolder}`);
+          } catch {}
         }
-        console.log('[AssetManager] Migrated items from legacy cache to', itemsDir);
       }
-    }
-  } catch (e) { console.error('[Auto-caught Error]', e); }
-
-  // Pre-seed cache from local assets/items if available and itemsDir is empty
-  try {
-    const devItemsDir = path.join(__dirname, '../src/assets/items');
-    if (fs.existsSync(devItemsDir)) {
-      if (!fs.existsSync(itemsDir) || fs.readdirSync(itemsDir).length === 0) {
-        fs.mkdirSync(itemsDir, { recursive: true });
-        for (const f of fs.readdirSync(devItemsDir)) {
-          if (/\.(png|jpg|webp)$/i.test(f)) {
-            fs.copyFileSync(path.join(devItemsDir, f), path.join(itemsDir, f));
-          }
-        }
-        console.log('[AssetManager] Pre-seeded cache from local assets/items to', itemsDir);
-      }
-    }
+    } catch {}
   } catch (e) {
-    console.warn('[AssetManager] Pre-seed error:', e);
+    console.error('[AssetManager] Pre-seed / Migration error:', e);
   }
 
   assetManager = new AssetManager(itemsDir);
@@ -743,11 +865,40 @@ instanceLockPromise.then(() => {
     });
   });
 
-  // Background asset sync removed from startup (will be triggered on-demand by tabs that need it)
-  // setTimeout(() => { ... }, 1000);
-
   flushCrashQueue();
   setInterval(flushCrashQueue, 60000);
+
+  // If running from root installation directory and a newer app-* folder exists, forward execution
+  const currentAppPath = getRealAppPath();
+  if (app.isPackaged && !path.basename(currentAppPath).startsWith('app-')) {
+    try {
+      const rootDir = currentAppPath;
+      if (fs.existsSync(rootDir)) {
+        const subdirs = fs.readdirSync(rootDir).filter(d => d.startsWith('app-') && fs.statSync(path.join(rootDir, d)).isDirectory());
+        if (subdirs.length > 0) {
+          subdirs.sort((a, b) => compareSemver(b.replace(/^app-/, ''), a.replace(/^app-/, '')));
+          const latestVer = subdirs[0].replace(/^app-/, '');
+          if (compareSemver(latestVer, app.getVersion()) > 0) {
+            const latestExe = path.join(rootDir, subdirs[0], 'Industrial Hub.exe');
+            if (fs.existsSync(latestExe)) {
+              console.log(`[Launcher] Newer version ${latestVer} exists. Forwarding to ${latestExe}`);
+              updateApplicationShortcuts(latestExe, path.dirname(latestExe));
+              const child = child_process.spawn(latestExe, process.argv.slice(1), {
+                detached: true,
+                stdio: 'ignore',
+                cwd: path.dirname(latestExe)
+              });
+              child.unref();
+              app.exit(0);
+              return;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[Launcher] Forwarding check error:', e);
+    }
+  }
 
   // Handle auto-update cleanup args from the new process
   let cleanupPid = null;
@@ -782,9 +933,9 @@ instanceLockPromise.then(() => {
     
     try {
       const resolvedCleanup = path.resolve(cleanupDir);
-      const expectedParent = path.resolve(clientDir);
       const folderName = path.basename(resolvedCleanup);
-      if (resolvedCleanup.startsWith(expectedParent) && folderName.startsWith('app-') && fs.existsSync(resolvedCleanup)) {
+      // Only delete old version folders named app-*, NEVER the installation root directory!
+      if (folderName.startsWith('app-') && fs.existsSync(resolvedCleanup)) {
         fs.rmSync(resolvedCleanup, { recursive: true, force: true });
         console.log(`Cleaned up old version directory: ${resolvedCleanup}`);
       }
@@ -795,38 +946,20 @@ instanceLockPromise.then(() => {
 
   // Cleanup old app-* folders (keep newest 3, delete older ones)
   try {
-    const appPath = getRealAppPath();
-    const currentFolder = path.basename(appPath);
-    if (currentFolder.startsWith('app-')) {
-      const folders = fs.readdirSync(clientDir).filter(f => f.startsWith('app-'));
-      
-      const parseVer = (str) => {
-         const m = str.match(/app-(\d+)\.(\d+)\.(\d+)/);
-         if (!m) return 0;
-         return parseInt(m[1])*1000000 + parseInt(m[2])*1000 + parseInt(m[3]);
-      };
-      folders.sort((a, b) => parseVer(b) - parseVer(a));
-
-      // Directly delete versions older than the newest 3
-      for (let i = 3; i < folders.length; i++) {
-        const folder = folders[i];
-        const fullPath = path.join(clientDir, folder);
-        try {
-          fs.rmSync(fullPath, { recursive: true, force: true });
-          console.log('Deleted old version folder:', folder);
-        } catch (e) {
-          console.error('Failed to delete old folder:', folder, e);
-        }
-      }
-
-      // Also clean up legacy "Версии" folder if it exists
-      const legacyVersionsDir = path.join(clientDir, 'Версии');
-      if (fs.existsSync(legacyVersionsDir)) {
-        try {
-          fs.rmSync(legacyVersionsDir, { recursive: true, force: true });
-          console.log('Removed legacy Версии archive folder');
-        } catch (e) {
-          console.error('Failed to remove legacy Версии folder:', e);
+    const rootDir = getAppRootDir();
+    if (fs.existsSync(rootDir)) {
+      const folders = fs.readdirSync(rootDir).filter(f => f.startsWith('app-') && fs.statSync(path.join(rootDir, f)).isDirectory());
+      if (folders.length > 3) {
+        folders.sort((a, b) => compareSemver(b.replace(/^app-/, ''), a.replace(/^app-/, '')));
+        for (let i = 3; i < folders.length; i++) {
+          const folder = folders[i];
+          const fullPath = path.join(rootDir, folder);
+          try {
+            fs.rmSync(fullPath, { recursive: true, force: true });
+            console.log('Deleted old version folder:', folder);
+          } catch (e) {
+            console.error('Failed to delete old folder:', folder, e);
+          }
         }
       }
     }
@@ -834,11 +967,11 @@ instanceLockPromise.then(() => {
     console.error('Cleanup error:', e);
   }
 
-  // Self-heal desktop shortcut & sync auto-start on startup
+  // Self-heal application shortcuts & sync auto-start on startup
   try {
     const realExe = getRealExecutablePath();
     if (realExe && !realExe.toLowerCase().includes('\\temp\\') && !realExe.toLowerCase().includes('/temp/')) {
-      updateDesktopShortcut(realExe);
+      updateApplicationShortcuts(realExe);
       
       const isAutoStartConfigured = store.get('autoStart');
       const isCurrentlyRegistered = app.getLoginItemSettings().openAtLogin || app.getLoginItemSettings({ path: realExe }).openAtLogin;
@@ -1586,13 +1719,14 @@ instanceLockPromise.then(() => {
   };
 
   ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion, applyImmediately = true) => {
-    if (!newVersion || !/^\d+\.\d+\.\d+$/.test(newVersion)) {
+    if (!newVersion || !/^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/.test(newVersion)) {
       throw new Error('Некорректный формат версии');
     }
 
     const TRUSTED_PREFIXES = [
       'https://github.com/kozhaki-vik/industrial-hub/',
-      'https://github.com/kozhaki-vik/industrial-hub-releases/'
+      'https://github.com/kozhaki-vik/industrial-hub-releases/',
+      'https://objects.githubusercontent.com/'
     ];
     const isTrustedSource = exeUrl && (
       TRUSTED_PREFIXES.some(prefix => exeUrl.startsWith(prefix)) ||
@@ -1603,6 +1737,7 @@ instanceLockPromise.then(() => {
     }
 
     const appPath = getRealAppPath();
+    const appRootDir = getAppRootDir();
     const tempExePath = path.join(os.tmpdir(), `ih_update_${newVersion}.exe`);
 
     const downloadWithRedirects = (targetUrl, destPath, onProgress, maxRedirects = 5) => {
@@ -1693,8 +1828,7 @@ instanceLockPromise.then(() => {
         throw new Error(`Скачанный файл имеет ту же версию (${newVersion}), что и запущена.`);
       }
 
-      const clientDir = path.resolve(appPath, '..');
-      const newAppDir = path.join(clientDir, `app-${newVersion}`);
+      const newAppDir = path.join(appRootDir, `app-${newVersion}`);
       const exeName = 'Industrial Hub.exe';
       const targetExePath = path.join(newAppDir, exeName);
 
@@ -1715,8 +1849,8 @@ instanceLockPromise.then(() => {
         console.error('Failed to save last_update.json:', e);
       }
 
-      // Robustly update desktop shortcut to point to new version
-      updateDesktopShortcut(targetExePath, newAppDir);
+      // Robustly update desktop and Start Menu shortcuts to point to new version
+      updateApplicationShortcuts(targetExePath, newAppDir);
 
       // If auto-start was enabled, update login item settings to point to new exe
       try {
@@ -1747,6 +1881,7 @@ instanceLockPromise.then(() => {
       });
       child.unref();
 
+      resetDisplayGamma();
       app.exit(0);
 
       return { success: true, updated: 1, total: 1, requiresRestart: true };
@@ -1759,11 +1894,9 @@ instanceLockPromise.then(() => {
 
   ipcMain.handle('network:apply-deferred-update', async (event, restartPayload) => {
     if (!restartPayload || !restartPayload.targetExePath) return false;
-    // Security Fix: Validate targetExePath is within temp dir and is an ih_update exe
     const safePath = path.resolve(restartPayload.targetExePath);
-    const tempDir = path.resolve(os.tmpdir());
-    if (!safePath.startsWith(tempDir) || !safePath.toLowerCase().endsWith('.exe')) {
-      console.error('Blocked potentially malicious executable execution:', safePath);
+    if (!safePath.toLowerCase().endsWith('.exe') || !fs.existsSync(safePath)) {
+      console.error('Blocked invalid executable execution:', safePath);
       return false;
     }
 
@@ -1775,6 +1908,7 @@ instanceLockPromise.then(() => {
     }
 
     try {
+      updateApplicationShortcuts(restartPayload.targetExePath, restartPayload.newAppDir);
       const child = child_process.spawn(restartPayload.targetExePath, [
         `--cleanup-pid=${process.pid}`,
         `--cleanup-dir=${restartPayload.appPath}`
