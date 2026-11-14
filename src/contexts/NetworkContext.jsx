@@ -21,7 +21,9 @@ export const NetworkProvider = ({ children }) => {
   const [deferredUpdatePayload, setDeferredUpdatePayload] = useState(null);
 
   const addLog = (msg) => {
-    console.log("[UpdateLog]", msg);
+    if (import.meta.env.DEV) {
+      console.log("[UpdateLog]", msg);
+    }
     setUpdateLogs(prev => [...prev, `${new Date().toLocaleTimeString('ru-RU')}: ${msg}`]);
   };
   
@@ -151,7 +153,9 @@ export const NetworkProvider = ({ children }) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'auth_success') {
-          console.log('Connected to Industrial Hub Server');
+          if (import.meta.env.DEV) {
+            console.log('Connected to Industrial Hub Server');
+          }
           setStatus('online'); // Set online only after auth is complete
           if (data.unreadCount !== undefined) setUnreadAdminCount(data.unreadCount);
           addLog("WS auth_success received, triggering check...");

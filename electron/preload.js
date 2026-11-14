@@ -43,8 +43,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setDisplayGamma: (brightness, deviceName) => ipcRenderer.invoke('gamma:setDisplayGamma', brightness, deviceName),
     registerShortcut: (vkCode) => ipcRenderer.invoke('gamma:registerShortcut', vkCode),
     unregisterShortcut: () => ipcRenderer.invoke('gamma:unregisterShortcut'),
-    registerHook: (vkCode) => ipcRenderer.invoke('gamma:registerShortcut', vkCode),
-    unregisterHook: () => ipcRenderer.invoke('gamma:unregisterShortcut'),
     onHotkey: (callback) => {
       const wrapped = () => callback();
       ipcRenderer.on('gamma:hotkey_pressed', wrapped);
@@ -70,10 +68,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
             'diagnostics:getAppPath', 'diagnostics:getAppDataPath',
             'diagnostics:checkAppIntegrity', 'diagnostics:checkRustIntegrity',
             'diagnostics:pingUrl',
-            'shell:openExternal', 'shell:openPath', 'shell:openFolder', 'shell:beep',
-            'app:relaunch', 'app:focusWindow', 'app:reportError',
+            'shell:openExternal', 'shell:openPath', 'shell:beep',
+            'app:relaunch', 'app:reportError',
             'app:getAutoStart', 'app:setAutoStart',
-            'app:getMinimizeToTray', 'app:setMinimizeToTray',
             'app:getStartMinimizedToTray', 'app:setStartMinimizedToTray',
             'assets:sync',
             'logs:openFolder', 'logs:getRecent',

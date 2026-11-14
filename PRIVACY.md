@@ -20,7 +20,7 @@ Industrial Hub is an open-source Windows desktop utility and community managemen
 ## 2. Information Collected and Processed
 
 ### 2.1 Technical Device Identifier & Connection Heartbeat
-- **Installation Identifier (`deviceId`):** To maintain active WebSocket connection state and sync user configuration preferences (such as shared schematics or clan bookmarks), a non-reversible SHA-256 cryptographic hash of the Windows system `MachineGuid` is generated locally on your computer. This identifier cannot be reversed to discover your hardware serial numbers, IP address, or user account name.
+- **Installation Identifier (`device-id`):** To calculate active online installations, maintain WebSocket connection state, and sync user configuration preferences (such as shared schematics or clan bookmarks), the application uses a local installation identifier (`device-id`) stored in `C:\ProgramData\IndustrialHub\device-id` (with a resilient fallback in user application storage). This identifier is generated locally without reading hardware serial numbers and without running background system scripts (such as PowerShell or WMI queries). It cannot be reversed to discover your hardware components, IP address, or user account name.
 - **Connection Heartbeat:** Periodic lightweight ping/pong messages are exchanged with the gateway server (`industrial-hub.duckdns.org`) solely to detect network disconnections and keep session state alive.
 
 ### 2.2 Optional Anonymous Hardware Diagnostics

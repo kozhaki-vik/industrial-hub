@@ -8,7 +8,7 @@ export const registerGlobalShortcut = async (vkCode, callback) => {
     activeUnsubscribe = null;
   }
 
-  const registerFn = window.electronAPI.gamma.registerShortcut || window.electronAPI.gamma.registerHook;
+  const registerFn = window.electronAPI.gamma.registerShortcut;
   if (!registerFn) return false;
 
   const success = await registerFn(vkCode);
@@ -24,7 +24,7 @@ export const unregisterGlobalShortcut = async () => {
     activeUnsubscribe = null;
   }
   if (!window.electronAPI || !window.electronAPI.gamma) return false;
-  const unregisterFn = window.electronAPI.gamma.unregisterShortcut || window.electronAPI.gamma.unregisterHook;
+  const unregisterFn = window.electronAPI.gamma.unregisterShortcut;
   if (!unregisterFn) return false;
   return await unregisterFn();
 };

@@ -87,54 +87,149 @@ function getRealExecutablePath() {
 }
 
 let cachedInstallationId = null;
-function getInstallationId() {
-  if (cachedInstallationId) return cachedInstallationId;
-  try {
-    let machineGuid = '';
-    if (process.platform === 'win32') {
-      try {
-        const out = child_process.execSync('reg query "HKLM\\SOFTWARE\\Microsoft\\Cryptography" /v MachineGuid', { windowsHide: true, timeout: 2000 }).toString();
-        const match = out.match(/MachineGuid\s+REG_SZ\s+([a-fA-F0-9-]+)/i);
-        if (match && match[1]) {
-          machineGuid = match[1].trim();
-        }
-      } catch (e) {
-        console.warn('Could not read MachineGuid from registry:', e.message);
-      }
-    }
 
-    const hash = crypto.createHash('sha256');
-    if (machineGuid) {
-      hash.update(machineGuid);
-    } else {
-      hash.update('device_' + os.userInfo().username);
-    }
-    cachedInstallationId = hash.digest('hex');
-    return cachedInstallationId;
+function getPrimaryDeviceIdPath() {
+  if (process.platform === 'win32') {
+    const programData = process.env.ProgramData || 'C:\\ProgramData';
+    return path.join(programData, 'IndustrialHub', 'device-id');
+  }
+  return path.join(app.getPath('userData'), 'device-id');
+}
+
+function getFallbackDeviceIdPath() {
+  try {
+    return path.join(app.getPath('userData'), '..', 'IndustrialHub_DeviceId', 'device-id');
   } catch {
-    return 'generic_device_id';
+    return path.join(os.homedir(), '.IndustrialHub_DeviceId', 'device-id');
   }
 }
+
+function readDeviceIdFromFile(filePath) {
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8').trim();
+      if (content && content.length >= 8 && /^[a-zA-Z0-9_-]+$/.test(content)) {
+        return content;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+function saveDeviceIdToFile(filePath, id) {
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, id, 'utf8');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getInstallationId() {
+  if (cachedInstallationId) return cachedInstallationId;
+
+  const primaryPath = getPrimaryDeviceIdPath();
+  const fallbackPath = getFallbackDeviceIdPath();
+
+  // 1. Check primary file (C:\ProgramData\IndustrialHub\device-id)
+  const fromPrimary = readDeviceIdFromFile(primaryPath);
+  if (fromPrimary) {
+    cachedInstallationId = fromPrimary;
+    return cachedInstallationId;
+  }
+
+  // 2. Check fallback file
+  const fromFallback = readDeviceIdFromFile(fallbackPath);
+  if (fromFallback) {
+    // Attempt to promote to primary file if write permission is now available
+    saveDeviceIdToFile(primaryPath, fromFallback);
+    cachedInstallationId = fromFallback;
+    return cachedInstallationId;
+  }
+
+  // 3. First launch or migration: try reading MachineGuid one time to preserve existing user binding
+  let migrationId = null;
+  if (process.platform === 'win32') {
+    try {
+      const out = child_process.execSync('reg query "HKLM\\SOFTWARE\\Microsoft\\Cryptography" /v MachineGuid', { windowsHide: true, timeout: 2000 }).toString();
+      const match = out.match(/MachineGuid\s+REG_SZ\s+([a-fA-F0-9-]+)/i);
+      if (match && match[1]) {
+        const hash = crypto.createHash('sha256');
+        hash.update(match[1].trim());
+        migrationId = hash.digest('hex');
+      }
+    } catch {}
+  }
+
+  if (!migrationId) {
+    if (typeof crypto.randomUUID === 'function') {
+      migrationId = crypto.randomUUID();
+    } else {
+      migrationId = crypto.randomBytes(16).toString('hex');
+    }
+  }
+
+  // Save to primary path, or fallback if writing to ProgramData fails
+  const saved = saveDeviceIdToFile(primaryPath, migrationId);
+  if (!saved) {
+    saveDeviceIdToFile(fallbackPath, migrationId);
+  }
+
+  cachedInstallationId = migrationId;
+  return cachedInstallationId;
+}
+
 function getSystemHWID() {
   return getInstallationId();
 }
 
-// --- Single Instance Lock ---
-const gotTheLock = app.requestSingleInstanceLock();
+// --- Single Instance Lock: Close old version -> Open new version ---
+let hasInstanceLock = false;
 
-if (!gotTheLock) {
-  // We are the second instance, quit immediately.
-  app.quit();
-} else {
-  // We are the primary instance.
+async function acquireSingleInstanceLock(maxAttempts = 10, delayMs = 300) {
+  let hasLock = app.requestSingleInstanceLock();
+  if (hasLock) return true;
+
+  // The first call to app.requestSingleInstanceLock() notified the running instance
+  // via its 'second-instance' handler to terminate itself.
+  // Wait in a retry loop until the older process exits and releases the lock.
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    hasLock = app.requestSingleInstanceLock();
+    if (hasLock) return true;
+  }
+  return false;
+}
+
+async function bootstrapSingleInstance() {
+  hasInstanceLock = await acquireSingleInstanceLock(10, 300);
+  if (!hasInstanceLock) {
+    app.exit(0);
+    return;
+  }
+
+  // When a subsequent instance is started, close all windows, reset gamma and exit immediately
   app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
-    }
+    try {
+      resetDisplayGamma();
+    } catch {}
+    try {
+      const windows = BrowserWindow.getAllWindows();
+      for (const win of windows) {
+        if (!win.isDestroyed()) {
+          win.destroy();
+        }
+      }
+    } catch {}
+    app.exit(0);
   });
 }
+
+const instanceLockPromise = bootstrapSingleInstance();
 
 function getNativeHelperPath() {
   const possiblePaths = [
@@ -582,7 +677,10 @@ app.on('render-process-gone', (event, webContents, details) => {
   sendCrashReport(msg);
 });
 
-app.whenReady().then(async () => {
+instanceLockPromise.then(() => {
+  if (!hasInstanceLock) return;
+
+  app.whenReady().then(async () => {
   logger.init();
   const getClientDir = () => {
     try {
@@ -762,7 +860,6 @@ app.whenReady().then(async () => {
   
   ipcMain.handle('store:get', (event, key) => store.get(key));
   ipcMain.handle('store:set', (event, key, val) => store.set(key, val));
-  ipcMain.handle('store:delete', (event, key) => store.delete(key));
   ipcMain.handle('store:clear', () => store.clear());
   ipcMain.handle('store:getAll', () => store.store);
 
@@ -977,51 +1074,25 @@ app.whenReady().then(async () => {
 
     if (!cachedHardwareInfo) {
       const cpus = os.cpus();
-      let gpuName = 'Unknown';
       let osName = '';
-      try {
-        const psResult = await new Promise((resolve) => {
-          child_process.exec(
-            'powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-CimInstance Win32_OperatingSystem).Caption; (Get-CimInstance Win32_VideoController).Name"',
-            { timeout: 3000, windowsHide: true },
-            (error, stdout) => {
-              if (error || !stdout.trim()) resolve({ os: '', gpu: '' });
-              else {
-                const lines = stdout.trim().split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-                resolve({
-                  os: lines[0] || '',
-                  gpu: lines[1] || ''
-                });
-              }
-            }
-          );
-        });
-        if (psResult.gpu) gpuName = psResult.gpu;
-        if (psResult.os) osName = psResult.os.replace(/^Майкрософт\s+/i, '').replace(/^Microsoft\s+/i, '').trim();
-      } catch (e) {
-        console.error(e);
-      }
-
-      if (!osName) {
-        if (process.platform === 'win32') {
-          const build = parseInt((os.release() || '').split('.')[2], 10);
-          if (!isNaN(build)) {
-            if (build >= 22000) osName = 'Windows 11';
-            else if (build >= 10240) osName = 'Windows 10';
-            else if (build >= 9600) osName = 'Windows 8.1';
-            else if (build >= 9200) osName = 'Windows 8';
-            else if (build >= 7600) osName = 'Windows 7';
-            else osName = 'Windows';
-          } else {
-            osName = 'Windows';
-          }
-        } else if (process.platform === 'darwin') {
-          osName = 'macOS';
-        } else if (process.platform === 'linux') {
-          osName = 'Linux';
+      if (process.platform === 'win32') {
+        const build = parseInt((os.release() || '').split('.')[2], 10);
+        if (!isNaN(build)) {
+          if (build >= 22000) osName = 'Windows 11';
+          else if (build >= 10240) osName = 'Windows 10';
+          else if (build >= 9600) osName = 'Windows 8.1';
+          else if (build >= 9200) osName = 'Windows 8';
+          else if (build >= 7600) osName = 'Windows 7';
+          else osName = 'Windows';
         } else {
-          osName = os.platform();
+          osName = 'Windows';
         }
+      } else if (process.platform === 'darwin') {
+        osName = 'macOS';
+      } else if (process.platform === 'linux') {
+        osName = 'Linux';
+      } else {
+        osName = os.platform();
       }
 
       cachedHardwareInfo = {
@@ -1030,8 +1101,8 @@ app.whenReady().then(async () => {
         osName,
         release: os.release(),
         arch: os.arch(),
-        cpu: cpus.length > 0 ? cpus[0].model : 'Unknown',
-        gpu: gpuName,
+        cpu: cpus.length > 0 ? cpus[0].model.trim() : 'Unknown',
+        gpu: 'Unknown',
         cores: cpus.length,
         ramTotal: Math.round(os.totalmem() / (1024 * 1024 * 1024))
       };
@@ -1702,16 +1773,6 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('app:focusWindow', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      if (!mainWindow.isFocused()) {
-        mainWindow.focus();
-      }
-      return true;
-    }
-    return false;
-  });
-
   ipcMain.handle('app:reportError', (event, errorDetails) => {
     logger.error('Reported from renderer:', errorDetails);
     sendCrashReport(errorDetails);
@@ -1751,12 +1812,6 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.handle('app:getMinimizeToTray', () => store.get('minimizeToTray', true));
-  ipcMain.handle('app:setMinimizeToTray', (e, val) => {
-    store.set('minimizeToTray', !!val);
-    return true;
-  });
-
   ipcMain.handle('app:getStartMinimizedToTray', () => store.get('startMinimizedToTray', false));
   ipcMain.handle('app:setStartMinimizedToTray', (e, val) => {
     store.set('startMinimizedToTray', !!val);
@@ -1785,6 +1840,7 @@ app.whenReady().then(async () => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
 });
 
 app.on('window-all-closed', function () {
