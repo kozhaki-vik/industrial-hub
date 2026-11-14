@@ -162,24 +162,32 @@ export const NetworkProvider = ({ children }) => {
         } else if (data.type === 'online_count') {
           setOnlineCount(data.count);
         } else if (data.type === 'update_available' || data.type === 'new_version' || data.type === 'force_update') {
-          console.log('Real-time update notification from server WebSocket:', data);
+          if (import.meta.env.DEV) {
+            console.log('Real-time update notification from server WebSocket:', data);
+          }
           addLog("WS update_available received, triggering check...");
           triggerUpdateCheck();
         } else if (data.type === 'assets_update') {
-          console.log('Real-time assets update notification from server WebSocket');
+          if (import.meta.env.DEV) {
+            console.log('Real-time assets update notification from server WebSocket');
+          }
           addLog("WS assets_update received, syncing items assets...");
           if (window.electronAPI?.assets?.sync) {
             window.electronAPI.assets.sync().catch(e => console.warn('Asset sync error:', e));
           }
         } else if (data.type === 'notification') {
-          console.log('Received notification from server:', data);
+          if (import.meta.env.DEV) {
+            console.log('Received notification from server:', data);
+          }
           addNotification(data.message, data.notifType || 'info');
           setUnreadAdminCount(prev => prev + 1);
           setTicketHistory(prev => [...prev, { sender: 'admin', message: data.message, created_at: new Date().toISOString() }]);
         } else if (data.type === 'ticket_history') {
           setTicketHistory(data.history || []);
         } else {
-          console.log('Message from server:', data);
+          if (import.meta.env.DEV) {
+            console.log('Message from server:', data);
+          }
         }
       } catch (err) {
         console.error('Failed to parse WebSocket message', err);

@@ -38,3 +38,13 @@ resources/IndustrialHubDisplay.exe
 Installer.exe
 *.cer
 *.pfx
+
+# Internal development documentation (kept locally, excluded from public repo)
+AGENTS.md
+PROJECT_MAP.md
+HOW_TO_GITHUB_RELEASE.md
+HOW_TO_UPDATE_ASSETS.md
+
+# Local archive for dormant views and heavy assets
+_local_archive/
+

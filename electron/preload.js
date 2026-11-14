@@ -4,7 +4,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   store: {
     get: (key) => ipcRenderer.invoke('store:get', key),
     set: (key, val) => ipcRenderer.invoke('store:set', key, val),
-    delete: (key) => ipcRenderer.invoke('store:delete', key),
     clear: () => ipcRenderer.invoke('store:clear'),
     getAll: () => ipcRenderer.invoke('store:getAll')
   },
@@ -13,11 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   app: {
     relaunch: () => ipcRenderer.invoke('app:relaunch'),
     reportError: (err) => ipcRenderer.invoke('app:reportError', err),
-    focusWindow: () => ipcRenderer.invoke('app:focusWindow'),
     getAutoStart: () => ipcRenderer.invoke('app:getAutoStart'),
     setAutoStart: (enabled) => ipcRenderer.invoke('app:setAutoStart', enabled),
-    getMinimizeToTray: () => ipcRenderer.invoke('app:getMinimizeToTray'),
-    setMinimizeToTray: (val) => ipcRenderer.invoke('app:setMinimizeToTray', val),
     getStartMinimizedToTray: () => ipcRenderer.invoke('app:getStartMinimizedToTray'),
     setStartMinimizedToTray: (val) => ipcRenderer.invoke('app:setStartMinimizedToTray', val)
   },
@@ -56,12 +52,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   assets: {
-    sync: () => ipcRenderer.invoke('assets:sync'),
-    onProgress: (callback) => {
-      const wrapped = (event, data) => callback(data);
-      ipcRenderer.on('assets:sync-progress', wrapped);
-      return () => ipcRenderer.removeListener('assets:sync-progress', wrapped);
-    }
+    sync: () => ipcRenderer.invoke('assets:sync')
   },
   dev: {
     saveKey: (key) => ipcRenderer.invoke('dev:saveKey', key),
@@ -73,7 +64,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ipcRenderer: {
     invoke: (channel, ...args) => {
         const ALLOWED_CHANNELS = [
-            'network:get-hwid', 'network:get-device-id', 'network:apply-updates', 'network:apply-exe-update', 'network:apply-deferred-update',
+            'network:get-hwid', 'network:get-device-id', 'network:apply-exe-update', 'network:apply-deferred-update',
             'gamma:registerShortcut', 'gamma:unregisterShortcut',
             'diagnostics:getAppVersionInfo', 'diagnostics:getHardwareInfo',
             'diagnostics:getAppPath', 'diagnostics:getAppDataPath',

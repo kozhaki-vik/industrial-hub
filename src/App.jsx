@@ -14,8 +14,6 @@ import { autoDetectRustPath } from './services/rustPath';
 
 // New Views
 import Conveyors from './views/Conveyors';
-import Monuments from './views/Monuments';
-import Electricity from './views/Electricity';
 import Gamma from './views/Gamma';
 import Graphics from './views/Graphics';
 import Servers from './views/Servers';

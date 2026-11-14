@@ -9,32 +9,12 @@ let currentConfig = {
   visitedTabs: []
 };
 
-// We make these async if we want real-time read, but since React expects synchronous config, 
-// we fetch all upfront and then keep local state synced.
-let isLoaded = false;
-
 // Initialize config synchronously from localStorage as fallback, then override later if electron
 if (localStorage.getItem('industrial-hub-config')) {
   try {
     currentConfig = { ...currentConfig, ...JSON.parse(localStorage.getItem('industrial-hub-config')) };
   } catch (e) { console.error('[Auto-caught Error]', e); }
 }
-
-export const loadConfigAsync = async () => {
-  if (window.electronAPI?.store) {
-    const all = await window.electronAPI.store.getAll();
-    if (all && Object.keys(all).length > 0) {
-      currentConfig = { ...currentConfig, ...all };
-    }
-  }
-  isLoaded = true;
-  return currentConfig;
-};
-
-// Load config synchronously (returns cached)
-export const loadConfig = () => {
-  return currentConfig;
-};
 
 // Save config synchronously to memory, async to store
 export const saveConfig = (newConfig) => {
@@ -76,7 +56,14 @@ export const getConfigKey = (key) => {
 };
 
 // Start async load
-loadConfigAsync();
+(async () => {
+  if (window.electronAPI?.store) {
+    const all = await window.electronAPI.store.getAll();
+    if (all && Object.keys(all).length > 0) {
+      currentConfig = { ...currentConfig, ...all };
+    }
+  }
+})();
 
 export const factoryReset = () => {
   localStorage.removeItem('industrial-hub-config');

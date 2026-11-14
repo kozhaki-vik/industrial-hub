@@ -759,24 +759,6 @@ app.whenReady().then(async () => {
     console.error('Failed to self-heal shortcut or auto-start on startup:', e);
   }
 
-  ipcMain.handle('shell:openFolder', async (event, folderPath) => {
-    if (folderPath) {
-      const allowedRoots = [app.getPath('userData'), store.get('rustPath')].filter(Boolean);
-      const resolvedFolder = path.resolve(folderPath);
-      const isAllowed = allowedRoots.some(root => {
-        const resolvedRoot = path.resolve(root);
-        return resolvedFolder === resolvedRoot || resolvedFolder.startsWith(resolvedRoot + path.sep);
-      });
-      if (!isAllowed) {
-        console.error('Blocked shell:openFolder to unauthorized path:', folderPath);
-        return false;
-      }
-      await shell.openPath(folderPath);
-      return true;
-    }
-    return false;
-  });
-
   
   ipcMain.handle('store:get', (event, key) => store.get(key));
   ipcMain.handle('store:set', (event, key, val) => store.set(key, val));
@@ -1414,10 +1396,8 @@ app.whenReady().then(async () => {
   };
 
   ipcMain.handle('gamma:registerShortcut', handleRegisterShortcut);
-  ipcMain.handle('gamma:registerHook', handleRegisterShortcut);
 
   ipcMain.handle('gamma:unregisterShortcut', handleUnregisterShortcut);
-  ipcMain.handle('gamma:unregisterHook', handleUnregisterShortcut);
 
   // NETWORK HANDLERS
   ipcMain.handle('network:get-device-id', () => {
@@ -1798,113 +1778,6 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('logs:getRecent', () => {
     return logger.getRecentLogs(150);
-  });
-
-  ipcMain.handle('network:apply-updates', async (event, files, baseUrl) => {
-    const appPath = getRealAppPath();
-    let successCount = 0;
-    let requiresRestart = false;
-    
-    const filesToDownload = [];
-    let totalBytes = 0;
-    
-    for (const file of files) {
-      const destPath = path.join(appPath, file.path);
-      // Security Fix: Path Traversal
-      if (!path.resolve(destPath).startsWith(path.resolve(appPath))) {
-        console.error('Path traversal blocked:', destPath);
-        continue;
-      }
-      // Security Fix: URL validation
-      const TRUSTED_PREFIX = 'https://github.com/kozhaki-vik/industrial-hub-releases/';
-      if (!baseUrl.startsWith(TRUSTED_PREFIX) && !baseUrl.startsWith('https://api.github.com/')) {
-        console.error('Untrusted baseUrl blocked:', baseUrl);
-        return { success: false, error: 'Untrusted update source' };
-      }
-      let needsDownload = true;
-      if (fs.existsSync(destPath)) {
-        const localBuffer = fs.readFileSync(destPath);
-        const localHash = crypto.createHash('sha256').update(localBuffer).digest('hex');
-        if (localHash === file.hash) {
-          needsDownload = false;
-        }
-      }
-      
-      if (needsDownload) {
-        filesToDownload.push(file);
-        totalBytes += (file.size || 0);
-        if (file.path.includes('package.json') || file.path.includes('electron') || file.path.includes('app.asar') || file.path.includes('.exe')) {
-          requiresRestart = true;
-        }
-      }
-    }
-    
-    if (filesToDownload.length === 0) {
-      return { success: true, updated: 0, total: files.length, requiresRestart: false };
-    }
-    
-    let downloadedBytes = 0;
-for (const file of filesToDownload) {
-      try {
-        const destPath = path.join(appPath, file.path);
-        const fileUrl = `${baseUrl}/updates/files/${file.path}`;
-        const destDir = path.dirname(destPath);
-        
-        if (!fs.existsSync(destDir)) {
-          fs.mkdirSync(destDir, { recursive: true });
-        }
-        
-        event.sender.send('update-progress', {
-          status: 'downloading',
-          downloadedBytes,
-          totalBytes,
-          currentFile: file.path
-        });
-        
-        await new Promise((resolve, reject) => {
-          const req = (fileUrl.startsWith('https') ? https : http).get(fileUrl, (res) => {
-            if (res.statusCode !== 200) {
-              return reject(new Error(`HTTP ${res.statusCode}`));
-            }
-            const fileStream = fs.createWriteStream(destPath);
-            res.pipe(fileStream);
-            
-            res.on('data', (chunk) => {
-              downloadedBytes += chunk.length;
-              const now = Date.now();
-              if (!file._lastEmit || now - file._lastEmit > 50) {
-                file._lastEmit = now;
-                event.sender.send('update-progress', {
-                  status: 'downloading',
-                  downloadedBytes,
-                  totalBytes,
-                  currentFile: file.path
-                });
-              }
-            });
-
-            fileStream.on('finish', () => {
-              fileStream.close();
-              resolve();
-            });
-          });
-          req.on('error', reject);
-        });
-        
-        const fileBuffer = fs.readFileSync(destPath);
-        const downloadedHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
-        if (downloadedHash === file.hash) {
-          successCount++;
-        } else {
-          console.error(`Hash mismatch for ${file.path}`);
-        }
-      } catch (err) {
-        console.error(`Failed to download ${file.path}:`, err);
-        event.sender.send('update-progress', { status: 'error', error: err.message });
-      }
-    }
-    
-    return { success: true, updated: successCount, total: files.length, requiresRestart };
   });
 
   createWindow();

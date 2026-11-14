@@ -7,15 +7,21 @@ param (
     [string]$Token = $env:GITHUB_TOKEN
 )
 
-# If Token is not set via environment variable, attempt to load from local .env
+# If Token is not set via environment variable, attempt to load from local or repo root .env
 if (-not $Token) {
-    $envFile = Join-Path $PSScriptRoot ".env"
-    if (Test-Path $envFile) {
-        Get-Content $envFile | ForEach-Object {
-            $line = $_.Trim()
-            if ($line -and -not $line.StartsWith("#") -and $line -match "^GITHUB_TOKEN\s*=\s*(.*)$") {
-                $Token = $matches[1].Trim().Trim('"').Trim("'")
+    $envCandidates = @(
+        (Join-Path $PSScriptRoot ".env"),
+        (Join-Path (Split-Path -Parent $PSScriptRoot) ".env")
+    )
+    foreach ($envFile in $envCandidates) {
+        if (Test-Path $envFile) {
+            Get-Content $envFile | ForEach-Object {
+                $line = $_.Trim()
+                if ($line -and -not $line.StartsWith("#") -and $line -match "^GITHUB_TOKEN\s*=\s*(.*)$") {
+                    $Token = $matches[1].Trim().Trim('"').Trim("'")
+                }
             }
+            if ($Token) { break }
         }
     }
 }

@@ -108,25 +108,3 @@ export const bindSignatures = [
     match: (cmd) => /duck 1;duck 0/.test(cmd) || /~duck/.test(cmd)
   }
 ];
-
-export const analyzeBinds = (binds) => {
-  const analyzed = [];
-  
-  for (const [key, command] of Object.entries(binds)) {
-    if (!command) continue;
-    const cmdLower = command.toLowerCase();
-    
-    // Check against signatures
-    const matchedSignature = bindSignatures.find(sig => sig.match(cmdLower));
-    
-    if (matchedSignature) {
-      analyzed.push({
-        key,
-        command,
-        ...matchedSignature
-      });
-    }
-  }
-
-  return analyzed;
-};
