@@ -7,8 +7,8 @@
 ## ❓ Архитектура системы обновлений
 
 1. **Разделение репозиториев:**
-   * 🔒 **Приватный репозиторий (`kozhaki-vik/industrial-hub`):** Содержит исключительно исходный код проекта. Доступен только разработчикам.
-   * 🌐 **Публичный репозиторий (`kozhaki-vik/industrial-hub-releases`):** Служит CDN-хранилищем для скомпилированных обновлений (`.exe`). Не содержит исходного кода.
+   * 🌐 **Открытый репозиторий исходного кода (`kozhaki-vik/industrial-hub`):** Содержит открытый исходный код приложения (лицензия MIT) и GitHub Actions CI для сборки.
+   * 📦 **Публичный репозиторий релизов (`kozhaki-vik/industrial-hub-releases`):** Служит CDN-хранилищем для скомпилированных и подписанных релизов (`.exe`). Не содержит исходного кода.
 
 2. **Формат сборки:**
    * Приложение собирается в единый переносимый файл (Standalone Portable `.exe`): `release\Industrial Hub X.X.X.exe`.
@@ -50,19 +50,15 @@ git push
 ```
 
 ### Шаг 3: Сборка клиента
-Скомпилируйте веб-часть, упакуйте Electron и подпишите `.exe`:
+Скомпилируйте веб-часть, нативные компоненты и соберите установщик:
 ```powershell
-# 1. Сборка React фронтенда
+# 1. Автокомпиляция native.cs и сборка React фронтенда
 npm run build
 
-# 2. Компиляция Electron Portable EXE
-npx electron-builder --win
-
-# 3. Подпись цифровым сертификатом Industrial Studio (Kozak)
-& "C:\Users\Developer\AppData\Local\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe" sign /sha1 F275C9D48A3325871DB04B0FDFB5701BE34802B7 /fd sha256 /tr http://timestamp.digicert.com /td sha256 "release\Industrial Hub 2.18.0.exe"
+# 2. Компиляция Electron EXE (NSIS инсталлятор и Portable)
+npx electron-builder --win --publish never
 ```
-После успешной сборки готовый подписанный исполняемый файл появится в папке:  
-`release\Industrial Hub 2.18.0.exe`
+После успешной сборки готовые исполняемые файлы появятся в папке `release/`. Цифровая подпись релизов выполняется автоматически через доверенный сервис SignPath Foundation (SignPath.io) в рамках CI/CD.
 
 ---
 

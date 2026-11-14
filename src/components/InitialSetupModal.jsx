@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Palette, Check, ArrowRight, ArrowLeft, Sparkles, Power, Minimize2, Bell } from 'lucide-react';
+import { Globe, Palette, Check, ArrowRight, ArrowLeft, Sparkles, Power, Minimize2, Bell, Activity } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { setConfigKey } from '../services/store';
 import ThemeSelector from './ThemeSelector';
@@ -22,6 +22,10 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
   const [showReleaseNotes, setShowReleaseNotes] = useState(() => {
     const val = localStorage.getItem('industrial-hub-show-release-notes');
     return val === null ? true : val === 'true';
+  });
+
+  const [telemetryEnabled, setTelemetryEnabled] = useState(() => {
+    return localStorage.getItem('hub_telemetry_enabled') !== 'false';
   });
 
   useEffect(() => {
@@ -70,6 +74,7 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
     localStorage.setItem('industrial-hub-initial-setup', 'true');
     localStorage.setItem('industrial-hub-start-minimized', startMinimized);
     localStorage.setItem('industrial-hub-show-release-notes', showReleaseNotes);
+    localStorage.setItem('hub_telemetry_enabled', telemetryEnabled ? 'true' : 'false');
     setConfigKey('language', selectedLang);
     setConfigKey('theme', selectedTheme);
     setConfigKey('initialSetupCompleted', true);
@@ -259,8 +264,75 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
                 }`} />
               </div>
             </div>
+
+            {/* Anonymous Diagnostic Telemetry */}
+            <div
+              onClick={() => setTelemetryEnabled(!telemetryEnabled)}
+              className={`p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
+                telemetryEnabled
+                  ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
+                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  telemetryEnabled ? 'bg-orange-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                }`}>
+                  <Activity className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                    {t('initial_setup_telemetry_title', 'Анонимная диагностическая телеметрия')}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {t('initial_setup_telemetry_desc', 'Отправка базовых характеристик ПК для улучшения стабильности')}
+                  </div>
+                </div>
+              </div>
+              <div className={`w-11 h-6 flex items-center rounded-full p-1 duration-200 shrink-0 ${
+                telemetryEnabled ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-700'
+              }`}>
+                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-200 ease-in-out ${
+                  telemetryEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Privacy Policy & License Notice */}
+        <div className="text-[11px] text-center text-slate-400 dark:text-slate-500 pt-1 leading-relaxed">
+          {t('initial_setup_legal_prefix', 'Продолжая, вы соглашаетесь с')}{' '}
+          <a
+            href="https://github.com/kozhaki-vik/industrial-hub/blob/main/LICENSE"
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => {
+              if (window.electronAPI?.app?.openExternal) {
+                e.preventDefault();
+                window.electronAPI.app.openExternal('https://github.com/kozhaki-vik/industrial-hub/blob/main/LICENSE');
+              }
+            }}
+            className="text-orange-500 hover:underline font-medium"
+          >
+            {t('initial_setup_license_link', 'Лицензией MIT')}
+          </a>{' '}
+          {t('initial_setup_and', 'и')}{' '}
+          <a
+            href="https://github.com/kozhaki-vik/industrial-hub/blob/main/PRIVACY.md"
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => {
+              if (window.electronAPI?.app?.openExternal) {
+                e.preventDefault();
+                window.electronAPI.app.openExternal('https://github.com/kozhaki-vik/industrial-hub/blob/main/PRIVACY.md');
+              }
+            }}
+            className="text-orange-500 hover:underline font-medium"
+          >
+            {t('initial_setup_privacy_link', 'Политикой конфиденциальности')}
+          </a>.
+        </div>
 
         {/* Navigation Buttons */}
         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">

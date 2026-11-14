@@ -32,3 +32,9 @@ releases/
 test_extract/
 testzip/
 test.zip
+
+# Precompiled native binaries and local certificates
+resources/IndustrialHubDisplay.exe
+Installer.exe
+*.cer
+*.pfx

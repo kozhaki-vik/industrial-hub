@@ -33,8 +33,8 @@
 ## Сборка и релиз
 1. Поднять версию в `package.json` (`Z+1` для Test или `Y+1, Z=0` для Main).
 2. `git commit -am "message"` → `git push`
-3. `npm run build` → `npx electron-builder --win`
-4. Подписать `.exe` утилитой `signtool.exe` основным сертификатом `F275C9D4...`
+3. `npm run build` (автокомпиляция native.cs + Vite) → `npx electron-builder --win --publish never`
+4. Подпись исполняемых файлов: доверенная цифровая подпись SignPath Foundation (SignPath.io) через GitHub Actions CI.
 5. Публикация в `kozhaki-vik/industrial-hub-releases`:
    - **Test-сборка:** `.\upload_release.ps1 -Version "X.Y.Z" -FilePath "release\Industrial Hub X.Y.Z.exe" -IsPreRelease $true`
    - **Main-релиз:** `.\upload_release.ps1 -Version "X.Y.0" -FilePath "release\Industrial Hub X.Y.0.exe" -IsPreRelease $false`
@@ -43,14 +43,10 @@
 * Test = Pre-release, Main = Release. Доступ к Test ветке защищен ключом разработчика `DEV_MASTER_KEY`.
 
 ## Подпись кода и безопасность
-* **Основной сертификат (10 лет, до 09.2036):**
-  - Thumbprint: `F275C9D48A3325871DB04B0FDFB5701BE34802B7`
-  - Субъект: `CN=Industrial Studio, O=Kozak`
-  - Команда подписи: `signtool.exe sign /sha1 F275C9D48A3325871DB04B0FDFB5701BE34802B7 /fd sha256 /tr http://timestamp.digicert.com /td sha256 <file.exe>`
-* **Резервные доверенные сертификаты (`TRUSTED_THUMBPRINTS`):**
-  - `CF5FD177247FC2EEB561B69BE223EF0757218C08` (CN=Industrial Systems Studio, O=Kozhaki, до 08.2027)
-  - `4061B8CF1678362998377C36C8F16A505ED8CE34` (CN=Kozhaki, O=Industrial Hub Systems, до 08.2036)
-* **Автообновление:** перед запуском скачанного `.exe` обязательно валидируется Thumbprint подписи через PowerShell (`Get-AuthenticodeSignature`), проверяя наличие в доверенном списке (`TRUSTED_THUMBPRINTS`).
+* **Цифровая подпись:** официальная подпись открытого исходного кода от SignPath Foundation (SignPath.io) для открытого репозитория `kozhaki-vik/industrial-hub`.
+* **Доверенные отпечатки сертификатов (`TRUSTED_THUMBPRINTS`):**
+  - Поддерживается белый список доверенных отпечатков SignPath и релизных сертификатов проекта.
+* **Автообновление:** перед запуском скачанного `.exe` обязательно валидируется подпись через PowerShell (`Get-AuthenticodeSignature` со статусом `Valid` и проверкой Thumbprint в `TRUSTED_THUMBPRINTS`).
 * **Конфиги Rust:** `config:writeConfig` пишет строго внутри `store.get('rustPath')/cfg`, проверяя `path.basename` от Path Traversal.
 * **Диагностика:** `diagnostics:pingUrl` валидирует DNS через `dns.lookup` против SSRF приватных подсетей.
 
