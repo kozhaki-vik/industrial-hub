@@ -6,8 +6,7 @@ import { useNotification } from './NotificationContext';
 const NetworkContext = createContext(null);
 const electron = window.electronAPI ? window.electronAPI : null;
 const SERVER_ENDPOINTS = [
-  'wss://industrial-hub.duckdns.org',
-  'wss://industrial-hub.duckdns.org:8080'
+  'wss://industrial-hub.duckdns.org'
 ];
 
 export const NetworkProvider = ({ children }) => {

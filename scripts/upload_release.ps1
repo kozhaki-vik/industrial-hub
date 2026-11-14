@@ -33,7 +33,7 @@ if (-not $Token) {
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$repo = "kozhaki-vik/industrial-hub-releases"
+$repo = "kozhaki-vik/industrial-hub"
 $tagName = "v$Version"
 $releaseName = "Industrial Hub $tagName"
 
@@ -52,7 +52,7 @@ $headers = @{
 $sig = (Get-AuthenticodeSignature -LiteralPath $FilePath).SignerCertificate.Thumbprint
 if (-not $sig -or $sig -ne "F275C9D48A3325871DB04B0FDFB5701BE34802B7") {
     Write-Host "Signing $FilePath with Industrial Studio certificate..."
-    $signtool = "C:\Users\Developer\AppData\Local\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe"
+    $signtool = Join-Path $env:LOCALAPPDATA "electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\windows-10\x64\signtool.exe"
     if (Test-Path $signtool) {
         & $signtool sign /sha1 F275C9D48A3325871DB04B0FDFB5701BE34802B7 /fd sha256 /tr http://timestamp.digicert.com /td sha256 $FilePath
     }
