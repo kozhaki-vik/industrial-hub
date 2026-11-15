@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { ExternalLink, Hash, Sparkles, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ExternalLink, Hash, Sparkles, X, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { normalizeImageUrl } from '../utils/urlHelper';
 
 /**
  * Parses basic Discord markdown:
@@ -171,6 +172,13 @@ export default function DiscordMessagePreview({
   const { t } = useTranslation();
   const [imgError, setImgError] = useState(false);
 
+  // Auto-reset image error state whenever banner URL changes
+  useEffect(() => {
+    setImgError(false);
+  }, [embed?.banner]);
+
+  const bannerUrl = useMemo(() => normalizeImageUrl(embed?.banner), [embed?.banner]);
+
   const embedColor = embed.color || '#5865f2';
   const now = new Date();
   const formattedTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -265,14 +273,20 @@ export default function DiscordMessagePreview({
             )}
 
             {/* Embed Banner Image */}
-            {embed.banner && !imgError && (
+            {bannerUrl && !imgError && (
               <div className="mt-3 rounded-[4px] overflow-hidden border border-[#1e1f22] bg-[#1e1f22]/60">
                 <img
-                  src={embed.banner}
+                  src={bannerUrl}
                   alt="Embed Banner"
                   className="w-full max-h-72 object-cover"
                   onError={() => setImgError(true)}
                 />
+              </div>
+            )}
+            {bannerUrl && imgError && (
+              <div className="mt-3 p-2.5 rounded-[4px] border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>{t('discord_preview_img_error', 'Не удалось загрузить изображение баннера. Убедитесь, что ссылка рабочая.')}</span>
               </div>
             )}
 

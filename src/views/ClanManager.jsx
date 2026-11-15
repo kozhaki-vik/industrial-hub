@@ -1,4 +1,5 @@
 import { ClanManagerContext } from './ClanManagerContext';
+import { DEFAULT_ADS_BANNER } from '../utils/urlHelper';
 import GeneralTab from './ClanManagerTabs/GeneralTab';
 import RolesTab from './ClanManagerTabs/RolesTab';
 import ChannelsTab from './ClanManagerTabs/ChannelsTab';
@@ -3939,12 +3940,17 @@ export default function ClanManager() {
       let aConfig = {
         title: t('clan_auto_168', t('clan_ads_buy', 'Покупка рекламы')),
         text: t('clan_auto_229', 'Здесь вы можете приобрести рекламу или обсудить партнерство.'),
-        banner: 'https://i.imgur.com/example.png',
+        banner: DEFAULT_ADS_BANNER,
         priceLink: 'https://telegra.ph/price',
       };
       try {
         if (config.adConfigJson) {
-          aConfig = { ...aConfig, ...JSON.parse(config.adConfigJson) };
+          const parsed = JSON.parse(config.adConfigJson);
+          aConfig = {
+            ...aConfig,
+            ...parsed,
+            banner: parsed.banner !== undefined && parsed.banner !== null ? parsed.banner : DEFAULT_ADS_BANNER
+          };
         }
       } catch (e) { console.error('[Auto-caught Error]', e); }
 
@@ -3961,13 +3967,11 @@ export default function ClanManager() {
           banner: aConfig.banner
         },
         buttons: [
-          { label: t('clan_auto_v2_1006', 'Заказать рекламу'), emoji: '📢', style: 'primary' },
+          { label: t('clan_auto_v2_1006', 'Заказать рекламу'), emoji: '<:speakerphone:1571506556254552156>', style: 'primary' },
           { label: t('clan_auto_v2_1007', 'Заключить партнерство'), emoji: '🤝', style: 'primary' },
-          aConfig.priceLink
-            ? { label: t('clan_auto_v2_1008', 'Узнать цену'), emoji: '💰', style: 'link' }
-            : { label: t('clan_auto_v2_1009', 'Узнать цену'), emoji: '💰', style: 'primary' },
-          { label: t('clan_auto_v2_1010', 'Разработка бота'), emoji: '⚙️', style: 'secondary' },
-          { label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '❓', style: 'secondary' }
+          { label: t('clan_auto_v2_1009', 'Узнать цену'), emoji: '<:cash:1571506385412423851>', style: 'success' },
+          { label: t('clan_auto_v2_1010', 'Разработка бота'), emoji: '<:adjustmentshorizontal:1571506352935932066>', style: 'secondary' },
+          { label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '<:infocircle:1571506482585927770>', style: 'secondary' }
         ]
       };
     }
