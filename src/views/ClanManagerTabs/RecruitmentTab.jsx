@@ -3,10 +3,13 @@ import { ClanManagerContext } from '../ClanManagerContext';
 import {
   RefreshCw, Sliders, Hash, UserPlus,
   UserCheck, Check, AlertTriangle, ScrollText, Bot, Clock,
-  ExternalLink, Eye, EyeOff, X, ArrowRight
+  ExternalLink, Eye, EyeOff, X, ArrowRight,
+  Upload, Loader2, CheckCircle2, HardDrive, Trash2
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import { ToggleSwitch } from '../ClanManager';
+import { normalizeImageUrl } from '../../utils/urlHelper';
+import { uploadBanner, deleteBanner } from '../../services/uploadService';
 
 export default function RecruitmentTab() {
   const {
@@ -16,8 +19,14 @@ export default function RecruitmentTab() {
     checkingRecruitmentInvite, verifyRecruitmentInvite,
     isFullScreenWindow, showDiscordLivePreview, setShowDiscordLivePreview,
     queueAutoSave, saveConfig, sendProxyAction, addLog,
-    openExternalUrl, setActiveTab, t
+    openExternalUrl, setActiveTab, t,
+    currentActiveGuildId, guildId
   } = useContext(ClanManagerContext);
+
+  const effectiveGuildId = currentActiveGuildId || guildId || config?.guildId;
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadBannerError, setUploadBannerError] = useState('');
+  const bannerFileInputRef = useRef(null);
 
   const [checkingPrefix, setCheckingPrefix] = useState(false);
   const [missingPrefixes, setMissingPrefixes] = useState([]);
@@ -80,6 +89,46 @@ export default function RecruitmentTab() {
     const updated = { ...config, recruitmentConfigJson: JSON.stringify(newConfig) };
     queueAutoSave(updated, immediate);
   }, [rConfig, config, queueAutoSave]);
+
+  const handleBannerFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadBannerError(t('clan_banner_err_size', 'Размер файла превышает лимит 2 МБ'));
+      return;
+    }
+
+    setUploadingBanner(true);
+    setUploadBannerError('');
+
+    try {
+      const res = await uploadBanner(file, 'recruitment', effectiveGuildId);
+      if (res.success && res.url) {
+        updateRConfig('banner', res.url, true);
+      } else {
+        setUploadBannerError(res.error || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
+      }
+    } catch (err) {
+      setUploadBannerError(err.message || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const handleRemoveRecruitmentBanner = async () => {
+    const cur = rConfig.banner;
+    setUploadBannerError('');
+    updateRConfig('banner', '', true);
+    if (cur && cur.includes('/uploads/banners/')) {
+      try {
+        await deleteBanner('recruitment', effectiveGuildId);
+      } catch (err) {
+        console.warn('[RecruitmentTab] Could not delete banner from server disk:', err.message);
+      }
+    }
+  };
 
   const updateChannelConfig = useCallback((key, val) => {
     const newCConfig = { ...cConfig, [key]: val };
@@ -202,15 +251,81 @@ export default function RecruitmentTab() {
             </div>
             
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('clan_auto_43', 'Ссылка на баннер (Изображение)')}</label>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {t('clan_auto_43', 'Ссылка на баннер (Изображение)')}
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={bannerFileInputRef}
+                    onChange={handleBannerFileSelect}
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => bannerFileInputRef.current?.click()}
+                    disabled={uploadingBanner}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800/40 cursor-pointer disabled:opacity-50"
+                    title={t('clan_banner_upload_btn_hint', 'Загрузить изображение напрямую на наш сервер (до 2 МБ, 1 шт)')}
+                  >
+                    {uploadingBanner ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {uploadingBanner
+                        ? t('clan_banner_uploading', 'Загрузка...')
+                        : t('clan_banner_upload_btn', 'Загрузить с ПК')}
+                    </span>
+                  </button>
+                  {rConfig.banner && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveRecruitmentBanner}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors border border-rose-200 dark:border-rose-800/40 cursor-pointer"
+                      title={t('clan_ads_banner_clear_hint', 'Убрать баннер')}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{t('clan_ads_banner_clear_btn', 'Убрать баннер')}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
               <input 
                 type="text" 
                 className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
                 value={rConfig.banner}
                 onChange={e => updateRConfig('banner', e.target.value, false)}
-                onBlur={e => updateRConfig('banner', e.target.value, true)}
-                placeholder="https://i.imgur.com/..."
+                onBlur={e => {
+                  const normalized = normalizeImageUrl(e.target.value);
+                  updateRConfig('banner', normalized, true);
+                }}
+                placeholder="https://..."
               />
+              {uploadBannerError && (
+                <div className="mt-1.5 p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{uploadBannerError}</span>
+                </div>
+              )}
+              {rConfig.banner && (
+                <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                  {rConfig.banner.includes('/uploads/banners/') ? (
+                    <div className="flex items-center gap-1.5 text-blue-500 font-medium">
+                      <HardDrive className="w-3.5 h-3.5" />
+                      <span>{t('clan_banner_uploaded_server', 'Размещено на сервере Industrial Hub')}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-emerald-500 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{t('clan_ads_banner_active', 'Установлен кастомный баннер')}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

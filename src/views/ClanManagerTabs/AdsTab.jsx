@@ -1,7 +1,8 @@
-import React, { useContext, useMemo, useCallback } from 'react';
+import React, { useContext, useMemo, useCallback, useState, useRef } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
-import { Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2 } from 'lucide-react';
+import { Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2, Upload, Loader2, AlertCircle, HardDrive } from 'lucide-react';
 import { DEFAULT_ADS_BANNER, normalizeImageUrl } from '../../utils/urlHelper';
+import { uploadBanner, deleteBanner } from '../../services/uploadService';
 
 export default function AdsTab() {
   const {
@@ -11,8 +12,16 @@ export default function AdsTab() {
     saveConfig,
     isFullScreenWindow,
     showDiscordLivePreview,
-    setShowDiscordLivePreview
+    setShowDiscordLivePreview,
+    currentActiveGuildId,
+    guildId
   } = useContext(ClanManagerContext);
+
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef(null);
+
+  const effectiveGuildId = currentActiveGuildId || guildId || config?.guildId;
 
   const aConfig = useMemo(() => {
     const defaults = {
@@ -44,6 +53,51 @@ export default function AdsTab() {
     const updated = { ...config, adConfigJson: JSON.stringify(newConfig) };
     queueAutoSave(updated, immediate);
   }, [aConfig, config, queueAutoSave]);
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset value so user can upload the same file again if desired
+    e.target.value = '';
+
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError(t('clan_banner_err_size', 'Размер файла превышает лимит 2 МБ'));
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      const res = await uploadBanner(file, 'ads', effectiveGuildId);
+      if (res.success && res.url) {
+        updateAConfig('banner', res.url, true);
+      } else {
+        setUploadError(res.error || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
+      }
+    } catch (err) {
+      setUploadError(err.message || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveBanner = async () => {
+    const currentBanner = aConfig.banner;
+    setUploadError('');
+    updateAConfig('banner', '', true);
+
+    if (currentBanner && currentBanner.includes('/uploads/banners/')) {
+      try {
+        await deleteBanner('ads', effectiveGuildId);
+      } catch (err) {
+        console.warn('[AdsTab] Could not delete banner from server disk:', err.message);
+      }
+    }
+  };
+
+  const isServerHosted = Boolean(aConfig.banner && aConfig.banner.includes('/uploads/banners/'));
 
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-5xl">
@@ -121,15 +175,47 @@ export default function AdsTab() {
         </div>
         
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
               {t('clan_ads_banner_label', 'Ссылка на баннер (изображение)')}
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+              />
+
+              {/* Upload button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800/40 cursor-pointer disabled:opacity-50"
+                title={t('clan_banner_upload_btn_hint', 'Загрузить изображение напрямую на наш сервер (до 2 МБ, 1 шт)')}
+              >
+                {uploading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {uploading
+                    ? t('clan_banner_uploading', 'Загрузка...')
+                    : t('clan_banner_upload_btn', 'Загрузить с ПК')}
+                </span>
+              </button>
+
               {aConfig.banner !== DEFAULT_ADS_BANNER && (
                 <button
                   type="button"
-                  onClick={() => updateAConfig('banner', DEFAULT_ADS_BANNER, true)}
+                  onClick={() => {
+                    setUploadError('');
+                    updateAConfig('banner', DEFAULT_ADS_BANNER, true);
+                  }}
                   className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800/40 cursor-pointer"
                   title={t('clan_ads_banner_default_hint', 'Установить официальный баннер по умолчанию')}
                 >
@@ -137,10 +223,11 @@ export default function AdsTab() {
                   <span>{t('clan_ads_banner_default_btn', 'По умолчанию')}</span>
                 </button>
               )}
+
               {aConfig.banner && (
                 <button
                   type="button"
-                  onClick={() => updateAConfig('banner', '', true)}
+                  onClick={handleRemoveBanner}
                   className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors border border-rose-200 dark:border-rose-800/40 cursor-pointer"
                   title={t('clan_ads_banner_clear_hint', 'Убрать баннер (сообщение будет без картинки)')}
                 >
@@ -150,6 +237,7 @@ export default function AdsTab() {
               )}
             </div>
           </div>
+
           <input 
             type="text" 
             className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow text-sm"
@@ -161,8 +249,16 @@ export default function AdsTab() {
             }}
             placeholder={DEFAULT_ADS_BANNER}
           />
+
+          {uploadError && (
+            <div className="mt-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{uploadError}</span>
+            </div>
+          )}
+
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed">
-            {t('clan_ads_banner_hint', 'По умолчанию используется официальный баннер. Вы можете указать свою ссылку (прямые ссылки, Dropbox, Google Drive) или очистить поле, чтобы скрыть баннер.')}
+            {t('clan_ads_banner_hint', 'По умолчанию используется официальный баннер. Вы можете загрузить свой файл с ПК (до 2 МБ), указать ссылку или очистить поле, чтобы скрыть баннер.')}
           </p>
 
           {/* Mini preview & status inside tab */}
@@ -180,9 +276,15 @@ export default function AdsTab() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  {isServerHosted ? (
+                    <HardDrive className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  )}
                   <span>
-                    {aConfig.banner === DEFAULT_ADS_BANNER
+                    {isServerHosted
+                      ? t('clan_banner_uploaded_server', 'Размещено на сервере Industrial Hub')
+                      : aConfig.banner === DEFAULT_ADS_BANNER
                       ? t('clan_ads_banner_is_default', 'Установлен официальный баннер по умолчанию')
                       : t('clan_ads_banner_active', 'Установлен кастомный баннер')}
                   </span>
