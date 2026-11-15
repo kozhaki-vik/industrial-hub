@@ -3,7 +3,7 @@ import { ClanManagerContext } from '../ClanManagerContext';
 import {
   Trash2, RefreshCw, ScrollText, UserCheck, Check,
   Search, ExternalLink, X, ChevronLeft, ChevronRight,
-  ClipboardList, AlertCircle
+  ClipboardList, AlertCircle, Archive
 } from 'lucide-react';
 import { ApplicationsTableSkeleton } from '../../components/Skeleton';
 
@@ -157,6 +157,10 @@ export default function ApplicationsTab() {
     t
   } = useContext(ClanManagerContext);
 
+  // View mode: 'active' (only PENDING) vs 'archive' (ACCEPTED, REJECTED, AUTO_REJECTED)
+  const [appViewMode, setAppViewMode] = useState('active'); // 'active' | 'archive'
+  const [archiveSubFilter, setArchiveSubFilter] = useState('ALL'); // 'ALL' | 'ACCEPTED' | 'REJECTED' | 'AUTO_REJECTED'
+
   // --- Search Input Debounce (prevents typing stutter) ---
   const [searchInput, setSearchInput] = useState(appSearch || '');
   const searchTimerRef = useRef(null);
@@ -200,9 +204,17 @@ export default function ApplicationsTab() {
   // --- Filter and Search logic ---
   const filteredApplications = useMemo(() => {
     let list = applicationsData || [];
-    if (appFilter && appFilter !== 'ALL') {
-      list = list.filter(a => a.status === appFilter);
+
+    if (appViewMode === 'active') {
+      list = list.filter(a => a.status === 'PENDING');
+    } else {
+      // Archive mode
+      list = list.filter(a => a.status !== 'PENDING');
+      if (archiveSubFilter && archiveSubFilter !== 'ALL') {
+        list = list.filter(a => a.status === archiveSubFilter);
+      }
     }
+
     if (appSearch && appSearch.trim()) {
       const q = appSearch.trim().toLowerCase();
       list = list.filter(a =>
@@ -214,7 +226,7 @@ export default function ApplicationsTab() {
       );
     }
     return list;
-  }, [applicationsData, appFilter, appSearch]);
+  }, [applicationsData, appViewMode, archiveSubFilter, appSearch]);
 
   // --- Client-side Pagination ---
   const [currentPage, setCurrentPage] = useState(1);
@@ -223,7 +235,7 @@ export default function ApplicationsTab() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [appFilter, appSearch]);
+  }, [appViewMode, archiveSubFilter, appSearch]);
 
   const paginatedApplications = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -270,58 +282,102 @@ export default function ApplicationsTab() {
         </div>
       </div>
 
-      {/* Filters and Search Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
-        {/* Status Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2">
-          {[
-            { id: 'ALL', label: t('clan_recruitment_apps_filter_all') || 'Все', count: statusCounts.ALL },
-            { id: 'PENDING', label: t('clan_recruitment_apps_filter_pending') || 'Ожидают', count: statusCounts.PENDING },
-            { id: 'ACCEPTED', label: t('clan_recruitment_apps_filter_accepted') || 'Приняты', count: statusCounts.ACCEPTED },
-            { id: 'REJECTED', label: t('clan_recruitment_apps_filter_rejected') || 'Отклонены', count: statusCounts.REJECTED },
-            { id: 'AUTO_REJECTED', label: t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ', count: statusCounts.AUTO_REJECTED }
-          ].map(f => (
+      {/* View Mode & Filter Toolbar */}
+      <div className="flex flex-col gap-3 p-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Main Mode Toggle: Active vs Archive */}
+          <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
             <button
-              key={f.id}
               type="button"
-              onClick={() => setAppFilter(f.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                appFilter === f.id
-                  ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/20'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700/80 hover:text-slate-900 dark:hover:text-slate-200'
+              onClick={() => setAppViewMode('active')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                appViewMode === 'active'
+                  ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <span>{f.label}</span>
+              <ScrollText className="w-3.5 h-3.5" />
+              <span>{t('clan_apps_mode_active', 'Активные заявки')}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                appFilter === f.id ? 'bg-orange-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                appViewMode === 'active' ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
               }`}>
-                {f.count}
+                {statusCounts.PENDING}
               </span>
             </button>
-          ))}
-        </div>
-
-        {/* Debounced Search input */}
-        <div className="relative md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder={t('clan_recruitment_app_search_placeholder') || 'Поиск по нику, Discord ID, Steam...'}
-            className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all"
-          />
-          {searchInput && (
             <button
               type="button"
-              onClick={handleClearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-              title={t('clan_auto_105', 'Очистить поиск')}
+              onClick={() => setAppViewMode('archive')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                appViewMode === 'archive'
+                  ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
             >
-              <X className="w-3.5 h-3.5" />
+              <Archive className="w-3.5 h-3.5" />
+              <span>{t('clan_apps_mode_archive', 'Архив заявок')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                appViewMode === 'archive' ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+              }`}>
+                {statusCounts.ACCEPTED + statusCounts.REJECTED + statusCounts.AUTO_REJECTED}
+              </span>
             </button>
-          )}
+          </div>
+
+          {/* Debounced Search input */}
+          <div className="relative md:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder={t('clan_recruitment_app_search_placeholder') || 'Поиск по нику, Discord ID, Steam...'}
+              className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                title={t('clan_auto_105', 'Очистить поиск')}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Sub-filters for Archive Mode */}
+        {appViewMode === 'archive' && (
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <span className="text-[11px] font-semibold text-slate-400 mr-1">
+              {t('clan_apps_archive_filter_label', 'Статус в архиве:')}
+            </span>
+            {[
+              { id: 'ALL', label: t('clan_recruitment_apps_filter_all') || 'Все', count: statusCounts.ACCEPTED + statusCounts.REJECTED + statusCounts.AUTO_REJECTED },
+              { id: 'ACCEPTED', label: t('clan_recruitment_apps_filter_accepted') || 'Приняты', count: statusCounts.ACCEPTED },
+              { id: 'REJECTED', label: t('clan_recruitment_apps_filter_rejected') || 'Отклонены', count: statusCounts.REJECTED },
+              { id: 'AUTO_REJECTED', label: t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ', count: statusCounts.AUTO_REJECTED }
+            ].map(f => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setArchiveSubFilter(f.id)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  archiveSubFilter === f.id
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                <span>{f.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                  archiveSubFilter === f.id ? 'bg-orange-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                }`}>
+                  {f.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Table Content */}

@@ -111,7 +111,7 @@ const VoteTemplateCard = React.memo(function VoteTemplateCard({
 
         <div className="md:col-span-2">
           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-            {t('clan_auto_63', 'Ссылка на баннер')}
+            {t('clan_banner_img_label', 'Ссылка на баннер (изображение)')}
           </label>
           <input 
             type="text" 
@@ -300,7 +300,7 @@ function TemplateComparator({ templates, t }) {
 }
 
 // --- Live Embed Preview Widget ---
-function LiveDiscordVoteEmbed({ template, clanName, t }) {
+function LiveDiscordVoteEmbed({ template, clanName, t, onToggleAnonymous }) {
   if (!template) return null;
 
   return (
@@ -354,8 +354,16 @@ function LiveDiscordVoteEmbed({ template, clanName, t }) {
           </div>
         )}
 
-        <div className="text-[10px] text-[#949ba4] pt-1">
-          {template.isAnonymous ? '🔒 Анонимное голосование' : '👥 Публичное голосование'}
+        <div className="flex items-center justify-between pt-2 border-t border-[#3f4147]">
+          <span className="text-[11px] font-medium text-[#949ba4]">
+            {template.isAnonymous ? '🔒 Анонимное голосование' : '👥 Публичное голосование'}
+          </span>
+          {onToggleAnonymous && (
+            <ToggleSwitch
+              checked={template.isAnonymous === true}
+              onChange={onToggleAnonymous}
+            />
+          )}
         </div>
       </div>
 
@@ -393,7 +401,7 @@ export default function VotesTab() {
     setShowDiscordLivePreview
   } = useContext(ClanManagerContext);
 
-  const [activeTabMode, setActiveTabMode] = useState('list'); // 'list' | 'compare' | 'preview'
+  const [activeTabMode, setActiveTabMode] = useState('editor'); // 'editor' | 'compare'
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState(0);
 
   const wTemplates = useMemo(() => {
@@ -459,21 +467,21 @@ export default function VotesTab() {
 
         {/* View Modes */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setActiveTabMode('list')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTabMode === 'list'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{t('clan_vote_mode_list', 'Шаблоны')} ({wTemplates.length})</span>
-            </button>
+          {wTemplates.length > 1 && (
+            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setActiveTabMode('editor')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTabMode === 'editor'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{t('clan_vote_mode_editor', 'Настройка')}</span>
+              </button>
 
-            {wTemplates.length > 1 && (
               <button
                 type="button"
                 onClick={() => setActiveTabMode('compare')}
@@ -486,23 +494,8 @@ export default function VotesTab() {
                 <ArrowLeftRight className="w-3.5 h-3.5" />
                 <span>{t('clan_vote_mode_compare', 'Сравнить')}</span>
               </button>
-            )}
-            {!(isFullScreenWindow && showDiscordLivePreview) && (
-
-            <button
-              type="button"
-              onClick={() => setActiveTabMode('preview')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTabMode === 'preview'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>{t('clan_vote_mode_preview', 'Предпросмотр')}</span>
-            </button>
-            )}
-          </div>
+            </div>
+          )}
 
           <button
             type="button"
@@ -516,99 +509,80 @@ export default function VotesTab() {
       </div>
 
       {/* Mode 1: Compare Templates Side-by-Side */}
-      {activeTabMode === 'compare' && wTemplates.length > 1 && (
+      {activeTabMode === 'compare' && wTemplates.length > 1 ? (
         <TemplateComparator templates={wTemplates} t={t} />
-      )}
-
-      {/* Mode 2: Live Embed Preview */}
-      {activeTabMode === 'preview' && (
-        <div className="flex flex-col xl:flex-row gap-6 items-start">
-          <div className="w-full flex-1 min-w-0 space-y-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-              <label className="block text-xs font-semibold text-slate-500 mb-2">
-                {t('clan_vote_select_preview_target', 'Выберите шаблон для живого предпросмотра:')}
+      ) : wTemplates.length === 0 ? (
+        <div className="py-12 text-center bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+          <Vote className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+          <div className="font-semibold text-sm text-slate-700 dark:text-slate-300">
+            {t('clan_vote_no_templates', 'Шаблоны еще не добавлены')}
+          </div>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">
+            {t('clan_vote_no_templates_desc', 'Создайте готовые шаблоны для четверга, понедельника или других дней, чтобы запускать опросы в один клик.')}
+          </p>
+          <button
+            type="button"
+            onClick={addTemplate}
+            className="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t('clan_auto_64', 'Добавить шаблон сервера')}</span>
+          </button>
+        </div>
+      ) : (
+        /* Mode 2: Clean Template Selector + Live Preview Side-by-Side */
+        <div className="space-y-4">
+          {/* Dropdown Selector for Templates */}
+          {wTemplates.length > 1 && (
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 shrink-0">
+                {t('clan_vote_select_preview_target', 'Выберите шаблон:')}
               </label>
               <select
                 value={selectedPreviewIndex}
                 onChange={e => setSelectedPreviewIndex(Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 cursor-pointer"
+                className="w-full max-w-md px-3.5 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white cursor-pointer shadow-2xs"
               >
                 {wTemplates.map((tpl, i) => (
                   <option key={i} value={i}>
-                    #{i + 1}: {tpl.name || 'Без названия'} ({tpl.day || '—'})
+                    Шаблон #{i + 1}: {tpl.name || 'Без названия'} ({tpl.day || '—'})
                   </option>
                 ))}
               </select>
             </div>
+          )}
 
-            {activePreviewTemplate && (
-              <VoteTemplateCard
-                tpl={activePreviewTemplate}
-                index={selectedPreviewIndex}
-                t={t}
-                onUpdate={updateTemplate}
-                onRemove={removeTemplate}
-                onSelectForPreview={setSelectedPreviewIndex}
-                isSelectedForPreview={true}
-              />
+          <div className="flex flex-col xl:flex-row gap-6 items-start">
+            <div className="w-full flex-1 min-w-0 space-y-4">
+              {activePreviewTemplate && (
+                <VoteTemplateCard
+                  tpl={activePreviewTemplate}
+                  index={selectedPreviewIndex}
+                  t={t}
+                  onUpdate={updateTemplate}
+                  onRemove={removeTemplate}
+                  onSelectForPreview={setSelectedPreviewIndex}
+                  isSelectedForPreview={true}
+                />
+              )}
+            </div>
+
+            {!(isFullScreenWindow && showDiscordLivePreview) && (
+              <div className="w-full flex-1 min-w-0">
+                <div className="sticky top-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    {t('clan_vote_live_embed_title', 'Как это выглядит в Discord канале:')}
+                  </h4>
+                  <LiveDiscordVoteEmbed
+                    template={activePreviewTemplate}
+                    clanName={config?.clanName}
+                    t={t}
+                    onToggleAnonymous={() => updateTemplate(selectedPreviewIndex, 'isAnonymous', activePreviewTemplate.isAnonymous !== true, true)}
+                  />
+                </div>
+              </div>
             )}
           </div>
-          {!(isFullScreenWindow && showDiscordLivePreview) && (
-
-          <div className="w-full flex-1 min-w-0">
-            <div className="sticky top-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                {t('clan_vote_live_embed_title', 'Как это выглядит в Discord канале:')}
-              </h4>
-              <LiveDiscordVoteEmbed
-                template={activePreviewTemplate}
-                clanName={config?.clanName}
-                t={t}
-              />
-            </div>
-          </div>
-          )}
-        </div>
-      )}
-
-      {/* Mode 3: Default List of Templates */}
-      {activeTabMode === 'list' && (
-        <div className="space-y-4">
-          {wTemplates.length === 0 ? (
-            <div className="py-12 text-center bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-              <Vote className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-              <div className="font-semibold text-sm text-slate-700 dark:text-slate-300">
-                {t('clan_vote_no_templates', 'Шаблоны еще не добавлены')}
-              </div>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">
-                {t('clan_vote_no_templates_desc', 'Создайте готовые шаблоны для четверга, понедельника или других дней, чтобы запускать опросы в один клик.')}
-              </p>
-              <button
-                type="button"
-                onClick={addTemplate}
-                className="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{t('clan_auto_64', 'Добавить шаблон сервера')}</span>
-              </button>
-            </div>
-          ) : (
-            wTemplates.map((tpl, index) => (
-              <VoteTemplateCard
-                key={index}
-                tpl={tpl}
-                index={index}
-                t={t}
-                onUpdate={updateTemplate}
-                onRemove={removeTemplate}
-                onSelectForPreview={(i) => {
-                  setSelectedPreviewIndex(i);
-                  setActiveTabMode('preview');
-                }}
-                isSelectedForPreview={index === selectedPreviewIndex}
-              />
-            ))
-          )}
         </div>
       )}
     </form>

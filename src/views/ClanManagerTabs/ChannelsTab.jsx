@@ -100,7 +100,7 @@ export default function ChannelsTab() {
     { key: 'news', label: t('clan_auto_v2_1015', 'Новости клана'), desc: t('clan_auto_225', 'Канал для публикации объявлений и новостей бота.'), typeFilter: [0, 2] },
     { key: 'votes', label: t('clan_tab_votes', 'Голосования'), desc: t('clan_auto_226', 'Канал для создания голосований. Может быть тем же, что и новости.'), typeFilter: [0, 2] },
     { key: 'ads', label: t('clan_auto_v2_1016', 'Реклама и альянсы'), desc: t('clan_auto_227', 'Сюда бот отправляет информацию об оплаченной рекламе.'), typeFilter: [0, 2] },
-    { key: 'roster', label: t('clan_auto_v2_1017', 'Состав клана'), desc: t('clan_auto_228', 'Здесь выводится динамический список всех участников.'), typeFilter: [0, 2] }
+    { key: 'roster', label: t('clan_channel_dynamic_roster', 'Динамический состав клана'), desc: t('clan_channel_dynamic_roster_desc', 'Канал, в котором бот автоматически публикует и обновляет карточки активных бойцов клана.'), typeFilter: [0, 2] }
   ], [t]);
 
   const discordChannels = useMemo(() => {

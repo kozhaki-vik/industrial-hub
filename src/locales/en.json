@@ -1230,7 +1230,6 @@
   "feedback_send": "Send",
   "feedback_success": "Thank you for your feedback!",
   "feedback_title": "Feedback",
-  "fill_pin": "Please enter PIN code",
   "gamma_btn_day": "Day (Off)",
   "gamma_btn_night": "Night (On)",
   "gamma_day_title": "Default Gamma (Day)",
@@ -1286,7 +1285,6 @@
   "initial_setup_telemetry_title": "Anonymous Diagnostic Telemetry",
   "initial_setup_theme_title": "Interface Theme",
   "initial_setup_title": "Welcome to Industrial Hub!",
-  "invalid_pin": "Invalid PIN code",
   "items": "Slots",
   "language": "Language",
   "loading": "Loading...",
@@ -1627,13 +1625,8 @@
   "servers_training_tag3": "Raid Training",
   "settings_autostart_desc": "Automatically launch Industrial Hub when your computer starts",
   "settings_autostart_title": "Run at Windows startup",
-  "settings_dev_pin_desc": "Enter PIN code to access developer mode.",
-  "settings_pin_placeholder": "PIN code",
-  "settings_pin_title": "Enter PIN code",
   "settings_discord_copied": "Discord tag {{tag}} copied!",
   "settings_no_connection": "No connection to server",
-  "settings_pin_cancel": "Cancel",
-  "settings_pin_submit": "Confirm",
   "settings_show_release_notes_desc": "Show changelog modal on first launch after an update",
   "settings_show_release_notes_title": "Show update release notes",
   "settings_sponsor_btn": "Become a Sponsor",
@@ -1756,5 +1749,7 @@
   "votesCast": "Votes Cast",
   "warnCount": "Warn Count",
   "warns": "Warns",
-  "wipesPlayed": "Wipes Played"
+  "wipesPlayed": "Wipes Played",
+  "clan_bot_language_title": "Bot Server Language",
+  "clan_bot_language_desc": "Language for dynamic roster, recruitment panels, tickets, and bot announcements on Discord. Independent of this desktop app's UI language."
 }

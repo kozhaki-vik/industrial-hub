@@ -59,11 +59,12 @@ function renderDiscordMarkdown(text) {
 
   const renderInlineSpans = (line, prefix) => {
     // Regex matching:
+    // 0. Custom emojis: <a?:name:id>
     // 1. Mentions: <@(\d+)> or @(\w+)
     // 2. Inline code: `(.*?)`
     // 3. Bold: \*\*(.*?)\*\*
     // 4. Links: (https?:\/\/[^\s]+)
-    const tokenRegex = /(<@\d+>|@[\wа-яА-ЯёЁ_.-]+|`[^`]+`|\*\*[^*]+\*\*|https?:\/\/[^\s]+)/g;
+    const tokenRegex = /(<a?:\w+:\d+>|<@\d+>|@[\wа-яА-ЯёЁ_.-]+|`[^`]+`|\*\*[^*]+\*\*|https?:\/\/[^\s]+)/g;
     const tokens = [];
     let last = 0;
     let tMatch;
@@ -73,7 +74,10 @@ function renderDiscordMarkdown(text) {
         tokens.push({ type: 'plain', text: line.slice(last, tMatch.index) });
       }
       const raw = tMatch[0];
-      if (raw.startsWith('<@') && raw.endsWith('>')) {
+      const emojiMatch = raw.match(/^<a?:(\w+):(\d+)>$/);
+      if (emojiMatch) {
+        tokens.push({ type: 'custom_emoji', name: emojiMatch[1], id: emojiMatch[2] });
+      } else if (raw.startsWith('<@') && raw.endsWith('>')) {
         tokens.push({ type: 'mention', text: raw.slice(2, -1) });
       } else if (raw.startsWith('@')) {
         tokens.push({ type: 'mention', text: raw });
@@ -92,6 +96,21 @@ function renderDiscordMarkdown(text) {
 
     return tokens.map((tok, i) => {
       const key = `${prefix}-tok-${i}`;
+      if (tok.type === 'custom_emoji') {
+        return (
+          <img
+            key={key}
+            src={`https://cdn.discordapp.com/emojis/${tok.id}.png?size=48&quality=lossless`}
+            alt={`:${tok.name}:`}
+            title={`:${tok.name}:`}
+            className="inline-block w-4 h-4 align-text-bottom mx-0.5 object-contain"
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        );
+      }
       if (tok.type === 'mention') {
         return (
           <span key={key} className="inline-flex items-center px-1 py-0.5 mx-0.5 rounded bg-[#5865f2]/20 text-[#c9cdfb] font-semibold text-[11px] hover:bg-[#5865f2] hover:text-white transition-colors cursor-pointer select-none">
@@ -180,26 +199,6 @@ export default function DiscordMessagePreview({
           )}
         </div>
       </div>
-
-      {/* If templates exist (e.g. wipe templates in votes) */}
-      {Array.isArray(templates) && templates.length > 1 && (
-        <div className="px-4 py-2 border-b border-[#232428] bg-[#2b2d31] flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-thin">
-          {templates.map((tpl, tIdx) => (
-            <button
-              key={tIdx}
-              type="button"
-              onClick={() => onSelectTemplate(tIdx)}
-              className={`px-3 py-1 rounded-[3px] text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                activeTemplateIndex === tIdx
-                  ? 'bg-[#5865f2] text-white shadow-xs'
-                  : 'bg-[#313338] text-[#949ba4] hover:text-[#f2f3f5] hover:bg-[#35373c]'
-              }`}
-            >
-              {tpl.name || `${t('preview_template', 'Шаблон #')}${tIdx + 1}`}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Discord Message Content */}
       <div className="p-4 sm:p-5 flex gap-4 overflow-y-auto flex-1 leading-relaxed custom-scrollbar">

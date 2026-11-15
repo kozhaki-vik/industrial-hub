@@ -17,8 +17,9 @@ export default function AdsTab() {
     const defaults = {
       title: t('clan_auto_169', t('clan_ads_buy', 'Покупка рекламы')),
       text: t('clan_auto_230', 'Здесь вы можете приобрести рекламу или обсудить партнерство.'),
-      banner: 'https://i.imgur.com/example.png',
-      priceLink: 'https://telegra.ph/price',
+      banner: '',
+      priceText: '',
+      priceClicks: 0
     };
     try {
       if (config?.adConfigJson) {
@@ -92,22 +93,29 @@ export default function AdsTab() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {t('clan_auto_68', 'Ссылка на Прайс-лист (Telegraph / Сайт)')}
-          </label>
-          <input 
-            type="text" 
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
-            value={aConfig.priceLink || ''}
-            onChange={e => updateAConfig('priceLink', e.target.value, false)}
-            onBlur={e => updateAConfig('priceLink', e.target.value, true)}
-            placeholder="https://telegra.ph/..."
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t('clan_ads_price_text_label', 'Текст прайс-листа и цены (кнопка «Узнать цену» в Discord)')}
+            </label>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+              {t('clan_ads_clicks_count', 'Кликов по цене')}: {aConfig.priceClicks || 0}
+            </span>
+          </div>
+          <textarea 
+            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[90px] resize-none"
+            value={aConfig.priceText || ''}
+            onChange={e => updateAConfig('priceText', e.target.value, false)}
+            onBlur={e => updateAConfig('priceText', e.target.value, true)}
+            placeholder="📢 Реклама в общем чате: 300₽ / неделя&#10;📌 Закрепленное объявление: 700₽ / неделя&#10;🤝 Партнерство: бесплатно по согласованию"
           />
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+            {t('clan_ads_price_text_hint', 'Этот текст высветится скрытым (ephemeral) сообщением пользователю при нажатии кнопки «Узнать цену» в Discord.')}
+          </p>
         </div>
         
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {t('clan_auto_69', 'Ссылка на баннер (Изображение)')}
+            {t('clan_ads_banner_label', 'Ссылка на баннер (изображение)')}
           </label>
           <input 
             type="text" 

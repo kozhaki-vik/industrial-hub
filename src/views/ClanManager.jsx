@@ -3157,7 +3157,6 @@ export default function ClanManager() {
     { id: 'applications', label: t('clan_tab_applications', 'Заявки в клан'), icon: ScrollText },
     { id: 'stats', label: t('clan_tab_stats', 'Статистика'), icon: BarChart3 },
     { id: 'ads', label: t('clan_tab_ads', 'Реклама'), icon: Megaphone },
-    { id: 'dossier', label: t('clan_tab_archive') || 'Архив', icon: Archive },
   ];
 
   const botConfigGroups = [
@@ -3608,11 +3607,11 @@ export default function ClanManager() {
       keywords: ['синхронизация', 'обновить', 'sync', 'roster sync']
     },
 
-    // Dossier
+    // Dossier / Archive in Roster
     {
       id: 'dossier_members',
-      tabId: 'dossier',
-      tabName: t('clan_tab_archive') || 'Архив',
+      tabId: 'roster',
+      tabName: t('clan_tab_roster', 'Состав') + ' (' + (t('clan_tab_archive') || 'Архив') + ')',
       tabIcon: Archive,
       title: t('clan_auto_148', 'Архив и личные карточки бойцов'),
       desc: t('clan_auto_202', 'Персональные карточки бойцов с историей, заметками офицеров и статусом'),
@@ -3620,8 +3619,8 @@ export default function ClanManager() {
     },
     {
       id: 'dossier_blacklist',
-      tabId: 'dossier',
-      tabName: t('clan_tab_archive') || 'Архив',
+      tabId: 'roster',
+      tabName: t('clan_tab_roster', 'Состав') + ' (' + (t('clan_tab_archive') || 'Архив') + ')',
       tabIcon: Archive,
       title: t('clan_auto_149', 'Черный список игроков (Blacklist)'),
       desc: t('clan_auto_203', 'Внесение недобросовестных игроков или нарушителей правил в клановый бан-лист'),
@@ -4587,7 +4586,7 @@ const contextValue = {
                   type="button"
                   onClick={() => {
                     setViewMode('clan');
-                    if (!['roster', 'votes', 'recruitment', 'stats', 'ads', 'dossier'].includes(activeTab)) {
+                    if (!['roster', 'votes', 'recruitment', 'applications', 'stats', 'ads'].includes(activeTab)) {
                       setActiveTab('roster');
                     }
                   }}

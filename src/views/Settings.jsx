@@ -131,48 +131,8 @@ export default function Settings() {
     }
   };
 
-  // Developer Key State
-  const [showPinModal, setShowPinModal] = React.useState(false);
-  const [pinInput, setPinInput] = React.useState('');
-  const [pinError, setPinError] = React.useState('');
-  const pinInputRef = React.useRef(null);
-
-  const handleOpenDeveloper = async () => {
-    if (window.electronAPI?.dev) {
-      try {
-        const hasSaved = await window.electronAPI.dev.hasKey();
-        if (hasSaved) {
-          sessionStorage.setItem('dev_authenticated', 'true');
-          navigate('/developer');
-          return;
-        }
-      } catch {}
-    }
-    setShowPinModal(true);
-    setPinError('');
-    setPinInput('');
-  };
-
-  const submitPin = () => {
-    const trimmed = (pinInput || '').trim();
-    if (!trimmed) {
-      if (pinInputRef.current) {
-        scrollToAndHighlight(pinInputRef.current);
-      }
-      setPinError(t('fill_pin', 'Введите ПИН-код'));
-      return;
-    }
-    if (trimmed === '2136') {
-      sessionStorage.setItem('dev_authenticated', 'true');
-      setShowPinModal(false);
-      navigate('/developer');
-      return;
-    } else {
-      setPinError(t('invalid_pin', 'Неверный ПИН-код'));
-      if (pinInputRef.current) {
-        scrollToAndHighlight(pinInputRef.current);
-      }
-    }
+  const handleOpenDeveloper = () => {
+    navigate('/developer');
   };
 
   const resetSponsorState = () => {
@@ -623,43 +583,7 @@ export default function Settings() {
         </div>
       )}
 
-      {/* PIN Modal */}
-      {showPinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-main-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 w-full max-w-sm shadow-2xl relative">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('settings_pin_title', 'Ввод ПИН-кода')}</h3>
-            <p className="text-sm text-slate-500 mb-4">{t('settings_dev_pin_desc', 'Введите ПИН-код для перехода в режим разработчика.')}</p>
-            
-            <input 
-              ref={pinInputRef}
-              type="password"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              placeholder={t('settings_pin_placeholder', 'ПИН-код')}
-              maxLength={10}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 mb-2"
-              onKeyDown={(e) => e.key === 'Enter' && submitPin()}
-              autoFocus
-            />
-            {pinError && <p className="text-xs text-red-500 mb-4">{pinError}</p>}
-            
-            <div className="flex gap-3 mt-4">
-              <button 
-                onClick={() => { setShowPinModal(false); setPinInput(''); setPinError(''); }}
-                className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                {t('settings_pin_cancel', 'Отмена')}
-              </button>
-              <button 
-                onClick={submitPin}
-                className="flex-1 px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors"
-              >
-                {t('settings_pin_submit', 'Подтвердить')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

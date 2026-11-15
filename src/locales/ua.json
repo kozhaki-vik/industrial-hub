@@ -1230,7 +1230,6 @@
   "feedback_send": "Відправити",
   "feedback_success": "Дякуємо за ваш відгук!",
   "feedback_title": "Зворотній зв'язок",
-  "fill_pin": "Введіть ПІН-код",
   "gamma_btn_day": "День (Вимк)",
   "gamma_btn_night": "Ніч (Увімк)",
   "gamma_day_title": "Звичайна гамма (День)",
@@ -1286,7 +1285,6 @@
   "initial_setup_telemetry_title": "Анонімна діагностична телеметрія",
   "initial_setup_theme_title": "Тема оформлення",
   "initial_setup_title": "Ласкаво просимо до Industrial Hub!",
-  "invalid_pin": "Невірний ПІН-код",
   "items": "Слоти",
   "language": "Мова",
   "loading": "Завантаження...",
@@ -1627,13 +1625,8 @@
   "servers_training_tag3": "Тренування рейдів",
   "settings_autostart_desc": "Автоматично запускати Industrial Hub при увімкненні комп'ютера",
   "settings_autostart_title": "Автозапуск програми",
-  "settings_dev_pin_desc": "Введіть ПІН-код для переходу в режим розробника.",
-  "settings_pin_placeholder": "ПІН-код",
-  "settings_pin_title": "Введення ПІН-коду",
   "settings_discord_copied": "Discord тег {{tag}} скопійовано!",
   "settings_no_connection": "Немає з'єднання з сервером",
-  "settings_pin_cancel": "Скасувати",
-  "settings_pin_submit": "Підтвердити",
   "settings_show_release_notes_desc": "Вікно зі списком змін при першому запуску після оновлення",
   "settings_show_release_notes_title": "Показувати інформацію про оновлення",
   "settings_sponsor_btn": "Стати спонсором",
@@ -1756,5 +1749,7 @@
   "votesCast": "Віддано голосів",
   "warnCount": "Кількість варнів",
   "warns": "Варни",
-  "wipesPlayed": "Зіграно вайпів"
+  "wipesPlayed": "Зіграно вайпів",
+  "clan_bot_language_title": "Мова бота на сервері Discord",
+  "clan_bot_language_desc": "Мова динамічного складу, панелей набору, тікетів та оголошень бота. Не залежить від мови цього додатку."
 }

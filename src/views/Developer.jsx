@@ -111,11 +111,7 @@ export default function Developer() {
     }
   };
 
-  useEffect(() => {
-    if (sessionStorage.getItem('dev_authenticated') !== 'true') {
-      navigate('/settings', { replace: true });
-    }
-  }, [navigate]);
+
 
   const handleChannelChange = async (channel) => {
     setUpdateChannel(channel);
