@@ -1,8 +1,10 @@
 # Privacy Policy
 
 **Effective Date:** November 14, 2026  
-**Application:** Industrial Hub (Desktop Application)  
-**Maintainer:** Dmytro Kondratenko (@kozhaki-vik)
+**Application:** Industrial Hub (Desktop Application & Discord Bot)  
+**Maintainer:** Dmytro Kondratenko (@kozhaki-vik)  
+**Hosted Version:** [https://kozhaki-vik.github.io/industrial-hub/privacy.html](https://kozhaki-vik.github.io/industrial-hub/privacy.html)  
+**Terms of Service:** [TERMS.md](TERMS.md)
 
 ---
 

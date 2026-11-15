@@ -69,12 +69,12 @@ Industrial Hub is designed with privacy-first architecture:
 
 ---
 
-## 📜 Code Signing Policy
+## 📜 Policies & Legal
 
-Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
-
+* **Terms of Service:** Read our [Terms of Service](TERMS.md) governing the desktop application and the Discord bot integration (also available on [GitHub Pages](https://kozhaki-vik.github.io/industrial-hub/terms.html)).
+* **Privacy Policy:** Detailed data minimization, telemetry, and Discord data processing practices are documented in our [Privacy Policy](PRIVACY.md) (also available on [GitHub Pages](https://kozhaki-vik.github.io/industrial-hub/privacy.html)).
+* **Code Signing Policy:** Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 * **Committers and Reviewers:** [Dmytro Kondratenko (@kozhaki-vik)](https://github.com/kozhaki-vik)
-* **Privacy Policy:** This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it, as detailed in our [Privacy Policy](PRIVACY.md). Users can opt out of optional diagnostic telemetry during initial setup or at any time in the application settings.
 
 ---
 
