@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { ExternalLink, Hash, Sparkles, X, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { normalizeImageUrl } from '../utils/urlHelper';
@@ -13,8 +13,14 @@ import { normalizeImageUrl } from '../utils/urlHelper';
  * - Headers: # ...
  * - Links: https://...
  */
-function renderDiscordMarkdown(text) {
-  if (!text) return null;
+function renderDiscordMarkdown(rawText) {
+  if (!rawText) return null;
+
+  // Normalize both actual CRLF/LF and literal escaped \n strings
+  const text = String(rawText)
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n');
 
   // Split by code blocks first to preserve them
   const codeBlockRegex = /```(?:[a-zA-Z0-9_-]+)?\n?([\s\S]*?)```/g;
@@ -156,7 +162,7 @@ function renderDiscordMarkdown(text) {
   );
 }
 
-export default function DiscordMessagePreview({
+function DiscordMessagePreview({
   channelName = 'recruitment',
   botName = 'Clan Manager',
   botAvatar = null,
@@ -178,6 +184,9 @@ export default function DiscordMessagePreview({
   }, [embed?.banner]);
 
   const bannerUrl = useMemo(() => normalizeImageUrl(embed?.banner), [embed?.banner]);
+  const renderedDescription = useMemo(() => {
+    return renderDiscordMarkdown(embed?.description);
+  }, [embed?.description]);
 
   const embedColor = embed.color || '#5865f2';
   const now = new Date();
@@ -252,7 +261,7 @@ export default function DiscordMessagePreview({
             {/* Embed Description */}
             {embed.description && (
               <div className="text-sm leading-relaxed text-[#dbdee1]">
-                {renderDiscordMarkdown(embed.description)}
+                {renderedDescription}
               </div>
             )}
 
@@ -335,3 +344,5 @@ export default function DiscordMessagePreview({
     </div>
   );
 }
+
+export default memo(DiscordMessagePreview);

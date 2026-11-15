@@ -4334,7 +4334,7 @@ const contextValue = {
 
   return (
     <ClanManagerContext.Provider value={contextValue}>
-      <div className={`flex items-start justify-center gap-6 h-full min-h-0 w-full mx-auto animate-main-fade-in ${isCompanionWindowVisible ? 'max-w-[1780px]' : 'max-w-[1720px]'}`}>
+      <div className="flex items-start justify-center gap-4 xl:gap-6 h-full min-h-0 w-full mx-auto animate-main-fade-in max-w-full">
       {loadingConfig ? (
         <div className="w-full flex items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 shadow-sm">
           <RefreshCw className="w-5 h-5 animate-spin mr-2.5 text-orange-500" />
@@ -4344,7 +4344,7 @@ const contextValue = {
         <>
           <div className="clan-manager-container bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row flex-1 h-full min-h-0 min-w-0 w-full">
           {/* Left Sidebar Navigation */}
-          <div className="clan-manager-sidebar w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-col justify-between overflow-y-auto scrollbar-thin h-full">
+          <div className="clan-manager-sidebar w-full md:w-56 xl:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-2.5 bg-slate-50/70 dark:bg-slate-950/40 flex flex-col justify-between overflow-y-auto scrollbar-thin h-full">
             {/* Dev Admin Mode Server Selector */}
             {isDevAdminActive && (
               <div className="mb-2 shrink-0 p-2 rounded-xl bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/50 border border-indigo-500/30">
@@ -4818,7 +4818,7 @@ const contextValue = {
 
         {/* Discord Companion Window (Real Discord Desktop Dimensions) */}
         {isCompanionWindowVisible && previewData && (
-          <aside className="w-[580px] 2xl:w-[600px] shrink-0 h-full flex flex-col min-h-0">
+          <aside className="w-[380px] lg:w-[420px] xl:w-[480px] 2xl:w-[520px] shrink-0 h-full flex flex-col min-h-0 transition-all duration-200">
             <DiscordMessagePreview
               channelName={previewData.channelName}
               botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}

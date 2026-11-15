@@ -110,7 +110,7 @@ export default function ChannelsTab() {
   const isDiscordLoaded = Boolean(discordInfo);
 
   return (
-    <form onSubmit={saveConfig} noValidate className="space-y-6 max-w-5xl">
+    <form onSubmit={saveConfig} noValidate className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">

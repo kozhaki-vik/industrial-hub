@@ -437,8 +437,15 @@ function resetDisplayGamma() {
   }
 }
 
-// Disable hardware acceleration to fix GPU crashes on some Windows systems
-app.disableHardwareAcceleration();
+// Hardware acceleration and GPU rendering optimization
+// Enable GPU rasterization and zero-copy for high-framerate rendering across all resolutions
+try {
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+  app.commandLine.appendSwitch('ignore-gpu-blocklist');
+} catch (e) {
+  logger.warn('Could not set GPU optimization switches:', e);
+}
 
 function getAdaptiveWindowBounds() {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -458,15 +465,15 @@ function getAdaptiveWindowBounds() {
   }
   // 3. Большие мониторы 27"+ (2K 2560x1440, 4K 3840x2160: высота > 1100px и ширина >= 2000px)
   else if (screenHeight > 1100 && screenWidth >= 2000) {
-    targetWidth = 1500;
-    targetHeight = 960;
+    targetWidth = Math.min(1800, Math.round(screenWidth * 0.75));
+    targetHeight = Math.min(1100, Math.round(screenHeight * 0.82));
     minWidth = 1080;
     minHeight = 700;
   }
   // 2. Стандартный ПК (Full HD 1920x1080)
   else {
-    targetWidth = 1280;
-    targetHeight = 820;
+    targetWidth = Math.min(1480, Math.round(screenWidth * 0.8));
+    targetHeight = Math.min(920, Math.round(screenHeight * 0.85));
     minWidth = 1000;
     minHeight = 650;
   }

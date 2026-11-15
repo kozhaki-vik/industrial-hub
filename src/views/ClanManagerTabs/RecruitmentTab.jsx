@@ -188,7 +188,7 @@ export default function RecruitmentTab() {
             {t('clan_auto_42', 'Панель набора в Discord')}
           </h4>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -467,7 +467,7 @@ export default function RecruitmentTab() {
           </div>
 
           <div className={`space-y-4 pt-2 transition-opacity ${rConfig.autoRejectEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                   <UserCheck className="w-3.5 h-3.5 text-blue-500" />
@@ -568,7 +568,7 @@ export default function RecruitmentTab() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 pt-1">
                 <div>
                   <ChannelSelect
                     label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}
@@ -646,7 +646,7 @@ export default function RecruitmentTab() {
           </div>
           
           <div className={`space-y-5 transition-opacity ${!rConfig.steamPrefixCheck ? 'opacity-50 pointer-events-none' : ''}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                   {t('clan_steam_prefix_label', 'Требуемая приписка')}

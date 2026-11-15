@@ -158,7 +158,7 @@ export default function VoiceTab() {
   }, [handleManageDynamicRoom]);
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl">
       {loadingVoice && !dynamicVoiceData ? (
         <VoiceRoomsSkeleton />
       ) : (
