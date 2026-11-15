@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useCallback, useRef } from 'react';
+import React, { useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
   BarChart3, RefreshCw, AlertTriangle, Check, Search, X,
@@ -150,6 +150,36 @@ const ITEMS_PER_PAGE = 20;
 
 
 const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, buildSmoothPath }) {
+  const containerRef = useRef(null);
+  const chartSvgRef = useRef(null);
+  const [chartDimensions, setChartDimensions] = useState({ width: 1000, height: 280 });
+
+  // Measure actual container dimensions dynamically with ResizeObserver
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        if (w > 0 && h > 0) {
+          setChartDimensions({ width: Math.round(w), height: Math.round(h) });
+        }
+      }
+    };
+    updateDimensions();
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setChartDimensions({ width: Math.round(width), height: Math.round(height) });
+        }
+      }
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
   // Selected day for main chart: e.g. "today" or date string "YYYY-MM-DD"
   const todayKey = useMemo(() => new Date().toISOString().split('T')[0], []);
   const [selectedDayKey, setSelectedDayKey] = useState(todayKey);
@@ -162,7 +192,14 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
 
   // Hover state for main chart tooltip
   const [hoverIndex, setHoverIndex] = useState(null);
-  const chartSvgRef = useRef(null);
+  const rafIdRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, []);
+
   const daysData = act.days || {};
   const currentDayData = daysData[selectedDayKey] || {
     buckets30m: new Array(48).fill(0),
@@ -216,37 +253,41 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
   const chartMaxY = Math.max(maxPrimary, maxCompare, 5);
 
   // SVG Chart Dimensions
-  const svgWidth = 1000;
-  const svgHeight = 280;
+  const chartWidth = chartDimensions.width;
+  const chartHeight = chartDimensions.height;
   const svgPadding = { top: 25, right: 30, bottom: 40, left: 45 };
 
   const primaryPath = useMemo(() => {
-    return buildSmoothPath(primaryValues, svgWidth, svgHeight, svgPadding, chartMaxY);
-  }, [primaryValues, chartMaxY]);
+    return buildSmoothPath(primaryValues, chartWidth, chartHeight, svgPadding, chartMaxY);
+  }, [primaryValues, chartWidth, chartHeight, svgPadding, chartMaxY, buildSmoothPath]);
 
   const comparePath = useMemo(() => {
     if (!compareValues) return null;
-    return buildSmoothPath(compareValues, svgWidth, svgHeight, svgPadding, chartMaxY);
-  }, [compareValues, chartMaxY]);
+    return buildSmoothPath(compareValues, chartWidth, chartHeight, svgPadding, chartMaxY);
+  }, [compareValues, chartWidth, chartHeight, svgPadding, chartMaxY, buildSmoothPath]);
 
-  // Handle Chart Mouse Move for Hover Tooltip
+  const plotW = Math.max(1, chartWidth - svgPadding.left - svgPadding.right);
+
+  // Handle Chart Mouse Move for Hover Tooltip (RAF throttled for 120/144Hz performance)
   const handleChartMouseMove = useCallback((e) => {
     if (!chartSvgRef.current) return;
-    const rect = chartSvgRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const relX = (mouseX / rect.width) * svgWidth;
-
-    const plotW = svgWidth - svgPadding.left - svgPadding.right;
-    const clampedX = Math.max(0, Math.min(plotW, relX - svgPadding.left));
-    const idx = Math.round((clampedX / plotW) * 47);
-    const newIdx = Math.min(47, Math.max(0, idx));
-    setHoverIndex(prev => prev === newIdx ? prev : newIdx);
-  }, [svgWidth, svgPadding]);
+    const clientX = e.clientX;
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(() => {
+      if (!chartSvgRef.current) return;
+      const rect = chartSvgRef.current.getBoundingClientRect();
+      if (!rect.width) return;
+      const mouseX = clientX - rect.left;
+      const clampedX = Math.max(0, Math.min(plotW, mouseX - svgPadding.left));
+      const idx = Math.min(47, Math.max(0, Math.round((clampedX / plotW) * 47)));
+      setHoverIndex(prev => (prev === idx ? prev : idx));
+    });
+  }, [plotW, svgPadding.left]);
 
   const handleChartMouseLeave = useCallback(() => {
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     setHoverIndex(null);
   }, []);
-
 
   return (
     <>
@@ -361,11 +402,12 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
         </div>
 
         {/* Main Interactive SVG Chart */}
-        <div className="relative w-full overflow-hidden select-none">
+        <div ref={containerRef} className="relative w-full h-64 md:h-72 lg:h-80 select-none">
           <svg
             ref={chartSvgRef}
-            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            className="w-full h-64 md:h-72 lg:h-80 cursor-crosshair overflow-visible"
+            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+            preserveAspectRatio="none"
+            className="w-full h-full cursor-crosshair overflow-visible block"
             onMouseMove={handleChartMouseMove}
             onMouseLeave={handleChartMouseLeave}
           >
@@ -392,14 +434,14 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
 
             {/* Horizontal Gridlines and Y-axis labels */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-              const y = svgPadding.top + (svgHeight - svgPadding.top - svgPadding.bottom) * (1 - ratio);
+              const y = svgPadding.top + (chartHeight - svgPadding.top - svgPadding.bottom) * (1 - ratio);
               const val = Math.round(chartMaxY * ratio);
               return (
                 <g key={ratio}>
                   <line
                     x1={svgPadding.left}
                     y1={y}
-                    x2={svgWidth - svgPadding.right}
+                    x2={chartWidth - svgPadding.right}
                     y2={y}
                     stroke="currentColor"
                     className="text-slate-200 dark:text-slate-800/80"
@@ -410,7 +452,7 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
                     x={svgPadding.left - 8}
                     y={y + 4}
                     textAnchor="end"
-                    className="text-[10px] font-mono fill-slate-400 dark:fill-slate-500 font-semibold"
+                    className="text-[10px] font-mono fill-slate-400 dark:fill-slate-500 font-semibold select-none"
                   >
                     {val}
                   </text>
@@ -420,6 +462,7 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
 
             {/* X-axis labels at 2-hour intervals */}
             {Array.from({ length: 13 }).map((_, i) => {
+              if (chartWidth < 650 && i % 2 !== 0 && i !== 12) return null;
               const slotIdx = Math.min(47, i * 4);
               const pt = primaryPath.coords[slotIdx];
               if (!pt) return null;
@@ -428,18 +471,18 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
                 <g key={i}>
                   <line
                     x1={pt.x}
-                    y1={svgHeight - svgPadding.bottom}
+                    y1={chartHeight - svgPadding.bottom}
                     x2={pt.x}
-                    y2={svgHeight - svgPadding.bottom + 5}
+                    y2={chartHeight - svgPadding.bottom + 5}
                     stroke="currentColor"
                     className="text-slate-300 dark:text-slate-700"
                     strokeWidth="1"
                   />
                   <text
                     x={pt.x}
-                    y={svgHeight - svgPadding.bottom + 18}
+                    y={chartHeight - svgPadding.bottom + 18}
                     textAnchor="middle"
-                    className="text-[10px] font-mono fill-slate-400 dark:fill-slate-500 font-medium"
+                    className="text-[10px] font-mono fill-slate-400 dark:fill-slate-500 font-medium select-none"
                   >
                     {label}
                   </text>
@@ -482,15 +525,38 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
               />
             )}
 
+            {/* 48 Invisible Hit-Testing Slices for Direct Column Hovering */}
+            {Array.from({ length: 48 }).map((_, i) => {
+              const step = plotW / 47;
+              const x = i === 0 ? 0 : svgPadding.left + (i - 0.5) * step;
+              const width = i === 0
+                ? svgPadding.left + 0.5 * step
+                : i === 47
+                  ? Math.max(1, chartWidth - x)
+                  : step;
+              return (
+                <rect
+                  key={i}
+                  x={Math.max(0, x)}
+                  y={0}
+                  width={Math.max(1, width)}
+                  height={chartHeight}
+                  fill="transparent"
+                  className="cursor-crosshair"
+                  onMouseEnter={() => setHoverIndex(i)}
+                />
+              );
+            })}
+
             {/* Crosshair and hover point */}
             {hoverIndex !== null && primaryPath.coords[hoverIndex] && (
-              <g>
+              <g pointerEvents="none">
                 {/* Vertical crosshair line */}
                 <line
                   x1={primaryPath.coords[hoverIndex].x}
                   y1={svgPadding.top}
                   x2={primaryPath.coords[hoverIndex].x}
-                  y2={svgHeight - svgPadding.bottom}
+                  y2={chartHeight - svgPadding.bottom}
                   stroke="#3b82f6"
                   strokeWidth="1.5"
                   strokeDasharray="3 3"
@@ -523,61 +589,78 @@ const ActivityChart = React.memo(function ActivityChart({ act, t, TIME_SLOTS, bu
           </svg>
 
           {/* Floating Tooltip HTML Overlay */}
-          {hoverIndex !== null && primaryPath.coords[hoverIndex] && (
-            <div
-              className="absolute z-20 pointer-events-none transform -translate-x-1/2 -translate-y-full transition-transform duration-75"
-              style={{
-                left: `${(primaryPath.coords[hoverIndex].x / svgWidth) * 100}%`,
-                top: `${(primaryPath.coords[hoverIndex].y / svgHeight) * 100}%`,
-                marginTop: '-12px'
-              }}
-            >
-              <div className="bg-slate-900/95 text-white p-3 rounded-xl shadow-xl border border-slate-700/80 text-xs backdrop-blur-md space-y-1.5 min-w-[170px]">
-                <div className="font-mono text-[11px] text-blue-400 font-bold border-b border-slate-800 pb-1">
-                  ⏱️ {TIME_SLOTS[hoverIndex]} – {TIME_SLOTS[Math.min(47, hoverIndex + 1)]}
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-400">
-                    {selectedDayKey === todayKey ? 'Сегодня' : selectedDayKey}:
-                  </span>
-                  <span className="font-bold text-white font-mono">
-                    {primaryValues[hoverIndex] || 0}
-                  </span>
-                </div>
-                {compareValues && (
-                  <div className="flex items-center justify-between gap-3 border-t border-slate-800/80 pt-1">
-                    <span className="text-purple-400">
-                      {compareMode === 'week' ? 'Неделю назад' : 'В среднем'}:
+          {hoverIndex !== null && primaryPath.coords[hoverIndex] && (() => {
+            const pt = primaryPath.coords[hoverIndex];
+            const isLeft = pt.x < 140;
+            const isRight = pt.x > chartWidth - 180;
+            const isTop = pt.y < 120;
+
+            let transformStyle = '';
+            if (isLeft) {
+              transformStyle = isTop ? 'translate(12px, 16px)' : 'translate(12px, calc(-100% - 16px))';
+            } else if (isRight) {
+              transformStyle = isTop ? 'translate(calc(-100% - 12px), 16px)' : 'translate(calc(-100% - 12px), calc(-100% - 16px))';
+            } else {
+              transformStyle = isTop ? 'translate(-50%, 16px)' : 'translate(-50%, calc(-100% - 16px))';
+            }
+
+            return (
+              <div
+                className="absolute z-30 pointer-events-none"
+                style={{
+                  left: `${pt.x}px`,
+                  top: `${pt.y}px`,
+                  transform: transformStyle
+                }}
+              >
+                <div className="bg-slate-900/95 text-white p-3 rounded-xl shadow-2xl border border-slate-700/80 text-xs backdrop-blur-md space-y-1.5 min-w-[170px]">
+                  <div className="font-mono text-[11px] text-blue-400 font-bold border-b border-slate-800 pb-1 flex items-center justify-between">
+                    <span>⏱️ {TIME_SLOTS[hoverIndex]} – {TIME_SLOTS[Math.min(47, hoverIndex + 1)]}</span>
+                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <span className="text-slate-400">
+                      {selectedDayKey === todayKey ? (t('clan_stats_today_label', 'Сегодня')) : selectedDayKey}:
                     </span>
-                    <span className="font-bold text-purple-300 font-mono">
-                      {compareValues[hoverIndex] || 0}
+                    <span className="font-bold text-white font-mono text-sm">
+                      {primaryValues[hoverIndex] || 0}
                     </span>
                   </div>
-                )}
-                {compareValues && (
-                  <div className="text-[10px] pt-0.5 font-mono text-right font-bold">
-                    {primaryValues[hoverIndex] >= compareValues[hoverIndex] ? (
-                      <span className="text-emerald-400">
-                        +{primaryValues[hoverIndex] - compareValues[hoverIndex]} (
-                        {compareValues[hoverIndex] > 0
-                          ? `+${Math.round(((primaryValues[hoverIndex] - compareValues[hoverIndex]) / compareValues[hoverIndex]) * 100)}%`
-                          : '+100%'}
-                        )
+                  {compareValues && (
+                    <div className="flex items-center justify-between gap-3 border-t border-slate-800/80 pt-1">
+                      <span className="text-purple-400">
+                        {compareMode === 'week' ? (t('clan_stats_week_ago', 'Неделю назад')) : (t('clan_stats_avg_month', 'В среднем'))}:
                       </span>
-                    ) : (
-                      <span className="text-rose-400">
-                        {primaryValues[hoverIndex] - compareValues[hoverIndex]} (
-                        {compareValues[hoverIndex] > 0
-                          ? `${Math.round(((primaryValues[hoverIndex] - compareValues[hoverIndex]) / compareValues[hoverIndex]) * 100)}%`
-                          : '-100%'}
-                        )
+                      <span className="font-bold text-purple-300 font-mono text-sm">
+                        {compareValues[hoverIndex] || 0}
                       </span>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                  {compareValues && (
+                    <div className="text-[10px] pt-0.5 font-mono text-right font-bold">
+                      {primaryValues[hoverIndex] >= compareValues[hoverIndex] ? (
+                        <span className="text-emerald-400">
+                          +{primaryValues[hoverIndex] - compareValues[hoverIndex]} (
+                          {compareValues[hoverIndex] > 0
+                            ? `+${Math.round(((primaryValues[hoverIndex] - compareValues[hoverIndex]) / compareValues[hoverIndex]) * 100)}%`
+                            : '+100%'}
+                          )
+                        </span>
+                      ) : (
+                        <span className="text-rose-400">
+                          {primaryValues[hoverIndex] - compareValues[hoverIndex]} (
+                          {compareValues[hoverIndex] > 0
+                            ? `${Math.round(((primaryValues[hoverIndex] - compareValues[hoverIndex]) / compareValues[hoverIndex]) * 100)}%`
+                            : '-100%'}
+                          )
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </>
@@ -874,7 +957,7 @@ export default function StatsTab() {
         </div>
 
         {/* Bar Chart of Member Events */}
-        <div className="overflow-x-auto pt-2">
+        <div className="overflow-x-auto pt-8">
           <div className="min-w-[600px] h-48 flex items-end justify-between gap-2 px-2 border-b border-slate-200 dark:border-slate-800 pb-2">
             {displayedDynamics.map((item, idx) => {
               const joinHeight = Math.max(6, (item.joins / dynamicsMaxVal) * 120);
@@ -882,7 +965,7 @@ export default function StatsTab() {
               return (
                 <div key={item.date || idx} className="flex-1 flex flex-col items-center justify-end group relative h-full">
                   {/* Tooltip on bar hover */}
-                  <div className="opacity-0 group-hover:opacity-100 pointer-events-none absolute -top-12 z-30 transition-opacity bg-slate-900 text-white text-[10px] py-1 px-2 rounded-lg whitespace-nowrap shadow-lg">
+                  <div className="opacity-0 group-hover:opacity-100 pointer-events-none absolute -top-10 z-30 transition-opacity bg-slate-900 text-white text-[10px] py-1 px-2.5 rounded-lg whitespace-nowrap shadow-xl border border-slate-700">
                     <span className="font-bold">{item.date}</span>: +{item.joins} / -{item.leaves}
                   </div>
 

@@ -17,11 +17,15 @@ export default function RecruitmentTab() {
     handleCreateRecruitmentInvite, creatingRecruitmentInvite,
     recruitmentInviteStatus, setRecruitmentInviteStatus,
     checkingRecruitmentInvite, verifyRecruitmentInvite,
-    isFullScreenWindow, showDiscordLivePreview, setShowDiscordLivePreview,
+    isFullScreenWindow, isCompanionWindowVisible, showDiscordLivePreview, setShowDiscordLivePreview,
     queueAutoSave, saveConfig, sendProxyAction, addLog,
     openExternalUrl, setActiveTab, t,
     currentActiveGuildId, guildId
   } = useContext(ClanManagerContext);
+
+  const gridTwoCols = isCompanionWindowVisible
+    ? "grid grid-cols-1 2xl:grid-cols-2 gap-4"
+    : "grid grid-cols-1 md:grid-cols-2 gap-4";
 
   const effectiveGuildId = currentActiveGuildId || guildId || config?.guildId;
   const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -163,21 +167,19 @@ export default function RecruitmentTab() {
           <UserPlus className="w-5 h-5 mr-2 text-blue-500" />
           {t('clan_auto_41', 'Настройки набора в клан')}
         </h3>
-        {isFullScreenWindow && (
-          <button
-            type="button"
-            onClick={() => setShowDiscordLivePreview(prev => !prev)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
-              showDiscordLivePreview
-                ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
-            }`}
-            title={showDiscordLivePreview ? t('clan_auto_v2_1026', 'Скрыть живой предпросмотр Discord') : t('clan_auto_v2_1027', 'Показать живой предпросмотр Discord')}
-          >
-            {showDiscordLivePreview ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{showDiscordLivePreview ? t('clan_auto_v2_1028', 'Превью Discord') : t('clan_auto_v2_1029', 'Включить превью')}</span>
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setShowDiscordLivePreview(prev => !prev)}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
+            showDiscordLivePreview
+              ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
+          }`}
+          title={showDiscordLivePreview ? t('clan_auto_v2_1026', 'Скрыть живой предпросмотр Discord') : t('clan_auto_v2_1027', 'Показать живой предпросмотр Discord')}
+        >
+          {showDiscordLivePreview ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+          <span>{showDiscordLivePreview ? t('clan_auto_v2_1028', 'Превью Discord') : t('clan_auto_v2_1029', 'Включить превью')}</span>
+        </button>
       </div>
 
       <div className="space-y-6">
@@ -188,7 +190,7 @@ export default function RecruitmentTab() {
             {t('clan_auto_42', 'Панель набора в Discord')}
           </h4>
           
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className={gridTwoCols}>
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -467,7 +469,7 @@ export default function RecruitmentTab() {
           </div>
 
           <div className={`space-y-4 pt-2 transition-opacity ${rConfig.autoRejectEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className={gridTwoCols}>
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                   <UserCheck className="w-3.5 h-3.5 text-blue-500" />
@@ -568,7 +570,7 @@ export default function RecruitmentTab() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 pt-1">
+              <div className={isCompanionWindowVisible ? "grid grid-cols-1 2xl:grid-cols-2 gap-3 pt-1" : "grid grid-cols-1 md:grid-cols-2 gap-3 pt-1"}>
                 <div>
                   <ChannelSelect
                     label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}

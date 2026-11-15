@@ -506,7 +506,7 @@ export default function ClanManager() {
     if (typeof window === 'undefined') return false;
     const isDocFs = Boolean(document.fullscreenElement);
     const isMaximized = Boolean(
-      window.innerWidth >= 1350 || 
+      window.innerWidth >= 1200 || 
       (window.screen && window.outerWidth >= (window.screen.availWidth - 40))
     );
     return isDocFs || isMaximized;
@@ -4818,7 +4818,7 @@ const contextValue = {
 
         {/* Discord Companion Window (Real Discord Desktop Dimensions) */}
         {isCompanionWindowVisible && previewData && (
-          <aside className="w-[380px] lg:w-[420px] xl:w-[480px] 2xl:w-[520px] shrink-0 h-full flex flex-col min-h-0 transition-all duration-200">
+          <aside className="w-[360px] lg:w-[390px] xl:w-[420px] 2xl:w-[450px] shrink-0 h-full flex flex-col min-h-0 transition-all duration-200">
             <DiscordMessagePreview
               channelName={previewData.channelName}
               botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
