@@ -19,7 +19,7 @@ export default function Header() {
 
   return (
     <header className={`sticky top-0 z-50 h-16 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 sm:px-6 transition-colors duration-300 ${bgClasses}`}>
-      <div className={`flex items-center gap-2 w-full mx-auto ${isClanRoute ? 'max-w-[2100px]' : 'max-w-7xl 2xl:max-w-[1800px]'}`}>
+      <div className={`flex items-center gap-2 w-full ${isClanRoute ? 'px-2' : 'max-w-7xl 2xl:max-w-[1800px] mx-auto'}`}>
         <NavLink to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
             <Wrench className="w-5 h-5 text-white" />

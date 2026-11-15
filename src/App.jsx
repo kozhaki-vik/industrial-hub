@@ -53,7 +53,7 @@ function AppMain() {
   return (
     <div className={`min-h-screen bg-[#F8F9FA] dark:bg-slate-950 transition-colors duration-300 animate-main-fade-in ${isClan ? 'h-screen overflow-hidden flex flex-col' : ''}`}>
       <Header />
-      <main className={`w-full mx-auto ${isClan ? 'max-w-[2100px] flex-1 px-3 sm:px-4 xl:px-6 py-3 min-h-0 overflow-hidden flex flex-col' : 'max-w-7xl 2xl:max-w-[1800px] px-6 py-8'}`}>
+      <main className={`w-full ${isClan ? 'flex-1 px-2 sm:px-4 xl:px-6 py-2 sm:py-3 min-h-0 overflow-hidden flex flex-col' : 'max-w-7xl 2xl:max-w-[1800px] mx-auto px-6 py-8'}`}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
