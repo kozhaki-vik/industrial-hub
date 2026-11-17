@@ -559,10 +559,20 @@ function createWindow() {
   });
   mainWindow.setMenu(null); // Completely removes the top menu
 
-  if (windowConfig.isMaximized) {
-    mainWindow.maximize();
-  } else if (!windowConfig.isCustom) {
-    mainWindow.center();
+  const isAutoStarted = process.argv.includes('--autostart') || process.argv.includes('--minimized');
+  const startMinimized = store.get('startMinimizedToTray', false);
+  const shouldStartHidden = Boolean(startMinimized || isAutoStarted);
+
+  if (!shouldStartHidden) {
+    if (windowConfig.isMaximized) {
+      mainWindow.maximize();
+    } else if (!windowConfig.isCustom) {
+      mainWindow.center();
+    }
+  } else {
+    if (!windowConfig.isCustom) {
+      mainWindow.center();
+    }
   }
 
   let saveBoundsTimeout = null;
@@ -596,11 +606,14 @@ function createWindow() {
   });
 
   // Focus both window and webContents on ready-to-show
-  const isAutoStarted = process.argv.includes('--autostart');
   mainWindow.once('ready-to-show', () => {
-    if (isAutoStarted && store.get('startMinimizedToTray', false)) {
-      console.log('App started automatically via Windows login, remaining in tray.');
+    if (shouldStartHidden) {
+      console.log('[Startup] App started minimized to tray, window remains hidden.');
+      mainWindow.hide();
     } else {
+      if (windowConfig.isMaximized) {
+        mainWindow.maximize();
+      }
       mainWindow.show();
       mainWindow.focus();
       if (mainWindow.webContents) {
@@ -618,30 +631,28 @@ function createWindow() {
 
   if (!tray) {
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png')));
+    const restoreAndShowWindow = () => {
+      if (!mainWindow) return;
+      if (store.get('isWindowMaximized', false) && !mainWindow.isMaximized()) {
+        mainWindow.maximize();
+      } else if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    };
+
     const contextMenu = Menu.buildFromTemplate([
       { 
         label: 'Открыть', 
-        click: () => { 
-          if (mainWindow) {
-            if (mainWindow.isMinimized()) mainWindow.restore();
-            mainWindow.show(); 
-            mainWindow.focus(); 
-          }
-        } 
+        click: restoreAndShowWindow
       },
       { label: 'Выход', click: () => { isQuitting = true; app.quit(); } }
     ]);
     tray.setToolTip('Industrial Hub');
     tray.setContextMenu(contextMenu);
-    tray.on('click', () => {
-      if (mainWindow) {
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        mainWindow.show();
-        mainWindow.focus();
-      }
-    });
+    tray.on('click', restoreAndShowWindow);
   }
-
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
@@ -988,7 +999,7 @@ instanceLockPromise.then(() => {
         app.setLoginItemSettings({
           openAtLogin: true,
           path: realExe,
-          args: []
+          args: ['--autostart']
         });
         store.set('autoStart', true);
       }
@@ -1152,7 +1163,13 @@ instanceLockPromise.then(() => {
         
         const protocol = url.protocol === 'https:' ? https : http;
         
-        const req = protocol.get(urlStr, { timeout: 3000 }, (res) => {
+        const req = protocol.get(urlStr, {
+          timeout: 4000,
+          headers: {
+            'User-Agent': 'Industrial-Hub/2.0 (Windows NT 10.0; Win64; x64)',
+            'Accept': 'application/vnd.github.v3+json, application/json, text/plain, */*'
+          }
+        }, (res) => {
           res.resume();
           const time = Date.now() - start;
           if (res.statusCode >= 200 && res.statusCode < 400) {
@@ -1235,14 +1252,37 @@ instanceLockPromise.then(() => {
         osName = os.platform();
       }
 
+      let gpuName = 'Unknown';
+      if (process.platform === 'win32') {
+        try {
+          const { execFileSync } = await import('child_process');
+          const stdout = execFileSync('powershell.exe', [
+            '-NoProfile',
+            '-NonInteractive',
+            '-Command',
+            '(Get-CimInstance Win32_VideoController).Name'
+          ], { encoding: 'utf8', windowsHide: true, timeout: 4000 });
+          const lines = stdout.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+          if (lines.length > 0) {
+            lines.sort((a, b) => {
+              const isDiscrete = (n) => /geforce|rtx|gtx|radeon\s*rx|arc/i.test(n) ? 1 : 0;
+              return isDiscrete(b) - isDiscrete(a);
+            });
+            gpuName = lines.join(' / ');
+          }
+        } catch (err) {
+          console.warn('[diagnostics] Failed to query GPU:', err.message);
+        }
+      }
+
       cachedHardwareInfo = {
-        pcName: 'Desktop PC',
+        pcName: os.hostname() || 'Desktop PC',
         platform: os.platform(),
         osName,
         release: os.release(),
         arch: os.arch(),
         cpu: cpus.length > 0 ? cpus[0].model.trim() : 'Unknown',
-        gpu: 'Unknown',
+        gpu: gpuName,
         cores: cpus.length,
         ramTotal: Math.round(os.totalmem() / (1024 * 1024 * 1024))
       };

@@ -1,6 +1,9 @@
 import React, { useContext, useMemo, useCallback, useState, useRef } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
-import { Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2, Upload, Loader2, AlertCircle, HardDrive } from 'lucide-react';
+import {
+  Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2,
+  Upload, Loader2, AlertCircle, HardDrive, ScrollText, ArrowRight
+} from 'lucide-react';
 import { DEFAULT_ADS_BANNER, normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
 
@@ -14,7 +17,10 @@ export default function AdsTab() {
     showDiscordLivePreview,
     setShowDiscordLivePreview,
     currentActiveGuildId,
-    guildId
+    guildId,
+    adTicketsData,
+    openAdTicketsCount,
+    setActiveTab
   } = useContext(ClanManagerContext);
 
   const [uploading, setUploading] = useState(false);
@@ -72,6 +78,28 @@ export default function AdsTab() {
     try {
       const res = await uploadBanner(file, 'ads', effectiveGuildId);
       if (res.success && res.url) {
+        // Verify image fully loaded and valid on server
+        await new Promise((resolve, reject) => {
+          const img = new Image();
+          const timer = setTimeout(() => {
+            img.src = '';
+            reject(new Error(t('clan_banner_verify_timeout', 'Таймаут проверки загруженного изображения')));
+          }, 10000);
+          img.onload = () => {
+            clearTimeout(timer);
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              resolve();
+            } else {
+              reject(new Error(t('clan_banner_verify_corrupt', 'Файл изображения повреждён или пуст')));
+            }
+          };
+          img.onerror = () => {
+            clearTimeout(timer);
+            reject(new Error(t('clan_banner_verify_failed', 'Не удалось загрузить и подтвердить целостность изображения с сервера')));
+          };
+          img.src = `${res.url}${res.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        });
+
         updateAConfig('banner', res.url, true);
       } else {
         setUploadError(res.error || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
@@ -79,7 +107,7 @@ export default function AdsTab() {
     } catch (err) {
       setUploadError(err.message || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
     } finally {
-      setUploading(false);
+      setUploadingBanner ? setUploadingBanner(false) : setUploading(false);
     }
   };
 
@@ -298,6 +326,45 @@ export default function AdsTab() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Заявки на рекламу - Блок перехода в журнал */}
+      <div className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+            <ScrollText className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+              <span>{t('clan_ads_tickets_block_title', 'Заявки на рекламу')}</span>
+              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
+                {Array.isArray(adTicketsData) ? adTicketsData.length : 0}
+              </span>
+              {openAdTicketsCount > 0 && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white shadow-xs">
+                  {openAdTicketsCount} {t('clan_status_pending_short', 'активно')}
+                </span>
+              )}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {t('clan_ads_tickets_desc', 'Журнал обращений, заказов рекламы и предложений о сотрудничестве от участников Discord.')}
+            </p>
+          </div>
+        </div>
+        {setActiveTab && (
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof setActiveTab === 'function') {
+                setActiveTab('applications', 'ads');
+              }
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <span>{t('clan_open_ad_tickets_btn', 'Открыть журнал заявок на рекламу')}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </form>
   );

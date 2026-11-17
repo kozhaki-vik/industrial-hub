@@ -56,7 +56,8 @@ export default function RecruitmentTab() {
       autoRejectMessage: defaultRejectMsg,
       steamPrefixCheck: false,
       steamPrefix: '',
-      steamPrefixLogChannel: ''
+      steamPrefixLogChannel: '',
+      markdownEnabled: true
     };
     try {
       if (config?.recruitmentConfigJson) {
@@ -110,6 +111,28 @@ export default function RecruitmentTab() {
     try {
       const res = await uploadBanner(file, 'recruitment', effectiveGuildId);
       if (res.success && res.url) {
+        // Verify image fully loaded and valid on server
+        await new Promise((resolve, reject) => {
+          const img = new Image();
+          const timer = setTimeout(() => {
+            img.src = '';
+            reject(new Error(t('clan_banner_verify_timeout', 'Таймаут проверки загруженного изображения')));
+          }, 10000);
+          img.onload = () => {
+            clearTimeout(timer);
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              resolve();
+            } else {
+              reject(new Error(t('clan_banner_verify_corrupt', 'Файл изображения повреждён или пуст')));
+            }
+          };
+          img.onerror = () => {
+            clearTimeout(timer);
+            reject(new Error(t('clan_banner_verify_failed', 'Не удалось загрузить и подтвердить целостность изображения с сервера')));
+          };
+          img.src = `${res.url}${res.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        });
+
         updateRConfig('banner', res.url, true);
       } else {
         setUploadBannerError(res.error || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
@@ -190,145 +213,66 @@ export default function RecruitmentTab() {
             {t('clan_auto_42', 'Панель набора в Discord')}
           </h4>
           
-          <div className={gridTwoCols}>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('clan_recruitment_server_link') || 'Ссылка на сервер для набора'}
-                </label>
-                <button
-                  type="button"
-                  onClick={handleCreateRecruitmentInvite}
-                  disabled={creatingRecruitmentInvite}
-                  title={t('clan_auto_101', 'Создать новую постоянную ссылку через бота и вставить в поле')}
-                  className="text-[11px] font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <RefreshCw className={`w-3 h-3 ${creatingRecruitmentInvite ? 'animate-spin' : ''}`} />
-                  <span>{t('clan_recruitment_link_refresh_btn') || 'Сгенерировать ссылку'}</span>
-                </button>
-              </div>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  required
-                  className={`w-full px-4 py-2 border rounded-xl dark:bg-slate-800/50 dark:text-white focus:ring-2 outline-none transition-shadow text-sm ${
-                    recruitmentInviteStatus === 'invalid'
-                      ? 'border-red-400 dark:border-red-500/60 focus:ring-red-500/40'
-                      : recruitmentInviteStatus === 'valid'
-                      ? 'border-emerald-400 dark:border-emerald-500/60 focus:ring-emerald-500/40'
-                      : 'border-slate-200 dark:border-slate-700 focus:ring-orange-500/50'
-                  }`}
-                  value={rConfig.link ?? (config?.discordLink ?? '')}
-                  onChange={e => updateRConfig('link', e.target.value, false)}
-                  onBlur={e => {
-                    const val = e.target.value;
-                    updateRConfig('link', val, true);
-                    if (val.trim()) {
-                      verifyRecruitmentInvite(val);
-                    } else {
-                      setRecruitmentInviteStatus(null);
-                    }
-                  }}
-                  placeholder="https://discord.gg/..."
-                />
-                {checkingRecruitmentInvite && (
-                  <div className="absolute right-3 top-2.5 flex items-center gap-1.5 text-xs text-slate-400">
-                    <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-              </div>
-
-              {recruitmentInviteStatus === 'valid' && (
-                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                  <Check className="w-3.5 h-3.5 shrink-0" />
-                  <span>{t('clan_recruitment_link_valid') || 'Ссылка активна'}</span>
-                </div>
-              )}
-              {recruitmentInviteStatus === 'invalid' && (
-                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-red-600 dark:text-red-400 font-medium">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                  <span>{t('clan_recruitment_link_invalid') || 'Ссылка недействительна или была удалена в Discord'}</span>
-                </div>
-              )}
+          {/* Ссылка на сервер для набора */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('clan_recruitment_server_link') || 'Ссылка на сервер для набора'}
+              </label>
+              <button
+                type="button"
+                onClick={handleCreateRecruitmentInvite}
+                disabled={creatingRecruitmentInvite}
+                title={t('clan_auto_101', 'Создать новую постоянную ссылку через бота и вставить в поле')}
+                className="text-[11px] font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <RefreshCw className={`w-3 h-3 ${creatingRecruitmentInvite ? 'animate-spin' : ''}`} />
+                <span>{t('clan_recruitment_link_refresh_btn') || 'Сгенерировать ссылку'}</span>
+              </button>
             </div>
-            
-            <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('clan_auto_43', 'Ссылка на баннер (Изображение)')}
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    ref={bannerFileInputRef}
-                    onChange={handleBannerFileSelect}
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => bannerFileInputRef.current?.click()}
-                    disabled={uploadingBanner}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800/40 cursor-pointer disabled:opacity-50"
-                    title={t('clan_banner_upload_btn_hint', 'Загрузить изображение напрямую на наш сервер (до 2 МБ, 1 шт)')}
-                  >
-                    {uploadingBanner ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Upload className="w-3.5 h-3.5" />
-                    )}
-                    <span>
-                      {uploadingBanner
-                        ? t('clan_banner_uploading', 'Загрузка...')
-                        : t('clan_banner_upload_btn', 'Загрузить с ПК')}
-                    </span>
-                  </button>
-                  {rConfig.banner && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveRecruitmentBanner}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors border border-rose-200 dark:border-rose-800/40 cursor-pointer"
-                      title={t('clan_ads_banner_clear_hint', 'Убрать баннер')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{t('clan_ads_banner_clear_btn', 'Убрать баннер')}</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+            <div className="relative">
               <input 
                 type="text" 
-                className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
-                value={rConfig.banner}
-                onChange={e => updateRConfig('banner', e.target.value, false)}
+                required
+                className={`w-full px-4 py-2 border rounded-xl dark:bg-slate-800/50 dark:text-white focus:ring-2 outline-none transition-shadow text-sm ${
+                  recruitmentInviteStatus === 'invalid'
+                    ? 'border-red-400 dark:border-red-500/60 focus:ring-red-500/40'
+                    : recruitmentInviteStatus === 'valid'
+                    ? 'border-emerald-400 dark:border-emerald-500/60 focus:ring-emerald-500/40'
+                    : 'border-slate-200 dark:border-slate-700 focus:ring-orange-500/50'
+                }`}
+                value={rConfig.link ?? (config?.discordLink ?? '')}
+                onChange={e => updateRConfig('link', e.target.value, false)}
                 onBlur={e => {
-                  const normalized = normalizeImageUrl(e.target.value);
-                  updateRConfig('banner', normalized, true);
+                  const val = e.target.value;
+                  updateRConfig('link', val, true);
+                  if (val.trim()) {
+                    verifyRecruitmentInvite(val);
+                  } else {
+                    setRecruitmentInviteStatus(null);
+                  }
                 }}
-                placeholder="https://..."
+                placeholder="https://discord.gg/..."
               />
-              {uploadBannerError && (
-                <div className="mt-1.5 p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                  <span>{uploadBannerError}</span>
-                </div>
-              )}
-              {rConfig.banner && (
-                <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
-                  {rConfig.banner.includes('/uploads/banners/') ? (
-                    <div className="flex items-center gap-1.5 text-blue-500 font-medium">
-                      <HardDrive className="w-3.5 h-3.5" />
-                      <span>{t('clan_banner_uploaded_server', 'Размещено на сервере Industrial Hub')}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 text-emerald-500 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{t('clan_ads_banner_active', 'Установлен кастомный баннер')}</span>
-                    </div>
-                  )}
+              {checkingRecruitmentInvite && (
+                <div className="absolute right-3 top-2.5 flex items-center gap-1.5 text-xs text-slate-400">
+                  <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
             </div>
+
+            {recruitmentInviteStatus === 'valid' && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <Check className="w-3.5 h-3.5 shrink-0" />
+                <span>{t('clan_recruitment_link_valid') || 'Ссылка активна'}</span>
+              </div>
+            )}
+            {recruitmentInviteStatus === 'invalid' && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-red-600 dark:text-red-400 font-medium">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>{t('clan_recruitment_link_invalid') || 'Ссылка недействительна или была удалена в Discord'}</span>
+              </div>
+            )}
           </div>
 
           {/* Лидер клана в embed */}
@@ -431,8 +375,23 @@ export default function RecruitmentTab() {
             />
           </div>
           
+          {/* Текст с требованиями и переключатель Markdown */}
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('clan_auto_49', 'Текст с требованиями (Markdown поддерживается) *')}</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('clan_auto_49', 'Текст с требованиями *')}
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  {t('clan_markdown_supported', 'Markdown поддерживается')}
+                </span>
+                <ToggleSwitch
+                  checked={rConfig.markdownEnabled !== false}
+                  onChange={val => updateRConfig('markdownEnabled', val, true)}
+                  activeColor="orange"
+                />
+              </div>
+            </div>
             <textarea 
               required
               className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[140px]"
@@ -441,6 +400,85 @@ export default function RecruitmentTab() {
               onBlur={e => updateRConfig('text', e.target.value, true)}
               placeholder={t('clan_auto_110', 'Опишите требования...')}
             ></textarea>
+          </div>
+
+          {/* Ссылка на баннер (Изображение) - Расположена под требованиями на всю ширину */}
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('clan_auto_43', 'Ссылка на баннер (Изображение)')}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={bannerFileInputRef}
+                  onChange={handleBannerFileSelect}
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => bannerFileInputRef.current?.click()}
+                  disabled={uploadingBanner}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800/40 cursor-pointer disabled:opacity-50"
+                  title={t('clan_banner_upload_btn_hint', 'Загрузить изображение напрямую на наш сервер (до 2 МБ, 1 шт)')}
+                >
+                  {uploadingBanner ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {uploadingBanner
+                      ? t('clan_banner_uploading', 'Загрузка и проверка...')
+                      : t('clan_banner_upload_btn', 'Загрузить с ПК')}
+                  </span>
+                </button>
+                {rConfig.banner && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveRecruitmentBanner}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors border border-rose-200 dark:border-rose-800/40 cursor-pointer"
+                    title={t('clan_ads_banner_clear_hint', 'Убрать баннер')}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{t('clan_ads_banner_clear_btn', 'Убрать баннер')}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            <input 
+              type="text" 
+              className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+              value={rConfig.banner}
+              onChange={e => updateRConfig('banner', e.target.value, false)}
+              onBlur={e => {
+                const normalized = normalizeImageUrl(e.target.value);
+                updateRConfig('banner', normalized, true);
+              }}
+              placeholder="https://..."
+            />
+            {uploadBannerError && (
+              <div className="mt-1.5 p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>{uploadBannerError}</span>
+              </div>
+            )}
+            {rConfig.banner && (
+              <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                {rConfig.banner.includes('/uploads/banners/') ? (
+                  <div className="flex items-center gap-1.5 text-blue-500 font-medium">
+                    <HardDrive className="w-3.5 h-3.5" />
+                    <span>{t('clan_banner_uploaded_server', 'Размещено на сервере Industrial Hub')}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-emerald-500 font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{t('clan_ads_banner_active', 'Установлен кастомный баннер')}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

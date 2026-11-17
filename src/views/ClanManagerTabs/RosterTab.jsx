@@ -832,23 +832,21 @@ export default function RosterTab() {
             </button>
           </div>
 
-          {/* Reset Voice Time Button (Leader only) */}
-          {rosterViewMode === 'active' && (
-            <button
-              type="button"
-              onClick={handleResetVoiceTime}
-              disabled={isResettingVoice}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ${
-                voiceResetDone
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
-                  : 'bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:border-rose-800/60'
-              }`}
-              title={t('clan_reset_voice_tooltip', 'Сбросить голосовую активность участников вручную (только для лидера)')}
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${isResettingVoice ? 'animate-spin text-rose-500' : voiceResetDone ? 'text-emerald-500' : 'text-slate-400'}`} />
-              <span>{voiceResetDone ? t('clan_reset_voice_done', 'Сброшено!') : t('clan_reset_voice_btn', 'Сбросить время войса')}</span>
-            </button>
-          )}
+          {/* Reset Voice Time Button (Leader only) - Always visible to prevent layout jumps */}
+          <button
+            type="button"
+            onClick={handleResetVoiceTime}
+            disabled={isResettingVoice}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+              voiceResetDone
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
+                : 'bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:border-rose-800/60'
+            }`}
+            title={t('clan_reset_voice_tooltip', 'Сбросить голосовую активность участников вручную (только для лидера)')}
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isResettingVoice ? 'animate-spin text-rose-500' : voiceResetDone ? 'text-emerald-500' : 'text-slate-400'}`} />
+            <span>{voiceResetDone ? t('clan_reset_voice_done', 'Сброшено!') : t('clan_reset_voice_btn', 'Сбросить время войса')}</span>
+          </button>
 
           {/* Refresh Button */}
           <button

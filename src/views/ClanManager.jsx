@@ -427,7 +427,7 @@ export default function ClanManager() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
   const [viewMode, setViewMode] = useState('clan'); // 'clan' (Daily Clan operations) | 'botConfig' (Technical Bot & Server setup)
-  const [activeTab, setActiveTab] = useState('roster');
+  const [activeTab, setActiveTabRaw] = useState('roster');
   const [modSubTab, setModSubTab] = useState('antiMention');
   const [isModExpanded, setIsModExpanded] = useState(true);
   const [rosterData, setRosterData] = useState(null);
@@ -476,6 +476,18 @@ export default function ClanManager() {
   const [appFilter, setAppFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'AUTO_REJECTED'
   const [appSearch, setAppSearch] = useState('');
   const [transcriptModal, setTranscriptModal] = useState({ isOpen: false, loading: false, html: null, app: null, error: null });
+
+  // Advertising Tickets state
+  const [adTicketsData, setAdTicketsData] = useState([]);
+  const [loadingAdTickets, setLoadingAdTickets] = useState(false);
+  const [applicationsCategory, setApplicationsCategory] = useState('clan'); // 'clan' | 'ads'
+
+  const setActiveTab = useCallback((tab, subCategory) => {
+    setActiveTabRaw(tab);
+    if (tab === 'applications' && subCategory) {
+      setApplicationsCategory(subCategory);
+    }
+  }, []);
 
   // Warning System state
   const [selectedUserForWarns, setSelectedUserForWarns] = useState(null);
@@ -1152,6 +1164,13 @@ export default function ClanManager() {
             setApplicationsData(data.data.applications || []);
             saveCachedMembersMeta(data.data.applications || []);
           }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_ad_tickets') {
+          setLoadingAdTickets(false);
+          if (!data.error && data.data && data.data.success) {
+            setAdTicketsData(data.data.tickets || []);
+          }
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'close_ad_ticket') {
+          fetchAdTickets();
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_ticket_transcript') {
           setTranscriptModal(prev => ({
             ...prev,
@@ -2338,6 +2357,28 @@ export default function ClanManager() {
     }));
   };
 
+  const fetchAdTickets = () => {
+    if (!ws || wsStatus !== 'online') return;
+    setLoadingAdTickets(true);
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'get_ad_tickets',
+      payload: { action: 'get_ad_tickets', limit: 100 }
+    }));
+  };
+
+  const handleCloseAdTicket = (ticketId, channelId) => {
+    if (!ws || wsStatus !== 'online') return;
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: 'close_ad_ticket',
+      payload: { action: 'close_ad_ticket', ticketId, channelId }
+    }));
+    setAdTicketsData(prev => prev.map(t => (t.id === ticketId || t.channelId === channelId) ? { ...t, status: 'CLOSED' } : t));
+  };
+
   const handleClearApplications = async () => {
     if (!ws || wsStatus !== 'online') return;
     const confirmed = await showConfirm({
@@ -2403,6 +2444,9 @@ export default function ClanManager() {
       }
     } else if (activeTab === 'applications') {
       fetchApplications();
+      fetchAdTickets();
+    } else if (activeTab === 'ads') {
+      fetchAdTickets();
     } else if (activeTab === 'recruitment') {
       fetchApplications();
       if (config?.recruitmentConfigJson) {
@@ -2480,6 +2524,18 @@ export default function ClanManager() {
     const uid = selectedProfileForDossier.userId;
     return clanWarnings.filter(w => w.userId === uid);
   }, [clanWarnings, selectedProfileForDossier?.userId]);
+
+  const pendingAppsCount = useMemo(() => {
+    return Array.isArray(applicationsData)
+      ? applicationsData.filter(a => a.status === 'PENDING').length
+      : 0;
+  }, [applicationsData]);
+
+  const openAdTicketsCount = useMemo(() => {
+    return Array.isArray(adTicketsData)
+      ? adTicketsData.filter(t => t.status === 'OPEN').length
+      : 0;
+  }, [adTicketsData]);
 
   useEffect(() => {
     if (!selectedProfileForDossier?.userId || !ws || wsStatus !== 'online') return;
@@ -4329,7 +4385,15 @@ const contextValue = {
   loadingActivityStats: typeof loadingActivityStats !== "undefined" ? loadingActivityStats : undefined,
   fetchActivityStats: typeof fetchActivityStats !== "undefined" ? fetchActivityStats : undefined,
   getCachedMemberMeta: typeof getCachedMemberMeta !== "undefined" ? getCachedMemberMeta : undefined,
-  saveCachedMembersMeta: typeof saveCachedMembersMeta !== "undefined" ? saveCachedMembersMeta : undefined
+  saveCachedMembersMeta: typeof saveCachedMembersMeta !== "undefined" ? saveCachedMembersMeta : undefined,
+  adTicketsData: typeof adTicketsData !== "undefined" ? adTicketsData : undefined,
+  loadingAdTickets: typeof loadingAdTickets !== "undefined" ? loadingAdTickets : undefined,
+  fetchAdTickets: typeof fetchAdTickets !== "undefined" ? fetchAdTickets : undefined,
+  handleCloseAdTicket: typeof handleCloseAdTicket !== "undefined" ? handleCloseAdTicket : undefined,
+  openAdTicketsCount: typeof openAdTicketsCount !== "undefined" ? openAdTicketsCount : undefined,
+  pendingAppsCount: typeof pendingAppsCount !== "undefined" ? pendingAppsCount : undefined,
+  applicationsCategory: typeof applicationsCategory !== "undefined" ? applicationsCategory : undefined,
+  setApplicationsCategory: typeof setApplicationsCategory !== "undefined" ? setApplicationsCategory : undefined
 };
 
   return (
@@ -4551,6 +4615,28 @@ const contextValue = {
                           <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                             {rosterData.roster.length}
                           </span>
+                        )}
+                        {tab.id === 'applications' && (
+                          pendingAppsCount > 0 ? (
+                            <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
+                              {pendingAppsCount}
+                            </span>
+                          ) : applicationsData?.length > 0 ? (
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                              {applicationsData.length}
+                            </span>
+                          ) : null
+                        )}
+                        {tab.id === 'ads' && (
+                          openAdTicketsCount > 0 ? (
+                            <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
+                              {openAdTicketsCount}
+                            </span>
+                          ) : adTicketsData?.length > 0 ? (
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                              {adTicketsData.length}
+                            </span>
+                          ) : null
                         )}
                       </button>
                     );

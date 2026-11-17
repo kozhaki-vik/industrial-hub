@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { ExternalLink, Hash, Sparkles, X, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { normalizeImageUrl } from '../utils/urlHelper';
+import { resolveDiscordEmoji } from '../utils/discordEmojis';
 
 /**
  * Parses basic Discord markdown:
@@ -104,16 +105,21 @@ function renderDiscordMarkdown(rawText) {
     return tokens.map((tok, i) => {
       const key = `${prefix}-tok-${i}`;
       if (tok.type === 'custom_emoji') {
+        const resolved = resolveDiscordEmoji(`<:${tok.name}:${tok.id}>`);
         return (
           <img
             key={key}
-            src={`https://cdn.discordapp.com/emojis/${tok.id}.png?size=48&quality=lossless`}
+            src={resolved?.url || `https://cdn.discordapp.com/emojis/${tok.id}.png?size=48&quality=lossless`}
             alt={`:${tok.name}:`}
             title={`:${tok.name}:`}
             className="inline-block w-4 h-4 align-text-bottom mx-0.5 object-contain"
             loading="lazy"
             onError={(e) => {
-              e.currentTarget.style.display = 'none';
+              if (resolved?.type === 'local') {
+                e.currentTarget.src = `https://cdn.discordapp.com/emojis/${tok.id}.png?size=48&quality=lossless`;
+              } else {
+                e.currentTarget.style.display = 'none';
+              }
             }}
           />
         );
@@ -173,7 +179,8 @@ function DiscordMessagePreview({
   onSelectTemplate = () => {},
   onClose = null,
   tabTitle = '',
-  className = ''
+  className = '',
+  markdownEnabled = true
 }) {
   const { t } = useTranslation();
   const [imgError, setImgError] = useState(false);
@@ -185,8 +192,16 @@ function DiscordMessagePreview({
 
   const bannerUrl = useMemo(() => normalizeImageUrl(embed?.banner), [embed?.banner]);
   const renderedDescription = useMemo(() => {
+    if (markdownEnabled === false || embed?.markdownEnabled === false) {
+      if (!embed?.description) return null;
+      return (
+        <div className="whitespace-pre-wrap leading-relaxed text-[#dbdee1]">
+          {embed.description}
+        </div>
+      );
+    }
     return renderDiscordMarkdown(embed?.description);
-  }, [embed?.description]);
+  }, [embed?.description, markdownEnabled, embed?.markdownEnabled]);
 
   const embedColor = embed.color || '#5865f2';
   const now = new Date();
@@ -325,13 +340,26 @@ function DiscordMessagePreview({
                   btnStyle = 'bg-[#4e5058] hover:bg-[#6d6f78] text-white';
                 }
 
+                const resolvedEmoji = resolveDiscordEmoji(btn.emoji);
+
                 return (
                   <button
                     key={bIdx}
                     type="button"
                     className={`h-8 px-4 rounded-[3px] text-sm font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer select-none ${btnStyle}`}
                   >
-                    {btn.emoji && <span className="text-base leading-none">{btn.emoji}</span>}
+                    {resolvedEmoji && (
+                      resolvedEmoji.type === 'local' || resolvedEmoji.type === 'cdn' ? (
+                        <img
+                          src={resolvedEmoji.url}
+                          alt={resolvedEmoji.alt || 'emoji'}
+                          className="w-4 h-4 object-contain shrink-0 inline-block"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <span className="text-base leading-none">{resolvedEmoji.text}</span>
+                      )
+                    )}
                     <span className="leading-none">{btn.label}</span>
                     {btn.style === 'link' && <ExternalLink className="w-3.5 h-3.5 ml-1 opacity-70" />}
                   </button>

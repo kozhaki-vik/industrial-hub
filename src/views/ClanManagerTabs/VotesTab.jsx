@@ -6,6 +6,15 @@ import {
   Calendar, Server, Image as ImageIcon
 } from 'lucide-react';
 import { ToggleSwitch } from '../ClanManager';
+import { resolveDiscordEmoji } from '../../utils/discordEmojis';
+
+function LocalEmoji({ name, fallback, className = "w-4 h-4 inline-block object-contain shrink-0" }) {
+  const resolved = resolveDiscordEmoji(name);
+  if (resolved && (resolved.type === 'local' || resolved.type === 'cdn')) {
+    return <img src={resolved.url} alt={resolved.alt || ''} className={className} onError={(e) => { e.currentTarget.style.display = 'none'; }} />;
+  }
+  return <span>{resolved?.text || fallback || name}</span>;
+}
 
 // Memoized single vote template card
 const VoteTemplateCard = React.memo(function VoteTemplateCard({
@@ -321,7 +330,7 @@ function LiveDiscordVoteEmbed({ template, clanName, t, onToggleAnonymous }) {
       {/* Embed Box */}
       <div className="border-l-4 border-blue-500 bg-[#2b2d31] p-3.5 rounded-r-xl space-y-2.5">
         <h5 className="font-bold text-sm text-white flex items-center gap-1.5">
-          <span>🗳️</span>
+          <LocalEmoji name="clipboard-text" fallback="🗳️" className="w-4 h-4 object-contain" />
           <span>{template.name || 'Опрос на вайп'}</span>
         </h5>
 
@@ -333,17 +342,26 @@ function LiveDiscordVoteEmbed({ template, clanName, t, onToggleAnonymous }) {
 
         <div className="grid grid-cols-2 gap-2 text-xs pt-1">
           <div className="bg-[#1e1f22] p-2 rounded-lg">
-            <div className="text-[10px] text-[#949ba4] uppercase font-bold">📅 День</div>
-            <div className="font-semibold text-white">{template.day || 'Четверг'}</div>
+            <div className="text-[10px] text-[#949ba4] uppercase font-bold flex items-center gap-1">
+              <LocalEmoji name="calendar-week" fallback="📅" className="w-3.5 h-3.5 object-contain" />
+              <span>День</span>
+            </div>
+            <div className="font-semibold text-white mt-0.5">{template.day || 'Четверг'}</div>
           </div>
           <div className="bg-[#1e1f22] p-2 rounded-lg">
-            <div className="text-[10px] text-[#949ba4] uppercase font-bold">⏰ Время</div>
-            <div className="font-semibold text-white">{template.time || '16:00'} МСК</div>
+            <div className="text-[10px] text-[#949ba4] uppercase font-bold flex items-center gap-1">
+              <LocalEmoji name="clock" fallback="⏰" className="w-3.5 h-3.5 object-contain" />
+              <span>Время</span>
+            </div>
+            <div className="font-semibold text-white mt-0.5">{template.time || '16:00'} МСК</div>
           </div>
           {template.ip && (
             <div className="col-span-2 bg-[#1e1f22] p-2 rounded-lg">
-              <div className="text-[10px] text-[#949ba4] uppercase font-bold">🌐 Сервер</div>
-              <div className="font-mono text-xs text-emerald-400">{template.ip}</div>
+              <div className="text-[10px] text-[#949ba4] uppercase font-bold flex items-center gap-1">
+                <LocalEmoji name="device-desktop" fallback="🌐" className="w-3.5 h-3.5 object-contain" />
+                <span>Сервер</span>
+              </div>
+              <div className="font-mono text-xs text-emerald-400 mt-0.5">{template.ip}</div>
             </div>
           )}
         </div>
@@ -355,8 +373,9 @@ function LiveDiscordVoteEmbed({ template, clanName, t, onToggleAnonymous }) {
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-[#3f4147]">
-          <span className="text-[11px] font-medium text-[#949ba4]">
-            {template.isAnonymous ? '🔒 Анонимное голосование' : '👥 Публичное голосование'}
+          <span className="text-[11px] font-medium text-[#949ba4] flex items-center gap-1.5">
+            <LocalEmoji name={template.isAnonymous ? "lock" : "users"} fallback={template.isAnonymous ? "🔒" : "👥"} className="w-3.5 h-3.5 object-contain" />
+            <span>{template.isAnonymous ? 'Анонимное голосование' : 'Публичное голосование'}</span>
           </span>
           {onToggleAnonymous && (
             <ToggleSwitch
