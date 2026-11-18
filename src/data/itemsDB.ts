@@ -3,6 +3,458 @@ import itemsRu from './items_ru.json';
 
 const rawItemsDB = [
   {
+    "shortname": "alien.costume",
+    "localizedName": "Alien Costume"
+  },
+  {
+    "shortname": "ammo.mortar.basic",
+    "localizedName": "Mortar Shell"
+  },
+  {
+    "shortname": "ammo.mortar.fragment",
+    "localizedName": "Fragmentation Mortar Shell"
+  },
+  {
+    "shortname": "apartment.master_key",
+    "localizedName": "Apartment Key"
+  },
+  {
+    "shortname": "ballistic.helmet",
+    "localizedName": "Ballistic helmet"
+  },
+  {
+    "shortname": "ballistic.legarmor",
+    "localizedName": "Ballistic leg armour"
+  },
+  {
+    "shortname": "ballistic.vest",
+    "localizedName": "Ballistic vest"
+  },
+  {
+    "shortname": "bar.stool.metal",
+    "localizedName": "Metal Bar Stool"
+  },
+  {
+    "shortname": "bar.stool.wood",
+    "localizedName": "Wooden Bar Stool"
+  },
+  {
+    "shortname": "barricade.sandbags.half",
+    "localizedName": "#barricade.sandbags.half"
+  },
+  {
+    "shortname": "barricade.sandbags.pillbox",
+    "localizedName": "#barricade.sandbags.pillbox"
+  },
+  {
+    "shortname": "barricade.sandbags.three.quarter",
+    "localizedName": "#barricade.sandbags.three.quarter"
+  },
+  {
+    "shortname": "bdu.pants",
+    "localizedName": "BDU pants"
+  },
+  {
+    "shortname": "bdu.shirt",
+    "localizedName": "BDU shirt"
+  },
+  {
+    "shortname": "beefmeat.cooked",
+    "localizedName": "Cooked Beef"
+  },
+  {
+    "shortname": "beefmeat",
+    "localizedName": "Raw Beef"
+  },
+  {
+    "shortname": "beefmeat.spoiled",
+    "localizedName": "Spoiled Beef"
+  },
+  {
+    "shortname": "blueprintbook",
+    "localizedName": "Blueprint Book"
+  },
+  {
+    "shortname": "blueprintfragment",
+    "localizedName": "Blueprint Fragment"
+  },
+  {
+    "shortname": "blueprintpage",
+    "localizedName": "Blueprint Page"
+  },
+  {
+    "shortname": "bread.brioche.loaf",
+    "localizedName": "Brioche Bread"
+  },
+  {
+    "shortname": "charity.plushy.03",
+    "localizedName": "Ronald McDonald House UK 2026 Plushie"
+  },
+  {
+    "shortname": "charity.plushy.04",
+    "localizedName": "Cancer Research UK 2026 Plushie"
+  },
+  {
+    "shortname": "clothing.mod.armorinsert_wool",
+    "localizedName": "Wool Armor Insert"
+  },
+  {
+    "shortname": "cream",
+    "localizedName": "Cream"
+  },
+  {
+    "shortname": "crossbowbowless",
+    "localizedName": "Bowless Crossbow"
+  },
+  {
+    "shortname": "dartboard",
+    "localizedName": "Dart Board"
+  },
+  {
+    "shortname": "discord.plushie",
+    "localizedName": "Wumpus Plush"
+  },
+  {
+    "shortname": "discord.zombie.plushie",
+    "localizedName": "Zombie Wumpus Plush"
+  },
+  {
+    "shortname": "firework.boomer.white",
+    "localizedName": "White Boomer"
+  },
+  {
+    "shortname": "fuse.highgrade",
+    "localizedName": "Heavy Fuse"
+  },
+  {
+    "shortname": "gamesroom.minifridge",
+    "localizedName": "Bar Games Minifridge"
+  },
+  {
+    "shortname": "gamesroom.shotgun.trap",
+    "localizedName": "Bar Games Shotgun Trap"
+  },
+  {
+    "shortname": "generator.biofuel",
+    "localizedName": "Biofuel Generator"
+  },
+  {
+    "shortname": "halfheight.industrial.shelves",
+    "localizedName": "Half Height Industrial Shelves"
+  },
+  {
+    "shortname": "halloween.string.lights",
+    "localizedName": "Halloween String Lights"
+  },
+  {
+    "shortname": "halloweenwreath",
+    "localizedName": "Halloween Wreath"
+  },
+  {
+    "shortname": "hazmat.plague",
+    "localizedName": "Plague Doctor Hazmat Suit"
+  },
+  {
+    "shortname": "healingtea.pure.creamy",
+    "localizedName": "Creamy Pure Healing Tea"
+  },
+  {
+    "shortname": "healingtea.pure.milky",
+    "localizedName": "Milky Pure Healing Tea"
+  },
+  {
+    "shortname": "industrial.autoturret",
+    "localizedName": "Industrial Auto Turret"
+  },
+  {
+    "shortname": "industrial.electric.furnace",
+    "localizedName": "Industrial Electric Furnace"
+  },
+  {
+    "shortname": "industrial.furnace.large",
+    "localizedName": "Large Industrial Furnace"
+  },
+  {
+    "shortname": "industrial.garagedoor",
+    "localizedName": "Industrial Garage Door"
+  },
+  {
+    "shortname": "industrial.storage.horizontal",
+    "localizedName": "Industrial Storage Horizontal Barrel"
+  },
+  {
+    "shortname": "industrial.storage.vertical",
+    "localizedName": "Industrial Storage Vertical Barrel"
+  },
+  {
+    "shortname": "industrial.torch",
+    "localizedName": "Industrial Torch"
+  },
+  {
+    "shortname": "jukebox",
+    "localizedName": "Jukebox"
+  },
+  {
+    "shortname": "kickgems",
+    "localizedName": "Gems"
+  },
+  {
+    "shortname": "m16a2",
+    "localizedName": "M16A2"
+  },
+  {
+    "shortname": "maxhealthtea.pure.creamy",
+    "localizedName": "Creamy Pure Max Health Tea"
+  },
+  {
+    "shortname": "maxhealthtea.pure.milky",
+    "localizedName": "Milky Pure Max Health Tea"
+  },
+  {
+    "shortname": "medical.honey.bandage",
+    "localizedName": "Medical Honey Bandage"
+  },
+  {
+    "shortname": "milk",
+    "localizedName": "Milk"
+  },
+  {
+    "shortname": "minifridge",
+    "localizedName": "Mini Fridge"
+  },
+  {
+    "shortname": "mortar.deployable",
+    "localizedName": "Mortar"
+  },
+  {
+    "shortname": "muttonmeat.cooked",
+    "localizedName": "Cooked Mutton"
+  },
+  {
+    "shortname": "muttonmeat",
+    "localizedName": "Raw Mutton"
+  },
+  {
+    "shortname": "muttonmeat.spoiled",
+    "localizedName": "Spoiled Mutton"
+  },
+  {
+    "shortname": "oretea.pure.creamy",
+    "localizedName": "Creamy Pure Ore Tea"
+  },
+  {
+    "shortname": "oretea.pure.milky",
+    "localizedName": "Milky Pure Ore Tea"
+  },
+  {
+    "shortname": "pie.apple.rich",
+    "localizedName": "Rich Apple Pie"
+  },
+  {
+    "shortname": "pie.bear.rich",
+    "localizedName": "Rich Bear Pie"
+  },
+  {
+    "shortname": "pie.beef",
+    "localizedName": "Beef Pie"
+  },
+  {
+    "shortname": "pie.beef.rich",
+    "localizedName": "Rich Beef Pie"
+  },
+  {
+    "shortname": "pie.bigcat.rich",
+    "localizedName": "Rich Big Cat Pie"
+  },
+  {
+    "shortname": "pie.chicken.rich",
+    "localizedName": "Rich Chicken Pie"
+  },
+  {
+    "shortname": "pie.crocodile.rich",
+    "localizedName": "Rich Crocodile Pie"
+  },
+  {
+    "shortname": "pie.fish.rich",
+    "localizedName": "Rich Fish Pie"
+  },
+  {
+    "shortname": "pie.hunters.rich",
+    "localizedName": "Rich Hunters Pie"
+  },
+  {
+    "shortname": "pie.mutton",
+    "localizedName": "Shepherds Pie"
+  },
+  {
+    "shortname": "pie.mutton.rich",
+    "localizedName": "Rich Shepherds Pie"
+  },
+  {
+    "shortname": "pie.pork.rich",
+    "localizedName": "Rich Pork Pie"
+  },
+  {
+    "shortname": "pie.pumpkin.rich",
+    "localizedName": "Rich Pumpkin Pie"
+  },
+  {
+    "shortname": "pooltable",
+    "localizedName": "Pool Table"
+  },
+  {
+    "shortname": "purecoolingtea.creamy",
+    "localizedName": "Creamy Pure Cooling Tea"
+  },
+  {
+    "shortname": "purecoolingtea.milky",
+    "localizedName": "Milky Pure Cooling Tea"
+  },
+  {
+    "shortname": "pureharvestingtea.creamy",
+    "localizedName": "Creamy Pure Harvesting Tea"
+  },
+  {
+    "shortname": "pureharvestingtea.milky",
+    "localizedName": "Milky Pure Harvesting Tea"
+  },
+  {
+    "shortname": "purewarmingtea.creamy",
+    "localizedName": "Creamy Pure Warming Tea"
+  },
+  {
+    "shortname": "purewarmingtea.milky",
+    "localizedName": "Milky Pure Warming Tea"
+  },
+  {
+    "shortname": "radiationresisttea.pure.creamy",
+    "localizedName": "Creamy Pure Anti-Rad Tea"
+  },
+  {
+    "shortname": "radiationresisttea.pure.milky",
+    "localizedName": "Milky Pure Anti-Rad Tea"
+  },
+  {
+    "shortname": "rifle.ak.glass.blue",
+    "localizedName": "Crystal Assault Rifle Sapphire"
+  },
+  {
+    "shortname": "rifle.ak.glass.green",
+    "localizedName": "Crystal Assault Rifle Emerald"
+  },
+  {
+    "shortname": "rifle.ak.glass.pink",
+    "localizedName": "Crystal Assault Rifle Pink Diamond"
+  },
+  {
+    "shortname": "rifle.ak.glass",
+    "localizedName": "Crystal Assault Rifle Diamond"
+  },
+  {
+    "shortname": "rifle.ak.glass.red",
+    "localizedName": "Crystal Assault Rifle Ruby"
+  },
+  {
+    "shortname": "salvaged.industrial.shelves",
+    "localizedName": "Salvaged Industrial Shelves"
+  },
+  {
+    "shortname": "scraptea.pure.creamy",
+    "localizedName": "Creamy Pure Scrap Tea"
+  },
+  {
+    "shortname": "scraptea.pure.milky",
+    "localizedName": "Milky Pure Scrap Tea"
+  },
+  {
+    "shortname": "sculpture.rock",
+    "localizedName": "Stone Sculpture"
+  },
+  {
+    "shortname": "shears",
+    "localizedName": "Shears"
+  },
+  {
+    "shortname": "skimmedmilk",
+    "localizedName": "Skimmed Milk"
+  },
+  {
+    "shortname": "smg.uzi",
+    "localizedName": "Uzi"
+  },
+  {
+    "shortname": "thruster.module",
+    "localizedName": "Thruster Module"
+  },
+  {
+    "shortname": "tunalight.skull",
+    "localizedName": "Skull Wall Lamp"
+  },
+  {
+    "shortname": "wall.animal.fence.gate",
+    "localizedName": "Animal Fence Gate"
+  },
+  {
+    "shortname": "wall.animal.fence",
+    "localizedName": "Animal Fence"
+  },
+  {
+    "shortname": "wall.shallow.industrial.shelves",
+    "localizedName": "Industrial Wall Shelves"
+  },
+  {
+    "shortname": "woodtea.pure.creamy",
+    "localizedName": "Creamy Pure Wood Tea"
+  },
+  {
+    "shortname": "woodtea.pure.milky",
+    "localizedName": "Milky Pure Wood Tea"
+  },
+  {
+    "shortname": "wool",
+    "localizedName": "Wool"
+  },
+  {
+    "shortname": "workbench.upgrade.accelerated",
+    "localizedName": "Accelerated Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.comfort",
+    "localizedName": "Comfort Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.defensive",
+    "localizedName": "Defensive Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.efficiency",
+    "localizedName": "Efficiency Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.prototype",
+    "localizedName": "Prototype Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.range",
+    "localizedName": "Range Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.recyclebin",
+    "localizedName": "Recycle Bin Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.reinforced",
+    "localizedName": "Reinforced Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.salvage",
+    "localizedName": "Salvage Workbench Upgrade"
+  },
+  {
+    "shortname": "workbench.upgrade.surplus",
+    "localizedName": "Surplus Workbench Upgrade"
+  },
+  {
     "shortname": "2module car chassis",
     "localizedName": "2module car chassis"
   },
