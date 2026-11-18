@@ -174,7 +174,7 @@ export default function Developer() {
     const resDiscord = await pingUrl('https://discord.com');
     setPings(p => ({ ...p, discord: resDiscord }));
     
-    const resInt1 = await pingUrl('https://1.1.1.1');
+    const resInt1 = await pingUrl('https://one.one.one.one');
     setPings(p => ({ ...p, internet1: resInt1 }));
     
     const resInt2 = await pingUrl('https://ya.ru');

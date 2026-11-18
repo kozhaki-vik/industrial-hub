@@ -1140,14 +1140,16 @@ instanceLockPromise.then(() => {
   ipcMain.handle('diagnostics:pingUrl', async (event, urlStr) => {
     return new Promise(async (resolve) => {
       const start = Date.now();
-      try {
-        const url = new URL(urlStr);
-        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-            return resolve({ status: 'error', time: 0, msg: 'Invalid protocol' });
-        }
-        
-        const hostname = url.hostname;
+
+      const fetchWithRedirects = async (currentUrlStr, redirectsLeft = 5) => {
         try {
+          const url = new URL(currentUrlStr);
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            return resolve({ status: 'error', time: 0, msg: 'Invalid protocol' });
+          }
+          
+          const hostname = url.hostname;
+          try {
             const { address } = await dns.promises.lookup(hostname);
             const parts = address.split('.').map(Number);
             const isPrivate = (parts[0] === 127 || parts[0] === 10 ||
@@ -1155,42 +1157,62 @@ instanceLockPromise.then(() => {
                     (parts[0] === 192 && parts[1] === 168) ||
                     address === '::1' || address === '0.0.0.0');
             if (isPrivate) {
-                return resolve({ status: 'error', time: 0, msg: 'Private address blocked' });
+              return resolve({ status: 'error', time: 0, msg: 'Private address blocked' });
             }
-        } catch {
+          } catch {
             return resolve({ status: 'error', time: 0, msg: 'DNS lookup failed' });
+          }
+          
+          const protocol = url.protocol === 'https:' ? https : http;
+          
+          const req = protocol.get(currentUrlStr, {
+            timeout: 4000,
+            headers: {
+              'User-Agent': 'Industrial-Hub/2.0 (Windows NT 10.0; Win64; x64)',
+              'Accept': 'application/vnd.github.v3+json, application/json, text/plain, */*'
+            }
+          }, (res) => {
+            res.resume();
+
+            // Follow HTTP redirects (301, 302, 307, 308)
+            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+              if (redirectsLeft > 0) {
+                try {
+                  const redirectUrl = new URL(res.headers.location, currentUrlStr).href;
+                  return fetchWithRedirects(redirectUrl, redirectsLeft - 1);
+                } catch {
+                  // If parsing redirect URL fails, proceed to report status
+                }
+              } else {
+                return resolve({ status: 'warning', time: Date.now() - start, msg: 'Too many redirects' });
+              }
+            }
+
+            const time = Date.now() - start;
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve({ status: 'ok', time, msg: res.statusCode === 200 ? '200 OK' : `${res.statusCode} ${res.statusMessage || 'OK'}` });
+            } else if (res.statusCode >= 300 && res.statusCode < 400) {
+              resolve({ status: 'warning', time, msg: `${res.statusCode} ${res.statusMessage || 'Redirect'}` });
+            } else {
+              resolve({ status: 'warning', time, msg: `HTTP ${res.statusCode}` });
+            }
+          });
+          
+          req.on('timeout', () => {
+            req.destroy();
+            resolve({ status: 'error', time: Date.now() - start, msg: 'Timeout' });
+          });
+          
+          req.on('error', (err) => {
+            resolve({ status: 'error', time: Date.now() - start, msg: err.message });
+          });
+        } catch (e) {
+          console.error(e);
+          resolve({ status: 'error', time: 0, msg: 'Invalid URL' });
         }
-        
-        const protocol = url.protocol === 'https:' ? https : http;
-        
-        const req = protocol.get(urlStr, {
-          timeout: 4000,
-          headers: {
-            'User-Agent': 'Industrial-Hub/2.0 (Windows NT 10.0; Win64; x64)',
-            'Accept': 'application/vnd.github.v3+json, application/json, text/plain, */*'
-          }
-        }, (res) => {
-          res.resume();
-          const time = Date.now() - start;
-          if (res.statusCode >= 200 && res.statusCode < 400) {
-            resolve({ status: 'ok', time, msg: `${res.statusCode} OK` });
-          } else {
-            resolve({ status: 'warning', time, msg: `HTTP ${res.statusCode}` });
-          }
-        });
-        
-        req.on('timeout', () => {
-          req.destroy();
-          resolve({ status: 'error', time: Date.now() - start, msg: 'Timeout' });
-        });
-        
-        req.on('error', (err) => {
-          resolve({ status: 'error', time: Date.now() - start, msg: err.message });
-        });
-      } catch (e) {
-        console.error(e);
-        resolve({ status: 'error', time: 0, msg: 'Invalid URL' });
-      }
+      };
+
+      fetchWithRedirects(urlStr);
     });
   });
 
