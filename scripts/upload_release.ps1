@@ -71,20 +71,22 @@ foreach ($f in $allFiles) {
         Write-Error "File not found: $f"
         exit 1
     }
-    $sig = (Get-AuthenticodeSignature -LiteralPath $f).SignerCertificate.Thumbprint
-    if (-not $sig -or $sig -ne "F275C9D48A3325871DB04B0FDFB5701BE34802B7") {
-        Write-Host "Signing $f with Industrial Studio certificate..."
-        if (Test-Path $signtool) {
-            & $signtool sign /sha1 F275C9D48A3325871DB04B0FDFB5701BE34802B7 /fd sha256 /tr http://timestamp.digicert.com /td sha256 (Resolve-Path $f).Path
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "Code signing failed for $f"
-                exit 1
+    if ($f -match '\.(exe|dll|sys)$') {
+        $sig = (Get-AuthenticodeSignature -LiteralPath $f).SignerCertificate.Thumbprint
+        if (-not $sig -or $sig -ne "F275C9D48A3325871DB04B0FDFB5701BE34802B7") {
+            Write-Host "Signing $f with Industrial Studio certificate..."
+            if (Test-Path $signtool) {
+                & $signtool sign /sha1 F275C9D48A3325871DB04B0FDFB5701BE34802B7 /fd sha256 /tr http://timestamp.digicert.com /td sha256 (Resolve-Path $f).Path
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Error "Code signing failed for $f"
+                    exit 1
+                }
+            } else {
+                Write-Warning "Signtool not found at $signtool. Skipping signature."
             }
         } else {
-            Write-Warning "Signtool not found at $signtool. Skipping signature."
+            Write-Host "File $f is already signed with valid certificate."
         }
-    } else {
-        Write-Host "File $f is already signed with valid certificate."
     }
 }
 
