@@ -10,10 +10,11 @@ import ChannelSelect from '../../components/ChannelSelect';
 import { ToggleSwitch } from '../ClanManager';
 import { normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
+import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
 
 export default function RecruitmentTab() {
   const {
-    config, discordInfo, rosterData, applicationsData,
+    config, setConfig, discordInfo, rosterData, applicationsData,
     handleCreateRecruitmentInvite, creatingRecruitmentInvite,
     recruitmentInviteStatus, setRecruitmentInviteStatus,
     checkingRecruitmentInvite, verifyRecruitmentInvite,
@@ -182,8 +183,63 @@ export default function RecruitmentTab() {
     return counts;
   }, [applicationsData]);
 
+  const handlePublishOrMoveRecruitment = useCallback(async (targetChannelId) => {
+    if (typeof sendProxyAction === 'function') {
+      const res = await sendProxyAction('publish_or_move_panel', {
+        panelType: 'recruitment',
+        targetChannelId
+      });
+      if (res?.success) {
+        if (res.config && typeof setConfig === 'function') {
+          setConfig(res.config);
+        } else {
+          updateRConfig('channelId', targetChannelId, true);
+        }
+        return { success: true };
+      }
+      return { success: false, error: res?.error };
+    }
+    return { success: false, error: 'Proxy action not available' };
+  }, [sendProxyAction, setConfig, updateRConfig]);
+
+  const handleSyncRecruitment = useCallback(async () => {
+    if (typeof sendProxyAction === 'function') {
+      await sendProxyAction('sync_panel', { panelType: 'recruitment' });
+    }
+  }, [sendProxyAction]);
+
+  const handleDeleteRecruitment = useCallback(async () => {
+    if (typeof sendProxyAction === 'function') {
+      const res = await sendProxyAction('delete_panel', { panelType: 'recruitment' });
+      if (res?.success) {
+        if (res.config && typeof setConfig === 'function') {
+          setConfig(res.config);
+        } else {
+          const newRc = { ...rConfig, channelId: null, messageId: null };
+          const updated = { ...config, recruitmentConfigJson: JSON.stringify(newRc) };
+          queueAutoSave(updated, true);
+        }
+      }
+    }
+  }, [sendProxyAction, setConfig, rConfig, config, queueAutoSave]);
+
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6">
+      {/* Discord Recruitment Panel Channel Status & Manager */}
+      <DiscordPanelChannelBar
+        title={t('clan_recruitment_panel_title', 'Панель набора в клан')}
+        channelId={rConfig?.channelId}
+        messageId={rConfig?.messageId}
+        discordChannels={discordInfo?.channels || []}
+        onPublishOrMove={handlePublishOrMoveRecruitment}
+        onSync={handleSyncRecruitment}
+        onDelete={handleDeleteRecruitment}
+        activeDesc={t('clan_recruitment_panel_active_desc', 'Кандидаты видят эту панель и нажимают кнопку для подачи заявки в клан.')}
+        promptText={t('clan_recruitment_panel_prompt', 'Выберите канал для публикации интерактивной панели набора в клан с кнопкой подачи заявки. При смене канала бот удалит старую панель.')}
+        icon={UserPlus}
+        accentColor="orange"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">

@@ -1,6 +1,6 @@
 let activeUnsubscribe = null;
 
-export const registerGlobalShortcut = async (vkCode, callback) => {
+export const registerGlobalShortcut = async (shortcut, callback) => {
   if (!window.electronAPI || !window.electronAPI.gamma) return false;
   
   if (activeUnsubscribe) {
@@ -11,7 +11,7 @@ export const registerGlobalShortcut = async (vkCode, callback) => {
   const registerFn = window.electronAPI.gamma.registerShortcut;
   if (!registerFn) return false;
 
-  const success = await registerFn(vkCode);
+  const success = await registerFn(shortcut);
   if (success && callback) {
     activeUnsubscribe = window.electronAPI.gamma.onHotkey(callback);
   }

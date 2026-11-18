@@ -3,11 +3,11 @@ export const getDisplays = async () => {
   return await window.electronAPI.gamma.getDisplays();
 };
 
-export const setDisplayGamma = (brightnessLevel, deviceName = "\\\\.\\DISPLAY1") => {
+export const setDisplayGamma = (brightnessLevel, deviceName) => {
   if (!window.electronAPI || !window.electronAPI.gamma) return;
   window.electronAPI.gamma.setDisplayGamma(brightnessLevel, deviceName);
 };
 
-export const resetDisplayGamma = (deviceName = "\\\\.\\DISPLAY1") => {
+export const resetDisplayGamma = (deviceName) => {
   setDisplayGamma(0, deviceName);
 };

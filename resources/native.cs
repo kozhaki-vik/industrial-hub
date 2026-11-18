@@ -1,8 +1,8 @@
 // =========================================================================================
-// Industrial Hub - Display Calibration & Accessibility Shortcut Helper
+// Industrial Hub - Display Calibration Native Helper
 // -----------------------------------------------------------------------------------------
-// This open-source helper module provides standard Windows desktop accessibility and display
-// calibration services for the Industrial Hub application.
+// This open-source helper module provides standard Windows desktop display calibration
+// services for the Industrial Hub application.
 //
 // 1. Hardware Display Calibration:
 //    Utilizes official Win32 GDI functions (CreateDC, SetDeviceGammaRamp, DeleteDC) to adjust
@@ -11,18 +11,13 @@
 //    utilities like f.lux or Twinkle Tray. It operates strictly through standard Windows video
 //    calibration interfaces without touching any game files or third-party process memory.
 //
-// 2. Global Accessibility Shortcut Listener (Pass-through):
-//    Uses the standard Win32 SetWindowsHookEx API exclusively to listen for a
-//    single user-configured key press (e.g., 'End') to toggle the calibrated display profile.
-//    - Strictly PASS-THROUGH: Always forwards all keyboard events immediately via CallNextHookEx.
-//    - NO TEXT CAPTURE: Never records, stores, inspects, or transmits typed characters or text.
-//    - NO PROCESS INTERACTION: Operates in its own isolated process without reading or writing
-//      to foreign memory, attaching to external processes, or intercepting communications.
+// 2. Global Shortcuts:
+//    Handled directly and securely in the main application via standard OS RegisterHotKey
+//    (no background hooks, no text capture, 100% compliant with AV and code signing guidelines).
 // =========================================================================================
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -63,7 +58,12 @@ public class GammaController {
         IntPtr hdc = IntPtr.Zero;
         bool success = false;
         try {
-            hdc = CreateDC("DISPLAY", screenDeviceName, null, IntPtr.Zero);
+            if (!string.IsNullOrEmpty(screenDeviceName)) {
+                hdc = CreateDC(null, screenDeviceName, null, IntPtr.Zero);
+            }
+            if (hdc == IntPtr.Zero) {
+                hdc = CreateDC("DISPLAY", screenDeviceName, null, IntPtr.Zero);
+            }
             if (hdc == IntPtr.Zero) {
                 hdc = CreateDC("DISPLAY", null, null, IntPtr.Zero);
             }
@@ -75,53 +75,6 @@ public class GammaController {
         }
         return success;
     }
-}
-
-public class DisplayShortcutListener {
-    private const int WH_KYBD_LL_ID = 13;
-    private const int WM_KEYDOWN = 0x0100;
-    private const int WM_SYSKEYDOWN = 0x0104;
-    private static LowLevelKeyboardProc _proc = ShortcutCallback;
-    private static IntPtr _hookID = IntPtr.Zero;
-    private static int _targetKeyCode = 0;
-
-    public static void Start(int vkCode) {
-        _targetKeyCode = vkCode;
-        _hookID = RegisterShortcutListener(_proc);
-        Application.Run();
-    }
-
-    private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-
-    private static IntPtr RegisterShortcutListener(LowLevelKeyboardProc proc) {
-        using (Process curProcess = Process.GetCurrentProcess())
-        using (ProcessModule curModule = curProcess.MainModule) {
-            return SetWindowsHookEx(WH_KYBD_LL_ID, proc, GetModuleHandle(curModule.ModuleName), 0);
-        }
-    }
-
-    private static IntPtr ShortcutCallback(int nCode, IntPtr wParam, IntPtr lParam) {
-        if (nCode >= 0 && (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)) {
-            int vkCode = Marshal.ReadInt32(lParam);
-            if (vkCode == _targetKeyCode) {
-                Console.WriteLine("HOTKEY_PRESSED");
-            }
-        }
-        return CallNextHookEx(_hookID, nCode, wParam, lParam);
-    }
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool UnhookWindowsHookEx(IntPtr hhk);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr GetModuleHandle(string lpModuleName);
 }
 
 public class Program {
@@ -148,18 +101,26 @@ public class Program {
                 bool res = GammaController.SetGamma(gamma, device);
                 Console.WriteLine(res ? "OK" : "ERROR");
             } else if (command == "reset" && args.Length >= 2) {
-                string device = args[1] == "default" ? null : args[1];
-                bool res = GammaController.SetGamma(1.0f, device);
-                Console.WriteLine(res ? "OK" : "ERROR");
+                if (args[1] == "all") {
+                    bool allRes = true;
+                    foreach (var s in Screen.AllScreens) {
+                        if (!GammaController.SetGamma(1.0f, s.DeviceName)) allRes = false;
+                    }
+                    Console.WriteLine(allRes ? "OK" : "ERROR");
+                } else {
+                    string device = args[1] == "default" ? null : args[1];
+                    bool res = GammaController.SetGamma(1.0f, device);
+                    Console.WriteLine(res ? "OK" : "ERROR");
+                }
             } else if (command == "displays") {
                 var screens = new List<string>();
                 foreach (var s in Screen.AllScreens) {
                     screens.Add("{\"DeviceName\":\"" + s.DeviceName.Replace("\\", "\\\\") + "\",\"Primary\":" + (s.Primary ? "true" : "false") + "}");
                 }
                 Console.WriteLine("[" + string.Join(",", screens.ToArray()) + "]");
-            } else if ((command == "shortcut" || command == "listen" || command == "hook") && args.Length >= 2) {
-                int vkCode = int.Parse(args[1]);
-                DisplayShortcutListener.Start(vkCode);
+            } else if (command == "shortcut" || command == "listen" || command == "hook") {
+                // Deprecated in favor of native OS RegisterHotKey in main app process
+                Console.WriteLine("OK");
             }
         } catch (Exception ex) {
             Console.WriteLine("EXCEPTION: " + ex.Message);

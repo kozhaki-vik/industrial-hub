@@ -34,7 +34,7 @@
    2. ТЁМНАЯ ТЕМА (Тёмный графит + СИНИЙ акцент #3154E1 вместо оранжевого)
    ========================================================================== */
 html.theme-dark,
-html.dark:not(.theme-discord) {
+html.dark:not(.theme-discord):not(.theme-custom) {
   --color-orange-50: #eff6ff;
   --color-orange-100: #dbeafe;
   --color-orange-200: #bfdbfe;
@@ -94,6 +94,15 @@ html.theme-discord .clan-manager-sidebar {
 html.theme-discord .clan-manager-sidebar button:not([class*="bg-blue-600"]):hover {
   background-color: #35373c;
   color: #dbdee1;
+}
+
+/* Стилизация Клан Менеджера в кастомной теме */
+html.theme-custom .clan-manager-container {
+  background-color: var(--color-slate-900);
+}
+
+html.theme-custom .clan-manager-sidebar {
+  background-color: var(--color-slate-950);
 }
 
 @layer base {

@@ -292,7 +292,7 @@ export default function LogsTab() {
                       <GroupIcon className="w-4 h-4" />
                     </div>
                     <span className="font-bold text-sm text-slate-900 dark:text-white">
-                      {t(`clan_logs_group_${group.id}`) || group.title}
+                      {t(`clan_logs_group_${group.id}`, typeof group.title === 'function' ? group.title() : group.title)}
                     </span>
                   </div>
                   <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
@@ -306,13 +306,15 @@ export default function LogsTab() {
                     const evSettings = logCfg.events?.[ev.key] || { enabled: true, channelId: '' };
                     const isEvEnabled = evSettings.enabled !== false;
                     const evChannelId = evSettings.channelId || '';
+                    const fallbackTitle = typeof ev.title === 'function' ? ev.title() : ev.title;
+                    const fallbackDesc = typeof ev.desc === 'function' ? ev.desc() : ev.desc;
 
                     return (
                       <LogEventRow
                         key={ev.key}
                         evKey={ev.key}
-                        title={t(`clan_logs_event_${ev.key}`) || ev.title}
-                        desc={t(`clan_logs_event_${ev.key}_desc`) || ev.desc}
+                        title={t(`clan_logs_event_${ev.key}`, fallbackTitle)}
+                        desc={t(`clan_logs_event_${ev.key}_desc`, fallbackDesc)}
                         isEnabled={isEvEnabled}
                         channelId={evChannelId}
                         defaultChName={defaultChName}

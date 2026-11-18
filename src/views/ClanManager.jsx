@@ -287,10 +287,10 @@ export function ToggleSwitch({
 const getLoggingEventGroups = (t) => [
   {
     id: 'members',
-    title: () => t('members_title'),
+    title: t('clan_logs_group_members', 'Участники сервера'),
     icon: Users,
     events: [
-      { key: 'member_join', title: () => t('member_join'), desc: t('clan_auto_170', 'Оповещение о входе нового участника на сервер') },
+      { key: 'member_join', title: t('clan_logs_event_member_join', 'Вход участника'), desc: t('clan_logs_event_member_join_desc', 'Оповещение о входе нового участника на сервер') },
       { key: 'member_leave', title: t('log_ev_member_leave_title', 'Выход участника'), desc: t('log_ev_member_leave_desc', 'Участник покинул сервер по собственному желанию') },
       { key: 'member_kick', title: t('log_ev_member_kick_title', 'Кик участника'), desc: t('log_ev_member_kick_desc', 'Участник был кикнут модератором (с указанием автора и причины)') },
       { key: 'member_ban', title: t('log_ev_member_ban_title', 'Бан участника'), desc: t('log_ev_member_ban_desc', 'Блокировка участника на сервере') },
@@ -3230,7 +3230,7 @@ export default function ClanManager() {
       title: t('clan_cfg_group_security', 'Модерация и логи'),
       tabs: [
         { id: 'moderation', label: t('clan_tab_moderation') || 'Модерация', icon: ShieldAlert },
-        { id: 'logs', label: t('clan_tab_logs') || 'Логирование', icon: ScrollText },
+        { id: 'logs', label: t('clan_tab_logs', 'Логирование и аудит'), icon: ScrollText },
       ]
     },
     {
@@ -4585,8 +4585,32 @@ const contextValue = {
             </div>
 
             {viewMode === 'clan' ? (
-              <div className="flex flex-col flex-1 min-h-0 justify-between">
-                <div className="space-y-1">
+              <div className="flex flex-col flex-1 min-h-0 space-y-2">
+                {/* Switch to Bot Configuration Button (Top) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('botConfig');
+                    if (!['general', 'roles', 'channels', 'permissions', 'moderation', 'logs', 'voice'].includes(activeTab)) {
+                      setActiveTab('general');
+                    }
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 mb-1 rounded-xl bg-slate-100/90 hover:bg-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 transition-all shadow-2xs group cursor-pointer"
+                  title={t('clan_btn_bot_config_tooltip', 'Перейти к технической настройке бота и сервера')}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                      <Settings className="w-4 h-4" />
+                    </div>
+                    <div className="text-left min-w-0">
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{t('clan_btn_bot_config', 'Настройки бота')}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{t('clan_btn_bot_config_desc', 'Роли, каналы, защита')}</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-200 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+
+                <div className="space-y-1 overflow-y-auto pr-1 scrollbar-thin flex-1">
                   <div className="hidden md:flex items-center justify-between px-3 py-1.5 mb-1 shrink-0">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       {t('clan_nav_clan_operations', 'Управление кланом')}
@@ -4641,32 +4665,6 @@ const contextValue = {
                       </button>
                     );
                   })}
-                </div>
-
-                {/* Bottom button: switch to bot configuration */}
-                <div className="pt-3 mt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setViewMode('botConfig');
-                      if (!['general', 'roles', 'channels', 'permissions', 'moderation', 'logs', 'voice'].includes(activeTab)) {
-                        setActiveTab('general');
-                      }
-                    }}
-                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-100/90 hover:bg-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 transition-all shadow-2xs group cursor-pointer"
-                    title={t('clan_btn_bot_config_tooltip', 'Перейти к технической настройке бота и сервера')}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                        <Settings className="w-4 h-4" />
-                      </div>
-                      <div className="text-left min-w-0">
-                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{t('clan_btn_bot_config', 'Настройки бота')}</div>
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{t('clan_btn_bot_config_desc', 'Роли, каналы, защита')}</div>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-200 group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </button>
                 </div>
               </div>
             ) : (

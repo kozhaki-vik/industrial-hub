@@ -1,6 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Keyboard, BookOpen, History, RefreshCcw, Save, Clock, Shield, AlertTriangle, Settings } from 'lucide-react';
+import {
+  ArrowLeft, Keyboard, BookOpen, History, RefreshCcw, Save, Clock, Shield, AlertTriangle, Settings,
+  Zap, Pickaxe, ArrowDown, Waves, Eye, Crosshair, Map, MousePointer, Ban, Skull, RotateCcw, LogOut,
+  Trash2, ShieldAlert, Activity, VolumeX, Volume2, MicOff, EyeOff, Maximize2, Droplets, HeartPulse,
+  Syringe, Search, X
+} from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { autoDetectRustPath } from '../services/rustPath';
@@ -10,6 +15,58 @@ import SuggestBindModal from '../components/SuggestBindModal';
 import FullKeyboard from '../components/FullKeyboard';
 import { showConfirm } from '../components/ConfirmModal';
 import { useNotification } from '../contexts/NotificationContext';
+
+const getColorClasses = (color) => {
+  const map = {
+    emerald: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500',
+    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-500',
+    indigo: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500',
+    red: 'bg-red-100 dark:bg-red-900/30 text-red-500',
+    rose: 'bg-rose-100 dark:bg-rose-900/30 text-rose-500',
+    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-500',
+    blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-500',
+    sky: 'bg-sky-100 dark:bg-sky-900/30 text-sky-500',
+    purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-500',
+    teal: 'bg-teal-100 dark:bg-teal-900/30 text-teal-500',
+    stone: 'bg-stone-100 dark:bg-stone-800 text-stone-500',
+    cyan: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-500',
+    orange: 'bg-orange-100 dark:bg-orange-900/30 text-orange-500',
+    violet: 'bg-violet-100 dark:bg-violet-900/30 text-violet-500',
+  };
+  return map[color] || 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500';
+};
+
+const getBindIcon = (icon) => {
+  switch (icon) {
+    case 'run': return <Zap className="w-5 h-5" />;
+    case 'pickaxe': return <Pickaxe className="w-5 h-5" />;
+    case 'crouch':
+    case 'arrow-down': return <ArrowDown className="w-5 h-5" />;
+    case 'waves': return <Waves className="w-5 h-5" />;
+    case 'zoom':
+    case 'eye': return <Eye className="w-5 h-5" />;
+    case 'crosshair': return <Crosshair className="w-5 h-5" />;
+    case 'map': return <Map className="w-5 h-5" />;
+    case 'cursor': return <MousePointer className="w-5 h-5" />;
+    case 'cancel': return <Ban className="w-5 h-5" />;
+    case 'skull': return <Skull className="w-5 h-5" />;
+    case 'respawn': return <RotateCcw className="w-5 h-5" />;
+    case 'log-out': return <LogOut className="w-5 h-5" />;
+    case 'trash': return <Trash2 className="w-5 h-5" />;
+    case 'shield': return <ShieldAlert className="w-5 h-5" />;
+    case 'activity': return <Activity className="w-5 h-5" />;
+    case 'volume-x': return <VolumeX className="w-5 h-5" />;
+    case 'volume-low': return <Volume2 className="w-5 h-5" />;
+    case 'mic-off': return <MicOff className="w-5 h-5" />;
+    case 'refresh-ccw': return <RefreshCcw className="w-5 h-5" />;
+    case 'monitor-off': return <EyeOff className="w-5 h-5" />;
+    case 'lookatradius': return <Maximize2 className="w-5 h-5" />;
+    case 'water': return <Droplets className="w-5 h-5" />;
+    case 'bandage': return <HeartPulse className="w-5 h-5" />;
+    case 'syringe': return <Syringe className="w-5 h-5" />;
+    default: return <BookOpen className="w-5 h-5" />;
+  }
+};
 
 export default function Binds() {
   const { t } = useTranslation();
@@ -27,6 +84,7 @@ export default function Binds() {
   const [highlightEmpty, setHighlightEmpty] = React.useState(false);
   const [manualBindKey, setManualBindKey] = React.useState(null);
   const [manualBindCommand, setManualBindCommand] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   const loadBinds = React.useCallback(async () => {
     if (rustPath) {
@@ -238,19 +296,33 @@ export default function Binds() {
     }
     
     if (activeTab === 'catalog') {
-      const shortBinds = bindSignatures.filter(item => !item.isLong);
-      const longBinds = bindSignatures.filter(item => item.isLong);
+      const filteredBinds = bindSignatures.filter(item => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        const title = (t('bind_sig_' + item.id, item.name) || '').toLowerCase();
+        const desc = (t('bind_desc_' + item.id, item.desc) || '').toLowerCase();
+        const cmd = (item.command || '').toLowerCase();
+        return title.includes(q) || desc.includes(q) || cmd.includes(q);
+      });
+
+      const shortBinds = filteredBinds.filter(item => !item.isLong);
+      const longBinds = filteredBinds.filter(item => item.isLong);
 
       const renderBindCard = (item, i) => (
         <div key={item.id || i} className="flex flex-col bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 transition-colors group shadow-sm">
           <div className="flex items-center gap-3 mb-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${item.color}-100 dark:bg-${item.color}-900/30 text-${item.color}-500 shrink-0`}>
-              <BookOpen className="w-5 h-5" />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getColorClasses(item.color)} shrink-0`}>
+              {getBindIcon(item.icon)}
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate" title={t('bind_sig_' + item.id, item.name)}>
                 {t('bind_sig_' + item.id, item.name)}
               </h4>
+              {item.desc && (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5" title={t('bind_desc_' + item.id, item.desc)}>
+                  {t('bind_desc_' + item.id, item.desc)}
+                </p>
+              )}
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 mb-4 overflow-x-auto whitespace-nowrap border border-slate-100 dark:border-slate-800/60">
@@ -267,47 +339,77 @@ export default function Binds() {
 
       return (
         <div className="mb-6 space-y-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl gap-4 shadow-sm">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('binds_suggest_title', 'Хотите добавить свой бинд в каталог?')}</p>
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl gap-4 shadow-sm">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('binds_search_ph', 'Поиск бинда...')}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-9 py-2 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <button 
               onClick={() => setIsSuggestModalOpen(true)}
-              className="px-5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl text-sm font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
+              className="px-5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl text-sm font-bold transition-all shadow-sm w-full sm:w-auto shrink-0 cursor-pointer text-center"
             >
               {t('suggest_bind_title', 'Предложить свой бинд')}
             </button>
           </div>
 
-          {/* Короткие бинды (3 колонки) */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
-                {t('binds_cat_short', 'Короткие бинды')}
-              </h3>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                {shortBinds.length}
-              </span>
+          {filteredBinds.length === 0 ? (
+            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+              <Search className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium">{t('binds_not_found', 'Ничего не найдено по вашему запросу')}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {shortBinds.map(renderBindCard)}
-            </div>
-          </div>
+          ) : (
+            <>
+              {/* Короткие бинды (3 колонки) */}
+              {shortBinds.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                      {t('binds_cat_short', 'Короткие бинды')}
+                    </h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      {shortBinds.length}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {shortBinds.map(renderBindCard)}
+                  </div>
+                </div>
+              )}
 
-          {/* Длинные бинды (2 колонки) */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
-                {t('binds_cat_long', 'Длинные бинды')}
-              </h3>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                {longBinds.length}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {longBinds.map(renderBindCard)}
-            </div>
-          </div>
+              {/* Длинные бинды (2 колонки) */}
+              {longBinds.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                    <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                      {t('binds_cat_long', 'Длинные бинды')}
+                    </h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      {longBinds.length}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {longBinds.map(renderBindCard)}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       );
     }

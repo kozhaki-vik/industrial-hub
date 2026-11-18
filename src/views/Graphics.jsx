@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, MonitorPlay, CheckCircle, Save, Shield, Clock, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getConfigKey, setConfigKey } from '../services/store';
-import { applyGraphicsPreset, getGraphicsBackups, createGraphicsBackup, restoreGraphicsBackup, ensureOriginalGraphicsBackup } from '../services/configManager';
+import { autoDetectRustPath } from '../services/rustPath';
+import { applyGraphicsPreset, getGraphicsBackups, createGraphicsBackup, restoreGraphicsBackup, ensureOriginalGraphicsBackup, isRustRunning } from '../services/configManager';
 import SupportTicketModal from '../components/SupportTicketModal';
 import { showConfirm } from '../components/ConfirmModal';
 import { useNotification } from '../contexts/NotificationContext';
@@ -12,7 +13,7 @@ export default function Graphics() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { addNotification } = useNotification();
-  const rustPath = getConfigKey('rustPath');
+  const [rustPath, setRustPath] = React.useState(getConfigKey('rustPath') || '');
   const [activePreset, setActivePreset] = React.useState(getConfigKey('activeGraphicsPreset') || 'Custom');
   const [activeTab, setActiveTab] = React.useState('presets'); // presets, backups
   const [backups, setBackups] = React.useState([]);
@@ -26,14 +27,28 @@ export default function Graphics() {
   }, [rustPath]);
 
   React.useEffect(() => {
-    if (rustPath) {
+    let mounted = true;
+    if (!rustPath) {
+      autoDetectRustPath().then((detected) => {
+        if (mounted && detected) {
+          setRustPath(detected);
+          setConfigKey('rustPath', detected);
+        }
+      });
+    } else {
       loadBackups();
     }
+    return () => { mounted = false; };
   }, [rustPath, loadBackups]);
 
   const handleApplyPreset = async (preset) => {
     if (!rustPath) {
       addNotification(t('error_rust_path_desc'), 'error');
+      return;
+    }
+
+    if (await isRustRunning()) {
+      addNotification(t('rust_running_error'), 'error');
       return;
     }
     
@@ -81,6 +96,8 @@ export default function Graphics() {
       const result = await restoreGraphicsBackup(filename);
       if (result.success) {
         loadBackups();
+        setActivePreset('Custom');
+        setConfigKey('activeGraphicsPreset', 'Custom');
         addNotification(t('graphics_backup_restored'), 'success');
       } else if (result.error === 'rust_running') {
         addNotification(t('rust_running_error'), 'error');

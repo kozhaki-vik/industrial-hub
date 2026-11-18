@@ -6,11 +6,15 @@ import {
 } from 'lucide-react';
 import { DEFAULT_ADS_BANNER, normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
+import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
 
 export default function AdsTab() {
   const {
     t,
     config,
+    setConfig,
+    discordInfo,
+    sendProxyAction,
     queueAutoSave,
     saveConfig,
     isFullScreenWindow,
@@ -127,8 +131,63 @@ export default function AdsTab() {
 
   const isServerHosted = Boolean(aConfig.banner && aConfig.banner.includes('/uploads/banners/'));
 
+  const handlePublishOrMoveAds = useCallback(async (targetChannelId) => {
+    if (typeof sendProxyAction === 'function') {
+      const res = await sendProxyAction('publish_or_move_panel', {
+        panelType: 'ads',
+        targetChannelId
+      });
+      if (res?.success) {
+        if (res.config && typeof setConfig === 'function') {
+          setConfig(res.config);
+        } else {
+          updateAConfig('channelId', targetChannelId, true);
+        }
+        return { success: true };
+      }
+      return { success: false, error: res?.error };
+    }
+    return { success: false, error: 'Proxy action not available' };
+  }, [sendProxyAction, setConfig, updateAConfig]);
+
+  const handleSyncAds = useCallback(async () => {
+    if (typeof sendProxyAction === 'function') {
+      await sendProxyAction('sync_panel', { panelType: 'ads' });
+    }
+  }, [sendProxyAction]);
+
+  const handleDeleteAds = useCallback(async () => {
+    if (typeof sendProxyAction === 'function') {
+      const res = await sendProxyAction('delete_panel', { panelType: 'ads' });
+      if (res?.success) {
+        if (res.config && typeof setConfig === 'function') {
+          setConfig(res.config);
+        } else {
+          const newAc = { ...aConfig, channelId: null, messageId: null };
+          const updated = { ...config, adConfigJson: JSON.stringify(newAc) };
+          queueAutoSave(updated, true);
+        }
+      }
+    }
+  }, [sendProxyAction, setConfig, aConfig, config, queueAutoSave]);
+
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl">
+      {/* Discord Advertising Panel Channel Status & Manager */}
+      <DiscordPanelChannelBar
+        title={t('clan_ads_panel_title', 'Панель рекламы и партнерства')}
+        channelId={aConfig?.channelId}
+        messageId={aConfig?.messageId}
+        discordChannels={discordInfo?.channels || []}
+        onPublishOrMove={handlePublishOrMoveAds}
+        onSync={handleSyncAds}
+        onDelete={handleDeleteAds}
+        activeDesc={t('clan_ads_panel_active_desc', 'Пользователи могут оставлять заявки на платную рекламу и взаимное партнерство.')}
+        promptText={t('clan_ads_panel_prompt', 'Выберите канал для публикации панели рекламы и партнерства. При смене канала бот удалит старую панель.')}
+        icon={Megaphone}
+        accentColor="purple"
+      />
+
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
           <Megaphone className="w-5 h-5 mr-2 text-blue-500" />

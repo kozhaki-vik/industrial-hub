@@ -53,6 +53,24 @@ export default function Conveyors() {
     }
     return cat?.label || '';
   }, [t]);
+
+  const getConveyorTitle = useCallback((tpl) => {
+    if (!tpl) return '';
+    const def = defaultConveyors.find(d => d.id === tpl.id);
+    if (lang === 'en') {
+      if (def && def.titleEn && (!tpl.titleEn || tpl.titleEn === tpl.title)) {
+        return def.titleEn;
+      }
+      return tpl.titleEn || (def && def.titleEn) || tpl.title || '';
+    }
+    if (lang === 'ua') {
+      if (def && def.titleUa && (!tpl.titleUa || tpl.titleUa === tpl.title)) {
+        return def.titleUa;
+      }
+      return tpl.titleUa || (def && def.titleUa) || tpl.title || '';
+    }
+    return tpl.title || (def && def.title) || '';
+  }, [lang]);
   
   const [conveyors, setConveyors] = useState([]);
   const [customCategories, setCustomCategories] = useState([]);
@@ -81,6 +99,26 @@ export default function Conveyors() {
     if (!hasDefaults && defaultConveyors && defaultConveyors.length > 0) {
       savedConveyors = [...defaultConveyors, ...savedConveyors];
       setConfigKey('conveyorTemplates', savedConveyors);
+    } else {
+      // Synchronize/upgrade default templates with updated translations
+      let migrated = false;
+      savedConveyors = savedConveyors.map(c => {
+        const def = defaultConveyors.find(d => d.id === c.id);
+        if (def) {
+          if (!c.titleUa || c.titleEn === c.title || !c.titleEn || c.titleEn !== def.titleEn || c.titleUa !== def.titleUa) {
+            migrated = true;
+            return {
+              ...c,
+              titleEn: def.titleEn,
+              titleUa: def.titleUa
+            };
+          }
+        }
+        return c;
+      });
+      if (migrated) {
+        setConfigKey('conveyorTemplates', savedConveyors);
+      }
     }
     
     setConveyors(savedConveyors);
@@ -211,17 +249,44 @@ export default function Conveyors() {
     }
   };
 
-  const handleImportTemplates = async () => {
+  const handleImportTemplates = async (mode = 'merge') => {
     if (!importCode.trim()) return;
     try {
       setImportError('');
       const res = await fetch(`https://industrial-hub.duckdns.org/api/conveyors/share/${importCode.trim()}`);
       const data = await res.json();
       if (data.success) {
-        setConveyors(data.templates || []);
-        setCustomCategories(data.categories || []);
-        setConfigKey('conveyorTemplates', data.templates || []);
-        setConfigKey('conveyorCategories', data.categories || []);
+        const importedTemplates = data.templates || [];
+        const importedCategories = data.categories || [];
+
+        if (mode === 'merge') {
+          // Merge categories: add missing categories
+          const existingCatIds = new Set(customCategories.map(c => c.id));
+          const newCats = importedCategories.filter(c => !existingCatIds.has(c.id));
+          const mergedCats = [...customCategories, ...newCats];
+
+          // Merge templates: if template with same id exists, give it a new id
+          const existingTplIds = new Set(conveyors.map(c => c.id));
+          const preparedImported = importedTemplates.map(tpl => {
+            if (existingTplIds.has(tpl.id)) {
+              return { ...tpl, id: `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 7)}` };
+            }
+            return tpl;
+          });
+          const mergedTpls = [...conveyors, ...preparedImported];
+
+          setConveyors(mergedTpls);
+          setCustomCategories(mergedCats);
+          setConfigKey('conveyorTemplates', mergedTpls);
+          setConfigKey('conveyorCategories', mergedCats);
+        } else {
+          // Complete replacement
+          setConveyors(importedTemplates);
+          setCustomCategories(importedCategories);
+          setConfigKey('conveyorTemplates', importedTemplates);
+          setConfigKey('conveyorCategories', importedCategories);
+        }
+
         setIsImportModalOpen(false);
         setImportCode('');
         addNotification(t('convImportSuccess', 'Успешно применено!'), 'success');
@@ -237,10 +302,12 @@ export default function Conveyors() {
 
   const filteredConveyors = useMemo(() => {
     let filtered = conveyors.filter(c => {
-      const titleStr = (lang === 'en' && c.titleEn) ? c.titleEn : (c.title || '');
-      const matchesSearch = titleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const currentTitle = getConveyorTitle(c);
+      const matchesSearch = !searchQuery ||
+                           currentTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (c.title && c.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
                            (c.titleEn && c.titleEn.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                           (c.title && c.title.toLowerCase().includes(searchQuery.toLowerCase()));
+                           (c.titleUa && c.titleUa.toLowerCase().includes(searchQuery.toLowerCase()));
 
       if (activeCategory === 'popular') {
         return matchesSearch && (c.copyCount > 0);
@@ -262,7 +329,7 @@ export default function Conveyors() {
     } else {
       return filtered.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
     }
-  }, [conveyors, searchQuery, activeCategory, customCategories, lang]);
+  }, [conveyors, searchQuery, activeCategory, customCategories, getConveyorTitle]);
 
   return (
     <div className="space-y-6 animate-main-fade-in h-full flex flex-col relative">
@@ -414,7 +481,7 @@ export default function Conveyors() {
                               <div className="flex-1 flex flex-col min-w-0">
                                 <div className="flex items-center gap-2 mb-3">
                                   <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 truncate">
-                                    {(lang === 'en' && tpl.titleEn) ? tpl.titleEn : tpl.title}
+                                    {getConveyorTitle(tpl)}
                                   </h3>
                                   {tpl.isFavorite && <Star className="w-5 h-5 text-orange-500 fill-orange-500 flex-shrink-0" />}
                                 </div>
@@ -739,15 +806,15 @@ export default function Conveyors() {
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 p-6" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">{t('convImportTitle', 'Импорт шаблонов')}</h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
-              {t('convImportDesc', 'Введите 6-значный код, чтобы загрузить чужие шаблоны. Внимание: ваши текущие шаблоны будут заменены!')}
+              {t('convImportDesc', 'Введите 6-значный код, чтобы загрузить чужие шаблоны. Вы можете объединить их со своими или полностью заменить.')}
             </p>
             <input 
               type="text"
               maxLength={6}
-              className="w-full text-center text-2xl font-mono tracking-widest py-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-orange-500 transition-colors mb-2 uppercase"
+              className="w-full text-center text-2xl font-mono tracking-widest py-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-orange-500 transition-colors mb-2"
               placeholder="12QWqw"
               value={importCode}
-              onChange={e => setImportCode(e.target.value)}
+              onChange={e => setImportCode(e.target.value.trim())}
             />
             {importError && (
               <p className="text-red-500 text-xs mb-4 text-center">{importError}</p>
@@ -755,14 +822,24 @@ export default function Conveyors() {
             <div className="flex flex-col gap-2 mt-2">
               <button 
                 className="w-full py-2 px-4 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
-                onClick={handleImportTemplates}
-                disabled={importCode.length < 6}
+                onClick={() => handleImportTemplates('merge')}
+                disabled={importCode.trim().length < 6}
               >
-                {t('convImportBtn', 'Импортировать')}
+                {t('convRestoreMerge', 'Объединить (добавить к моим)')}
               </button>
               <button 
-                className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                onClick={() => setIsImportModalOpen(false)}
+                className="w-full py-2 px-4 bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-500 rounded-lg font-medium hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                onClick={() => handleImportTemplates('replace')}
+                disabled={importCode.trim().length < 6}
+              >
+                {t('convRestoreReplace', 'Полностью заменить')}
+              </button>
+              <button 
+                className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mt-1"
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setImportError('');
+                }}
               >
                 {t('cancel', 'Отмена')}
               </button>

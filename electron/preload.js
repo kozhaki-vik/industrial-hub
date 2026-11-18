@@ -41,7 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gamma: {
     getDisplays: () => ipcRenderer.invoke('gamma:getDisplays'),
     setDisplayGamma: (brightness, deviceName) => ipcRenderer.invoke('gamma:setDisplayGamma', brightness, deviceName),
-    registerShortcut: (vkCode) => ipcRenderer.invoke('gamma:registerShortcut', vkCode),
+    registerShortcut: (shortcut) => ipcRenderer.invoke('gamma:registerShortcut', shortcut),
     unregisterShortcut: () => ipcRenderer.invoke('gamma:unregisterShortcut'),
     onHotkey: (callback) => {
       const wrapped = () => callback();

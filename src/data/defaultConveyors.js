@@ -63,12 +63,14 @@ export const defaultConveyors = [
     ],
     "isFavorite": false,
     "sortOrder": 0,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleEn": "AK-47",
+    "titleUa": "AK-47"
   },
   {
     "id": "1780496609952",
     "title": "Top Guns",
-    "titleEn": "Top Guns",
+    "titleEn": "Top Tier Weapons",
     "categoryId": "weapons",
     "isFavorite": false,
     "items": [
@@ -124,12 +126,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 2,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Топ зброя"
   },
   {
     "id": "1780496609953",
     "title": "Берданка",
-    "titleEn": "Берданка",
+    "titleEn": "Semi-Automatic Rifle (SAR)",
     "categoryId": "weapons",
     "isFavorite": false,
     "items": [
@@ -140,12 +143,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 1,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Берданка (SAR)"
   },
   {
     "id": "1780496609954",
     "title": "SMG",
-    "titleEn": "SMG",
+    "titleEn": "SMGs",
     "categoryId": "weapons",
     "isFavorite": false,
     "items": [
@@ -166,12 +170,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 3,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Пістолети-кулемети (SMG)"
   },
   {
     "id": "1780496609955",
     "title": "Маска, куртка, нагрудник",
-    "titleEn": "Маска, куртка, нагрудник",
+    "titleEn": "Metal Facemask, Jacket, Chestplate",
     "categoryId": "clothing",
     "isFavorite": false,
     "items": [
@@ -192,12 +197,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 4,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Маска, куртка, нагрудник"
   },
   {
     "id": "1780496609956",
     "title": "Килт, ботинки",
-    "titleEn": "Килт, ботинки",
+    "titleEn": "Roadsign Kilt, Boots",
     "categoryId": "clothing",
     "isFavorite": false,
     "items": [
@@ -213,12 +219,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 5,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Кілт, черевики"
   },
   {
     "id": "1780496609957",
     "title": "Худи, перчатки, штаны, кевлар(штаны, рубашка)",
-    "titleEn": "Худи, перчатки, штаны, кевлар(штаны, рубашка)",
+    "titleEn": "Hoodie, Gloves, Pants, Underwear",
     "categoryId": "clothing",
     "isFavorite": false,
     "items": [
@@ -244,12 +251,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 6,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Худі, рукавички, штани, кевлар"
   },
   {
     "id": "1780496609958",
     "title": "Рюкзаки, джагеры, кофейки и т.д.",
-    "titleEn": "Рюкзаки, джагеры, кофейки и т.д.",
+    "titleEn": "Backpacks, Heavy Armor, Coffee Cans etc.",
     "categoryId": "clothing",
     "isFavorite": false,
     "items": [
@@ -330,12 +338,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 7,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Рюкзаки, важка броня, кавники тощо"
   },
   {
     "id": "1780496609959",
     "title": "Хазик",
-    "titleEn": "Хазик",
+    "titleEn": "Hazmat Suit",
     "categoryId": "clothing",
     "isFavorite": false,
     "items": [
@@ -346,12 +355,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 8,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Хазмат"
   },
   {
     "id": "1780496609960",
     "title": "Порох",
-    "titleEn": "Порох",
+    "titleEn": "Gunpowder",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -362,12 +372,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 9,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Порох"
   },
   {
     "id": "1780496609961",
     "title": "Топливо",
-    "titleEn": "Топливо",
+    "titleEn": "Low Grade Fuel & Oil",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -393,12 +404,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 10,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Паливо та нафта"
   },
   {
     "id": "1780496609962",
     "title": "Ткань и т.д.",
-    "titleEn": "Ткань и т.д.",
+    "titleEn": "Cloth, Leather & Scrap",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -434,12 +446,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 11,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Тканина, шкіра, скрап"
   },
   {
     "id": "1780496609963",
     "title": "5.56 Патроны",
-    "titleEn": "5.56 Патроны",
+    "titleEn": "5.56 Rifle Ammo",
     "categoryId": "ammo",
     "isFavorite": false,
     "items": [
@@ -460,12 +473,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 12,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "5.56 Набої"
   },
   {
     "id": "1780496609964",
     "title": "Остальные патроны",
-    "titleEn": "Остальные патроны",
+    "titleEn": "Pistol & Shotgun Ammo",
     "categoryId": "ammo",
     "isFavorite": false,
     "items": [
@@ -506,12 +520,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 13,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Пістолетні та дробові набої"
   },
   {
     "id": "1780496609965",
     "title": "Карточки",
-    "titleEn": "Карточки",
+    "titleEn": "Keycards",
     "categoryId": "misc_category",
     "isFavorite": false,
     "items": [
@@ -532,12 +547,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 14,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Картки доступу"
   },
   {
     "id": "1780496609966",
     "title": "Электрика",
-    "titleEn": "Электрика",
+    "titleEn": "SAM Site & Defense",
     "categoryId": "misc_category",
     "isFavorite": false,
     "items": [
@@ -558,12 +574,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 15,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "ППО та турелі"
   },
   {
     "id": "1780496609967",
     "title": "Конструкции",
-    "titleEn": "Конструкции",
+    "titleEn": "Structures & Deployables",
     "categoryId": "misc_category",
     "isFavorite": false,
     "items": [
@@ -669,12 +686,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 16,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Конструкції та меблі"
   },
   {
     "id": "1780496609968",
     "title": "Инструменты",
-    "titleEn": "Инструменты",
+    "titleEn": "Tools",
     "categoryId": "misc_category",
     "isFavorite": false,
     "items": [
@@ -705,12 +723,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 17,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Інструменти"
   },
   {
     "id": "1780496609969",
     "title": "Компоненты на ткань",
-    "titleEn": "Компоненты на ткань",
+    "titleEn": "Cloth Components",
     "categoryId": "components",
     "isFavorite": false,
     "items": [
@@ -731,12 +750,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 18,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Компоненти на тканину"
   },
   {
     "id": "1780496609970",
     "title": "Камеры, ноуты, микросхемы",
-    "titleEn": "Камеры, ноуты, микросхемы",
+    "titleEn": "CCTV, Computers, Tech Trash",
     "categoryId": "components",
     "isFavorite": false,
     "items": [
@@ -757,12 +777,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 19,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Камери, ноути, мікросхеми"
   },
   {
     "id": "1780496609971",
     "title": "Трубы",
-    "titleEn": "Трубы",
+    "titleEn": "Metal Pipes",
     "categoryId": "components",
     "isFavorite": false,
     "items": [
@@ -773,12 +794,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 20,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Металеві труби"
   },
   {
     "id": "1780496609972",
     "title": "Бадики",
-    "titleEn": "Бадики",
+    "titleEn": "Weapon Bodies",
     "categoryId": "components",
     "isFavorite": false,
     "items": [
@@ -799,12 +821,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 21,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Корпуси зброї"
   },
   {
     "id": "1780496609973",
     "title": "Листовой металл, пружины, шестерни",
-    "titleEn": "Листовой металл, пружины, шестерни",
+    "titleEn": "Sheet Metal, Springs, Gears",
     "categoryId": "components",
     "isFavorite": false,
     "items": [
@@ -825,12 +848,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 22,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Листовий метал, пружини, шестерні"
   },
   {
     "id": "1780496609974",
     "title": "Дорожные знаки, лезвия, фьюзы",
-    "titleEn": "Дорожные знаки, лезвия, фьюзы",
+    "titleEn": "Road Signs, Blades, Fuses",
     "categoryId": "components",
     "isFavorite": false,
     "items": [
@@ -851,12 +875,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 23,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Дорожні знаки, леза, запобіжники"
   },
   {
     "id": "1780496609975",
     "title": "Говно взрывка + Миномет и снаряды",
-    "titleEn": "Говно взрывка + Миномет и снаряды",
+    "titleEn": "Low-Tier Explosives & Grenades",
     "categoryId": "explosives",
     "isFavorite": false,
     "items": [
@@ -907,12 +932,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 24,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Проста вибухівка та гранати"
   },
   {
     "id": "1780496609976",
     "title": "Скорки",
-    "titleEn": "Скорки",
+    "titleEn": "HV Rockets",
     "categoryId": "explosives",
     "isFavorite": false,
     "items": [
@@ -923,12 +949,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 25,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Швидкісні ракети (HV)"
   },
   {
     "id": "1780496609977",
     "title": "Зажиги",
-    "titleEn": "Зажиги",
+    "titleEn": "Incendiary Rockets",
     "categoryId": "explosives",
     "isFavorite": false,
     "items": [
@@ -939,12 +966,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 26,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Запалювальні ракети"
   },
   {
     "id": "1780496609978",
     "title": "Ракеты",
-    "titleEn": "Ракеты",
+    "titleEn": "Basic Rockets",
     "categoryId": "explosives",
     "isFavorite": false,
     "items": [
@@ -955,12 +983,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 27,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Звичайні ракети"
   },
   {
     "id": "1780496609979",
     "title": "Млрс + модули млрс",
-    "titleEn": "Млрс + модули млрс",
+    "titleEn": "MLRS Rockets & Modules",
     "categoryId": "explosives",
     "isFavorite": false,
     "items": [
@@ -976,12 +1005,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 28,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "MLRS ракети та модулі"
   },
   {
     "id": "1780496609980",
     "title": "Сишки, экспа, разрыва",
-    "titleEn": "Сишки, экспа, разрыва",
+    "titleEn": "C4, Explosives & Exp Ammo",
     "categoryId": "explosives",
     "isFavorite": false,
     "items": [
@@ -1002,12 +1032,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 29,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "C4, вибухівка, розривні набої"
   },
   {
     "id": "1780496609981",
     "title": "Базуки и т.д.",
-    "titleEn": "Базуки и т.д.",
+    "titleEn": "Rocket Launchers",
     "categoryId": "explosives",
     "isFavorite": false,
     "items": [
@@ -1028,12 +1059,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 30,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Ракетниці та гранатомети"
   },
   {
     "id": "1780496609982",
     "title": "Дерево",
-    "titleEn": "Дерево",
+    "titleEn": "Wood",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -1044,12 +1076,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 31,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Дерево"
   },
   {
     "id": "1780496609983",
     "title": "Камни",
-    "titleEn": "Камни",
+    "titleEn": "Stones",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -1060,22 +1093,24 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 32,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Каміння"
   },
   {
     "id": "1780496609984",
     "title": "Еда",
-    "titleEn": "Еда",
+    "titleEn": "Food",
     "categoryId": "food",
     "isFavorite": false,
     "items": [],
     "sortOrder": 33,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Їжа"
   },
   {
     "id": "1780496609985",
     "title": "Метал",
-    "titleEn": "Метал",
+    "titleEn": "Metal Fragments",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -1086,12 +1121,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 34,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Метал"
   },
   {
     "id": "1780496609986",
     "title": "МВК",
-    "titleEn": "МВК",
+    "titleEn": "High Quality Metal (HQM)",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -1102,7 +1138,8 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 35,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "МВК (Високоякісний метал)"
   },
   {
     "id": "1780496609987",
@@ -1124,12 +1161,14 @@ export const defaultConveyors = [
     ],
     "isFavorite": false,
     "sortOrder": 36,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleEn": "Medical & Healing",
+    "titleUa": "Медикаменти та лікування"
   },
   {
     "id": "1780496609988",
     "title": "Руда",
-    "titleEn": "Руда",
+    "titleEn": "Ores",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -1150,12 +1189,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 37,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Руда"
   },
   {
     "id": "1780496609989",
     "title": "Сера",
-    "titleEn": "Сера",
+    "titleEn": "Sulfur",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -1166,12 +1206,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 38,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Сірка"
   },
   {
     "id": "1780496609990",
     "title": "Уголь",
-    "titleEn": "Уголь",
+    "titleEn": "Charcoal",
     "categoryId": "resources",
     "isFavorite": false,
     "items": [
@@ -1182,12 +1223,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 39,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Вугілля"
   },
   {
     "id": "1780496609991",
     "title": "Говно Оружие",
-    "titleEn": "Говно Оружие",
+    "titleEn": "Secondary Weapons / Shotguns & Pistols",
     "categoryId": "weapons",
     "isFavorite": false,
     "items": [
@@ -1238,12 +1280,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 40,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Другорядна зброя / Дробовики та пістолети"
   },
   {
     "id": "1780496609992",
     "title": "Модули",
-    "titleEn": "Модули",
+    "titleEn": "Weapon Attachments",
     "categoryId": "weapons",
     "isFavorite": false,
     "items": [
@@ -1304,12 +1347,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 41,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Збройові модулі"
   },
   {
     "id": "1780496609993",
     "title": "Пластины",
-    "titleEn": "Пластины",
+    "titleEn": "Armor Inserts",
     "categoryId": "clothing",
     "isFavorite": false,
     "items": [
@@ -1335,12 +1379,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 42,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Бронепластини"
   },
   {
     "id": "1780496609994",
     "title": "Буферный ящик для локеров",
-    "titleEn": "Буферный ящик для локеров",
+    "titleEn": "Locker Buffer Box",
     "categoryId": "auto_locker",
     "isFavorite": false,
     "items": [
@@ -1396,12 +1441,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 43,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Буферний ящик для локерів"
   },
   {
     "id": "1780496609995",
     "title": "Локеры",
-    "titleEn": "Локеры",
+    "titleEn": "Lockers",
     "categoryId": "auto_locker",
     "isFavorite": false,
     "items": [
@@ -1457,12 +1503,13 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 44,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Локери"
   },
   {
     "id": "1780496609996",
     "title": "Ящик для всего",
-    "titleEn": "Ящик для всего",
+    "titleEn": "Drop Box (All Items)",
     "categoryId": "misc_category",
     "isFavorite": false,
     "items": [
@@ -1518,7 +1565,8 @@ export const defaultConveyors = [
       }
     ],
     "sortOrder": 45,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleUa": "Ящик для всього"
   },
   {
     "id": "1780496609997",
@@ -1653,6 +1701,8 @@ export const defaultConveyors = [
     ],
     "isFavorite": false,
     "sortOrder": 46,
-    "copyCount": 0
+    "copyCount": 0,
+    "titleEn": "Garage Box",
+    "titleUa": "Ящик у гаражі"
   }
 ];

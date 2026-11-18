@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { RosterSkeleton } from '../../components/Skeleton';
 import { showConfirm } from '../../components/ConfirmModal';
+import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
 
 const ROLE_KEYS = [
   'leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId',
@@ -392,6 +393,8 @@ const HistoryTableRow = React.memo(function HistoryTableRow({
 export default function RosterTab() {
   const {
     config,
+    setConfig,
+    autoSaveConfig,
     rosterData,
     setRosterData,
     dossiersData,
@@ -409,6 +412,75 @@ export default function RosterTab() {
     getCachedMemberMeta,
     t
   } = useContext(ClanManagerContext);
+
+  const rosterChannelId = useMemo(() => {
+    try {
+      if (config?.channelsConfigJson) {
+        const parsed = typeof config.channelsConfigJson === 'string'
+          ? JSON.parse(config.channelsConfigJson)
+          : config.channelsConfigJson;
+        return parsed.roster || parsed.dynamicRosterChannel || null;
+      }
+    } catch {}
+    return null;
+  }, [config?.channelsConfigJson]);
+
+  const handlePublishOrMoveRoster = useCallback(async (targetChannelId) => {
+    if (typeof sendProxyAction === 'function') {
+      const res = await sendProxyAction('publish_or_move_roster', { targetChannelId });
+      if (res?.success) {
+        if (res.config && typeof setConfig === 'function') {
+          setConfig(res.config);
+        } else {
+          let chCfg = {};
+          try {
+            if (config?.channelsConfigJson) {
+              chCfg = typeof config.channelsConfigJson === 'string'
+                ? JSON.parse(config.channelsConfigJson)
+                : config.channelsConfigJson;
+            }
+          } catch {}
+          chCfg.roster = targetChannelId;
+          chCfg.dynamicRosterChannel = targetChannelId;
+          const updated = { ...config, channelsConfigJson: JSON.stringify(chCfg) };
+          if (typeof autoSaveConfig === 'function') autoSaveConfig(updated);
+        }
+        return { success: true };
+      }
+      return { success: false, error: res?.error };
+    }
+    return { success: false, error: 'Proxy not available' };
+  }, [sendProxyAction, config, setConfig, autoSaveConfig]);
+
+  const handleSyncRoster = useCallback(async () => {
+    if (typeof sendProxyAction === 'function') {
+      await sendProxyAction('sync_panel', { panelType: 'roster' });
+    }
+  }, [sendProxyAction]);
+
+  const handleDeleteRoster = useCallback(async () => {
+    if (typeof sendProxyAction === 'function') {
+      const res = await sendProxyAction('delete_roster');
+      if (res?.success) {
+        if (res.config && typeof setConfig === 'function') {
+          setConfig(res.config);
+        } else {
+          let chCfg = {};
+          try {
+            if (config?.channelsConfigJson) {
+              chCfg = typeof config.channelsConfigJson === 'string'
+                ? JSON.parse(config.channelsConfigJson)
+                : config.channelsConfigJson;
+            }
+          } catch {}
+          delete chCfg.roster;
+          delete chCfg.dynamicRosterChannel;
+          const updated = { ...config, channelsConfigJson: JSON.stringify(chCfg) };
+          if (typeof autoSaveConfig === 'function') autoSaveConfig(updated);
+        }
+      }
+    }
+  }, [sendProxyAction, config, setConfig, autoSaveConfig]);
 
   const [rosterViewMode, setRosterViewMode] = useState('active'); // 'active' | 'archive'
   const [archiveFilter, setArchiveFilter] = useState('ALL'); // 'ALL' | 'LEFT' | 'KICKED' | 'BLACKLISTED' | 'ACTIVE'
@@ -766,6 +838,23 @@ export default function RosterTab() {
 
   return (
     <div className="w-full space-y-5 animate-main-fade-in">
+      {/* Discord Dynamic Roster Channel Status & Manager */}
+      {rosterViewMode === 'active' && (
+        <DiscordPanelChannelBar
+          title={t('clan_roster_channel_title', 'Канал динамического состава')}
+          channelId={rosterChannelId}
+          discordChannels={discordInfo?.channels || []}
+          onPublishOrMove={handlePublishOrMoveRoster}
+          onSync={handleSyncRoster}
+          onDelete={handleDeleteRoster}
+          activeDesc={t('clan_roster_channel_active_desc', 'Бот автоматически обновляет карточки активных участников клана в реальном времени.')}
+          promptText={t('clan_roster_channel_prompt', 'Выберите канал, в котором бот будет публиковать и обновлять карточки участников клана. При смене канала бот автоматически удалит карточки из прежнего канала.')}
+          deleteConfirmDesc={t('clan_roster_delete_confirm_desc', 'Вы уверены, что хотите удалить карточки состава из Discord? Сообщения участников будут удалены из канала.')}
+          icon={UserCheck}
+          accentColor="blue"
+        />
+      )}
+
       {/* Top Header & Metrics Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>

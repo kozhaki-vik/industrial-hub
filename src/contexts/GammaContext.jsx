@@ -1,9 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import { setDisplayGamma, resetDisplayGamma, getDisplays } from '../services/gamma';
 import { registerGlobalShortcut, unregisterGlobalShortcut } from '../services/hotkeyService';
-import { mapToVirtualKeyCode } from '../utils/keyboardMap';
 
 const GammaContext = createContext();
 
@@ -18,14 +17,30 @@ export function GammaProvider({ children }) {
   const [selectedDisplay, setSelectedDisplay] = useState(getConfigKey('selectedGammaDisplay') || '');
   const nightVisionLevel = 100;
 
-  // Initialization: fetch monitors
+  const isNightVisionRef = useRef(false);
+  const selectedDisplayRef = useRef(selectedDisplay);
+  const lastToggleTimeRef = useRef(0);
+
+  // Keep refs strictly synchronized
+  useEffect(() => {
+    isNightVisionRef.current = isNightVision;
+  }, [isNightVision]);
+
+  useEffect(() => {
+    selectedDisplayRef.current = selectedDisplay;
+  }, [selectedDisplay]);
+
+  // Initialization: fetch monitors & sort them naturally (DISPLAY1, DISPLAY2)
   useEffect(() => {
     getDisplays().then(monitors => {
-      setDisplays(monitors);
+      if (!Array.isArray(monitors)) return;
+      const sorted = [...monitors].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      setDisplays(sorted);
       let target = getConfigKey('selectedGammaDisplay');
-      if (monitors.length > 0 && (!target || !monitors.includes(target))) {
-        target = monitors[0];
+      if (sorted.length > 0 && (!target || !sorted.includes(target))) {
+        target = sorted[0];
         setSelectedDisplay(target);
+        selectedDisplayRef.current = target;
         setConfigKey('selectedGammaDisplay', target);
       }
     });
@@ -36,21 +51,33 @@ export function GammaProvider({ children }) {
     setConfigKey('gammaBind', gammaBind);
   }, [gammaBind]);
 
-  // Handle hotkey logic globally
+  // Pure toggle function with debounce and outside-updater side effects
+  const toggleGamma = useCallback(() => {
+    const now = Date.now();
+    if (now - lastToggleTimeRef.current < 300) {
+      return; // Debounce double-invocations or OS repeat
+    }
+    lastToggleTimeRef.current = now;
+
+    const nextState = !isNightVisionRef.current;
+    const targetDisplay = selectedDisplayRef.current;
+
+    if (nextState) {
+      setDisplayGamma(100, targetDisplay);
+    } else {
+      resetDisplayGamma(targetDisplay);
+    }
+    setIsNightVision(nextState);
+  }, []);
+
+  // Handle hotkey registration globally - depends ONLY on gammaBind, NOT on selectedDisplay
   useEffect(() => {
     let isActive = true;
-    const toggleGamma = () => {
-      setIsNightVision(prev => {
-        if (!prev) setDisplayGamma(100, selectedDisplay);
-        else resetDisplayGamma(selectedDisplay);
-        return !prev;
-      });
-    };
 
     const setupShortcut = async () => {
-      const vkCode = mapToVirtualKeyCode(gammaBind);
-      if (vkCode) {
-        await registerGlobalShortcut(vkCode, () => {
+      const bind = gammaBind && typeof gammaBind === 'string' ? gammaBind.trim() : gammaBind;
+      if (bind) {
+        await registerGlobalShortcut(bind, () => {
           if (isActive) toggleGamma();
         });
       } else {
@@ -64,28 +91,44 @@ export function GammaProvider({ children }) {
       isActive = false;
       unregisterGlobalShortcut();
     };
-  }, [gammaBind, selectedDisplay]);
+  }, [gammaBind, toggleGamma]);
 
   const handleSetGammaBind = (bind) => {
     setGammaBind(bind);
   };
 
-  const handleSetSelectedDisplay = (disp) => {
+  const handleSetSelectedDisplay = useCallback((disp) => {
+    if (!disp || disp === selectedDisplayRef.current) return;
+    const oldDisp = selectedDisplayRef.current;
+
+    selectedDisplayRef.current = disp;
     setSelectedDisplay(disp);
     setConfigKey('selectedGammaDisplay', disp);
-    resetDisplayGamma(selectedDisplay); // Reset old monitor just in case
-    if (isNightVision) setDisplayGamma(100, disp);
-  };
 
-  const enableGamma = () => {
-    setDisplayGamma(100, selectedDisplay);
+    // If night vision is currently active, transition smoothly:
+    // clear old monitor and apply to new monitor
+    if (isNightVisionRef.current) {
+      if (oldDisp) {
+        resetDisplayGamma(oldDisp);
+      }
+      setDisplayGamma(100, disp);
+    } else if (oldDisp) {
+      // Ensure old display calibration is reset
+      resetDisplayGamma(oldDisp);
+    }
+  }, []);
+
+  const enableGamma = useCallback(() => {
+    const disp = selectedDisplayRef.current || selectedDisplay;
+    setDisplayGamma(100, disp);
     setIsNightVision(true);
-  };
+  }, [selectedDisplay]);
 
-  const disableGamma = () => {
-    resetDisplayGamma(selectedDisplay);
+  const disableGamma = useCallback(() => {
+    const disp = selectedDisplayRef.current || selectedDisplay;
+    resetDisplayGamma(disp);
     setIsNightVision(false);
-  };
+  }, [selectedDisplay]);
 
   const value = {
     gammaBind,
@@ -96,7 +139,7 @@ export function GammaProvider({ children }) {
     displays,
     selectedDisplay,
     setSelectedDisplay: handleSetSelectedDisplay,
-    nightVisionLevel: 100
+    nightVisionLevel
   };
 
   return (

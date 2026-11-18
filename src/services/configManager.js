@@ -43,35 +43,92 @@ const basePreset = {
   'graphics.dlaa': 'False',
   'graphics.dlss': '-1',
   'graphics.dof': 'False',
-  'graphics.fov': '90',
-  'graphics.lodbias': '1.95',
+  'graphics.lodbias': '0.6',
   'graphics.parallax': '0',
-  'graphics.reflexmode': '2',
   'graphics.renderscale': '1',
-  'graphics.screenmode': '1',
-  'graphics.shaderlod': '5',
   'graphics.shadowlights': '0',
-  'graphics.shadowquality': '1',
-  'graphics.volumetric_clouds': '1',
-  'graphics.vsync': '0',
+  'graphics.shadowmode': '0',
+  'graphics.volumetric_clouds': '0',
   'graphicssettings.anisotropicfiltering': '0',
-  'graphicssettings.globaltexturemipmaplimit': '1',
+  'graphicssettings.globaltexturemipmaplimit': '2',
   'graphicssettings.particleraycastbudget': '4',
   'graphicssettings.pixellightcount': '0',
-  'graphicssettings.shadowcascades': '2',
-  'graphicssettings.shadowdistancepercent': '0',
-  'graphicssettings.shadowmaskmode': '0',
-  'graphicssettings.shadowresolution': '1',
-  'graphicssettings.softparticles': 'True',
+  'graphicssettings.shadowqualitypreset': '0',
+  'graphicssettings.softparticles': 'False',
+  'grass.distance': '50',
   'grass.quality': '0',
-  'water.reflections': '1'
+  'shadowcaching.enabled': 'True',
+  'water.quality': '0',
+  'water.reflections': '0'
 };
 
 const presets = {
-  'Potato': { ...basePreset, 'graphics.drawdistance': '1000', 'mesh.quality': '0', 'particle.quality': '0', 'terrain.quality': '0', 'tree.meshes': '0', 'tree.quality': '0' },
-  'Low': { ...basePreset, 'graphics.drawdistance': '1500', 'mesh.quality': '50', 'particle.quality': '25', 'terrain.quality': '25', 'tree.meshes': '25', 'tree.quality': '50' },
-  'Medium': { ...basePreset, 'graphics.drawdistance': '2000', 'mesh.quality': '75', 'particle.quality': '40', 'terrain.quality': '40', 'tree.meshes': '40', 'tree.quality': '75' },
-  'Ultra': { ...basePreset, 'graphics.drawdistance': '2500', 'mesh.quality': '100', 'particle.quality': '50', 'terrain.quality': '50', 'tree.meshes': '50', 'tree.quality': '100' }
+  'Potato': {
+    ...basePreset,
+    'graphics.drawdistance': '1000',
+    'mesh.quality': '0',
+    'particle.quality': '0',
+    'terrain.quality': '0',
+    'tree.meshes': '0',
+    'tree.quality': '0',
+    'graphics.lodbias': '0.6',
+    'graphicssettings.globaltexturemipmaplimit': '2',
+    'graphics.shadowmode': '0',
+    'graphicssettings.shadowqualitypreset': '0',
+    'graphics.volumetric_clouds': '0',
+    'water.reflections': '0',
+    'water.quality': '0',
+    'grass.distance': '50',
+    'grass.quality': '0',
+    'decor.quality': '0',
+    'graphics.af': '1',
+    'effects.antialiasing': '0',
+    'effects.ao': 'False'
+  },
+  'Medium': {
+    ...basePreset,
+    'graphics.drawdistance': '2000',
+    'mesh.quality': '75',
+    'particle.quality': '40',
+    'terrain.quality': '40',
+    'tree.meshes': '40',
+    'tree.quality': '75',
+    'graphics.lodbias': '1.0',
+    'graphicssettings.globaltexturemipmaplimit': '1',
+    'graphics.shadowmode': '2',
+    'graphicssettings.shadowqualitypreset': '1',
+    'graphics.volumetric_clouds': '1',
+    'water.reflections': '1',
+    'water.quality': '1',
+    'grass.distance': '75',
+    'grass.quality': '50',
+    'decor.quality': '50',
+    'graphics.af': '4',
+    'effects.antialiasing': '2',
+    'effects.ao': 'False'
+  },
+  'Ultra': {
+    ...basePreset,
+    'graphics.drawdistance': '2500',
+    'mesh.quality': '100',
+    'particle.quality': '50',
+    'terrain.quality': '50',
+    'tree.meshes': '50',
+    'tree.quality': '100',
+    'graphics.lodbias': '2.0',
+    'graphicssettings.globaltexturemipmaplimit': '0',
+    'graphics.shadowmode': '3',
+    'graphicssettings.shadowqualitypreset': '2',
+    'graphics.volumetric_clouds': '2',
+    'water.reflections': '2',
+    'water.quality': '2',
+    'grass.distance': '100',
+    'grass.quality': '100',
+    'decor.quality': '100',
+    'graphics.af': '16',
+    'effects.antialiasing': '3',
+    'effects.ao': 'True'
+  }
 };
 
 export const applyGraphicsPreset = async (presetName) => {
@@ -137,8 +194,8 @@ export const ensureOriginalBackup = async () => {
   const hasOriginal = backups.some(b => b.isOriginal);
 
   if (!hasOriginal) {
-    const content = await readConfig('keys.cfg') || '';
     const rustPath = getConfigKey('rustPath');
+    let content = '';
 
     if (window.electronAPI?.config && rustPath) {
       const backupsDir = `${rustPath}/cfg/industrial_hub_backups`;
@@ -147,12 +204,20 @@ export const ensureOriginalBackup = async () => {
       const originalPath = `${backupsDir}/keys_original_backup.cfg`;
       const currentKeysPath = `${rustPath}/cfg/keys.cfg`;
       
-      const exists = await window.electronAPI.config.fileExists(currentKeysPath);
-      if (exists) {
-        await window.electronAPI.config.copyFile(currentKeysPath, originalPath);
+      const originalExists = await window.electronAPI.config.fileExists(originalPath);
+      if (originalExists) {
+        content = await window.electronAPI.config.readConfig(rustPath, 'industrial_hub_backups\\keys_original_backup.cfg') || '';
       } else {
-        await window.electronAPI.config.writeConfig(rustPath, 'industrial_hub_backups\\keys_original_backup.cfg', content);
+        const exists = await window.electronAPI.config.fileExists(currentKeysPath);
+        content = await readConfig('keys.cfg') || '';
+        if (exists) {
+          await window.electronAPI.config.copyFile(currentKeysPath, originalPath);
+        } else {
+          await window.electronAPI.config.writeConfig(rustPath, 'industrial_hub_backups\\keys_original_backup.cfg', content);
+        }
       }
+    } else {
+      content = await readConfig('keys.cfg') || '';
     }
     
     backups.unshift({
@@ -232,8 +297,8 @@ export const ensureOriginalGraphicsBackup = async () => {
   const hasOriginal = backups.some(b => b.isOriginal);
 
   if (!hasOriginal) {
-    const content = await readConfig('client.cfg') || '';
     const rustPath = getConfigKey('rustPath');
+    let content = '';
 
     if (window.electronAPI?.config && rustPath) {
       const backupsDir = `${rustPath}/cfg/industrial_hub_backups`;
@@ -242,12 +307,20 @@ export const ensureOriginalGraphicsBackup = async () => {
       const originalPath = `${backupsDir}/client_original_backup.cfg`;
       const currentClientPath = `${rustPath}/cfg/client.cfg`;
       
-      const exists = await window.electronAPI.config.fileExists(currentClientPath);
-      if (exists) {
-        await window.electronAPI.config.copyFile(currentClientPath, originalPath);
+      const originalExists = await window.electronAPI.config.fileExists(originalPath);
+      if (originalExists) {
+        content = await window.electronAPI.config.readConfig(rustPath, 'industrial_hub_backups\\client_original_backup.cfg') || '';
       } else {
-        await window.electronAPI.config.writeConfig(rustPath, 'industrial_hub_backups\\client_original_backup.cfg', content);
+        const clientExists = await window.electronAPI.config.fileExists(currentClientPath);
+        content = await readConfig('client.cfg') || '';
+        if (clientExists) {
+          await window.electronAPI.config.copyFile(currentClientPath, originalPath);
+        } else {
+          await window.electronAPI.config.writeConfig(rustPath, 'industrial_hub_backups\\client_original_backup.cfg', content);
+        }
       }
+    } else {
+      content = await readConfig('client.cfg') || '';
     }
     
     backups.unshift({

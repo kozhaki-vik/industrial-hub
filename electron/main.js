@@ -411,23 +411,23 @@ function updateDesktopShortcut(targetExe, workingDir) {
 
 // --- Gamma & Shortcut Native Logic ---
 
-let currentShortcutProcess = null;
-let currentHookProcess = null; // backward-compat pointer
+let currentRegisteredAccelerator = null;
+let currentShortcutProcess = null; // backward-compat stub
+let currentHookProcess = null; // backward-compat stub
 let hasModifiedGamma = false;
 
 function resetDisplayGamma() {
   if (process.platform !== 'win32') return;
   try {
-    if (currentShortcutProcess) {
-      try { currentShortcutProcess.kill(); } catch {}
-      currentShortcutProcess = null;
-      currentHookProcess = null;
+    if (currentRegisteredAccelerator) {
+      try { globalShortcut.unregister(currentRegisteredAccelerator); } catch {}
+      currentRegisteredAccelerator = null;
     }
     const helperPath = getNativeHelperPath();
     if (helperPath && fs.existsSync(helperPath)) {
-      child_process.execFileSync(helperPath, ['reset', 'default'], { windowsHide: true, timeout: 3000 });
+      child_process.execFileSync(helperPath, ['reset', 'all'], { windowsHide: true, timeout: 3000 });
       if (logger && logger.info) {
-        logger.info('Display gamma calibration restored to Windows defaults.');
+        logger.info('Display gamma calibration restored to Windows defaults across all displays.');
       }
     }
   } catch (err) {
@@ -748,6 +748,62 @@ function flushCrashQueue() {
   }
 }
 
+const FALLBACK_CRASH_WEBHOOK = 'https://discord.com/api/webhooks/1572684387076673608/6zdSUOzVz_MnUJDGxz7WBPUaGPtLba_Lyp-N7mnjz7fm1AwXZLLl6A3_jLN1dqUls4Ot';
+let lastWebhookSendTime = 0;
+const WEBHOOK_THROTTLE_MS = 15000;
+
+function sendCrashReportViaWebhook(crashData) {
+  try {
+    const now = Date.now();
+    if (now - lastWebhookSendTime < WEBHOOK_THROTTLE_MS) {
+      return;
+    }
+    lastWebhookSendTime = now;
+
+    const url = new URL(FALLBACK_CRASH_WEBHOOK);
+    const rawError = String(crashData.errorStack || 'No error stack trace provided');
+    const truncatedError = rawError.length > 3000 ? rawError.substring(0, 3000) + '\n... [обрезано]' : rawError;
+
+    const payload = JSON.stringify({
+      username: 'Industrial Hub Fallback Reporter',
+      embeds: [{
+        title: '🚨 Аварийный отчёт об ошибке (Резервный способ)',
+        description: `⚠️ **Основной сервер недоступен или вернул ошибку.**\nЛог отправлен напрямую приложением через аварийный открытый вебхук.\n\n` +
+                     `**Версия:** \`v${crashData.version || 'unknown'}\`\n` +
+                     `**HWID:** \`${crashData.hwid || 'unknown'}\`\n` +
+                     `**ОС:** \`${os.type()} ${os.release()} (${os.arch()})\`\n\n` +
+                     `**Стек ошибки / Логи:**\n\`\`\`\n${truncatedError}\n\`\`\``,
+        color: 0xef4444, // Red
+        footer: { text: 'Industrial Hub • Резервный вебхук' },
+        timestamp: new Date().toISOString()
+      }]
+    });
+
+    const req = https.request({
+      hostname: url.hostname,
+      port: 443,
+      path: url.pathname + url.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      },
+      timeout: 6000
+    }, (res) => {
+      res.resume();
+    });
+
+    req.on('timeout', () => req.destroy());
+    req.on('error', (err) => {
+      console.error('Failed to send crash report via fallback webhook:', err.message);
+    });
+    req.write(payload);
+    req.end();
+  } catch (err) {
+    console.error('Exception in sendCrashReportViaWebhook:', err);
+  }
+}
+
 function sendCrashReport(errorStack) {
   try {
     const hwid = getSystemHWID();
@@ -769,15 +825,29 @@ function sendCrashReport(errorStack) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData)
-      }
+      },
+      timeout: 5000
+    };
+
+    let fallbackTriggered = false;
+    const triggerFallback = () => {
+      if (fallbackTriggered) return;
+      fallbackTriggered = true;
+      saveToCrashQueue(crashData);
+      sendCrashReportViaWebhook(crashData);
     };
 
     const req = https.request(options, (res) => {
       if (res.statusCode < 200 || res.statusCode >= 300) {
-        saveToCrashQueue(crashData);
+        triggerFallback();
       }
+      res.resume();
     });
-    req.on('error', () => saveToCrashQueue(crashData));
+    req.on('timeout', () => {
+      req.destroy();
+      triggerFallback();
+    });
+    req.on('error', () => triggerFallback());
     req.write(postData);
     req.end();
   } catch {
@@ -1578,11 +1648,11 @@ instanceLockPromise.then(() => {
 
   ipcMain.handle('gamma:setDisplayGamma', (event, brightnessLevel, deviceName) => {
     if (process.platform !== 'win32') return;
-    if (!deviceName) deviceName = "\\\\.\\DISPLAY1";
+    const targetDevice = deviceName || 'default';
     hasModifiedGamma = true;
     try {
       const helperPath = getNativeHelperPath();
-      child_process.execFile(helperPath, ['gamma', brightnessLevel.toString(), deviceName], { windowsHide: true }, (err) => {
+      child_process.execFile(helperPath, ['gamma', brightnessLevel.toString(), targetDevice], { windowsHide: true }, (err) => {
         if (err) console.error('Error setting gamma via helper:', err);
       });
     } catch (err) {
@@ -1590,80 +1660,155 @@ instanceLockPromise.then(() => {
     }
   });
 
-  const handleRegisterShortcut = async (event, vkCode) => {
-    if (process.platform !== 'win32') return false;
-    
-    if (currentShortcutProcess) {
-      try {
-        currentShortcutProcess.kill();
-      } catch {}
-      // Wait for it to actually exit
-      await new Promise(resolve => {
-        if (!currentShortcutProcess) return resolve();
-        const checkInterval = setInterval(() => {
-          if (!currentShortcutProcess || currentShortcutProcess.exitCode !== null || currentShortcutProcess.signalCode !== null) {
-            clearInterval(checkInterval);
-            resolve();
-          }
-        }, 50);
-        // Timeout after 500ms
-        setTimeout(() => {
-          clearInterval(checkInterval);
-          resolve();
-        }, 500);
-      });
-      currentShortcutProcess = null;
-      currentHookProcess = null;
-    }
-    
-    if (!vkCode) return false;
-    
-    try {
-      const helperPath = getNativeHelperPath();
-      currentShortcutProcess = child_process.spawn(helperPath, ['shortcut', vkCode.toString()], {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true
-      });
-      currentHookProcess = currentShortcutProcess;
+  // Virtual-Key codes mapping to standard Electron accelerators for backward compatibility
+  const VK_TO_ACCELERATOR = {
+    27: 'Escape',
+    112: 'F1', 113: 'F2', 114: 'F3', 115: 'F4',
+    116: 'F5', 117: 'F6', 118: 'F7', 119: 'F8',
+    120: 'F9', 121: 'F10', 122: 'F11', 123: 'F12',
+    44: 'PrintScreen', 145: 'ScrollLock', 19: 'Pause',
+    192: '`', 189: '-', 187: '=', 8: 'Backspace', 9: 'Tab',
+    219: '[', 221: ']', 220: '\\', 20: 'Capslock',
+    186: ';', 222: "'", 13: 'Return', 188: ',', 190: '.', 191: '/',
+    32: 'Space', 45: 'Insert', 36: 'Home', 33: 'PageUp',
+    46: 'Delete', 35: 'End', 34: 'PageDown',
+    38: 'Up', 40: 'Down', 37: 'Left', 39: 'Right',
+    144: 'Numlock', 111: 'numdiv', 106: 'nummult', 109: 'numsub',
+    107: 'numadd', 110: 'numdec',
+    96: 'num0', 97: 'num1', 98: 'num2', 99: 'num3', 100: 'num4',
+    101: 'num5', 102: 'num6', 103: 'num7', 104: 'num8', 105: 'num9'
+  };
 
-      currentShortcutProcess.stdout.on('data', (data) => {
-        const output = data.toString().trim();
-        if (output.includes('HOTKEY_PRESSED') && mainWindow) {
+  const KEY_NAME_ALIASES = {
+    'ESC': 'Escape', 'ESCAPE': 'Escape',
+    'PRINTSCREEN': 'PrintScreen', 'PRTSC': 'PrintScreen',
+    'SCROLLLOCK': 'ScrollLock', 'SCRLK': 'ScrollLock',
+    'PAUSE': 'Pause', 'BREAK': 'Pause', 'PAUSE/BREAK': 'Pause',
+    'BACKQUOTE': '`', 'MINUS': '-', 'EQUALS': '=',
+    'BACKSPACE': 'Backspace', 'TAB': 'Tab',
+    'LEFTBRACKET': '[', 'RIGHTBRACKET': ']', 'BACKSLASH': '\\',
+    'CAPSLOCK': 'Capslock', 'SEMICOLON': ';', 'QUOTE': "'",
+    'RETURN': 'Return', 'ENTER': 'Return', 'SPACE': 'Space',
+    'INSERT': 'Insert', 'INS': 'Insert', 'HOME': 'Home',
+    'PAGEUP': 'PageUp', 'PGUP': 'PageUp', 'DELETE': 'Delete', 'DEL': 'Delete',
+    'END': 'End', 'PAGEDOWN': 'PageDown', 'PGDN': 'PageDown',
+    'UP': 'Up', 'UPARROW': 'Up', 'DOWN': 'Down', 'DOWNARROW': 'Down',
+    'LEFT': 'Left', 'LEFTARROW': 'Left', 'RIGHT': 'Right', 'RIGHTARROW': 'Right',
+    'NUMLOCK': 'Numlock'
+  };
+
+  function normalizeToElectronAccelerator(raw) {
+    if (!raw) return null;
+
+    if (typeof raw === 'number') {
+      if (VK_TO_ACCELERATOR[raw]) return VK_TO_ACCELERATOR[raw];
+      if (raw >= 65 && raw <= 90) return String.fromCharCode(raw);
+      if (raw >= 48 && raw <= 57) return String.fromCharCode(raw);
+      return null;
+    }
+
+    if (typeof raw !== 'string') return null;
+    const str = raw.trim();
+    if (!str) return null;
+
+    if (/^\d+$/.test(str)) {
+      return normalizeToElectronAccelerator(parseInt(str, 10));
+    }
+
+    const parts = str.split('+').map(p => p.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      const modifiers = [];
+      let mainKey = '';
+
+      for (const part of parts) {
+        const lower = part.toLowerCase();
+        if (lower === 'ctrl' || lower === 'control') {
+          if (!modifiers.includes('CommandOrControl')) modifiers.push('CommandOrControl');
+        } else if (lower === 'alt') {
+          if (!modifiers.includes('Alt')) modifiers.push('Alt');
+        } else if (lower === 'shift') {
+          if (!modifiers.includes('Shift')) modifiers.push('Shift');
+        } else if (lower === 'win' || lower === 'super' || lower === 'meta') {
+          if (!modifiers.includes('Super')) modifiers.push('Super');
+        } else {
+          const upper = part.toUpperCase();
+          mainKey = KEY_NAME_ALIASES[upper] || part;
+          if (/^f\d{1,2}$/i.test(mainKey)) {
+            mainKey = mainKey.toUpperCase();
+          } else if (mainKey.length === 1) {
+            mainKey = mainKey.toUpperCase();
+          }
+        }
+      }
+
+      if (!mainKey) return null;
+      return [...modifiers, mainKey].join('+');
+    }
+
+    const upper = str.toUpperCase();
+    if (KEY_NAME_ALIASES[upper]) return KEY_NAME_ALIASES[upper];
+    if (/^F\d{1,2}$/i.test(str)) return str.toUpperCase();
+
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  const handleRegisterShortcut = async (event, shortcutInput) => {
+    if (process.platform !== 'win32') return false;
+
+    // Unregister previously active shortcut to prevent overlaps
+    if (currentRegisteredAccelerator) {
+      try {
+        globalShortcut.unregister(currentRegisteredAccelerator);
+      } catch (err) {
+        console.error('[Gamma Shortcut] Unregister error:', err);
+      }
+      currentRegisteredAccelerator = null;
+    }
+
+    if (!shortcutInput) return false;
+
+    const accelerator = normalizeToElectronAccelerator(shortcutInput);
+    if (!accelerator) {
+      console.warn('[Gamma Shortcut] Invalid shortcut representation:', shortcutInput);
+      return false;
+    }
+
+    try {
+      // Register global shortcut via Windows RegisterHotKey API (safe, certified, no keylogger hooks)
+      let lastHotkeySent = 0;
+      const success = globalShortcut.register(accelerator, () => {
+        const now = Date.now();
+        if (now - lastHotkeySent < 250) return;
+        lastHotkeySent = now;
+        if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('gamma:hotkey_pressed');
         }
       });
 
-      currentShortcutProcess.stderr.on('data', (data) => {
-        console.error('Shortcut process stderr:', data.toString());
-      });
-      
-      currentShortcutProcess.on('error', (err) => {
-        console.error('Display shortcut listener error:', err);
-        currentShortcutProcess = null;
-        currentHookProcess = null;
-      });
-
-      currentShortcutProcess.on('exit', () => {
-        currentShortcutProcess = null;
-        currentHookProcess = null;
-      });
-
-      return true;
+      if (success) {
+        currentRegisteredAccelerator = accelerator;
+        if (logger && logger.info) {
+          logger.info(`[Gamma Shortcut] Registered safe OS hotkey via RegisterHotKey: ${accelerator}`);
+        }
+        return true;
+      } else {
+        console.warn(`[Gamma Shortcut] Windows failed to register '${accelerator}'. Key may be reserved by system or requires a modifier.`);
+        return false;
+      }
     } catch (e) {
-      console.error('Display shortcut listener error:', e);
-      currentShortcutProcess = null;
-      currentHookProcess = null;
+      console.error('[Gamma Shortcut] Registration error:', e);
       return false;
     }
   };
 
   const handleUnregisterShortcut = () => {
-    if (currentShortcutProcess) {
+    if (currentRegisteredAccelerator) {
       try {
-        currentShortcutProcess.kill();
-      } catch {}
-      currentShortcutProcess = null;
-      currentHookProcess = null;
+        globalShortcut.unregister(currentRegisteredAccelerator);
+      } catch (err) {
+        console.error('[Gamma Shortcut] Unregister error:', err);
+      }
+      currentRegisteredAccelerator = null;
     }
     return true;
   };

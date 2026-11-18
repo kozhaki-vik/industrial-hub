@@ -103,7 +103,13 @@ function getMatchScore(query, item, lang) {
 }
 
 export default function ConveyorEditorModal({ t, lang, initialData, onClose, onSave, categories }) {
-  const [title, setTitle] = useState(initialData?.title || '');
+  const getInitialTitle = () => {
+    if (!initialData) return '';
+    if (lang === 'en' && initialData.titleEn) return initialData.titleEn;
+    if (lang === 'ua' && initialData.titleUa) return initialData.titleUa;
+    return initialData.title || '';
+  };
+  const [title, setTitle] = useState(getInitialTitle());
   const [categoryId, setCategoryId] = useState(initialData?.categoryId || 'uncategorized');
   
   const getInitialItems = () => {
@@ -252,7 +258,9 @@ export default function ConveyorEditorModal({ t, lang, initialData, onClose, onS
 
     onSave({
       id: initialData?.id || `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title: title.trim(),
+      title: lang === 'ru' ? title.trim() : (initialData?.title || title.trim()),
+      titleEn: lang === 'en' ? title.trim() : initialData?.titleEn,
+      titleUa: lang === 'ua' ? title.trim() : initialData?.titleUa,
       categoryId: categoryId,
       items: cleanedItems,
       isFavorite: initialData?.isFavorite || false,
