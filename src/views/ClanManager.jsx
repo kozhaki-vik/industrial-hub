@@ -442,6 +442,7 @@ export default function ClanManager() {
   const [loadingVoice, setLoadingVoice] = useState(false);
   const [voiceActionLoading, setVoiceActionLoading] = useState(false);
   const [creatingRoleKey, setCreatingRoleKey] = useState(null);
+  const createRoleTimeoutRef = useRef(null);
   const [creatingLogChannel, setCreatingLogChannel] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetSections, setResetSections] = useState([
@@ -1267,7 +1268,11 @@ export default function ClanManager() {
               setDiscordInfo(prev => ({ roles: data.data.roles, channels: prev?.channels || [] }));
             }
           }
-        } else if (data.type === 'clan_proxy_res' && data.reqId === 'create_single_role') {
+        } else if (data.type === 'clan_proxy_res' && data.reqId && (data.reqId === 'create_single_role' || data.reqId.startsWith('create_single_role_'))) {
+          if (createRoleTimeoutRef.current) {
+            clearTimeout(createRoleTimeoutRef.current);
+            createRoleTimeoutRef.current = null;
+          }
           setCreatingRoleKey(null);
           if (!data.error && data.data && data.data.success) {
             if (data.data.roles) {
@@ -1983,9 +1988,14 @@ export default function ClanManager() {
   };
 
   const handleCreateRoleInDiscord = (r, isCustom = false, nameOverride = '') => {
-    if (!ws || wsStatus !== 'online') return;
+    if (!ws || wsStatus !== 'online' || creatingRoleKey) return;
     const roleIdentifier = isCustom ? r.id : r.key;
     setCreatingRoleKey(roleIdentifier);
+    
+    if (createRoleTimeoutRef.current) clearTimeout(createRoleTimeoutRef.current);
+    createRoleTimeoutRef.current = setTimeout(() => {
+      setCreatingRoleKey(null);
+    }, 25000);
     
     let roleName = (nameOverride || '').trim();
     if (!roleName) {
@@ -2021,10 +2031,14 @@ export default function ClanManager() {
     const roleColor = isCustom ? '#3b82f6' : (roleColors[r.dbKey] || '#3b82f6');
 
     addLog(`${t('log_role_create', 'Создание роли в Discord: ')}"${roleName}"...`);
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
+    const reqId = `create_single_role_${roleIdentifier}_${Date.now()}`;
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
-      reqId: 'create_single_role',
+      reqId,
+      clan_secret: clanSecret,
+      targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
       payload: {
         action: 'create_single_role',
         name: roleName,

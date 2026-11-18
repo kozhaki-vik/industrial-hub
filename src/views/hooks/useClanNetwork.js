@@ -10,10 +10,16 @@ export function useClanNetwork(rawWs, isDevAdminActive, activeDevGuildIdRef, gui
           return (dataStr) => {
             try {
               const parsed = typeof dataStr === 'string' ? JSON.parse(dataStr) : dataStr;
-              if (parsed && parsed.type === 'clan' && parsed.action === 'proxy') {
-                const activeGid = parsed.targetGuildId || (isDevAdminActive ? activeDevGuildIdRef.current : undefined) || guildIdRef.current;
-                if (activeGid && !parsed.targetGuildId) {
-                  parsed.targetGuildId = activeGid;
+              if (parsed && typeof parsed === 'object' && parsed.type === 'clan') {
+                const storedSecret = localStorage.getItem('hub_clan_secret');
+                if (storedSecret && !parsed.clan_secret) {
+                  parsed.clan_secret = storedSecret;
+                }
+                if (parsed.action === 'proxy') {
+                  const activeGid = parsed.targetGuildId || (isDevAdminActive ? activeDevGuildIdRef.current : undefined) || guildIdRef.current;
+                  if (activeGid && !parsed.targetGuildId) {
+                    parsed.targetGuildId = activeGid;
+                  }
                 }
               }
               return target.send(typeof parsed === 'string' ? parsed : JSON.stringify(parsed));

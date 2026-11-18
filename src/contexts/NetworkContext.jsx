@@ -251,13 +251,13 @@ export const NetworkProvider = ({ children }) => {
   useEffect(() => {
     connect();
     
-    // Heartbeat every minute
+    // Heartbeat every 20 seconds
     const interval = setInterval(async () => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         const currentHwid = await getHwid();
         wsRef.current.send(JSON.stringify({ type: 'heartbeat', hwid: currentHwid }));
       }
-    }, 60000);
+    }, 20000);
 
     // Safety net: periodic background update check every 5 minutes
     const updateInterval = setInterval(() => {
