@@ -149,7 +149,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="mb-8 max-w-5xl">
+    <div className="mb-8 max-w-6xl mx-auto w-full animate-main-fade-in">
       <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-5">{t('settings_title')}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

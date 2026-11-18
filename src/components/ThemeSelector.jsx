@@ -132,7 +132,13 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
         {hasCustomTheme && customTheme ? (
           // Saved Custom Theme Card
           <div
-            onClick={() => onChange('custom')}
+            onClick={() => {
+              if (value === 'custom') {
+                setIsCustomModalOpen(true);
+              } else {
+                onChange('custom');
+              }
+            }}
             className={`group relative text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden ${
               value === 'custom'
                 ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
@@ -156,7 +162,7 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
               </svg>
 
               {/* Accent Color Badge */}
-              <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs border border-white/10 shadow-xs">
+              <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 shadow-xs">
                 <span
                   className="w-2 h-2 rounded-full shrink-0 shadow-xs"
                   style={{ backgroundColor: customTheme.accent }}
@@ -165,9 +171,23 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                   Custom
                 </span>
               </div>
+
+              {/* Prominent Configure / Edit Button in Preview Box */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCustomModalOpen(true);
+                }}
+                className="absolute top-1.5 right-1.5 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-orange-500 text-white backdrop-blur-sm border border-white/20 shadow-sm text-[11px] font-semibold transition-all hover:scale-105 cursor-pointer z-10"
+                title={t('theme_custom_edit', 'Настроить цвета')}
+              >
+                <SlidersHorizontal className="w-3 h-3" />
+                <span>{t('theme_custom_edit_btn', 'Настроить')}</span>
+              </button>
             </div>
 
-            {/* Title, Icon & Description + Edit Button */}
+            {/* Title, Icon & Description + Actions */}
             <div className="flex items-start justify-between gap-2 w-full">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
@@ -184,7 +204,9 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                     <span>{t('theme_custom', 'Своя тема')}</span>
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('theme_custom_desc', 'Пользовательская')}
+                    {value === 'custom'
+                      ? t('theme_custom_selected_hint', 'Выбрана (настроить)')
+                      : t('theme_custom_click_to_apply', 'Нажмите для выбора')}
                   </div>
                 </div>
               </div>
@@ -197,7 +219,11 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                     e.stopPropagation();
                     setIsCustomModalOpen(true);
                   }}
-                  className="p-1 rounded-lg text-slate-400 hover:text-orange-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                    value === 'custom'
+                      ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400 hover:bg-orange-500 hover:text-white'
+                      : 'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white'
+                  }`}
                   title={t('theme_custom_edit', 'Настроить цвета')}
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -236,7 +262,7 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                     {t('theme_custom', 'Своя тема')}
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {t('theme_custom_create_desc', 'Настроить цвета')}
+                    {t('theme_custom_create_desc', 'Настроить свои цвета')}
                   </div>
                 </div>
               </div>
