@@ -211,29 +211,12 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                 </div>
               </div>
 
-              {/* Actions: Edit button + Selection Checkmark */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsCustomModalOpen(true);
-                  }}
-                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                    value === 'custom'
-                      ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400 hover:bg-orange-500 hover:text-white'
-                      : 'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white'
-                  }`}
-                  title={t('theme_custom_edit', 'Настроить цвета')}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                </button>
-                {value === 'custom' && (
-                  <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-xs">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </div>
-                )}
-              </div>
+              {/* Selection Checkmark */}
+              {value === 'custom' && (
+                <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                </div>
+              )}
             </div>
           </div>
         ) : (
