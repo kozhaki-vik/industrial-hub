@@ -3,7 +3,7 @@ param (
     [string[]]$FilePaths,
     [string]$FilePath,
     [string]$Repo = "kozhaki-vik/industrial-hub",
-    [bool]$IsPreRelease = $false,
+    [switch]$IsPreRelease,
     [string]$Body = "",
     [string]$BodyFile = "",
     [string]$Token = $env:GITHUB_TOKEN
@@ -114,7 +114,7 @@ if ($existingRelease) {
         name = $releaseName
         body = $releaseBody
         draft = $false
-        prerelease = $IsPreRelease
+        prerelease = [bool]$IsPreRelease
     } | ConvertTo-Json
 
     $utf8Body = [System.Text.Encoding]::UTF8.GetBytes($createPayload)
@@ -159,7 +159,7 @@ foreach ($f in $allFiles) {
 # 4. Update release prerelease and body if needed
 $patchPayload = @{
     name = $releaseName
-    prerelease = $IsPreRelease
+    prerelease = [bool]$IsPreRelease
 }
 if ($releaseBody) {
     $patchPayload["body"] = $releaseBody

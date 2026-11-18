@@ -839,21 +839,19 @@ export default function RosterTab() {
   return (
     <div className="w-full space-y-5 animate-main-fade-in">
       {/* Discord Dynamic Roster Channel Status & Manager */}
-      {rosterViewMode === 'active' && (
-        <DiscordPanelChannelBar
-          title={t('clan_roster_channel_title', 'Канал динамического состава')}
-          channelId={rosterChannelId}
-          discordChannels={discordInfo?.channels || []}
-          onPublishOrMove={handlePublishOrMoveRoster}
-          onSync={handleSyncRoster}
-          onDelete={handleDeleteRoster}
-          activeDesc={t('clan_roster_channel_active_desc', 'Бот автоматически обновляет карточки активных участников клана в реальном времени.')}
-          promptText={t('clan_roster_channel_prompt', 'Выберите канал, в котором бот будет публиковать и обновлять карточки участников клана. При смене канала бот автоматически удалит карточки из прежнего канала.')}
-          deleteConfirmDesc={t('clan_roster_delete_confirm_desc', 'Вы уверены, что хотите удалить карточки состава из Discord? Сообщения участников будут удалены из канала.')}
-          icon={UserCheck}
-          accentColor="blue"
-        />
-      )}
+      <DiscordPanelChannelBar
+        title={t('clan_roster_channel_title', 'Канал динамического состава')}
+        channelId={rosterChannelId}
+        discordChannels={discordInfo?.channels || []}
+        onPublishOrMove={handlePublishOrMoveRoster}
+        onSync={handleSyncRoster}
+        onDelete={handleDeleteRoster}
+        activeDesc={t('clan_roster_channel_active_desc', 'Бот автоматически обновляет карточки активных участников клана в реальном времени.')}
+        promptText={t('clan_roster_channel_prompt', 'Выберите канал, в котором бот будет публиковать и обновлять карточки участников клана. При смене канала бот автоматически удалит карточки из прежнего канала.')}
+        deleteConfirmDesc={t('clan_roster_delete_confirm_desc', 'Вы уверены, что хотите удалить карточки состава из Discord? Сообщения участников будут удалены из канала.')}
+        icon={UserCheck}
+        accentColor="blue"
+      />
 
       {/* Top Header & Metrics Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">

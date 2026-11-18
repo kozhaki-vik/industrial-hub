@@ -4,13 +4,15 @@ import {
   RefreshCw, Sliders, Hash, UserPlus,
   UserCheck, Check, AlertTriangle, ScrollText, Bot, Clock,
   ExternalLink, Eye, EyeOff, X, ArrowRight,
-  Upload, Loader2, CheckCircle2, HardDrive, Trash2
+  Upload, Loader2, CheckCircle2, HardDrive, Trash2,
+  Sparkles, Image as ImageIcon, Info
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import { ToggleSwitch } from '../ClanManager';
 import { normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
 import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
+import { proofreadRecruitmentText, getPresetBanners } from '../../services/aiService';
 
 export default function RecruitmentTab() {
   const {
@@ -35,6 +37,22 @@ export default function RecruitmentTab() {
 
   const [checkingPrefix, setCheckingPrefix] = useState(false);
   const [missingPrefixes, setMissingPrefixes] = useState([]);
+
+  // --- AI Text Proofreading & Presets State ---
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState(null);
+  const [aiError, setAiError] = useState('');
+  const [presetBanners, setPresetBanners] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getPresetBanners().then(data => {
+      if (isMounted && Array.isArray(data) && data.length > 0) {
+        setPresetBanners(data);
+      }
+    });
+    return () => { isMounted = false; };
+  }, []);
 
   // --- Memoized Configurations ---
   const defaultRejectMsg = useMemo(() => {
@@ -95,6 +113,60 @@ export default function RecruitmentTab() {
     const updated = { ...config, recruitmentConfigJson: JSON.stringify(newConfig) };
     queueAutoSave(updated, immediate);
   }, [rConfig, config, queueAutoSave]);
+
+  const handleRunProofreading = useCallback(async () => {
+    const textToAnalyze = rConfig.text;
+    if (!textToAnalyze || !textToAnalyze.trim()) return;
+
+    setIsAnalyzing(true);
+    setAiError('');
+    setAiSuggestion(null);
+
+    try {
+      const currentMd = rConfig.markdownEnabled !== false;
+      const res = await proofreadRecruitmentText(textToAnalyze, currentMd);
+      if (res.success && res.data) {
+        setAiSuggestion({
+          improvedText: res.data.improvedText,
+          suggestedMarkdown: res.data.suggestedMarkdown,
+          hasChanges: res.data.hasChanges,
+          summary: res.data.summary,
+          providerName: res.providerName || res.provider || 'AI'
+        });
+      } else {
+        setAiError(res.error || t('clan_ai_err_general', 'Не удалось проанализировать текст'));
+      }
+    } catch (err) {
+      setAiError(err.message || t('clan_ai_err_general', 'Не удалось проанализировать текст'));
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [rConfig.text, rConfig.markdownEnabled, t]);
+
+  const handleApplyAiSuggestion = useCallback(() => {
+    if (!aiSuggestion) return;
+    const newConfig = {
+      ...rConfig,
+      text: aiSuggestion.improvedText
+    };
+    if (typeof aiSuggestion.suggestedMarkdown === 'boolean') {
+      newConfig.markdownEnabled = aiSuggestion.suggestedMarkdown;
+    }
+    const updated = { ...config, recruitmentConfigJson: JSON.stringify(newConfig) };
+    queueAutoSave(updated, true);
+    setAiSuggestion(null);
+    setAiError('');
+  }, [aiSuggestion, rConfig, config, queueAutoSave]);
+
+  const handleDeclineAiSuggestion = useCallback(() => {
+    setAiSuggestion(null);
+    setAiError('');
+  }, []);
+
+  const handleSelectPresetBanner = useCallback((url) => {
+    setUploadBannerError('');
+    updateRConfig('banner', url, true);
+  }, [updateRConfig]);
 
   const handleBannerFileSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -433,21 +505,40 @@ export default function RecruitmentTab() {
           
           {/* Текст с требованиями и переключатель Markdown */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                 {t('clan_auto_49', 'Текст с требованиями *')}
               </label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  {t('clan_markdown_supported', 'Markdown поддерживается')}
-                </span>
-                <ToggleSwitch
-                  checked={rConfig.markdownEnabled !== false}
-                  onChange={val => updateRConfig('markdownEnabled', val, true)}
-                  activeColor="orange"
-                />
+              <div className="flex items-center gap-2.5">
+                {/* Зелёная кнопка «Анализ и исправление» */}
+                <button
+                  type="button"
+                  onClick={handleRunProofreading}
+                  disabled={isAnalyzing || !rConfig.text?.trim()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all cursor-pointer"
+                  title={t('clan_recruitment_ai_analyze_hint', 'Анализ и исправление текста (грамматика, оформление и Markdown с сохранением игрового сленга Rust)')}
+                >
+                  {isAnalyzing ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isAnalyzing ? t('clan_recruitment_ai_analyzing', 'Анализ...') : t('clan_recruitment_ai_analyze_btn', 'Анализ и исправление')}</span>
+                </button>
+
+                <div className="flex items-center gap-2 pl-1 border-l border-slate-200 dark:border-slate-700">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    {t('clan_markdown_supported', 'Markdown поддерживается')}
+                  </span>
+                  <ToggleSwitch
+                    checked={rConfig.markdownEnabled !== false}
+                    onChange={val => updateRConfig('markdownEnabled', val, true)}
+                    activeColor="orange"
+                  />
+                </div>
               </div>
             </div>
+
             <textarea 
               required
               className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[140px]"
@@ -456,6 +547,95 @@ export default function RecruitmentTab() {
               onBlur={e => updateRConfig('text', e.target.value, true)}
               placeholder={t('clan_auto_110', 'Опишите требования...')}
             ></textarea>
+
+            {/* Ошибка анализа */}
+            {aiError && (
+              <div className="mt-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 flex items-start gap-2 text-xs text-rose-600 dark:text-rose-400">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span>{aiError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAiError('')}
+                  className="text-rose-400 hover:text-rose-600 dark:hover:text-rose-200 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Карточка предложения изменений (Анализ и исправление) */}
+            {aiSuggestion && (
+              <div className="mt-3 p-4 rounded-xl border border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/30 text-xs space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-semibold text-emerald-800 dark:text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>{t('clan_ai_suggestion_title', 'Предложение по исправлению')} ({aiSuggestion.providerName})</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDeclineAiSuggestion}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    title={t('clan_ai_decline', 'Отказаться')}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {aiSuggestion.summary && (
+                  <div className="text-slate-600 dark:text-slate-300 italic text-[11px] leading-relaxed">
+                    💡 {aiSuggestion.summary}
+                  </div>
+                )}
+
+                {/* Подсказка о Markdown переключателе */}
+                {typeof aiSuggestion.suggestedMarkdown === 'boolean' && aiSuggestion.suggestedMarkdown !== (rConfig.markdownEnabled !== false) && (
+                  <div className="p-2.5 rounded-lg bg-emerald-100/70 dark:bg-emerald-900/40 text-emerald-950 dark:text-emerald-200 text-[11px] flex items-center gap-2 font-medium border border-emerald-200/60 dark:border-emerald-800/40">
+                    <Info className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      {aiSuggestion.suggestedMarkdown
+                        ? t('clan_ai_suggest_enable_md', 'В тексте обнаружена разметка списков или заголовков. При применении будет включен режим Markdown.')
+                        : t('clan_ai_suggest_disable_md', 'Для данного текста разметка Markdown не требуется. При применении режим Markdown будет выключен.')}
+                    </span>
+                  </div>
+                )}
+
+                {/* Превью предложенного текста */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      {t('clan_ai_our_variant', 'Наш вариант:')}
+                    </span>
+                    <span className="text-slate-400 text-[10px]">
+                      {aiSuggestion.hasChanges ? 'Внесены аккуратные правки' : 'Текст уже выглядит отлично'}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60 font-mono text-[11px] whitespace-pre-wrap text-slate-800 dark:text-slate-200 max-h-48 overflow-y-auto leading-relaxed shadow-inner">
+                    {aiSuggestion.improvedText}
+                  </div>
+                </div>
+
+                {/* Кнопки Отказаться / Применить */}
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDeclineAiSuggestion}
+                    className="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 font-medium transition-colors cursor-pointer text-xs"
+                  >
+                    {t('clan_ai_btn_decline', 'Отказаться')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyAiSuggestion}
+                    className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold transition-colors shadow-sm cursor-pointer flex items-center gap-1.5 text-xs"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{t('clan_ai_btn_apply', 'Применить')}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Ссылка на баннер (Изображение) - Расположена под требованиями на всю ширину */}
@@ -527,12 +707,70 @@ export default function RecruitmentTab() {
                     <HardDrive className="w-3.5 h-3.5" />
                     <span>{t('clan_banner_uploaded_server', 'Размещено на сервере Industrial Hub')}</span>
                   </div>
+                ) : rConfig.banner.includes('/presets/banners/') ? (
+                  <div className="flex items-center gap-1.5 text-orange-500 font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{t('clan_banner_preset_server', 'Выбран готовый баннер Rust с сервера')}</span>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-emerald-500 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>{t('clan_ads_banner_active', 'Установлен кастомный баннер')}</span>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Готовые баннеры Rust с сервера */}
+            {presetBanners.length > 0 && (
+              <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-orange-500" />
+                    <span>{t('clan_recruitment_presets_title', 'Готовые баннеры Rust (с сервера):')}</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    {t('clan_recruitment_presets_hint', 'Кликните по картинке для применения')}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {presetBanners.map(preset => {
+                    const isSelected = rConfig.banner === preset.fullUrl || (preset.fileName && rConfig.banner?.includes(preset.fileName));
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleSelectPresetBanner(preset.fullUrl)}
+                        className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
+                          isSelected
+                            ? 'border-orange-500 shadow-md ring-2 ring-orange-500/40'
+                            : 'border-slate-200 dark:border-slate-700/80 hover:border-orange-400/80 opacity-75 hover:opacity-100'
+                        }`}
+                        title={`${preset.title}: ${preset.desc}`}
+                      >
+                        <div className="aspect-[16/9] w-full overflow-hidden relative">
+                          <img
+                            src={preset.fullUrl}
+                            alt={preset.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                          {isSelected && (
+                            <div className="absolute top-1.5 right-1.5 bg-orange-500 text-white p-1 rounded-full shadow-md z-10">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-1.5 z-0">
+                            <div className="text-[10px] font-semibold text-white truncate drop-shadow-sm">
+                              {preset.title.split(' (')[0]}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
