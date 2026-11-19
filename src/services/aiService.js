@@ -3,15 +3,14 @@
  * Communicates with Industrial Hub Server for AI-powered text analysis and banner presets.
  */
 
+const PUBLIC_API_BASE = 'https://industrial-hub.duckdns.org';
+
 const getApiBases = () => {
-  if (import.meta.env.DEV) {
-    return ['http://127.0.0.1:8080', 'https://industrial-hub.duckdns.org'];
-  }
-  return ['https://industrial-hub.duckdns.org', 'http://127.0.0.1:8080'];
+  return [PUBLIC_API_BASE, 'http://127.0.0.1:8080'];
 };
 
 /**
- * Fallback static list of Rust banner presets in case server is temporarily offline
+ * Fallback static list of Rust banner presets
  */
 export const FALLBACK_PRESET_BANNERS = [
   {
@@ -98,15 +97,24 @@ export async function proofreadRecruitmentText(text, currentMarkdown = true) {
       });
       clearTimeout(timeout);
 
-      const json = await resp.json();
-      if (!resp.ok || !json.success) {
-        throw new Error(json.error || `Ошибка сервера (${resp.status})`);
+      let json = null;
+      try {
+        json = await resp.json();
+      } catch {
+        json = null;
+      }
+
+      if (!resp.ok || !json?.success) {
+        return {
+          success: false,
+          error: json?.error || `Ошибка сервера (${resp.status})`
+        };
       }
 
       return json;
     } catch (err) {
       lastError = err;
-      // If network refused on first base, loop to fallback base
+      // Network refused or abort -> try next base
     }
   }
 
@@ -129,7 +137,8 @@ export async function getPresetBanners() {
         if (json.success && Array.isArray(json.presets)) {
           return json.presets.map(p => ({
             ...p,
-            fullUrl: `${base}/presets/banners/${p.fileName}`
+            fullUrl: `${PUBLIC_API_BASE}/presets/banners/${p.fileName}`,
+            previewUrl: `/presets/banners/${p.fileName}`
           }));
         }
       }
@@ -137,9 +146,9 @@ export async function getPresetBanners() {
   }
 
   // Fallback if server is not reachable
-  const primaryBase = bases[0];
   return FALLBACK_PRESET_BANNERS.map(p => ({
     ...p,
-    fullUrl: `${primaryBase}/presets/banners/${p.fileName}`
+    fullUrl: `${PUBLIC_API_BASE}/presets/banners/${p.fileName}`,
+    previewUrl: `/presets/banners/${p.fileName}`
   }));
 }

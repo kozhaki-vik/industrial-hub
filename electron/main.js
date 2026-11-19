@@ -266,15 +266,16 @@ async function acquireSingleInstanceLock(maxAttempts = 10, delayMs = 300) {
   let hasLock = app.requestSingleInstanceLock();
   if (hasLock) return true;
 
-  // The first call to app.requestSingleInstanceLock() notified the running instance
-  // via its 'second-instance' handler to terminate itself.
-  // Wait in a retry loop until the older process exits and releases the lock.
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-    hasLock = app.requestSingleInstanceLock();
-    if (hasLock) return true;
+  // Only if this process is an updater replacement (--cleanup-dir), wait for older process to exit
+  const isUpdateProcess = process.argv.some(arg => arg.includes('--cleanup-dir'));
+  if (isUpdateProcess) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      hasLock = app.requestSingleInstanceLock();
+      if (hasLock) return true;
+    }
   }
-  return false;
+  return hasLock;
 }
 
 async function bootstrapSingleInstance() {
@@ -284,20 +285,36 @@ async function bootstrapSingleInstance() {
     return;
   }
 
-  // When a subsequent instance is started, close all windows, reset gamma and exit immediately
-  app.on('second-instance', () => {
-    try {
-      resetDisplayGamma();
-    } catch {}
-    try {
-      const windows = BrowserWindow.getAllWindows();
-      for (const win of windows) {
-        if (!win.isDestroyed()) {
-          win.destroy();
+  // Handle when user launches the shortcut again or updater replaces instance
+  app.on('second-instance', (event, commandLine) => {
+    // If the second instance is an update replacement process, terminate older instance gracefully
+    const isUpdateReplacement = Array.isArray(commandLine) && commandLine.some(arg => arg.includes('--cleanup-dir'));
+    if (isUpdateReplacement) {
+      try { resetDisplayGamma(); } catch {}
+      try {
+        const windows = BrowserWindow.getAllWindows();
+        for (const win of windows) {
+          if (!win.isDestroyed()) win.destroy();
         }
+      } catch {}
+      app.exit(0);
+      return;
+    }
+
+    // Normal launch via shortcut while already running:
+    // Restore and show mainWindow to foreground
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
       }
-    } catch {}
-    app.exit(0);
+      if (!mainWindow.isVisible()) {
+        mainWindow.show();
+      }
+      mainWindow.focus();
+      if (mainWindow.webContents) {
+        mainWindow.webContents.focus();
+      }
+    }
   });
 }
 
@@ -559,9 +576,12 @@ function createWindow() {
   });
   mainWindow.setMenu(null); // Completely removes the top menu
 
-  const isAutoStarted = process.argv.includes('--autostart') || process.argv.includes('--minimized');
+  const isAutoStarted = process.argv.includes('--autostart');
+  const isExplicitMinimized = process.argv.includes('--minimized');
   const startMinimized = store.get('startMinimizedToTray', false);
-  const shouldStartHidden = Boolean(startMinimized || isAutoStarted);
+  // Manual launch via shortcut always shows the window once so the user can interact.
+  // Starting hidden in tray only applies to Windows autostart or explicit --minimized argument.
+  const shouldStartHidden = Boolean((isAutoStarted && startMinimized) || isExplicitMinimized);
 
   if (!shouldStartHidden) {
     if (windowConfig.isMaximized) {

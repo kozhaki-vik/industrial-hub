@@ -62,7 +62,8 @@ export default function ChannelsTab() {
     saveConfig,
     discordInfo,
     fetchDiscordInfo,
-    fetchDynamicVoice
+    fetchDynamicVoice,
+    sendProxyAction
   } = useContext(ClanManagerContext);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -89,7 +90,15 @@ export default function ChannelsTab() {
     const newConfig = { ...cConfig, [key]: val };
     const updated = { ...config, channelsConfigJson: JSON.stringify(newConfig) };
     queueAutoSave(updated, true);
-  }, [cConfig, config, queueAutoSave]);
+
+    if (key === 'roster' && typeof sendProxyAction === 'function') {
+      if (val) {
+        sendProxyAction('publish_or_move_roster', { targetChannelId: val }).catch(() => {});
+      } else {
+        sendProxyAction('delete_roster').catch(() => {});
+      }
+    }
+  }, [cConfig, config, queueAutoSave, sendProxyAction]);
 
   const channelsList = useMemo(() => [
     { key: 'ticketsCategory', label: t('clan_auto_v2_1012', 'Категория для тикетов'), desc: t('clan_auto_222', 'Здесь бот будет создавать приватные каналы тикетов заявок.'), typeFilter: 4, badge: 'Категория' },

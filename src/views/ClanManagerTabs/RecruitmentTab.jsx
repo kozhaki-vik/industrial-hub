@@ -5,7 +5,7 @@ import {
   UserCheck, Check, AlertTriangle, ScrollText, Bot, Clock,
   ExternalLink, Eye, EyeOff, X, ArrowRight,
   Upload, Loader2, CheckCircle2, HardDrive, Trash2,
-  Sparkles, Image as ImageIcon, Info
+  Sparkles, Image as ImageIcon, Info, ChevronDown
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import { ToggleSwitch } from '../ClanManager';
@@ -14,9 +14,24 @@ import { uploadBanner, deleteBanner } from '../../services/uploadService';
 import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
 import { proofreadRecruitmentText, getPresetBanners } from '../../services/aiService';
 
+export function HelpTooltip({ text, className = '' }) {
+  if (!text) return null;
+  return (
+    <span className={`group relative inline-flex items-center align-middle ml-1.5 ${className}`}>
+      <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-orange-100 dark:hover:bg-orange-950/50 hover:text-orange-600 dark:hover:text-orange-400 text-slate-500 dark:text-slate-400 flex items-center justify-center text-[10px] font-bold cursor-help transition-colors select-none">
+        ?
+      </span>
+      <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-60 sm:w-72 p-2.5 bg-slate-900/95 text-slate-100 text-[11px] rounded-xl shadow-xl border border-slate-700/60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 pointer-events-none leading-relaxed text-left font-normal normal-case backdrop-blur-xs">
+        {text}
+        <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-900 rotate-45 border-r border-b border-slate-700/60"></span>
+      </span>
+    </span>
+  );
+}
+
 export default function RecruitmentTab() {
   const {
-    config, setConfig, discordInfo, rosterData, applicationsData,
+    config, setConfig, discordInfo, rosterData, applicationsData, pendingAppsCount,
     handleCreateRecruitmentInvite, creatingRecruitmentInvite,
     recruitmentInviteStatus, setRecruitmentInviteStatus,
     checkingRecruitmentInvite, verifyRecruitmentInvite,
@@ -107,6 +122,17 @@ export default function RecruitmentTab() {
     } catch (e) { console.error('[Auto-caught Error]', e); }
     return cc;
   }, [config?.channelsConfigJson]);
+
+  // --- Collapsible Sections with User Override Memory ---
+  const [userAutoRejectExpanded, setUserAutoRejectExpanded] = useState(null);
+  const isAutoRejectExpanded = userAutoRejectExpanded !== null
+    ? userAutoRejectExpanded
+    : Boolean(rConfig.autoRejectEnabled);
+
+  const [userSteamPrefixExpanded, setUserSteamPrefixExpanded] = useState(null);
+  const isSteamPrefixExpanded = userSteamPrefixExpanded !== null
+    ? userSteamPrefixExpanded
+    : Boolean(rConfig.steamPrefixCheck);
 
   const updateRConfig = useCallback((key, val, immediate = false) => {
     const newConfig = { ...rConfig, [key]: val };
@@ -334,6 +360,44 @@ export default function RecruitmentTab() {
       </div>
 
       <div className="space-y-6">
+        {/* Быстрый переход: Журнал и статус заявок в клан */}
+        <div className="p-4 sm:p-5 border border-orange-200/80 dark:border-orange-900/40 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-950/30 dark:via-amber-950/10 dark:to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-2.5 rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/20 shrink-0">
+              <ScrollText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  {t('clan_tab_applications', 'Заявки в клан')}
+                </h4>
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-orange-500 text-white shadow-xs">
+                  {pendingAppsCount > 0 ? `${pendingAppsCount} новых` : `${Array.isArray(applicationsData) ? applicationsData.length : 0} всего`}
+                </span>
+                {pendingAppsCount > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    Ожидают решения
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('clan_recruitment_apps_banner_desc', 'Просмотр анкет кандидатов, оперативное рассмотрение и архив тикетов.')}
+              </p>
+            </div>
+          </div>
+          {setActiveTab && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('applications')}
+              className="w-full sm:w-auto px-4 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white rounded-xl text-xs font-bold shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            >
+              <span>{t('clan_open_applications_btn', 'Открыть журнал заявок')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
         {/* 1. Основные параметры панели набора */}
         <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
           <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -751,10 +815,15 @@ export default function RecruitmentTab() {
                       >
                         <div className="aspect-[16/9] w-full overflow-hidden relative">
                           <img
-                            src={preset.fullUrl}
+                            src={preset.previewUrl || preset.fullUrl}
                             alt={preset.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            onError={(e) => {
+                              if (e.target.src !== preset.fullUrl) {
+                                e.target.src = preset.fullUrl;
+                              }
+                            }}
                           />
                           {isSelected && (
                             <div className="absolute top-1.5 right-1.5 bg-orange-500 text-white p-1 rounded-full shadow-md z-10">
@@ -777,15 +846,20 @@ export default function RecruitmentTab() {
         </div>
 
         {/* 2. Автоматическое отклонение заявок (Auto-Reject) */}
-        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
-          <div className="flex items-center justify-between">
+        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/40">
+              <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/40 shrink-0">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-base font-semibold text-slate-900 dark:text-white">
-                  {t('clan_recruitment_auto_reject_title') || 'Автоматическое отклонение заявок'}
+                <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>{t('clan_recruitment_auto_reject_title') || 'Автоматическое отклонение заявок'}</span>
+                  {!rConfig.autoRejectEnabled && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                      Отключено
+                    </span>
+                  )}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('clan_recruitment_auto_reject_desc') || 'Бот автоматически проверяет анкеты кандидатов при подаче и отклоняет неподходящие заявки.'}
@@ -793,197 +867,218 @@ export default function RecruitmentTab() {
               </div>
             </div>
             
-            <ToggleSwitch 
-              checked={Boolean(rConfig.autoRejectEnabled)}
-              onChange={val => updateRConfig('autoRejectEnabled', val, true)}
-              activeColor="orange"
-            />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setUserAutoRejectExpanded(!isAutoRejectExpanded)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200/60 dark:border-slate-700/60"
+              >
+                <span>{isAutoRejectExpanded ? 'Скрыть параметры' : 'Параметры фильтра'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isAutoRejectExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              <ToggleSwitch 
+                checked={Boolean(rConfig.autoRejectEnabled)}
+                onChange={val => updateRConfig('autoRejectEnabled', val, true)}
+                activeColor="orange"
+              />
+            </div>
           </div>
 
-          <div className={`space-y-4 pt-2 transition-opacity ${rConfig.autoRejectEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-            <div className={gridTwoCols}>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-blue-500" />
-                  {t('clan_recruitment_min_age') || 'Минимальный возраст кандидата'}
-                </label>
-                <input 
-                  type="number" 
-                  min="0" 
-                  max="99"
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
-                  value={rConfig.minAge || ''}
-                  onChange={e => updateRConfig('minAge', e.target.value ? parseInt(e.target.value, 10) : 0, false)}
-                  onBlur={e => updateRConfig('minAge', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
-                  placeholder={t('clan_recruitment_min_age_ph') || 'Например: 18 (0 — без ограничений)'}
-                />
-                <p className="text-[11px] text-slate-400 mt-1">{t('clan_auto_50', 'Кандидаты младше этого возраста будут отклонены.')}</p>
-              </div>
+          {isAutoRejectExpanded && (
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800 animate-in fade-in duration-200">
+              {!rConfig.autoRejectEnabled && (
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                  <Info className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>Авто-отклонение выключено. Параметры ниже сохранены и начнут действовать после включения тумблера.</span>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-orange-500" />
-                  {t('clan_recruitment_min_hours') || 'Минимальное количество часов в игре'}
-                </label>
-                <input 
-                  type="number" 
-                  min="0" 
-                  step="100"
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
-                  value={rConfig.minHours || ''}
-                  onChange={e => updateRConfig('minHours', e.target.value ? parseInt(e.target.value, 10) : 0, false)}
-                  onBlur={e => updateRConfig('minHours', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
-                  placeholder={t('clan_recruitment_min_hours_ph') || 'Например: 2000 (0 — без ограничений)'}
-                />
-                <p className="text-[11px] text-slate-400 mt-1">{t('clan_recruitment_min_hours_hint') || 'Проверяется строго по анкете. В карточке суммируются реальные часы всех указанных Steam аккаунтов.'}</p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none">
-                  {t('clan_recruitment_reject_banned') || 'Автоматически отклонять игроков с VAC/Game блокировками'}
-                </span>
-                <ToggleSwitch
-                  checked={rConfig.rejectBanned ?? true}
-                  onChange={val => updateRConfig('rejectBanned', val, true)}
-                  activeColor="orange"
-                  size="sm"
-                />
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none">
-                  {t('clan_recruitment_strict_steam') || 'Строгая проверка Steam (профиль должен быть открыт для сверки часов)'}
-                </span>
-                <ToggleSwitch
-                  checked={Boolean(rConfig.strictSteamCheck)}
-                  onChange={val => updateRConfig('strictSteamCheck', val, true)}
-                  activeColor="orange"
-                  size="sm"
-                />
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none">
-                  {t('clan_recruitment_silent_reject') || 'Экономить лимит каналов (мгновенный отказ кандидату без создания тикета)'}
-                </span>
-                <ToggleSwitch
-                  checked={rConfig.silentAutoReject !== false}
-                  onChange={val => updateRConfig('silentAutoReject', val, true)}
-                  activeColor="orange"
-                  size="sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                {t('clan_recruitment_reject_msg') || 'Сообщение кандидату при автоматическом отклонении'}
-              </label>
-              <textarea 
-                className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[60px]"
-                value={rConfig.autoRejectMessage ?? defaultRejectMsg}
-                onChange={e => updateRConfig('autoRejectMessage', e.target.value, false)}
-                onBlur={e => updateRConfig('autoRejectMessage', e.target.value, true)}
-                placeholder={defaultRejectMsg}
-              ></textarea>
-            </div>
-
-            {/* Выбор каналов для отправки отклоненных заявок */}
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
-              <div>
-                <h5 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <Hash className="w-3.5 h-3.5 text-orange-500" />
-                  {t('clan_recruitment_channels_title') || 'Куда отсылать отклоненные заявки'}
-                </h5>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('clan_recruitment_channels_desc') || 'Выберите каналы Discord, в которые бот будет отправлять карточки отклоненных анкет.'}
-                </p>
-              </div>
-
-              <div className={isCompanionWindowVisible ? "grid grid-cols-1 2xl:grid-cols-2 gap-3 pt-1" : "grid grid-cols-1 md:grid-cols-2 gap-3 pt-1"}>
+              <div className={gridTwoCols}>
                 <div>
-                  <ChannelSelect
-                    label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}
-                    description={t('clan_auto_113', 'Канал для карточек авто-отказа (нехватка часов, возраст, VAC-баны)')}
-                    value={cConfig.autoRejectedApplications || ''}
-                    onChange={val => updateChannelConfig('autoRejectedApplications', val)}
-                    discordChannels={discordInfo?.channels || []}
-                    typeFilter={[0, 2]}
-                    isLoading={!discordInfo}
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-blue-500" />
+                    <span>{t('clan_recruitment_min_age') || 'Минимальный возраст кандидата'}</span>
+                    <HelpTooltip text={t('clan_auto_50', 'Кандидаты младше этого возраста будут автоматически отклонены ботом при подаче анкеты.')} />
+                  </label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    max="99"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+                    value={rConfig.minAge || ''}
+                    onChange={e => updateRConfig('minAge', e.target.value ? parseInt(e.target.value, 10) : 0, false)}
+                    onBlur={e => updateRConfig('minAge', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
+                    placeholder={t('clan_recruitment_min_age_ph') || 'Например: 18 (0 — без ограничений)'}
                   />
                 </div>
+
                 <div>
-                  <ChannelSelect
-                    label={t('clan_recruitment_channel_admin') || 'Отклоненные админами заявки'}
-                    description={t('clan_auto_114', 'Канал для карточек заявок, отклоненных рекрутерами вручную')}
-                    value={cConfig.rejectedApplications || ''}
-                    onChange={val => updateChannelConfig('rejectedApplications', val)}
-                    discordChannels={discordInfo?.channels || []}
-                    typeFilter={[0, 2]}
-                    isLoading={!discordInfo}
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-orange-500" />
+                    <span>{t('clan_recruitment_min_hours') || 'Минимальное количество часов в игре'}</span>
+                    <HelpTooltip text={t('clan_recruitment_min_hours_hint', 'Проверяется строго по анкете. В карточке суммируются реальные часы всех указанных Steam аккаунтов.')} />
+                  </label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    step="100"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-sm"
+                    value={rConfig.minHours || ''}
+                    onChange={e => updateRConfig('minHours', e.target.value ? parseInt(e.target.value, 10) : 0, false)}
+                    onBlur={e => updateRConfig('minHours', e.target.value ? parseInt(e.target.value, 10) : 0, true)}
+                    placeholder={t('clan_recruitment_min_hours_ph') || 'Например: 2000 (0 — без ограничений)'}
                   />
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* 3. Журнал заявок вынесен в отдельный раздел */}
-        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/40">
-              <ScrollText className="w-5 h-5" />
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none flex items-center">
+                    <span>{t('clan_recruitment_reject_banned') || 'Автоматически отклонять игроков с VAC/Game блокировками'}</span>
+                    <HelpTooltip text="Бот сверяет Steam ID кандидата с базой Valve и отклоняет анкеты с активными банами." />
+                  </span>
+                  <ToggleSwitch
+                    checked={rConfig.rejectBanned ?? true}
+                    onChange={val => updateRConfig('rejectBanned', val, true)}
+                    activeColor="orange"
+                    size="sm"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none flex items-center">
+                    <span>{t('clan_recruitment_strict_steam') || 'Строгая проверка Steam'}</span>
+                    <HelpTooltip text="Профиль Steam кандидата должен быть открыт в настройках приватности для сверки реальных игровых часов." />
+                  </span>
+                  <ToggleSwitch
+                    checked={Boolean(rConfig.strictSteamCheck)}
+                    onChange={val => updateRConfig('strictSteamCheck', val, true)}
+                    activeColor="orange"
+                    size="sm"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none flex items-center">
+                    <span>{t('clan_recruitment_silent_reject') || 'Экономить лимит каналов'}</span>
+                    <HelpTooltip text="Мгновенный отказ кандидату во всплывающем окне Discord без создания отдельного текстового тикет-канала (Discord ограничивает сервер 500 каналами)." />
+                  </span>
+                  <ToggleSwitch
+                    checked={rConfig.silentAutoReject !== false}
+                    onChange={val => updateRConfig('silentAutoReject', val, true)}
+                    activeColor="orange"
+                    size="sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <span>{t('clan_recruitment_reject_msg') || 'Сообщение кандидату при автоматическом отклонении'}</span>
+                  <HelpTooltip text="Текст, который кандидат увидит в личном уведомлении при несоответствии минимальным требованиям клана." />
+                </label>
+                <textarea 
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/50 outline-none transition-shadow text-xs min-h-[60px]"
+                  value={rConfig.autoRejectMessage ?? defaultRejectMsg}
+                  onChange={e => updateRConfig('autoRejectMessage', e.target.value, false)}
+                  onBlur={e => updateRConfig('autoRejectMessage', e.target.value, true)}
+                  placeholder={defaultRejectMsg}
+                ></textarea>
+              </div>
+
+              {/* Выбор каналов для отправки отклоненных заявок */}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <h5 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Hash className="w-3.5 h-3.5 text-orange-500" />
+                    <span>{t('clan_recruitment_channels_title') || 'Куда отсылать отклоненные заявки'}</span>
+                  </h5>
+                  <HelpTooltip text="Каналы Discord, в которые бот отправляет информационные карточки отсеянных и отклоненных анкет." />
+                </div>
+
+                <div className={isCompanionWindowVisible ? "grid grid-cols-1 2xl:grid-cols-2 gap-3 pt-1" : "grid grid-cols-1 md:grid-cols-2 gap-3 pt-1"}>
+                  <div>
+                    <ChannelSelect
+                      label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}
+                      description={t('clan_auto_113', 'Канал для карточек авто-отказа (нехватка часов, возраст, VAC-баны)')}
+                      value={cConfig.autoRejectedApplications || ''}
+                      onChange={val => updateChannelConfig('autoRejectedApplications', val)}
+                      discordChannels={discordInfo?.channels || []}
+                      typeFilter={[0, 2]}
+                      isLoading={!discordInfo}
+                    />
+                  </div>
+                  <div>
+                    <ChannelSelect
+                      label={t('clan_recruitment_channel_admin') || 'Отклоненные админами заявки'}
+                      description={t('clan_auto_114', 'Канал для карточек заявок, отклоненных рекрутерами вручную')}
+                      value={cConfig.rejectedApplications || ''}
+                      onChange={val => updateChannelConfig('rejectedApplications', val)}
+                      discordChannels={discordInfo?.channels || []}
+                      typeFilter={[0, 2]}
+                      isLoading={!discordInfo}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                {t('clan_tab_applications', 'Заявки в клан')}
-                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300">
-                  {Array.isArray(applicationsData) ? applicationsData.length : 0}
-                </span>
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {t('clan_recruitment_apps_moved_desc', 'Журнал и история поступивших анкет теперь вынесены в отдельный раздел «Заявки в клан».')}
-              </p>
-            </div>
-          </div>
-          {setActiveTab && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('applications')}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-            >
-              <span>{t('clan_open_applications_btn', 'Открыть журнал заявок')}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           )}
         </div>
 
-        {/* 4. Steam Приписки (Tag Verification) */}
+        {/* 3. Steam Приписки (Tag Verification) */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-4 flex-wrap">
-            <div>
-              <h3 className="text-base font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0">
                 <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.5 14H8c-1.66 0-3-1.34-3-3s1.34-3 3-3l.14.01C8.58 8.28 10.13 7 12 7c2.21 0 4 1.79 4 4h.5c1.38 0 2.5 1.12 2.5 2.5S17.88 16 16.5 16z"/></svg>
-                <span>{t('clan_steam_prefix_title', 'Steam Приписки')}</span>
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {t('clan_steam_prefix_desc', 'Проверка наличия кланового тега в Steam нике участников')}
-              </p>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                  <span>{t('clan_steam_prefix_title', 'Steam Приписки')}</span>
+                  {!rConfig.steamPrefixCheck && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                      Отключено
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {t('clan_steam_prefix_desc', 'Проверка наличия кланового тега в Steam нике участников')}
+                </p>
+              </div>
             </div>
-            <ToggleSwitch
-              checked={Boolean(rConfig.steamPrefixCheck)}
-              onChange={(val) => updateRConfig('steamPrefixCheck', val, true)}
-              activeColor="blue"
-            />
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setUserSteamPrefixExpanded(!isSteamPrefixExpanded)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200/60 dark:border-slate-700/60"
+              >
+                <span>{isSteamPrefixExpanded ? 'Скрыть параметры' : 'Параметры проверки'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isSteamPrefixExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              <ToggleSwitch
+                checked={Boolean(rConfig.steamPrefixCheck)}
+                onChange={(val) => updateRConfig('steamPrefixCheck', val, true)}
+                activeColor="blue"
+              />
+            </div>
           </div>
           
-          <div className={`space-y-5 transition-opacity ${!rConfig.steamPrefixCheck ? 'opacity-50 pointer-events-none' : ''}`}>
+          {isSteamPrefixExpanded && (
+            <div className="space-y-5 pt-2 animate-in fade-in duration-200">
+              {!rConfig.steamPrefixCheck && (
+                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 text-[11px] text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                  <Info className="w-3.5 h-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <span>Проверка приписок выключена. Настройки сохранены и активируются при включении тумблера.</span>
+                </div>
+              )}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {t('clan_steam_prefix_label', 'Требуемая приписка')}
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                  <span>{t('clan_steam_prefix_label', 'Требуемая приписка')}</span>
+                  <HelpTooltip text="Клановый тег, который бот проверяет в никах Steam участников (например: [GODS])." />
                 </label>
                 <input
                   type="text"
@@ -1092,7 +1187,8 @@ export default function RecruitmentTab() {
               </div>
             </div>
           </div>
-        </div>
+        )}
+      </div>
       </div>
     </form>
   );

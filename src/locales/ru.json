@@ -1784,7 +1784,7 @@
   "settings_sponsor_desc": "Добровольная поддержка разработчика. При донате от 5$ вы попадаете в раздел спонсоров.",
   "settings_sponsor_ticket_body": "Новая заявка на спонсорство!\nСпособ: {{type}}\nВремя из чека: {{time}}\nКонтакт для карточки: {{contact}}",
   "settings_sponsors_title": "Спонсоры",
-  "settings_start_minimized_desc": "Приложение будет запускаться сразу в системном трее, минуя отображение окна",
+  "settings_start_minimized_desc": "При автозагрузке Windows приложение запускается свернутым в трей. При ручном запуске через ярлык окно открывается как обычно.",
   "settings_start_minimized_title": "Запускать свернутой в трей",
   "settings_support_back": "Назад к выбору",
   "settings_support_contact": "Ваш тег Discord, Steam или соцсети",

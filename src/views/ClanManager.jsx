@@ -1061,7 +1061,14 @@ export default function ClanManager() {
             } else {
               const err = configError || 'Empty or invalid configuration returned from bot/server';
               setError(err);
-              if (!err.includes('Слишком много запросов') && !err.includes('429')) {
+              const isExpectedOrOffline = 
+                err.includes('Слишком много запросов') || 
+                err.includes('429') ||
+                err.includes('Not linked or bot offline') ||
+                err.includes('бот не в сети') ||
+                err.includes('Timeout waiting for bot') ||
+                err.includes('Unauthorized');
+              if (!isExpectedOrOffline) {
                 reportClanErrorToTelegram('Failed to load clan configuration', `Error: ${err}\nGuild ID: ${guildId || 'Unknown'}`);
               }
             }
@@ -1828,6 +1835,7 @@ export default function ClanManager() {
     setConfig(newConfig);
     latestConfigRef.current = newConfig;
     pendingConfigRef.current = newConfig;
+    setSaveStatus('saving');
 
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveTimeRef.current;
@@ -3933,9 +3941,9 @@ export default function ClanManager() {
         tabTitle: t('clan_auto_v2_1018', t('clan_rec_base', 'Набор в клан')),
         channelName,
         embed: {
-          title: `${t('clan_ds_link_prefix', 'ССЫЛКА НА ДС ->')} ${inviteLink}`,
+          title: rConfig.title || (config?.name ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}` : t('clan_rec_base', 'Набор в клан')),
           color: '#5865f2',
-          description: `\`\`\`ansi\n${rConfig.title || t('clan_rec_base', 'Набор в клан')}\n\n${rConfig.text || 'Требования...'}\n\`\`\`\n# Лидер: ${leaderDisplay}`,
+          description: `${rConfig.text || t('clan_auto_110', 'Опишите требования...')}\n\n**Лидер:** ${leaderDisplay}\n**Ссылка:** ${inviteLink}`,
           banner: rConfig.banner
         },
         buttons: [
@@ -4782,6 +4790,53 @@ const contextValue = {
 
           {/* Tab Content */}
           <div className="flex-1 p-6 md:p-8 overflow-y-auto h-full scrollbar-thin min-h-0">
+            {/* Unified Top Header Bar with Live Save Status */}
+            <div className="flex items-center justify-between pb-3.5 mb-5 border-b border-slate-200/80 dark:border-slate-800 gap-4 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {(() => {
+                  const currentTabObj = tabs.find(t => t.id === activeTab);
+                  const Icon = currentTabObj?.icon;
+                  return (
+                    <div className="flex items-center gap-2 min-w-0">
+                      {Icon && <Icon className="w-5 h-5 text-blue-500 shrink-0" />}
+                      <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white truncate">
+                        {activeTab === 'search' ? (t('clan_search_results_title') || 'Поиск настроек') : (currentTabObj?.label || t('clan_tab_general', 'Управление'))}
+                      </h2>
+                    </div>
+                  );
+                })()}
+                {config?.name && (
+                  <span className="text-xs px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-semibold border border-slate-200 dark:border-slate-700 truncate shadow-2xs">
+                    {config.name}
+                  </span>
+                )}
+              </div>
+
+              {/* Live Save Status Badge */}
+              <div className="flex items-center gap-2 shrink-0">
+                {saveStatus === 'saving' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/80 shadow-2xs animate-pulse">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>{t('clan_roles_syncing', 'Синхронизация с ботом...')}</span>
+                  </span>
+                ) : saveStatus === 'success' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 shadow-2xs">
+                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>{t('clan_saved_success', 'Настройки сохранены')}</span>
+                  </span>
+                ) : saveStatus && typeof saveStatus === 'string' && saveStatus.startsWith('error') ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80 shadow-2xs">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>{t('clan_error_save', 'Ошибка сохранения')}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>{t('clan_all_saved', 'Все изменения сохранены')}</span>
+                  </span>
+                )}
+              </div>
+            </div>
             
             {activeTab === 'search' && (
               <div className="space-y-6 max-w-4xl animate-main-fade-in">

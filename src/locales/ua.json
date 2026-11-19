@@ -1784,7 +1784,7 @@
   "settings_sponsor_desc": "Добровільна підтримка розробника. При донаті від 5$ ви потрапляєте в розділ спонсорів.",
   "settings_sponsor_ticket_body": "Нова заявка на спонсорство!\nСпосіб: {{type}}\nЧас з чека: {{time}}\nКонтакт для картки: {{contact}}",
   "settings_sponsors_title": "Спонсори",
-  "settings_start_minimized_desc": "Програма запускатиметься відразу в системному треї, минаючи вікно",
+  "settings_start_minimized_desc": "При автозавантаженні Windows додаток запускається згорнутим у трей. При ручному запуску через ярлик вікно відкривається як зазвичай.",
   "settings_start_minimized_title": "Запускати згорнутим у трей",
   "settings_support_back": "Назад",
   "settings_support_contact": "Ваш тег Discord, Steam або соцмережі",
