@@ -475,11 +475,7 @@ export default function VotesTab() {
       {/* Header and Mode Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-            <Vote className="w-6 h-6 text-blue-500" />
-            <span>{t('clan_auto_52', 'Шаблоны голосований и вайпов')}</span>
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {t('clan_votes_desc', 'Быстрый визуальный конструктор голосований для клана с предпросмотром в реальном времени')}
           </p>
         </div>

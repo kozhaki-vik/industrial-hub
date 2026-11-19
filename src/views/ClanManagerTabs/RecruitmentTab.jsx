@@ -5,7 +5,7 @@ import {
   UserCheck, Check, AlertTriangle, ScrollText, Bot, Clock,
   ExternalLink, Eye, EyeOff, X, ArrowRight,
   Upload, Loader2, CheckCircle2, HardDrive, Trash2,
-  Sparkles, Image as ImageIcon, Info, ChevronDown
+  Sparkles, Image as ImageIcon, Info, ChevronDown, Palette
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import { ToggleSwitch } from '../ClanManager';
@@ -38,8 +38,11 @@ export default function RecruitmentTab() {
     isFullScreenWindow, isCompanionWindowVisible, showDiscordLivePreview, setShowDiscordLivePreview,
     queueAutoSave, saveConfig, sendProxyAction, addLog,
     openExternalUrl, setActiveTab, t,
-    currentActiveGuildId, guildId
+    currentActiveGuildId, guildId,
+    aiPreviewOverride, setAiPreviewOverride
   } = useContext(ClanManagerContext);
+
+  const [isAiPreviewing, setIsAiPreviewing] = useState(false);
 
   const gridTwoCols = isCompanionWindowVisible
     ? "grid grid-cols-1 2xl:grid-cols-2 gap-4"
@@ -104,7 +107,7 @@ export default function RecruitmentTab() {
     }
 
     if (config?.name) {
-      if (!rc.title || rc.title === t('clan_rec_gods', 'Набор в клан GODS') || rc.title === t('clan_rec_base', 'Набор в клан')) {
+      if (!rc.title || rc.title === t('clan_rec_base', 'Набор в клан') || rc.title.includes('GODS')) {
         rc.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}`;
       } else if (rc.title.includes('GODS')) {
         rc.title = rc.title.replace(/\bGODS\b/g, config.name);
@@ -182,12 +185,27 @@ export default function RecruitmentTab() {
     queueAutoSave(updated, true);
     setAiSuggestion(null);
     setAiError('');
-  }, [aiSuggestion, rConfig, config, queueAutoSave]);
+    setIsAiPreviewing(false);
+    if (setAiPreviewOverride) setAiPreviewOverride(null);
+  }, [aiSuggestion, rConfig, config, queueAutoSave, setAiPreviewOverride]);
 
   const handleDeclineAiSuggestion = useCallback(() => {
     setAiSuggestion(null);
     setAiError('');
-  }, []);
+    setIsAiPreviewing(false);
+    if (setAiPreviewOverride) setAiPreviewOverride(null);
+  }, [setAiPreviewOverride]);
+
+  const handleToggleAiPreview = useCallback(() => {
+    if (isAiPreviewing) {
+      setIsAiPreviewing(false);
+      if (setAiPreviewOverride) setAiPreviewOverride(null);
+    } else if (aiSuggestion?.improvedText) {
+      setIsAiPreviewing(true);
+      if (setAiPreviewOverride) setAiPreviewOverride(aiSuggestion.improvedText);
+      if (setShowDiscordLivePreview) setShowDiscordLivePreview(true);
+    }
+  }, [isAiPreviewing, aiSuggestion, setAiPreviewOverride, setShowDiscordLivePreview]);
 
   const handleSelectPresetBanner = useCallback((url) => {
     setUploadBannerError('');
@@ -338,16 +356,15 @@ export default function RecruitmentTab() {
         accentColor="orange"
       />
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
-          <UserPlus className="w-5 h-5 mr-2 text-blue-500" />
-          {t('clan_auto_41', 'Настройки набора в клан')}
-        </h3>
+      {/* Action / Preview Bar */}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {t('clan_recruitment_settings_desc', 'Настройте интерактивную панель набора, требования к кандидатам и фильтры Steam.')}
+        </p>
         <button
           type="button"
           onClick={() => setShowDiscordLivePreview(prev => !prev)}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer shrink-0 ${
             showDiscordLivePreview
               ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
               : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
@@ -680,8 +697,21 @@ export default function RecruitmentTab() {
                   </div>
                 </div>
 
-                {/* Кнопки Отказаться / Применить */}
-                <div className="flex items-center justify-end gap-2 pt-1">
+                {/* Кнопки Предпросмотр / Отказаться / Применить */}
+                <div className="flex items-center justify-end gap-2 pt-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleToggleAiPreview}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isAiPreviewing
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border-emerald-400 shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-emerald-400'
+                    }`}
+                    title={isAiPreviewing ? 'Скрыть предложенный ИИ вариант в превью' : 'Показать предложенный вариант в окне превью Discord'}
+                  >
+                    {isAiPreviewing ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    <span>{isAiPreviewing ? t('clan_ai_preview_active_btn', 'Скрыть предпросмотр') : t('clan_ai_preview_btn', 'Предпросмотр')}</span>
+                  </button>
                   <button
                     type="button"
                     onClick={handleDeclineAiSuggestion}
@@ -700,6 +730,129 @@ export default function RecruitmentTab() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Кастомизация Embed и кнопок Discord */}
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/40 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-orange-500" />
+                <span>{t('clan_recruitment_embed_custom_title', 'Оформление Embed и кнопок Discord')}</span>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Embed Color */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <span>{t('clan_embed_color', 'Цвет полосы Embed')}</span>
+                  <HelpTooltip text="Цвет левой полосы карточки набора в Discord." />
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={rConfig.embedColor?.startsWith('#') ? rConfig.embedColor : '#5865f2'}
+                    onChange={e => updateRConfig('embedColor', e.target.value, true)}
+                    className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-800 shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={rConfig.embedColor || '#5865f2'}
+                    onChange={e => updateRConfig('embedColor', e.target.value, false)}
+                    onBlur={e => updateRConfig('embedColor', e.target.value, true)}
+                    placeholder="#5865f2"
+                    className="w-28 px-3 py-1.5 font-mono text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white uppercase"
+                  />
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {[
+                      { name: 'Blurple', value: '#5865f2' },
+                      { name: 'Emerald', value: '#10b981' },
+                      { name: 'Amber', value: '#f59e0b' },
+                      { name: 'Rose', value: '#ef4444' },
+                      { name: 'Blue', value: '#3b82f6' },
+                      { name: 'Purple', value: '#8b5cf6' }
+                    ].map(sw => (
+                      <button
+                        key={sw.name}
+                        type="button"
+                        onClick={() => updateRConfig('embedColor', sw.value, true)}
+                        className="w-6 h-6 rounded-lg border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform cursor-pointer"
+                        style={{ backgroundColor: sw.value }}
+                        title={sw.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Embed Footer Text */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-orange-500" />
+                  <span>{t('clan_embed_footer', 'Текст футера Embed (подвал)')}</span>
+                  <HelpTooltip text="Нижняя строчка мелким шрифтом в Embed карточке." />
+                </label>
+                <input
+                  type="text"
+                  value={rConfig.footerText || ''}
+                  onChange={e => updateRConfig('footerText', e.target.value, false)}
+                  onBlur={e => updateRConfig('footerText', e.target.value, true)}
+                  placeholder={t('clan_embed_footer_placeholder', 'Например: Присоединяйтесь к сильнейшим!')}
+                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/30 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {/* Button text (Open) */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                  <span>{t('clan_button_label', 'Текст кнопки подачи заявки')}</span>
+                  <HelpTooltip text="Текст на зеленой кнопке в сообщении набора Discord." />
+                </label>
+                <input
+                  type="text"
+                  value={rConfig.buttonText || ''}
+                  onChange={e => updateRConfig('buttonText', e.target.value, false)}
+                  onBlur={e => updateRConfig('buttonText', e.target.value, true)}
+                  placeholder={t('clan_button_label_placeholder', 'Подать заявку')}
+                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/30 outline-none"
+                />
+              </div>
+
+              {/* Button text (Closed) */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                  <span>{t('clan_button_closed_label', 'Текст кнопки при закрытом наборе')}</span>
+                  <HelpTooltip text="Текст на неактивной кнопке, когда набор выключен." />
+                </label>
+                <input
+                  type="text"
+                  value={rConfig.closedButtonText || ''}
+                  onChange={e => updateRConfig('closedButtonText', e.target.value, false)}
+                  onBlur={e => updateRConfig('closedButtonText', e.target.value, true)}
+                  placeholder={t('clan_button_closed_placeholder', 'Набор закрыт')}
+                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-orange-500/30 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Include metadata lines toggle */}
+            <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+                  {t('clan_recruitment_include_meta', 'Добавлять в конец описания контакты лидеров и ссылку')}
+                </span>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  {t('clan_recruitment_include_meta_hint', 'Если выключено, в Embed будет отображаться только ваш собственный текст выше.')}
+                </p>
+              </div>
+              <ToggleSwitch
+                checked={rConfig.includeMetadataLines !== false}
+                onChange={val => updateRConfig('includeMetadataLines', val, true)}
+                activeColor="orange"
+              />
+            </div>
           </div>
 
           {/* Ссылка на баннер (Изображение) - Расположена под требованиями на всю ширину */}
@@ -1078,12 +1231,12 @@ export default function RecruitmentTab() {
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                   <span>{t('clan_steam_prefix_label', 'Требуемая приписка')}</span>
-                  <HelpTooltip text="Клановый тег, который бот проверяет в никах Steam участников (например: [GODS])." />
+                  <HelpTooltip text="Клановый тег, который бот проверяет в никах Steam участников (например: [CLAN])." />
                 </label>
                 <input
                   type="text"
                   className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder={t('clan_recruitment_steam_prefix_placeholder', 'Например: [GODS]')}
+                  placeholder={t('clan_recruitment_steam_prefix_placeholder', 'Например: [CLAN]')}
                   value={rConfig.steamPrefix || ''}
                   onChange={e => updateRConfig('steamPrefix', e.target.value, false)}
                   onBlur={e => updateRConfig('steamPrefix', e.target.value, true)}

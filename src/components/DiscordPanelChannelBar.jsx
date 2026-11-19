@@ -152,11 +152,12 @@ export default function DiscordPanelChannelBar({
               {isLive ? (
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  {t('clan_panel_status_live', 'В порядке')}
+                  {t('clan_panel_status_live', 'Активно')}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                  {t('clan_panel_status_draft', 'Не опубликовано')}
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                  {t('clan_panel_status_draft', 'Неактивно')}
                 </span>
               )}
 

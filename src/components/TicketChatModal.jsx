@@ -83,7 +83,7 @@ export default function TicketChatModal({ isOpen, onClose }) {
                 <span className="text-xs text-slate-400 mb-1 ml-1 mr-1">
                   {msg.sender === 'user' ? t('chat_sender_you', 'Вы') : t('chat_sender_admin', 'Администратор')} • {new Date(msg.created_at).toLocaleString()}
                 </span>
-                <div className={`p-3 rounded-2xl ${msg.sender === 'user' ? 'bg-orange-500 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-none'}`}>
+                <div className={`p-3 rounded-2xl whitespace-pre-wrap break-words ${msg.sender === 'user' ? 'bg-orange-500 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-none'}`}>
                   {msg.message}
                   {msg.image_data && msg.image_data.startsWith('data:image') && (
                     <img src={msg.image_data} alt="attachment" className="mt-2 rounded-lg max-h-48 object-cover cursor-pointer hover:opacity-90" onClick={() => window.open(msg.image_data)} />

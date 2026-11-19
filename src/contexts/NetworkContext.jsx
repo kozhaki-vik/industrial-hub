@@ -277,6 +277,26 @@ export const NetworkProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Automatically apply deferred update once Rust closes
+  useEffect(() => {
+    if (!deferredUpdatePayload || !electron?.config?.isRustRunning) return;
+
+    const rustWatcher = setInterval(async () => {
+      try {
+        const isRustOpen = await electron.config.isRustRunning();
+        if (!isRustOpen) {
+          clearInterval(rustWatcher);
+          addLog("Rust was closed. Automatically applying deferred update...");
+          electron.ipcRenderer.invoke('network:apply-deferred-update', deferredUpdatePayload);
+        }
+      } catch (e) {
+        console.error("Error checking Rust status for deferred update:", e);
+      }
+    }, 10000);
+
+    return () => clearInterval(rustWatcher);
+  }, [deferredUpdatePayload]);
+
   const sendTelemetry = useCallback((data) => {
     if (localStorage.getItem('hub_telemetry_enabled') === 'false') {
       return;

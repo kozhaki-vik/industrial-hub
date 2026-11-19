@@ -44,7 +44,7 @@ export default function SplashScreen({ onComplete }) {
       
       if (!isMounted) return;
 
-      if (result && result.updated > 0) {
+      if (result && result.updated > 0 && !result.deferredRestart) {
         setProgressData(prev => ({ ...prev, status: 'success' }));
         setUpdateStatus('done');
         

@@ -856,20 +856,7 @@ export default function RosterTab() {
       {/* Top Header & Metrics Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-            {rosterViewMode === 'active' ? (
-              <>
-                <UserCheck className="w-6 h-6 text-blue-500" />
-                <span>{t('clan_tab_roster', 'Состав клана')}</span>
-              </>
-            ) : (
-              <>
-                <Archive className="w-6 h-6 text-orange-500" />
-                <span>{t('clan_tab_history_archive', 'История и архив состава')}</span>
-              </>
-            )}
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {rosterViewMode === 'active'
               ? t('clan_roster_private_desc', 'Приватный штаб управления бойцами клана (данные видны только руководству)')
               : t('clan_roster_archive_desc', 'История участников, когда-либо вступавших в клан, даты, статистика вайпов и причины выхода')}

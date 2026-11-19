@@ -14,6 +14,7 @@ import StatsTab from './ClanManagerTabs/StatsTab';
 import LogsTab from './ClanManagerTabs/LogsTab';
 import ModerationTab from './ClanManagerTabs/ModerationTab';
 import ApplicationsTab from './ClanManagerTabs/ApplicationsTab';
+import AdTicketsTab from './ClanManagerTabs/AdTicketsTab';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -30,7 +31,8 @@ import {
   Sparkles, Unlink, Volume2, Mic, MicOff, VolumeX, Trash2, UserX, RefreshCw, Sliders, Radio,
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
-  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, ArrowLeft, Eye, EyeOff, Copy, ChevronDown, ChevronRight
+  BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, ArrowLeft, Eye, EyeOff, Copy, ChevronDown, ChevronRight,
+  Inbox
 } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
@@ -426,6 +428,7 @@ export default function ClanManager() {
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
+  const [aiPreviewOverride, setAiPreviewOverride] = useState(null);
   const [viewMode, setViewMode] = useState('clan'); // 'clan' (Daily Clan operations) | 'botConfig' (Technical Bot & Server setup)
   const [activeTab, setActiveTabRaw] = useState('roster');
   const [modSubTab, setModSubTab] = useState('antiMention');
@@ -484,6 +487,13 @@ export default function ClanManager() {
   const [applicationsCategory, setApplicationsCategory] = useState('clan'); // 'clan' | 'ads'
 
   const setActiveTab = useCallback((tab, subCategory) => {
+    if (tab !== 'recruitment') {
+      setAiPreviewOverride(null);
+    }
+    if (tab === 'applications' && subCategory === 'ads') {
+      setActiveTabRaw('ad_tickets');
+      return;
+    }
     setActiveTabRaw(tab);
     if (tab === 'applications' && subCategory) {
       setApplicationsCategory(subCategory);
@@ -639,6 +649,20 @@ export default function ClanManager() {
       }));
     });
   };
+
+  const sendClanProxy = useCallback((reqId, payload) => {
+    if (!ws || wsStatus !== 'online') return false;
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId,
+      clan_secret: clanSecret,
+      targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
+      payload
+    }));
+    return true;
+  }, [ws, wsStatus, isDevAdminActive]);
 
   const fetchUserWarnings = async (userId) => {
     if (!userId) return;
@@ -1093,9 +1117,10 @@ export default function ClanManager() {
             }
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'update_config') {
-          if (data.error) {
-            setError(data.error);
-            setSaveStatus(`error: ${data.error}`);
+          if (data.error || (data.data && data.data.error)) {
+            const err = data.error || data.data.error;
+            setError(err);
+            setSaveStatus(`error: ${err}`);
             setTimeout(() => setSaveStatus(null), 5000);
           } else {
             setSaveStatus('success');
@@ -1691,7 +1716,7 @@ export default function ClanManager() {
       }
       const oldName = config?.name || '';
       // If recruitment title was not customized, or was using old name, or was GODS, update it to match new name
-      if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || (oldName && r.title === `${t('clan_recruit_title_prefix', 'Набор в клан')} ${oldName}`) || r.title.includes('GODS')) {
+      if (!r.title || r.title === t('clan_rec_base', 'Набор в клан') || (oldName && r.title === `${t('clan_recruit_title_prefix', 'Набор в клан')} ${oldName}`) || r.title.includes('GODS')) {
         r.title = newName ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${newName}` : t('clan_rec_base', 'Набор в клан');
         updatedRecruitment = JSON.stringify(r);
       }
@@ -1726,7 +1751,7 @@ export default function ClanManager() {
       try {
         if (updatedConfig.recruitmentConfigJson) r = JSON.parse(updatedConfig.recruitmentConfigJson);
       } catch (e) { console.error('[Auto-caught Error]', e); }
-      if (!r.title || r.title === t('clan_rec_gods', 'Набор в клан GODS') || r.title === t('clan_rec_base', 'Набор в клан') || r.title.includes('GODS')) {
+      if (!r.title || r.title === t('clan_rec_base', 'Набор в клан') || r.title.includes('GODS')) {
         r.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${clanName}`;
         updatedConfig.recruitmentConfigJson = JSON.stringify(r);
       }
@@ -1734,10 +1759,13 @@ export default function ClanManager() {
       queueAutoSave(updatedConfig, true);
     }
 
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
       reqId: 'auto_setup',
+      clan_secret: clanSecret,
+      targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
       payload: {
         action: 'auto_setup',
         currentConfig: updatedConfig,
@@ -1787,10 +1815,13 @@ export default function ClanManager() {
     const updated = { ...config, channelsConfigJson: JSON.stringify(channelsConfig) };
     queueAutoSave(updated, true);
     
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
     ws.send(JSON.stringify({
       type: 'clan',
       action: 'proxy',
       reqId: 'sync_permissions',
+      clan_secret: clanSecret,
+      targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
       payload: {
         action: 'sync_permissions',
         permissions
@@ -1806,11 +1837,18 @@ export default function ClanManager() {
     }
 
     const cfgToSend = pendingConfigRef.current || latestConfigRef.current;
-    if (!cfgToSend || !ws || wsStatus !== 'online') return;
+    if (!cfgToSend || !ws || wsStatus !== 'online') {
+      if (saveStatus === 'saving') setSaveStatus(null);
+      return;
+    }
 
     // No-op guard: if the configuration hasn't changed compared to lastSavedConfigRef, skip sending
     if (lastSavedConfigRef.current && JSON.stringify(cfgToSend) === JSON.stringify(lastSavedConfigRef.current)) {
       pendingConfigRef.current = null;
+      if (saveStatus === 'saving') {
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus(null), 2500);
+      }
       return;
     }
 
@@ -1819,10 +1857,13 @@ export default function ClanManager() {
     lastSavedConfigRef.current = JSON.parse(JSON.stringify(cfgToSend));
     setSaveStatus('saving');
 
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
       reqId: 'update_config', 
+      clan_secret: clanSecret,
+      targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
       payload: {
         action: 'update_config',
         updates: cfgToSend
@@ -2279,10 +2320,13 @@ export default function ClanManager() {
     lastVoiceSaveTimeRef.current = Date.now();
     setSaveStatus('saving');
 
+    const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
     ws.send(JSON.stringify({ 
       type: 'clan', 
       action: 'proxy', 
       reqId: 'update_dynamic_voice', 
+      clan_secret: clanSecret,
+      targetGuildId: (isDevAdminActive && activeDevGuildIdRef.current) ? activeDevGuildIdRef.current : undefined,
       payload: {
         action: 'update_dynamic_voice',
         config: cfgToSend
@@ -3236,6 +3280,7 @@ export default function ClanManager() {
     { id: 'applications', label: t('clan_tab_applications', 'Заявки в клан'), icon: ScrollText },
     { id: 'stats', label: t('clan_tab_stats', 'Статистика'), icon: BarChart3 },
     { id: 'ads', label: t('clan_tab_ads', 'Реклама'), icon: Megaphone },
+    { id: 'ad_tickets', label: t('clan_tab_ad_tickets', 'Заявки на рекламу'), icon: Inbox },
   ];
 
   const botConfigGroups = [
@@ -3618,6 +3663,16 @@ export default function ClanManager() {
       desc: t('sidx_applications_desc', 'Список всех поданных анкет кандидатов, статус тикетов и стенограммы собеседований'),
       keywords: ['заявки', 'анкеты', 'кандидаты', 'журнал', 'тикеты', 'applications', 'tickets', 'transcripts']
     },
+    // Ad Tickets
+    {
+      id: 'ad_tickets_journal',
+      tabId: 'ad_tickets',
+      tabName: t('clan_tab_ad_tickets', 'Заявки на рекламу'),
+      tabIcon: Inbox,
+      title: t('sidx_ad_tickets_title', 'Заявки на рекламу и партнерство'),
+      desc: t('sidx_ad_tickets_desc', 'Список обращений по рекламе, спонсорству и партнерству от участников Discord'),
+      keywords: ['реклама', 'заявки на рекламу', 'тикеты рекламы', 'партнерство', 'спонсорство', 'ad tickets', 'partnership']
+    },
 
     // Permissions
     {
@@ -3920,7 +3975,7 @@ export default function ClanManager() {
       } catch (e) { console.error('[Auto-caught Error]', e); }
 
       if (config?.name) {
-        if (!rConfig.title || rConfig.title === t('clan_rec_gods', 'Набор в клан GODS') || rConfig.title === t('clan_rec_base', 'Набор в клан')) {
+        if (!rConfig.title || rConfig.title === t('clan_rec_base', 'Набор в клан') || rConfig.title.includes('GODS')) {
           rConfig.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}`;
         } else if (rConfig.title.includes('GODS')) {
           rConfig.title = rConfig.title.replace(/\bGODS\b/g, config.name);
@@ -3937,17 +3992,23 @@ export default function ClanManager() {
       const appChannel = discordInfo?.channels?.find(c => c.id === cConfig.applications);
       const channelName = appChannel ? appChannel.name : t('clan_default_rec_ch', 'набор-в-клан');
 
+      const currentText = aiPreviewOverride || rConfig.text || t('clan_auto_110', 'Опишите требования...');
+      const description = rConfig.includeMetadataLines !== false
+        ? `${currentText}\n\n**Лидер:** ${leaderDisplay}\n**Ссылка:** ${inviteLink}`
+        : currentText;
+
       return {
-        tabTitle: t('clan_auto_v2_1018', t('clan_rec_base', 'Набор в клан')),
+        tabTitle: aiPreviewOverride ? `${t('clan_rec_base', 'Набор в клан')} (${t('clan_ai_preview_badge', 'Предпросмотр ИИ')})` : t('clan_auto_v2_1018', t('clan_rec_base', 'Набор в клан')),
         channelName,
         embed: {
           title: rConfig.title || (config?.name ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}` : t('clan_rec_base', 'Набор в клан')),
-          color: '#5865f2',
-          description: `${rConfig.text || t('clan_auto_110', 'Опишите требования...')}\n\n**Лидер:** ${leaderDisplay}\n**Ссылка:** ${inviteLink}`,
-          banner: rConfig.banner
+          color: rConfig.embedColor || '#5865f2',
+          description,
+          banner: rConfig.banner,
+          footer: rConfig.footerText || undefined
         },
         buttons: [
-          { label: t('clan_auto_v2_1001', 'Подать заявку'), emoji: '📝', style: 'success' }
+          { label: rConfig.buttonText || t('clan_auto_v2_1001', 'Подать заявку'), emoji: '📝', style: 'success' }
         ]
       };
     }
@@ -4040,9 +4101,10 @@ export default function ClanManager() {
         channelName,
         embed: {
           title: aConfig.title || t('clan_ads_buy', 'Покупка рекламы'),
-          color: '#2ecc71',
-          description: aConfig.text ? `**${aConfig.text}**` : `**${t('clan_ads_default_text', 'Размещение рекламы/партнерства на платных/взаимных условиях, актуальная информация по кнопкам ниже.')}**`,
-          banner: aConfig.banner
+          color: aConfig.color || aConfig.embedColor || '#2ecc71',
+          description: aConfig.text || t('clan_ads_default_text', 'Размещение рекламы/партнерства на платных/взаимных условиях, актуальная информация по кнопкам ниже.'),
+          banner: aConfig.banner,
+          footer: aConfig.footerText || undefined
         },
         buttons: [
           { label: t('clan_auto_v2_1006', 'Заказать рекламу'), emoji: '<:speakerphone:1571506556254552156>', style: 'primary' },
@@ -4066,6 +4128,9 @@ const contextValue = {
   aConfig: typeof aConfig !== "undefined" ? aConfig : undefined,
   activeDevGuildIdRef: typeof activeDevGuildIdRef !== "undefined" ? activeDevGuildIdRef : undefined,
   currentActiveGuildId: typeof currentActiveGuildId !== "undefined" ? currentActiveGuildId : undefined,
+  aiPreviewOverride: typeof aiPreviewOverride !== "undefined" ? aiPreviewOverride : undefined,
+  setAiPreviewOverride: typeof setAiPreviewOverride !== "undefined" ? setAiPreviewOverride : undefined,
+  sendClanProxy: typeof sendClanProxy !== "undefined" ? sendClanProxy : undefined,
   activeTab: typeof activeTab !== "undefined" ? activeTab : undefined,
   activeTpl: typeof activeTpl !== "undefined" ? activeTpl : undefined,
   activeVotes: typeof activeVotes !== "undefined" ? activeVotes : undefined,
@@ -4566,8 +4631,18 @@ const contextValue = {
                 {t('clan_nav_sections') || 'Разделы'}
               </span>
               {saveStatus && (
-                <span className={`text-[10px] font-medium ${saveStatus === 'success' ? 'text-green-500' : saveStatus.startsWith('error') ? 'text-red-500' : 'text-blue-500 animate-pulse'}`}>
-                  {saveStatus === 'success' ? `✓ ${t('clan_saved_success') || 'Сохранено'}` : saveStatus === 'saving' ? (t('clan_roles_syncing') || 'Синхронизация...') : (t('clan_error') || 'Ошибка')}
+                <span className={`text-[10px] font-medium transition-all ${
+                  saveStatus === 'success' 
+                    ? 'text-emerald-500' 
+                    : typeof saveStatus === 'string' && saveStatus.startsWith('error') 
+                      ? 'text-rose-500 font-semibold' 
+                      : 'text-blue-500 animate-pulse'
+                }`}>
+                  {saveStatus === 'success' 
+                    ? `✓ ${t('clan_saved_success') || 'Сохранено'}` 
+                    : typeof saveStatus === 'string' && saveStatus.startsWith('error')
+                      ? (t('clan_error') || 'Ошибка')
+                      : (t('clan_roles_syncing') || 'Синхронизация...')}
                 </span>
               )}
             </div>
@@ -4673,7 +4748,7 @@ const contextValue = {
                             </span>
                           ) : null
                         )}
-                        {tab.id === 'ads' && (
+                        {tab.id === 'ad_tickets' && (
                           openAdTicketsCount > 0 ? (
                             <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
                               {openAdTicketsCount}
@@ -4696,7 +4771,7 @@ const contextValue = {
                   type="button"
                   onClick={() => {
                     setViewMode('clan');
-                    if (!['roster', 'votes', 'recruitment', 'applications', 'stats', 'ads'].includes(activeTab)) {
+                    if (!['roster', 'votes', 'recruitment', 'applications', 'stats', 'ads', 'ad_tickets'].includes(activeTab)) {
                       setActiveTab('roster');
                     }
                   }}
@@ -4955,6 +5030,8 @@ const contextValue = {
             {activeTab === 'votes' && <VotesTab />}
 
             {activeTab === 'ads' && <AdsTab />}
+
+            {activeTab === 'ad_tickets' && <AdTicketsTab />}
 
             {activeTab === 'roster' && <RosterTab />}
 

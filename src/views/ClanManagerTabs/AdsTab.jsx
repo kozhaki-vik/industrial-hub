@@ -2,11 +2,22 @@ import React, { useContext, useMemo, useCallback, useState, useRef } from 'react
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
   Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2,
-  Upload, Loader2, AlertCircle, HardDrive, ScrollText, ArrowRight
+  Upload, Loader2, AlertCircle, HardDrive, ScrollText, ArrowRight,
+  Palette, Sparkles
 } from 'lucide-react';
 import { DEFAULT_ADS_BANNER, normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
 import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
+
+const COLOR_SWATCHES = [
+  { name: 'Emerald', value: '#2ecc71' },
+  { name: 'Blurple', value: '#5865f2' },
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Amber', value: '#f59e0b' },
+  { name: 'Rose', value: '#ef4444' },
+  { name: 'Purple', value: '#8b5cf6' },
+  { name: 'Dark', value: '#2b2d31' }
+];
 
 export default function AdsTab() {
   const {
@@ -39,7 +50,9 @@ export default function AdsTab() {
       text: t('clan_auto_230', 'Здесь вы можете приобрести рекламу или обсудить партнерство.'),
       banner: DEFAULT_ADS_BANNER,
       priceText: '',
-      priceClicks: 0
+      priceClicks: 0,
+      footerText: '',
+      color: '#2ecc71'
     };
     try {
       if (config?.adConfigJson) {
@@ -50,7 +63,8 @@ export default function AdsTab() {
           return {
             ...defaults,
             ...parsed,
-            banner: parsed.banner !== undefined && parsed.banner !== null ? parsed.banner : DEFAULT_ADS_BANNER
+            banner: parsed.banner !== undefined && parsed.banner !== null ? parsed.banner : DEFAULT_ADS_BANNER,
+            color: parsed.color || parsed.embedColor || defaults.color
           };
         }
       }
@@ -111,7 +125,7 @@ export default function AdsTab() {
     } catch (err) {
       setUploadError(err.message || t('clan_banner_upload_err', 'Ошибка загрузки изображения'));
     } finally {
-      setUploadingBanner ? setUploadingBanner(false) : setUploading(false);
+      setUploading(false);
     }
   };
 
@@ -172,7 +186,7 @@ export default function AdsTab() {
   }, [sendProxyAction, setConfig, aConfig, config, queueAutoSave]);
 
   return (
-    <form onSubmit={saveConfig} noValidate className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl">
+    <form onSubmit={saveConfig} noValidate className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl animate-main-fade-in">
       {/* Discord Advertising Panel Channel Status & Manager */}
       <DiscordPanelChannelBar
         title={t('clan_ads_panel_title', 'Панель рекламы и партнерства')}
@@ -188,15 +202,15 @@ export default function AdsTab() {
         accentColor="purple"
       />
 
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-slate-800 dark:text-white flex items-center">
-          <Megaphone className="w-5 h-5 mr-2 text-blue-500" />
-          {t('clan_auto_65', 'Настройки панели рекламы')}
-        </h3>
+      {/* Action / Controls Header Bar */}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {t('clan_ads_settings_desc', 'Настройте текст рекламного Embed-сообщения, ссылки на прайс-лист и баннер.')}
+        </p>
         <button
           type="button"
           onClick={() => setShowDiscordLivePreview(prev => !prev)}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer shrink-0 ${
             showDiscordLivePreview
               ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
               : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
@@ -208,7 +222,7 @@ export default function AdsTab() {
         </button>
       </div>
 
-      <div className="space-y-5 p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm">
+      <div className="space-y-5 p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs">
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             {t('clan_auto_66', 'Заголовок Embed-сообщения *')}
@@ -216,7 +230,7 @@ export default function AdsTab() {
           <input 
             type="text" 
             required
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow"
+            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow text-sm"
             value={aConfig.title || ''}
             onChange={e => updateAConfig('title', e.target.value, false)}
             onBlur={e => updateAConfig('title', e.target.value, true)}
@@ -226,16 +240,71 @@ export default function AdsTab() {
         
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {t('clan_auto_67', 'Текст *')}
+            {t('clan_auto_67', 'Основной текст сообщения *')}
           </label>
           <textarea 
             required
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px] resize-none"
+            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px] resize-none text-sm leading-relaxed"
             value={aConfig.text || ''}
             onChange={e => updateAConfig('text', e.target.value, false)}
             onBlur={e => updateAConfig('text', e.target.value, true)}
             placeholder={t('clan_auto_112', 'Информация о рекламе...')}
           />
+        </div>
+
+        {/* Color and Footer Customization Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          {/* Embed Color picker */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+              <Palette className="w-3.5 h-3.5 text-blue-500" />
+              <span>{t('clan_embed_color', 'Цвет полосы Embed')}</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={aConfig.color?.startsWith('#') ? aConfig.color : '#2ecc71'}
+                onChange={e => updateAConfig('color', e.target.value, true)}
+                className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-800 shrink-0"
+              />
+              <input
+                type="text"
+                value={aConfig.color || '#2ecc71'}
+                onChange={e => updateAConfig('color', e.target.value, false)}
+                onBlur={e => updateAConfig('color', e.target.value, true)}
+                placeholder="#2ecc71"
+                className="w-28 px-3 py-1.5 font-mono text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white uppercase"
+              />
+              <div className="flex items-center gap-1 flex-wrap">
+                {COLOR_SWATCHES.map(sw => (
+                  <button
+                    key={sw.name}
+                    type="button"
+                    onClick={() => updateAConfig('color', sw.value, true)}
+                    className="w-6 h-6 rounded-lg border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform cursor-pointer"
+                    style={{ backgroundColor: sw.value }}
+                    title={sw.name}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Embed Footer Text */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+              <span>{t('clan_embed_footer', 'Текст футера Embed (подвал)')}</span>
+            </label>
+            <input
+              type="text"
+              value={aConfig.footerText || ''}
+              onChange={e => updateAConfig('footerText', e.target.value, false)}
+              onBlur={e => updateAConfig('footerText', e.target.value, true)}
+              placeholder={t('clan_embed_footer_placeholder', 'Например: Официальный рекламный раздел')}
+              className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none"
+            />
+          </div>
         </div>
 
         <div>
@@ -248,7 +317,7 @@ export default function AdsTab() {
             </span>
           </div>
           <textarea 
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[90px] resize-none"
+            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[90px] resize-none text-sm"
             value={aConfig.priceText || ''}
             onChange={e => updateAConfig('priceText', e.target.value, false)}
             onBlur={e => updateAConfig('priceText', e.target.value, true)}
@@ -415,10 +484,10 @@ export default function AdsTab() {
             type="button"
             onClick={() => {
               if (typeof setActiveTab === 'function') {
-                setActiveTab('applications', 'ads');
+                setActiveTab('ad_tickets');
               }
             }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
           >
             <span>{t('clan_open_ad_tickets_btn', 'Открыть журнал заявок на рекламу')}</span>
             <ArrowRight className="w-3.5 h-3.5" />

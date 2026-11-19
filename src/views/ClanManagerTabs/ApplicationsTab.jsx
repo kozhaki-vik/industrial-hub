@@ -1,9 +1,8 @@
 import React, { useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
-  Trash2, RefreshCw, ScrollText, UserCheck, Check,
-  Search, ExternalLink, X, ChevronLeft, ChevronRight,
-  ClipboardList, AlertCircle, Archive, Megaphone, Lock, Hash
+  Trash2, RefreshCw, ScrollText, Check, Search, ExternalLink, X,
+  ChevronLeft, ChevronRight, AlertCircle, Archive
 } from 'lucide-react';
 import { ApplicationsTableSkeleton } from '../../components/Skeleton';
 import { showConfirm } from '../../components/ConfirmModal';
@@ -141,134 +140,6 @@ const ApplicationRow = React.memo(function ApplicationRow({
   );
 });
 
-// --- Memoized ad ticket row ---
-const AdTicketRow = React.memo(function AdTicketRow({
-  ticket,
-  t,
-  guildId,
-  openExternalUrl,
-  handleViewTranscript,
-  onCloseTicket
-}) {
-  const user = ticket.user || {};
-  const displayName = user.displayName || user.username || `User ${String(ticket.userId).slice(-4)}`;
-  const initials = (displayName || 'Р').slice(0, 2).toUpperCase();
-  const isOpen = ticket.status === 'OPEN';
-
-  const channelUrl = guildId && ticket.channelId
-    ? `discord://discord.com/channels/${guildId}/${ticket.channelId}`
-    : null;
-  const webChannelUrl = guildId && ticket.channelId
-    ? `https://discord.com/channels/${guildId}/${ticket.channelId}`
-    : null;
-
-  return (
-    <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors border-b border-slate-100 dark:border-slate-800/60">
-      <td className="px-4 py-3.5">
-        <div className="flex items-center space-x-3">
-          {user.avatar ? (
-            <img
-              src={user.avatar}
-              alt=""
-              loading="lazy"
-              className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                if (e.currentTarget.nextElementSibling) {
-                  e.currentTarget.nextElementSibling.style.display = 'flex';
-                }
-              }}
-            />
-          ) : null}
-          <div
-            className={`w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0 shadow-2xs ${user.avatar ? 'hidden' : 'flex'}`}
-          >
-            {initials}
-          </div>
-          <div className="min-w-0 max-w-[200px]">
-            <div className="font-semibold text-slate-800 dark:text-slate-200 truncate text-xs">{displayName}</div>
-            <div className="text-[10px] text-slate-400 font-mono truncate">ID: {ticket.userId}</div>
-          </div>
-        </div>
-      </td>
-      <td className="px-3 py-3.5">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40">
-          📢 {t('clan_ad_ticket_type_ad', 'Реклама / Партнерство')}
-        </span>
-      </td>
-      <td className="px-3 py-3.5">
-        {channelUrl ? (
-          <button
-            type="button"
-            onClick={() => {
-              if (openExternalUrl) {
-                openExternalUrl(channelUrl);
-              } else {
-                window.open(webChannelUrl, '_blank');
-              }
-            }}
-            className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors text-[11px] font-medium group cursor-pointer"
-            title={`Открыть канал в Discord: #${ticket.channelId}`}
-          >
-            <Hash className="w-3 h-3 opacity-70 group-hover:opacity-100" />
-            <span className="font-mono">#{String(ticket.channelId).slice(-6)}</span>
-            <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover:opacity-100" />
-          </button>
-        ) : (
-          <span className="text-slate-400 text-xs">—</span>
-        )}
-      </td>
-      <td className="px-3 py-3.5">
-        {isOpen ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5"></span>
-            {t('clan_ad_ticket_status_open', 'Открыт')}
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-            🔒 {t('clan_ad_ticket_status_closed', 'Закрыт')}
-          </span>
-        )}
-      </td>
-      <td className="px-3 py-3.5 text-center">
-        <button
-          type="button"
-          onClick={() => handleViewTranscript({
-            id: ticket.id,
-            channelId: ticket.channelId,
-            username: displayName,
-            userId: ticket.userId,
-            appliedAt: ticket.createdAt
-          })}
-          className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white border border-slate-200 dark:border-slate-700 transition-all text-[11px] font-medium shadow-2xs group cursor-pointer"
-          title={t('clan_recruitment_app_view_transcript') || 'Просмотр транскрипта'}
-        >
-          <ScrollText className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
-          <span>{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</span>
-        </button>
-      </td>
-      <td className="px-3 py-3.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
-        {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'}
-      </td>
-      <td className="px-4 py-3.5 text-right">
-        {isOpen ? (
-          <button
-            type="button"
-            onClick={() => onCloseTicket(ticket)}
-            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200/60 dark:border-red-900/40 hover:bg-red-100 dark:hover:bg-red-900/50 transition-all text-[11px] font-medium cursor-pointer"
-            title={t('clan_ad_ticket_close_btn', 'Закрыть тикет')}
-          >
-            <Lock className="w-3 h-3" />
-            <span>{t('clan_ad_ticket_close_btn', 'Закрыть')}</span>
-          </button>
-        ) : (
-          <span className="text-slate-400 text-xs">—</span>
-        )}
-      </td>
-    </tr>
-  );
-});
-
 export default function ApplicationsTab() {
   const {
     applicationsData,
@@ -283,24 +154,8 @@ export default function ApplicationsTab() {
     getSteamProfileUrl,
     openExternalUrl,
     getCachedMemberMeta,
-    t,
-    adTicketsData,
-    loadingAdTickets,
-    fetchAdTickets,
-    handleCloseAdTicket,
-    openAdTicketsCount,
-    pendingAppsCount,
-    applicationsCategory,
-    setApplicationsCategory,
-    discordInfo,
-    currentActiveGuildId,
-    config
+    t
   } = useContext(ClanManagerContext);
-
-  const guildId = currentActiveGuildId || discordInfo?.guild?.id || config?.guildId || '';
-
-  // --- Category Switcher (Clan applications vs Ad tickets) ---
-  const currentCategory = applicationsCategory || 'clan';
 
   // --- Clan Applications State ---
   const [appViewMode, setAppViewMode] = useState('active'); // 'active' | 'archive'
@@ -328,44 +183,11 @@ export default function ApplicationsTab() {
     setAppSearch('');
   }, [setAppSearch]);
 
-  // --- Ad Tickets State ---
-  const [adViewMode, setAdViewMode] = useState('active'); // 'active' | 'closed'
-  const [adSearchInput, setAdSearchInput] = useState('');
-  const [adDebouncedSearch, setAdDebouncedSearch] = useState('');
-  const adSearchTimerRef = useRef(null);
-
-  const handleAdSearchChange = useCallback((val) => {
-    setAdSearchInput(val);
-    if (adSearchTimerRef.current) clearTimeout(adSearchTimerRef.current);
-    adSearchTimerRef.current = setTimeout(() => {
-      setAdDebouncedSearch(val);
-    }, 250);
-  }, []);
-
-  const handleClearAdSearch = useCallback(() => {
-    setAdSearchInput('');
-    if (adSearchTimerRef.current) clearTimeout(adSearchTimerRef.current);
-    setAdDebouncedSearch('');
-  }, []);
-
   useEffect(() => {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-      if (adSearchTimerRef.current) clearTimeout(adSearchTimerRef.current);
     };
   }, []);
-
-  // --- Close ad ticket confirmation handler ---
-  const handleConfirmCloseTicket = useCallback(async (ticket) => {
-    const userLabel = ticket.user?.displayName || ticket.user?.username || ticket.userId;
-    const confirmed = await showConfirm({
-      title: t('clan_ad_ticket_close_confirm_title', 'Закрытие тикета'),
-      message: `${t('clan_ad_ticket_close_confirm_msg', 'Вы действительно хотите закрыть заявку/тикет пользователя')} ${userLabel}? Канал в Discord будет архивирован.`
-    });
-    if (confirmed && handleCloseAdTicket) {
-      handleCloseAdTicket(ticket.id, ticket.channelId);
-    }
-  }, [handleCloseAdTicket, t]);
 
   // --- Status counts for clan applications ---
   const clanStatusCounts = useMemo(() => {
@@ -405,39 +227,7 @@ export default function ApplicationsTab() {
     return list;
   }, [applicationsData, appViewMode, archiveSubFilter, appSearch]);
 
-  // --- Filter and Search logic for Ad Tickets ---
-  const adTicketsCounts = useMemo(() => {
-    const list = adTicketsData || [];
-    return {
-      ALL: list.length,
-      OPEN: list.filter(t => t.status === 'OPEN').length,
-      CLOSED: list.filter(t => t.status === 'CLOSED').length
-    };
-  }, [adTicketsData]);
-
-  const filteredAdTickets = useMemo(() => {
-    let list = adTicketsData || [];
-
-    if (adViewMode === 'active') {
-      list = list.filter(t => t.status === 'OPEN');
-    } else {
-      list = list.filter(t => t.status === 'CLOSED');
-    }
-
-    if (adDebouncedSearch && adDebouncedSearch.trim()) {
-      const q = adDebouncedSearch.trim().toLowerCase();
-      list = list.filter(t => {
-        const username = t.user?.username?.toLowerCase() || '';
-        const displayName = t.user?.displayName?.toLowerCase() || '';
-        const uid = String(t.userId || '');
-        const cid = String(t.channelId || '');
-        return username.includes(q) || displayName.includes(q) || uid.includes(q) || cid.includes(q);
-      });
-    }
-    return list;
-  }, [adTicketsData, adViewMode, adDebouncedSearch]);
-
-  // --- Client-side Pagination (Clan Apps) ---
+  // --- Client-side Pagination ---
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
   const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
@@ -451,469 +241,241 @@ export default function ApplicationsTab() {
     return filteredApplications.slice(start, start + pageSize);
   }, [filteredApplications, currentPage, pageSize]);
 
-  // --- Client-side Pagination (Ad Tickets) ---
-  const [adPage, setAdPage] = useState(1);
-  const totalAdPages = Math.max(1, Math.ceil(filteredAdTickets.length / pageSize));
-
-  useEffect(() => {
-    setAdPage(1);
-  }, [adViewMode, adDebouncedSearch]);
-
-  const paginatedAdTickets = useMemo(() => {
-    const start = (adPage - 1) * pageSize;
-    return filteredAdTickets.slice(start, start + pageSize);
-  }, [filteredAdTickets, adPage, pageSize]);
-
   return (
-    <div className="w-full space-y-6 animate-main-fade-in">
-      {/* Top Category Tabs: Заявки в клан vs Заявки на рекламу */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl w-fit shadow-xs">
-        <button
-          type="button"
-          onClick={() => setApplicationsCategory && setApplicationsCategory('clan')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 cursor-pointer ${
-            currentCategory === 'clan'
-              ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-          }`}
-        >
-          <ScrollText className="w-4 h-4" />
-          <span>{t('clan_tab_applications', 'Заявки в клан')}</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
-            clanStatusCounts.PENDING > 0
-              ? 'bg-orange-500 text-white'
-              : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-          }`}>
-            {clanStatusCounts.PENDING > 0 ? clanStatusCounts.PENDING : clanStatusCounts.ALL}
-          </span>
-        </button>
+    <div className="w-full space-y-5 animate-main-fade-in">
+      {/* Top Header & Actions Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t('clan_recruitment_apps_desc') || 'История всех поступивших заявок: принятые, отклоненные руководством и отфильтрованные ботом.'}
+          </p>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setApplicationsCategory && setApplicationsCategory('ads')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 cursor-pointer ${
-            currentCategory === 'ads'
-              ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-          }`}
-        >
-          <Megaphone className="w-4 h-4" />
-          <span>{t('clan_tab_ad_tickets', 'Заявки на рекламу')}</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
-            adTicketsCounts.OPEN > 0
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-          }`}>
-            {adTicketsCounts.OPEN > 0 ? adTicketsCounts.OPEN : adTicketsCounts.ALL}
-          </span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={fetchApplications}
+            disabled={loadingApps}
+            className="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loadingApps ? 'animate-spin text-orange-500' : ''}`} />
+            <span>{t('clan_recruitment_apps_refresh') || 'Обновить'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleClearApplications}
+            disabled={loadingApps || clanStatusCounts.ALL === 0}
+            className="px-3.5 py-2 text-xs font-semibold border border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            title={t('clan_recruitment_apps_clear') || 'Очистить журнал'}
+          >
+            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+            <span className="hidden sm:inline">{t('clan_recruitment_apps_clear') || 'Очистить журнал'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* --- CATEGORY: CLAN APPLICATIONS --- */}
-      {currentCategory === 'clan' && (
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <ScrollText className="w-5 h-5 text-orange-500" />
-                <span>{t('clan_tab_applications', 'Заявки в клан')}</span>
-                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
-                  {clanStatusCounts.ALL}
-                </span>
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {t('clan_recruitment_apps_desc') || 'История всех поступивших заявок: принятые, отклоненные руководством и отфильтрованные ботом.'}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={fetchApplications}
-                disabled={loadingApps}
-                className="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loadingApps ? 'animate-spin text-orange-500' : ''}`} />
-                <span>{t('clan_recruitment_apps_refresh') || 'Обновить'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleClearApplications}
-                disabled={loadingApps || clanStatusCounts.ALL === 0}
-                className="px-3.5 py-2 text-xs font-semibold border border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                title={t('clan_recruitment_apps_clear') || 'Очистить журнал'}
-              >
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                <span>{t('clan_recruitment_apps_clear') || 'Очистить журнал'}</span>
-              </button>
-            </div>
+      {/* View Mode & Filter Toolbar */}
+      <div className="flex flex-col gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Main Mode Toggle: Active vs Archive */}
+          <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setAppViewMode('active')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                appViewMode === 'active'
+                  ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <ScrollText className="w-3.5 h-3.5" />
+              <span>{t('clan_apps_mode_active', 'Активные заявки')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                appViewMode === 'active' ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+              }`}>
+                {clanStatusCounts.PENDING}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAppViewMode('archive')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                appViewMode === 'archive'
+                  ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Archive className="w-3.5 h-3.5" />
+              <span>{t('clan_apps_mode_archive', 'Архив заявок')}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                appViewMode === 'archive' ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+              }`}>
+                {clanStatusCounts.ALL - clanStatusCounts.PENDING}
+              </span>
+            </button>
           </div>
 
-          {/* View Mode & Filter Toolbar */}
-          <div className="flex flex-col gap-3 p-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              {/* Main Mode Toggle: Active vs Archive */}
-              <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => setAppViewMode('active')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    appViewMode === 'active'
-                      ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <ScrollText className="w-3.5 h-3.5" />
-                  <span>{t('clan_apps_mode_active', 'Активные заявки')}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    appViewMode === 'active' ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                  }`}>
-                    {clanStatusCounts.PENDING}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAppViewMode('archive')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                    appViewMode === 'archive'
-                      ? 'bg-white dark:bg-slate-700 text-orange-600 dark:text-orange-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Archive className="w-3.5 h-3.5" />
-                  <span>{t('clan_apps_mode_archive', 'Архив заявок')}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    appViewMode === 'archive' ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                  }`}>
-                    {clanStatusCounts.ACCEPTED + clanStatusCounts.REJECTED + clanStatusCounts.AUTO_REJECTED}
-                  </span>
-                </button>
-              </div>
+          {/* Debounced Search input */}
+          <div className="relative md:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder={t('clan_recruitment_app_search_placeholder') || 'Поиск по нику, ID, Steam...'}
+              className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                title={t('clan_auto_105', 'Очистить поиск')}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
 
-              {/* Debounced Search input */}
-              <div className="relative md:w-80">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder={t('clan_recruitment_app_search_placeholder') || 'Поиск по нику, Discord ID, Steam...'}
-                  className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all"
-                />
-                {searchInput && (
-                  <button
-                    type="button"
-                    onClick={handleClearSearch}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                    title={t('clan_auto_105', 'Очистить поиск')}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
+        {/* Sub-filter chips for Archive mode */}
+        {appViewMode === 'archive' && (
+          <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex-wrap">
+            <span className="text-[11px] text-slate-400 font-medium mr-1">{t('clan_filter_label', 'Фильтр:')}</span>
+            <button
+              type="button"
+              onClick={() => setArchiveSubFilter('ALL')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                archiveSubFilter === 'ALL'
+                  ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              {t('clan_recruitment_apps_filter_all') || 'Все архивные'} ({clanStatusCounts.ALL - clanStatusCounts.PENDING})
+            </button>
+            <button
+              type="button"
+              onClick={() => setArchiveSubFilter('ACCEPTED')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                archiveSubFilter === 'ACCEPTED'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              ✓ {t('clan_recruitment_apps_filter_accepted') || 'Принятые'} ({clanStatusCounts.ACCEPTED})
+            </button>
+            <button
+              type="button"
+              onClick={() => setArchiveSubFilter('REJECTED')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                archiveSubFilter === 'REJECTED'
+                  ? 'bg-rose-600 text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              ❌ {t('clan_recruitment_apps_filter_rejected') || 'Отклоненные'} ({clanStatusCounts.REJECTED})
+            </button>
+            <button
+              type="button"
+              onClick={() => setArchiveSubFilter('AUTO_REJECTED')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                archiveSubFilter === 'AUTO_REJECTED'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              🤖 {t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ'} ({clanStatusCounts.AUTO_REJECTED})
+            </button>
+          </div>
+        )}
+      </div>
 
-            {/* Sub-filters for Archive Mode */}
-            {appViewMode === 'archive' && (
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                <span className="text-[11px] font-semibold text-slate-400 mr-1">
-                  {t('clan_apps_archive_filter_label', 'Статус в архиве:')}
-                </span>
-                {[
-                  { id: 'ALL', label: t('clan_recruitment_apps_filter_all') || 'Все', count: clanStatusCounts.ACCEPTED + clanStatusCounts.REJECTED + clanStatusCounts.AUTO_REJECTED },
-                  { id: 'ACCEPTED', label: t('clan_recruitment_apps_filter_accepted') || 'Приняты', count: clanStatusCounts.ACCEPTED },
-                  { id: 'REJECTED', label: t('clan_recruitment_apps_filter_rejected') || 'Отклонены', count: clanStatusCounts.REJECTED },
-                  { id: 'AUTO_REJECTED', label: t('clan_recruitment_apps_filter_auto_rejected') || 'Авто-отказ', count: clanStatusCounts.AUTO_REJECTED }
-                ].map(f => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setArchiveSubFilter(f.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
-                      archiveSubFilter === f.id
-                        ? 'bg-orange-500 text-white shadow-xs'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    <span>{f.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      archiveSubFilter === f.id ? 'bg-orange-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                    }`}>
-                      {f.count}
-                    </span>
-                  </button>
+      {/* Table Content */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        {loadingApps && (!applicationsData || applicationsData.length === 0) ? (
+          <div className="p-6">
+            <ApplicationsTableSkeleton rows={6} />
+          </div>
+        ) : filteredApplications.length === 0 ? (
+          <div className="text-center py-16 border-dashed border-slate-200 dark:border-slate-800">
+            <ScrollText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              {appSearch
+                ? (t('clan_search_not_found_title') || 'Ничего не найдено')
+                : (t('clan_recruitment_apps_empty') || 'Заявок в выбранной категории пока нет')}
+            </h4>
+            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+              {appSearch
+                ? `${t('clan_apps_search_empty', 'По запросу «')}${appSearch}${t('clan_apps_search_empty2', '» заявок не найдено.')}`
+                : (appViewMode === 'active'
+                  ? t('clan_apps_active_empty_hint', 'Новые кандидаты появятся здесь, когда нажмут кнопку подачи заявки в Discord.')
+                  : t('clan_apps_archive_empty_hint', 'Здесь сохраняется история всех рассмотренных заявок.'))}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
+              <thead className="bg-slate-50 dark:bg-slate-800/70 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none">
+                <tr>
+                  <th className="px-4 py-3">{t('clan_recruitment_app_col_candidate') || 'Кандидат'}</th>
+                  <th className="px-3 py-3">{t('clan_recruitment_app_col_steam') || 'Steam'}</th>
+                  <th className="px-3 py-3">{t('clan_recruitment_app_col_age') || 'Возраст'}</th>
+                  <th className="px-3 py-3">{t('clan_recruitment_app_col_hours') || 'Часы'}</th>
+                  <th className="px-3 py-3">{t('clan_recruitment_app_col_status') || 'Статус'}</th>
+                  <th className="px-3 py-3">{t('clan_recruitment_app_col_details') || 'Детали'}</th>
+                  <th className="px-3 py-3 text-center">{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</th>
+                  <th className="px-4 py-3 text-right">{t('clan_recruitment_app_col_date') || 'Дата'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {paginatedApplications.map(app => (
+                  <ApplicationRow
+                    key={app.id}
+                    app={app}
+                    t={t}
+                    getSteamProfileUrl={getSteamProfileUrl}
+                    openExternalUrl={openExternalUrl}
+                    handleViewTranscript={handleViewTranscript}
+                    cachedMeta={getCachedMemberMeta ? getCachedMemberMeta(app.userId) : null}
+                  />
                 ))}
+              </tbody>
+            </table>
+
+            {/* Pagination Toolbar */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/30">
+                <div>
+                  {t('clan_pagination_showing', 'Показано')} {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredApplications.length)} {t('clan_pagination_of', 'из')} {filteredApplications.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>{t('clan_pagination_prev', 'Назад')}</span>
+                  </button>
+                  <span className="px-2 font-semibold text-slate-700 dark:text-slate-300">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
+                  >
+                    <span>{t('clan_pagination_next', 'Вперед')}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
-
-          {/* Table Content */}
-          <div className="bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            {loadingApps && (!applicationsData || applicationsData.length === 0) ? (
-              <div className="p-6">
-                <ApplicationsTableSkeleton rows={8} />
-              </div>
-            ) : filteredApplications.length === 0 ? (
-              <div className="text-center py-16 border-dashed border-slate-200 dark:border-slate-800">
-                <ClipboardList className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  {appSearch
-                    ? (t('clan_search_not_found_title') || 'Ничего не найдено')
-                    : (t('clan_recruitment_apps_empty') || 'Заявок в выбранной категории пока нет')}
-                </h4>
-                <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
-                  {appSearch
-                    ? `${t('clan_apps_search_empty', 'По запросу «')}${appSearch}${t('clan_apps_search_empty2', '» заявок не найдено.')}`
-                    : (t('clan_apps_empty_desc', 'Когда кандидаты заполнят форму заявки в Discord, их анкеты мгновенно появятся здесь.'))}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                  <thead className="bg-slate-50 dark:bg-slate-800/70 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none">
-                    <tr>
-                      <th className="px-4 py-3">{t('clan_recruitment_app_col_candidate') || t('clan_candidate', 'Кандидат')}</th>
-                      <th className="px-3 py-3">{t('clan_recruitment_app_col_steam') || 'Steam'}</th>
-                      <th className="px-3 py-3">{t('clan_recruitment_app_col_age') || 'Возраст'}</th>
-                      <th className="px-3 py-3">{t('clan_recruitment_app_col_hours') || 'Часы'}</th>
-                      <th className="px-3 py-3">{t('clan_recruitment_app_col_status') || 'Статус'}</th>
-                      <th className="px-3 py-3">{t('clan_recruitment_app_col_details') || 'Детали'}</th>
-                      <th className="px-3 py-3 text-center">{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</th>
-                      <th className="px-4 py-3 text-right">{t('clan_recruitment_app_col_date') || 'Дата'}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                    {paginatedApplications.map(app => (
-                      <ApplicationRow
-                        key={app.id}
-                        app={app}
-                        t={t}
-                        getSteamProfileUrl={getSteamProfileUrl}
-                        openExternalUrl={openExternalUrl}
-                        handleViewTranscript={handleViewTranscript}
-                        cachedMeta={getCachedMemberMeta ? getCachedMemberMeta(app.userId) : null}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Pagination Toolbar */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/30">
-                    <div>
-                      {t('clan_pagination_showing', 'Показано')} {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredApplications.length)} {t('clan_pagination_of', 'из')} {filteredApplications.length}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={currentPage <= 1}
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                        <span>{t('clan_pagination_prev', 'Назад')}</span>
-                      </button>
-                      <span className="px-2 font-semibold text-slate-700 dark:text-slate-300">
-                        {currentPage} / {totalPages}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={currentPage >= totalPages}
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
-                      >
-                        <span>{t('clan_pagination_next', 'Вперед')}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* --- CATEGORY: AD TICKETS / APPLICATIONS --- */}
-      {currentCategory === 'ads' && (
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-blue-500" />
-                <span>{t('clan_ad_tickets_title', 'Заявки на рекламу и сотрудничество')}</span>
-                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                  {adTicketsCounts.ALL}
-                </span>
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {t('clan_ad_tickets_desc', 'Все обращения по рекламе, партнерству и спонсорству, открытые пользователями Discord.')}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={fetchAdTickets}
-                disabled={loadingAdTickets}
-                className="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loadingAdTickets ? 'animate-spin text-blue-500' : ''}`} />
-                <span>{t('clan_recruitment_apps_refresh') || 'Обновить'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* View Mode & Filter Toolbar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
-            {/* Mode Switcher: Active vs Closed */}
-            <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setAdViewMode('active')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  adViewMode === 'active'
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <Megaphone className="w-3.5 h-3.5" />
-                <span>{t('clan_ad_mode_active', 'Активные заявки')}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  adViewMode === 'active' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                }`}>
-                  {adTicketsCounts.OPEN}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAdViewMode('closed')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  adViewMode === 'closed'
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <Archive className="w-3.5 h-3.5" />
-                <span>{t('clan_ad_mode_closed', 'Закрытые тикеты')}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  adViewMode === 'closed' ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                }`}>
-                  {adTicketsCounts.CLOSED}
-                </span>
-              </button>
-            </div>
-
-            {/* Debounced Search input */}
-            <div className="relative md:w-80">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={adSearchInput}
-                onChange={(e) => handleAdSearchChange(e.target.value)}
-                placeholder={t('clan_ad_ticket_search_placeholder', 'Поиск по нику, ID, каналу...')}
-                className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all"
-              />
-              {adSearchInput && (
-                <button
-                  type="button"
-                  onClick={handleClearAdSearch}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                  title={t('clan_auto_105', 'Очистить поиск')}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Table Content */}
-          <div className="bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            {loadingAdTickets && (!adTicketsData || adTicketsData.length === 0) ? (
-              <div className="p-6">
-                <ApplicationsTableSkeleton rows={6} />
-              </div>
-            ) : filteredAdTickets.length === 0 ? (
-              <div className="text-center py-16 border-dashed border-slate-200 dark:border-slate-800">
-                <Megaphone className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  {adDebouncedSearch
-                    ? (t('clan_search_not_found_title') || 'Ничего не найдено')
-                    : (t('clan_ad_tickets_empty', 'Заявок на рекламу в выбранной категории пока нет'))}
-                </h4>
-                <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
-                  {adDebouncedSearch
-                    ? `${t('clan_apps_search_empty', 'По запросу «')}${adDebouncedSearch}${t('clan_apps_search_empty2', '» заявок не найдено.')}`
-                    : (t('clan_ad_tickets_empty_desc', 'Когда пользователи нажмут кнопки заказа рекламы или партнерства в Discord, тикеты появятся здесь.'))}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                  <thead className="bg-slate-50 dark:bg-slate-800/70 uppercase font-semibold text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none">
-                    <tr>
-                      <th className="px-4 py-3">{t('clan_ad_col_user', 'Пользователь')}</th>
-                      <th className="px-3 py-3">{t('clan_ad_col_type', 'Категория')}</th>
-                      <th className="px-3 py-3">{t('clan_ad_col_channel', 'Канал в Discord')}</th>
-                      <th className="px-3 py-3">{t('clan_recruitment_app_col_status') || 'Статус'}</th>
-                      <th className="px-3 py-3 text-center">{t('clan_recruitment_app_col_transcript') || 'Транскрипт'}</th>
-                      <th className="px-3 py-3">{t('clan_recruitment_app_col_date') || 'Дата'}</th>
-                      <th className="px-4 py-3 text-right">{t('clan_ad_col_actions', 'Действие')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                    {paginatedAdTickets.map(ticket => (
-                      <AdTicketRow
-                        key={ticket.id}
-                        ticket={ticket}
-                        t={t}
-                        guildId={guildId}
-                        openExternalUrl={openExternalUrl}
-                        handleViewTranscript={handleViewTranscript}
-                        onCloseTicket={handleConfirmCloseTicket}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Pagination Toolbar */}
-                {totalAdPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/30">
-                    <div>
-                      {t('clan_pagination_showing', 'Показано')} {(adPage - 1) * pageSize + 1}–{Math.min(adPage * pageSize, filteredAdTickets.length)} {t('clan_pagination_of', 'из')} {filteredAdTickets.length}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={adPage <= 1}
-                        onClick={() => setAdPage(p => Math.max(1, p - 1))}
-                        className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                        <span>{t('clan_pagination_prev', 'Назад')}</span>
-                      </button>
-                      <span className="px-2 font-semibold text-slate-700 dark:text-slate-300">
-                        {adPage} / {totalAdPages}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={adPage >= totalAdPages}
-                        onClick={() => setAdPage(p => Math.min(totalAdPages, p + 1))}
-                        className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1 font-medium"
-                      >
-                        <span>{t('clan_pagination_next', 'Вперед')}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

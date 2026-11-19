@@ -107,13 +107,11 @@ export async function checkUpdates(addLog = () => {}) {
 
   if (serverData.version && compareSemver(serverData.version, localVersion) > 0) {
     let applyImmediately = true;
-    if (!isFirstCheck) {
-      if (electron.config && electron.config.isRustRunning) {
-        const isRustOpen = await electron.config.isRustRunning();
-        if (isRustOpen) {
-          applyImmediately = false;
-          addLog("Rust is running. Update will be downloaded but not applied immediately.");
-        }
+    if (electron?.config?.isRustRunning) {
+      const isRustOpen = await electron.config.isRustRunning();
+      if (isRustOpen) {
+        applyImmediately = false;
+        addLog("Rust is running. Update will be downloaded but not applied immediately.");
       }
     }
     

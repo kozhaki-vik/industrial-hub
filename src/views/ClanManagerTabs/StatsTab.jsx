@@ -774,11 +774,7 @@ export default function StatsTab() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-500" />
-            <span>{t('clan_stats_title') || 'Статистика и активность клана'}</span>
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {t('clan_stats_realtime_desc', 'Мониторинг активности участников по времени суток, динамика онлайна в войсе и учет сообщений.')}
           </p>
         </div>
