@@ -341,4 +341,5 @@ function findLocalByName(rawName) {
   return null;
 }
 
+export { EMOJI_FILES, APP_EMOJI_IDS };
 export default resolveDiscordEmoji;

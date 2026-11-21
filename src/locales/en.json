@@ -747,7 +747,7 @@
   "clan_recruitment_apps_filter_rejected": "Rejected",
   "clan_recruitment_apps_moved_desc": "The log and history of received applications are now moved to a dedicated 'Clan Applications' section.",
   "clan_recruitment_apps_refresh": "Refresh List",
-  "clan_recruitment_auto_reject_desc": "The bot automatically screens incoming applications and rejects those that do not meet your criteria.",
+  "clan_recruitment_auto_reject_desc": "The bot automatically rejects unsuitable candidate applications.",
   "clan_recruitment_auto_reject_title": "Auto-Reject Applications",
   "clan_recruitment_channel_admin": "Channel for admin-rejected applications",
   "clan_recruitment_channel_auto": "Channel for auto-rejected applications by bot",

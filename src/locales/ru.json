@@ -761,7 +761,7 @@
   "clan_recruitment_apps_filter_rejected": "Отклонены",
   "clan_recruitment_apps_moved_desc": "Журнал и история поступивших анкет теперь вынесены в отдельный раздел «Заявки в клан».",
   "clan_recruitment_apps_refresh": "Обновить список",
-  "clan_recruitment_auto_reject_desc": "Бот автоматически проверяет анкеты кандидатов при подаче и отклоняет неподходящие заявки.",
+  "clan_recruitment_auto_reject_desc": "Бот автоматически отклоняет неподходящие анкеты кандидатов",
   "clan_recruitment_auto_reject_title": "Автоматическое отклонение заявок",
   "clan_recruitment_channel_admin": "Канал для отклоненных заявок (администраторами)",
   "clan_recruitment_channel_auto": "Канал для авто-отклоненных заявок ботом",
