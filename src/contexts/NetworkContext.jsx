@@ -130,6 +130,42 @@ export const NetworkProvider = ({ children }) => {
     }
   }, []);
 
+  const triggerForceUpdate = useCallback(async () => {
+    if (!electron) return { success: false, error: 'Not running in Electron' };
+    try {
+      addLog("Starting manual triggerForceUpdate (force download & reinstall)...");
+      setUpdateProgress({
+        status: 'downloading',
+        downloadedBytes: 0,
+        totalBytes: 100,
+        currentFile: 'Поиск последнего релиза...'
+      });
+
+      const res = await checkUpdates(addLog, true);
+      addLog(`triggerForceUpdate() finished. res = ${JSON.stringify(res)}`);
+
+      if (res && res.success) {
+        if (res.deferredRestart) {
+          setDeferredUpdatePayload(res.restartPayload);
+          if (window.electronAPI && window.electronAPI.shell && window.electronAPI.shell.beep) {
+            window.electronAPI.shell.beep();
+          }
+          setUpdateProgress({ status: 'deferred' });
+        } else {
+          setUpdateProgress(prev => ({ ...prev, status: 'success' }));
+        }
+      } else if (res && !res.success) {
+        setUpdateProgress({ status: 'error', currentFile: res.error || 'Ошибка принудительного обновления' });
+      }
+      return res;
+    } catch (e) {
+      addLog(`triggerForceUpdate catch: ${e.message}`);
+      console.error('Force update failed:', e);
+      setUpdateProgress({ status: 'error', currentFile: e.message });
+      return { success: false, error: e.message };
+    }
+  }, []);
+
   const connect = useCallback(async () => {
     if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
       return;
@@ -355,7 +391,7 @@ export const NetworkProvider = ({ children }) => {
   }, []);
 
   return (
-    <NetworkContext.Provider value={{ ws: wsRef.current, status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, sendTelemetry, createTicket, ticketHistory, setTicketHistory, getTicketHistory, unreadAdminCount, setUnreadAdminCount, markTicketsRead, deferredUpdatePayload }}>
+    <NetworkContext.Provider value={{ ws: wsRef.current, status, onlineCount, serverVersion, updateProgress, updateLogs, addLog, triggerUpdateCheck, triggerForceUpdate, sendTelemetry, createTicket, ticketHistory, setTicketHistory, getTicketHistory, unreadAdminCount, setUnreadAdminCount, markTicketsRead, deferredUpdatePayload }}>
       {children}
     </NetworkContext.Provider>
   );

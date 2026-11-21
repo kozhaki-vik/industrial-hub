@@ -1952,7 +1952,7 @@ instanceLockPromise.then(() => {
     });
   };
 
-  ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion, applyImmediately = true) => {
+  ipcMain.handle('network:apply-exe-update', async (event, exeUrl, newVersion, applyImmediately = true, force = false) => {
     if (!newVersion || !/^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/.test(newVersion)) {
       throw new Error('Некорректный формат версии');
     }
@@ -2058,15 +2058,18 @@ instanceLockPromise.then(() => {
         currentFile: 'Применение обновления...'
       });
 
-      if (newVersion === app.getVersion()) {
+      if (!force && newVersion === app.getVersion()) {
         throw new Error(`Скачанный файл имеет ту же версию (${newVersion}), что и запущена.`);
       }
 
-      const newAppDir = path.join(appRootDir, `app-${newVersion}`);
+      const sameDir = path.resolve(appRootDir, `app-${newVersion}`) === path.resolve(appPath);
+      const newAppDir = sameDir 
+        ? path.join(appRootDir, `app-${newVersion}-reinstall-${Date.now()}`)
+        : path.join(appRootDir, `app-${newVersion}`);
       const exeName = 'Industrial Hub.exe';
       const targetExePath = path.join(newAppDir, exeName);
 
-      if (fs.existsSync(newAppDir)) {
+      if (fs.existsSync(newAppDir) && !sameDir) {
         fs.rmSync(newAppDir, { recursive: true, force: true });
       }
       fs.mkdirSync(newAppDir, { recursive: true });

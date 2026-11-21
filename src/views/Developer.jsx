@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, Key, Eye, EyeOff, Server, Lock, Trash2 } from 'lucide-react';
+import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, Key, Eye, EyeOff, Server, Lock, Trash2, DownloadCloud } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath, openLogFolder, getRecentLogs } from '../services/diagnostics';
 import { getButtonStats } from '../services/analytics';
@@ -16,7 +16,8 @@ import { compareSemver } from '../utils/semver';
 export default function Developer() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { serverVersion, updateProgress, triggerUpdateCheck, updateLogs } = useNetwork();
+  const { serverVersion, updateProgress, triggerUpdateCheck, triggerForceUpdate, updateLogs } = useNetwork();
+  const [isForceDownloading, setIsForceDownloading] = useState(false);
 
   const [hwInfo, setHwInfo] = useState(null);
   const [pings, setPings] = useState({ server: null, ws: null, github: null, discord: null, internet1: null, internet2: null });
@@ -480,10 +481,35 @@ export default function Developer() {
                 if (btn) btn.classList.remove('animate-spin');
                 if (txt) txt.innerText = t('dev_check_update_btn');
               }} 
-              className="flex items-center justify-center gap-2 w-full py-2 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors cursor-pointer"
             >
               <RefreshCw id="forceCheckBtnIcon" className="w-4 h-4" /> 
               <span id="forceCheckBtnText">{t('dev_check_update_btn')}</span>
+            </button>
+
+            {/* Кнопка "Скачать обновление принудительно" */}
+            <button 
+              type="button"
+              disabled={isForceDownloading || updateProgress?.status === 'downloading' || updateProgress?.status === 'extracting'}
+              onClick={async () => {
+                setIsForceDownloading(true);
+                try {
+                  await triggerForceUpdate();
+                } finally {
+                  setIsForceDownloading(false);
+                }
+              }} 
+              className="flex items-center justify-center gap-2 w-full py-2 bg-orange-500 hover:bg-orange-600 active:scale-95 disabled:opacity-50 disabled:hover:bg-orange-500 text-white rounded-lg text-sm font-bold shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+              title={t('dev_force_download_update_tooltip', 'Принудительно скачать и переустановить последний релиз из выбранной ветки (даже если версия совпадает)')}
+            >
+              <DownloadCloud className={`w-4 h-4 ${isForceDownloading || updateProgress?.status === 'downloading' ? 'animate-bounce' : ''}`} /> 
+              <span>
+                {isForceDownloading || updateProgress?.status === 'downloading'
+                  ? t('dev_force_downloading_progress', 'Скачивание обновления...')
+                  : updateProgress?.status === 'extracting'
+                  ? t('dev_force_extracting_progress', 'Переустановка и запуск...')
+                  : t('dev_force_download_update_btn', 'Скачать обновление принудительно')}
+              </span>
             </button>
             <button onClick={() => setIsTestingSplash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors">
               <PlayCircle className="w-4 h-4" /> {t('dev_app_test_splash')}

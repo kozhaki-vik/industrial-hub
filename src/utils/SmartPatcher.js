@@ -6,8 +6,8 @@ import { compareSemver } from './semver';
 let isUpdating = false;
 let isFirstCheck = true;
 
-export async function checkUpdates(addLog = () => {}) {
-  if (isUpdating) return null;
+export async function checkUpdates(addLog = () => {}, force = false) {
+  if (isUpdating && !force) return null;
   
   if (!electron) {
     console.warn("SmartPatcher: Not running in Electron, updates disabled.");
@@ -105,9 +105,11 @@ export async function checkUpdates(addLog = () => {}) {
   addLog(`Local version = ${localVersion}, Server version = ${serverData.version}`);
   console.log(`SmartPatcher: Local version = ${localVersion}, Server version = ${serverData.version}`);
 
-  if (serverData.version && compareSemver(serverData.version, localVersion) > 0) {
+  const shouldUpdate = force || (serverData.version && compareSemver(serverData.version, localVersion) > 0);
+
+  if (shouldUpdate) {
     let applyImmediately = true;
-    if (electron?.config?.isRustRunning) {
+    if (!force && electron?.config?.isRustRunning) {
       const isRustOpen = await electron.config.isRustRunning();
       if (isRustOpen) {
         applyImmediately = false;
@@ -116,14 +118,18 @@ export async function checkUpdates(addLog = () => {}) {
     }
     
     isFirstCheck = false;
-    addLog(`Versions differ! Will apply EXE auto-update from ${localVersion} to ${serverData.version}`);
-    console.log(`SmartPatcher: Updating from ${localVersion} to ${serverData.version}...`);
+    if (force) {
+      addLog(`[Force Update] Force reinstalling version ${serverData.version} (channel: ${channel})`);
+    } else {
+      addLog(`Versions differ! Will apply EXE auto-update from ${localVersion} to ${serverData.version}`);
+    }
+    console.log(`SmartPatcher: Updating from ${localVersion} to ${serverData.version} (force=${force})...`);
     
     let exeUrl = serverData.clientUrl;
     
-    addLog(`Invoking network:apply-exe-update with ${exeUrl}...`);
+    addLog(`Invoking network:apply-exe-update with ${exeUrl} (force=${force})...`);
     try {
-      const result = await electron.ipcRenderer.invoke('network:apply-exe-update', exeUrl, serverData.version, applyImmediately);
+      const result = await electron.ipcRenderer.invoke('network:apply-exe-update', exeUrl, serverData.version, applyImmediately, force);
       addLog(`Invoke returned: ${JSON.stringify(result)}`);
       console.log("SmartPatcher EXE Update Result:", result);
       isUpdating = false;
