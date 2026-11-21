@@ -4831,9 +4831,9 @@ const contextValue = {
                       setActiveTab('roster');
                     }
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 mb-1 rounded-xl bg-blue-50 hover:bg-blue-100/90 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-xs border border-blue-200 dark:border-blue-900/50 transition-all cursor-pointer shadow-2xs"
+                  className="group w-full flex items-center gap-2 px-3 py-2.5 mb-1 rounded-xl bg-blue-50 hover:bg-blue-100/90 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-xs border border-blue-200 dark:border-blue-900/50 transition-all cursor-pointer shadow-2xs"
                 >
-                  <ArrowLeft className="w-4 h-4 shrink-0" />
+                  <ArrowLeft className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:-translate-x-1" />
                   <span>{t('clan_btn_back_to_clan', '← Назад к клану')}</span>
                 </button>
 

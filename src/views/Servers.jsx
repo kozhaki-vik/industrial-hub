@@ -57,10 +57,12 @@ export default function Servers() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <button 
+          type="button"
           onClick={() => navigate('/')} 
-          className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
+          className="group p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-orange-400/60 dark:hover:border-orange-500/50 shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+          title={t('back', 'Назад')}
         >
-          <ArrowLeft className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+          <ArrowLeft className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:-translate-x-1 transition-all duration-200" />
         </button>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
