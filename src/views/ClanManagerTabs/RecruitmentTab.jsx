@@ -9,6 +9,7 @@ import {
   ArrowUp, ArrowDown, Plus, RotateCcw, Folder, Layers, Smile
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
+import EmojiSuggestModal from '../../components/EmojiSuggestModal';
 import { ToggleSwitch } from '../ClanManager';
 import { normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
@@ -190,6 +191,7 @@ export default function RecruitmentTab() {
 
   // --- Modal Form Configuration State & Hooks ---
   const [isFormBuilderExpanded, setIsFormBuilderExpanded] = useState(true);
+  const [isEmojiSuggestOpen, setIsEmojiSuggestOpen] = useState(false);
 
   const ROLE_PRESETS = useMemo(() => ({
     name: { label: 'Ваше имя / Никнейм', placeholder: 'Иван / Alex_Rust', style: 'short' },
@@ -2371,6 +2373,7 @@ export default function RecruitmentTab() {
       </div>
       </div>
     )}
+    <EmojiSuggestModal isOpen={isEmojiSuggestOpen} onClose={() => setIsEmojiSuggestOpen(false)} />
     </form>
   );
 }

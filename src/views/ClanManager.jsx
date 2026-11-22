@@ -2566,6 +2566,17 @@ export default function ClanManager() {
     }));
   };
 
+  const fetchRoster = useCallback(() => {
+    if (!ws || wsStatus !== 'online') return;
+    addLog('Fetching roster via proxy');
+    ws.send(JSON.stringify({
+      type: 'clan',
+      action: 'proxy',
+      reqId: `get_roster_${Date.now()}`,
+      payload: { action: 'get_roster' }
+    }));
+  }, [ws, wsStatus]);
+
   const fetchAdTickets = () => {
     if (!ws || wsStatus !== 'online') return;
     setLoadingAdTickets(true);
@@ -4502,6 +4513,7 @@ const contextValue = {
   fetchDiscordInfo: typeof fetchDiscordInfo !== "undefined" ? fetchDiscordInfo : undefined,
   fetchDossiers: typeof fetchDossiers !== "undefined" ? fetchDossiers : undefined,
   fetchDynamicVoice: typeof fetchDynamicVoice !== "undefined" ? fetchDynamicVoice : undefined,
+  fetchRoster: typeof fetchRoster !== "undefined" ? fetchRoster : undefined,
   fetchUserWarnings: typeof fetchUserWarnings !== "undefined" ? fetchUserWarnings : undefined,
   fetchedConfig: typeof fetchedConfig !== "undefined" ? fetchedConfig : undefined,
   filtered: typeof filtered !== "undefined" ? filtered : undefined,
