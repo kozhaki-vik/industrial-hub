@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, Search, Sparkles, Smile, Image as ImageIcon, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { EMOJI_FILES, resolveDiscordEmoji } from '../utils/discordEmojis';
+import { EMOJI_FILES, resolveDiscordEmoji, getDiscordEmojiTag } from '../utils/discordEmojis';
 import EmojiSuggestModal from './EmojiSuggestModal';
 
 const POPULAR_UNICODE_EMOJIS = [
@@ -11,7 +11,7 @@ const POPULAR_UNICODE_EMOJIS = [
   '🎲', '⚙️', '💀', '👑', '🚁', '🚜', '🧭', '✅'
 ];
 
-export default function EmojiPickerModal({ isOpen, onClose, onSelect, currentEmoji }) {
+export default function EmojiPickerModal({ isOpen, onClose, onSelect, currentEmoji, mode = 'discord_tag', title }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('white'); // 'white' | 'unicode' | 'custom'
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +36,11 @@ export default function EmojiPickerModal({ isOpen, onClose, onSelect, currentEmo
   if (!isOpen) return null;
 
   const handleSelectEmoji = (emojiKeyOrStr) => {
-    onSelect(emojiKeyOrStr);
+    let result = emojiKeyOrStr;
+    if (activeTab === 'white' && mode === 'discord_tag') {
+      result = getDiscordEmojiTag(emojiKeyOrStr);
+    }
+    onSelect(result);
     onClose();
   };
 
@@ -56,7 +60,7 @@ export default function EmojiPickerModal({ isOpen, onClose, onSelect, currentEmo
             <div className="flex items-center gap-2">
               <Smile className="w-4 h-4 text-orange-500" />
               <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                {t('clan_emoji_picker_title', 'Выбор эмодзи поля')}
+                {title || t('clan_emoji_picker_title', 'Выбор эмодзи Discord')}
               </h3>
             </div>
             <button

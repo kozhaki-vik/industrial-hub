@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import EmojiSuggestModal from '../../components/EmojiSuggestModal';
+import EmojiPickerModal from '../../components/EmojiPickerModal';
+import { POPULAR_WHITE_EMOJIS, setLeadingEmoji, renderTextWithDiscordEmojis } from '../../utils/discordEmojis';
 import { ToggleSwitch } from '../ClanManager';
 import { normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
@@ -192,6 +194,7 @@ export default function RecruitmentTab() {
   // --- Modal Form Configuration State & Hooks ---
   const [isFormBuilderExpanded, setIsFormBuilderExpanded] = useState(true);
   const [isEmojiSuggestOpen, setIsEmojiSuggestOpen] = useState(false);
+  const [emojiPickerTarget, setEmojiPickerTarget] = useState(null);
 
   const ROLE_PRESETS = useMemo(() => ({
     name: { label: 'Ваше имя / Никнейм', placeholder: 'Иван / Alex_Rust', style: 'short' },
@@ -225,11 +228,11 @@ export default function RecruitmentTab() {
   }, [rConfig.formConfig, defaultFormFields]);
 
   const defaultTicketCardFields = useMemo(() => [
-    { id: 'tcf_1', name: '👤 Имя', value: '{Имя}', inline: true },
-    { id: 'tcf_2', name: '🎂 Возраст', value: '{Возраст} лет', inline: true },
-    { id: 'tcf_3', name: '⏱️ Игровые часы', value: '{Часы}', inline: true },
-    { id: 'tcf_4', name: '🔗 Steam профиль', value: '{Steam}', inline: false },
-    { id: 'tcf_5', name: '📝 Информация о кандидате', value: '{Опыт}', inline: false }
+    { id: 'tcf_1', name: '<:usercircle:1571506569705824367> Имя', value: '{Имя}', inline: true },
+    { id: 'tcf_2', name: '<:calendarweek:1571506435991543818> Возраст', value: '{Возраст} лет', inline: true },
+    { id: 'tcf_3', name: '<:clock:1571506445999017984> Игровые часы', value: '{Часы}', inline: true },
+    { id: 'tcf_4', name: '<:link:1571506483718258850> Steam профиль', value: '{Steam}', inline: false },
+    { id: 'tcf_5', name: '<:listdetails:1571506487929606224> Информация о кандидате', value: '{Опыт}', inline: false }
   ], []);
 
   const ticketCardConfig = useMemo(() => {
@@ -395,6 +398,24 @@ export default function RecruitmentTab() {
   const resetTicketCardConfig = useCallback(() => {
     updateRConfig('ticketCardConfig', { fields: defaultTicketCardFields }, true);
   }, [defaultTicketCardFields, updateRConfig]);
+
+  const handleSelectTicketCardEmoji = useCallback((emojiTag) => {
+    if (!emojiPickerTarget) return;
+    const { idx, fieldKey } = emojiPickerTarget;
+    const currentFields = [...ticketCardConfig.fields];
+    const field = currentFields[idx];
+    if (!field) return;
+
+    if (fieldKey === 'name') {
+      const updatedName = setLeadingEmoji(field.name || '', emojiTag);
+      updateTicketCardField(idx, 'name', updatedName, true);
+    } else if (fieldKey === 'value') {
+      const curVal = field.value || '';
+      const separator = (curVal.length > 0 && !curVal.endsWith(' ')) ? ' ' : '';
+      updateTicketCardField(idx, 'value', `${curVal}${separator}${emojiTag}`, true);
+    }
+    setEmojiPickerTarget(null);
+  }, [emojiPickerTarget, ticketCardConfig.fields, updateTicketCardField]);
 
   const handleRunProofreading = useCallback(async () => {
     const textToAnalyze = rConfig.text;
@@ -1841,11 +1862,11 @@ export default function RecruitmentTab() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] flex items-center justify-center shrink-0">
                           #{idx + 1}
                         </span>
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          {field.name || `Поле #${idx + 1}`}
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center">
+                          {renderTextWithDiscordEmojis(field.name || `Поле #${idx + 1}`)}
                         </span>
                         {field.inline ? (
                           <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900/50">В одну строку</span>
@@ -1889,34 +1910,76 @@ export default function RecruitmentTab() {
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
                       {/* 1. Header Name */}
                       <div className="sm:col-span-4">
-                        <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                          Заголовок блока в тикете
-                        </label>
-                        <input
-                          type="text"
-                          maxLength={256}
-                          value={field.name || ''}
-                          onChange={(e) => updateTicketCardField(idx, 'name', e.target.value, false)}
-                          onBlur={(e) => updateTicketCardField(idx, 'name', e.target.value, true)}
-                          placeholder="Например: 👤 Кандидат"
-                          className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none"
-                        />
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                            Заголовок блока в тикете
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setEmojiPickerTarget({ idx, fieldKey: 'name' })}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 cursor-pointer"
+                            title="Выбрать эмодзи для заголовка"
+                          >
+                            <Smile className="w-3 h-3" />
+                            <span>Иконка</span>
+                          </button>
+                        </div>
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            maxLength={256}
+                            value={field.name || ''}
+                            onChange={(e) => updateTicketCardField(idx, 'name', e.target.value, false)}
+                            onBlur={(e) => updateTicketCardField(idx, 'name', e.target.value, true)}
+                            placeholder="Например: <:usercircle:1571506569705824367> Имя"
+                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none pr-7 font-medium"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setEmojiPickerTarget({ idx, fieldKey: 'name' })}
+                            className="absolute right-1.5 p-1 text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded cursor-pointer transition-colors"
+                            title="Открыть выбор эмодзи Discord"
+                          >
+                            <Smile className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* 2. Value Template */}
                       <div className="sm:col-span-5">
-                        <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                          Шаблон содержимого (поддерживает любой текст и {'{переменные}'})
-                        </label>
-                        <input
-                          type="text"
-                          maxLength={1024}
-                          value={field.value || ''}
-                          onChange={(e) => updateTicketCardField(idx, 'value', e.target.value, false)}
-                          onBlur={(e) => updateTicketCardField(idx, 'value', e.target.value, true)}
-                          placeholder="Например: {Имя}, {Возраст} лет"
-                          className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none font-mono"
-                        />
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                            Шаблон содержимого ({'{переменные}'})
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setEmojiPickerTarget({ idx, fieldKey: 'value' })}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 cursor-pointer"
+                            title="Вставить эмодзи в шаблон"
+                          >
+                            <Smile className="w-3 h-3" />
+                            <span>Эмодзи</span>
+                          </button>
+                        </div>
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            maxLength={1024}
+                            value={field.value || ''}
+                            onChange={(e) => updateTicketCardField(idx, 'value', e.target.value, false)}
+                            onBlur={(e) => updateTicketCardField(idx, 'value', e.target.value, true)}
+                            placeholder="Например: {Имя}, {Возраст} лет"
+                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none font-mono pr-7"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setEmojiPickerTarget({ idx, fieldKey: 'value' })}
+                            className="absolute right-1.5 p-1 text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded cursor-pointer transition-colors"
+                            title="Открыть выбор эмодзи Discord"
+                          >
+                            <Smile className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* 3. Inline Toggle */}
@@ -1951,6 +2014,38 @@ export default function RecruitmentTab() {
                           + {v.tag}
                         </button>
                       ))}
+                    </div>
+
+                    {/* Quick White Discord Emoji Insertion Chips */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1 bg-slate-900/5 dark:bg-slate-900/60 p-2 rounded-lg border border-slate-200/60 dark:border-slate-800/80">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mr-1 flex items-center gap-1 shrink-0">
+                        <Smile className="w-3 h-3 text-indigo-500" />
+                        <span>Иконка заголовка:</span>
+                      </span>
+                      {POPULAR_WHITE_EMOJIS.map(item => (
+                        <button
+                          key={item.name}
+                          type="button"
+                          onClick={() => {
+                            const updatedName = setLeadingEmoji(field.name || '', item.tag);
+                            updateTicketCardField(idx, 'name', updatedName, true);
+                          }}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 hover:border-indigo-400/80 transition-all cursor-pointer shadow-xs active:scale-95"
+                          title={`Задать иконку "${item.label}" для заголовка`}
+                        >
+                          <img src={`./emojis/${item.filename}`} alt={item.name} className="w-3 h-3 object-contain shrink-0" />
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setEmojiPickerTarget({ idx, fieldKey: 'name' })}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-xs ml-auto active:scale-95"
+                        title="Открыть полный каталог из 88 белых Discord-эмодзи"
+                      >
+                        <Smile className="w-3 h-3" />
+                        <span>Все 88 иконок...</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -2374,6 +2469,13 @@ export default function RecruitmentTab() {
       </div>
     )}
     <EmojiSuggestModal isOpen={isEmojiSuggestOpen} onClose={() => setIsEmojiSuggestOpen(false)} />
+    <EmojiPickerModal
+      isOpen={Boolean(emojiPickerTarget)}
+      onClose={() => setEmojiPickerTarget(null)}
+      onSelect={handleSelectTicketCardEmoji}
+      mode="discord_tag"
+      title={emojiPickerTarget?.fieldKey === 'name' ? 'Выбор иконки Discord для заголовка' : 'Выбор эмодзи Discord'}
+    />
     </form>
   );
 }

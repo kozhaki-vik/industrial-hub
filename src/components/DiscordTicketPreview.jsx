@@ -1,6 +1,7 @@
 import React, { useState, useMemo, memo } from 'react';
 import { Lock, Hash, ShieldCheck, AlertTriangle, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { renderTextWithDiscordEmojis } from '../utils/discordEmojis';
 
 function DiscordTicketPreview({
   channelName = 'заявка-alex_rust',
@@ -228,12 +229,12 @@ function DiscordTicketPreview({
             <div className="font-bold text-[#f2f3f5] text-base flex items-center gap-2">
               {isRejected ? (
                 <>
-                  <span>❌</span>
+                  <img src="./emojis/x.png" alt="x" className="w-4 h-4 object-contain inline-block shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   <span>Анкета отклонена: Alex_Rust</span>
                 </>
               ) : (
                 <>
-                  <span>📋</span>
+                  <img src="./emojis/clipboard-text.png" alt="clipboard" className="w-4 h-4 object-contain inline-block shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   <span>Новая заявка в клан: Alex_Rust</span>
                 </>
               )}
@@ -263,12 +264,12 @@ function DiscordTicketPreview({
                           key={field.id || `${rIdx}-${idx}`} 
                           className="bg-[#1e1f22]/70 rounded-[4px] p-2.5 border border-[#232428] min-w-0"
                         >
-                          <div className="text-[11px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 truncate">
-                            {field.name || field.label || `Поле #${idx + 1}`}
+                          <div className="text-[11px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 truncate flex items-center">
+                            {renderTextWithDiscordEmojis(field.name || field.label || `Поле #${idx + 1}`)}
                           </div>
                           {/* Natural Discord text: light grey/white, no arbitrary neon colors */}
                           <div className="text-xs font-medium leading-relaxed text-[#f2f3f5] whitespace-pre-wrap break-words">
-                            {resolvedAnswer}
+                            {renderTextWithDiscordEmojis(resolvedAnswer)}
                           </div>
                         </div>
                       );

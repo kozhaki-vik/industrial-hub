@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Local Discord Application Custom Emoji Resolver
  * Maps custom emojis (by ID, full string <:name:id>, or name) to local bundled White PNG assets.
@@ -339,6 +341,221 @@ function findLocalByName(rawName) {
     }
   }
   return null;
+}
+
+export const APP_EMOJI_NAME_TO_ID = {
+  x_: '1571506575640891414',
+  x: '1571506575640891414',
+  volume: '1571506574428475482',
+  users: '1571506572931371048',
+  userplus: '1571506571442135192',
+  'user-plus': '1571506571442135192',
+  usercircle: '1571506569705824367',
+  'user-circle': '1571506569705824367',
+  user: '1571506568275558511',
+  trash: '1571506566476070942',
+  thumbupoff: '1571506565079367740',
+  'thumb-up-off': '1571506565079367740',
+  thumbup: '1571506563703767040',
+  'thumb-up': '1571506563703767040',
+  thumbdownoff: '1571506561837179021',
+  'thumb-down-off': '1571506561837179021',
+  thumbdown: '1571506560839196703',
+  'thumb-down': '1571506560839196703',
+  sun: '1571506559454937148',
+  star: '1571506557857046669',
+  speakerphone: '1571506556254552156',
+  share3: '1571506553297567775',
+  'share-3': '1571506553297567775',
+  send: '1571506551242494013',
+  search: '1571506549753520229',
+  scan: '1571506547597516850',
+  rosettediscountcheck: '1571506545936830544',
+  'rosette-discount-check': '1571506545936830544',
+  repeat: '1571506544107856043',
+  refresh: '1571506542619136120',
+  plus: '1571506541239074906',
+  playerplay: '1571506539938844832',
+  'player-play': '1571506539938844832',
+  pin: '1571506537304952933',
+  photo: '1571506521160818788',
+  phone: '1571506519432888401',
+  pencil: '1571506518170406962',
+  music: '1571506516819972188',
+  moon: '1571506501435261040',
+  microphoneoff: '1571506499862405271',
+  'microphone-off': '1571506499862405271',
+  microphone: '1571506498360582304',
+  message: '1571506496964010086',
+  menu2: '1571506495802052708',
+  'menu-2': '1571506495802052708',
+  lockopen: '1571506494464335913',
+  'lock-open': '1571506494464335913',
+  lock: '1571506492824223904',
+  loader: '1571506491125534730',
+  listsearch: '1571506489376505997',
+  'list-search': '1571506489376505997',
+  listdetails: '1571506487929606224',
+  'list-details': '1571506487929606224',
+  listcheck: '1571506486302220299',
+  'list-check': '1571506486302220299',
+  list: '1571506484859375697',
+  link: '1571506483718258850',
+  infocircle: '1571506482585927770',
+  'info-circle': '1571506482585927770',
+  hourglassempty: '1571506480337915914',
+  'hourglass-empty': '1571506480337915914',
+  heart: '1571506478873845770',
+  headphonesoff: '1571506477359964241',
+  'headphones-off': '1571506477359964241',
+  headphones: '1571506475497422898',
+  folder: '1571506474151313528',
+  flame: '1571506472679121037',
+  flag: '1571506471412174998',
+  fileexport: '1571506470074187836',
+  'file-export': '1571506470074187836',
+  filedescription: '1571506468723761233',
+  'file-description': '1571506468723761233',
+  eye: '1571506467482243132',
+  externallink: '1571506465749999640',
+  'external-link': '1571506465749999640',
+  edit: '1571506464743493703',
+  download: '1571506463476678858',
+  dotsvertical: '1571506461991768075',
+  'dots-vertical': '1571506461991768075',
+  dots: '1571506460498727103',
+  devicemobile: '1571506459152486533',
+  'device-mobile': '1571506459152486533',
+  devicedesktopanalytics: '1571506457612910592',
+  'device-desktop-analytics': '1571506457612910592',
+  devicedesktop: '1571506456048566354',
+  'device-desktop': '1571506456048566354',
+  database: '1571506454735626291',
+  crown: '1571506453418610900',
+  creditcard: '1571506451644547184',
+  'credit-card': '1571506451644547184',
+  copy: '1571506450159763568',
+  code: '1571506448498692177',
+  cloudupload: '1571506447496249484',
+  'cloud-upload': '1571506447496249484',
+  clock: '1571506445999017984',
+  clipboardtext: '1571506444597985380',
+  'clipboard-text': '1571506444597985380',
+  circlecheck: '1571506443180310600',
+  'circle-check': '1571506443180310600',
+  chevronright: '1571506442052182036',
+  'chevron-right': '1571506442052182036',
+  chevronleft: '1571506440521256991',
+  'chevron-left': '1571506440521256991',
+  checks: '1571506438835273788',
+  cash: '1571506437425860760',
+  calendarweek: '1571506435991543818',
+  'calendar-week': '1571506435991543818',
+  bulb: '1571506433705386134',
+  brandyoutube: '1571506432493359134',
+  'brand-youtube': '1571506432493359134',
+  bolt: '1571506431285526608',
+  bell: '1571506429951615016',
+  barbell: '1571506428466692106',
+  arrowright: '1571506427220983848',
+  'arrow-right': '1571506427220983848',
+  arrownarrowright: '1571506425614831707',
+  'arrow-narrow-right': '1571506425614831707',
+  arrowleft: '1571506424289431722',
+  'arrow-left': '1571506424289431722',
+  arrowbackup: '1571506422737277049',
+  'arrow-back-up': '1571506422737277049',
+  aligncenterjustified: '1571506421277663423',
+  'align-center-justified': '1571506421277663423',
+  alerttriangle: '1571506419998396568',
+  'alert-triangle': '1571506419998396568',
+  alertcircle: '1571506418832384080',
+  'alert-circle': '1571506418832384080',
+  alarm: '1571506417225957537',
+  adjustmentshorizontal: '1571506416152219658',
+  'adjustments-horizontal': '1571506416152219658'
+};
+
+/**
+ * Returns Discord formatted <:name:id> custom emoji tag
+ */
+export function getDiscordEmojiTag(keyOrName) {
+  if (!keyOrName) return '';
+  const clean = String(keyOrName).trim();
+  if (clean.startsWith('<:') && clean.endsWith('>')) return clean;
+  const normalized = clean.toLowerCase().replace(/^:+|:+$/g, '');
+  const id = APP_EMOJI_NAME_TO_ID[normalized] || APP_EMOJI_NAME_TO_ID[normalized.replace(/[^a-z0-9_]/g, '')];
+  if (id) {
+    const discordName = normalized.replace(/[^a-z0-9_]/g, '');
+    return `<:${discordName}:${id}>`;
+  }
+  return clean;
+}
+
+/**
+ * Strips leading Discord custom emoji (<:name:id>) or unicode emoji from text
+ */
+export function stripLeadingEmoji(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/^<a?:[a-zA-Z0-9_.-]+:\d+>\s*/, '')
+    .replace(/^[\u{1F000}-\u{1FAFF}\u{2000}-\u{2BFF}\u{FE00}-\u{FE0F}]+\s*/u, '')
+    .trim();
+}
+
+/**
+ * Replaces or prepends leading emoji in text
+ */
+export function setLeadingEmoji(text, emojiTag) {
+  const clean = stripLeadingEmoji(text);
+  return clean ? `${emojiTag} ${clean}` : emojiTag;
+}
+
+/**
+ * 13 popular white Discord Application Emojis for quick chips in constructors
+ */
+export const POPULAR_WHITE_EMOJIS = [
+  { name: 'usercircle', id: '1571506569705824367', label: 'Имя', filename: 'user-circle.png', tag: '<:usercircle:1571506569705824367>' },
+  { name: 'calendarweek', id: '1571506435991543818', label: 'Возраст', filename: 'calendar-week.png', tag: '<:calendarweek:1571506435991543818>' },
+  { name: 'clock', id: '1571506445999017984', label: 'Часы', filename: 'clock.png', tag: '<:clock:1571506445999017984>' },
+  { name: 'link', id: '1571506483718258850', label: 'Steam', filename: 'link.png', tag: '<:link:1571506483718258850>' },
+  { name: 'listdetails', id: '1571506487929606224', label: 'Опыт', filename: 'list-details.png', tag: '<:listdetails:1571506487929606224>' },
+  { name: 'devicedesktop', id: '1571506456048566354', label: 'ПК', filename: 'device-desktop.png', tag: '<:devicedesktop:1571506456048566354>' },
+  { name: 'devicemobile', id: '1571506459152486533', label: 'Телефон', filename: 'device-mobile.png', tag: '<:devicemobile:1571506459152486533>' },
+  { name: 'send', id: '1571506551242494013', label: 'Telegram', filename: 'send.png', tag: '<:send:1571506551242494013>' },
+  { name: 'crown', id: '1571506453418610900', label: 'Роль', filename: 'crown.png', tag: '<:crown:1571506453418610900>' },
+  { name: 'flame', id: '1571506472679121037', label: 'ПВП', filename: 'flame.png', tag: '<:flame:1571506472679121037>' },
+  { name: 'rosettediscountcheck', id: '1571506545936830544', label: 'Проверка', filename: 'rosette-discount-check.png', tag: '<:rosettediscountcheck:1571506545936830544>' },
+  { name: 'circlecheck', id: '1571506443180310600', label: 'Готов', filename: 'circle-check.png', tag: '<:circlecheck:1571506443180310600>' },
+  { name: 'clipboardtext', id: '1571506444597985380', label: 'Анкета', filename: 'clipboard-text.png', tag: '<:clipboardtext:1571506444597985380>' }
+];
+
+/**
+ * Renders text containing Discord custom emojis (<:name:id>) as inline images
+ */
+export function renderTextWithDiscordEmojis(text, imgClass = 'w-3.5 h-3.5') {
+  if (!text) return null;
+  const str = String(text);
+  const parts = str.split(/(<a?:\w+:\d+>)/g);
+  if (parts.length === 1) return str;
+
+  return parts.map((part, pIdx) => {
+    const match = part.match(/^<a?:(\w+):(\d+)>$/);
+    if (!match) return part;
+    const name = match[1];
+    const id = match[2];
+    const resolved = resolveDiscordEmoji(`<:${name}:${id}>`);
+    if (resolved && (resolved.type === 'local' || resolved.type === 'cdn')) {
+      return React.createElement('img', {
+        key: pIdx,
+        src: resolved.url,
+        alt: name,
+        className: `${imgClass} object-contain inline-block mr-1 align-middle shrink-0`,
+        onError: (e) => { e.currentTarget.style.display = 'none'; }
+      });
+    }
+    return part;
+  });
 }
 
 export { EMOJI_FILES, APP_EMOJI_IDS };
