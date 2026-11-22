@@ -4189,11 +4189,19 @@ export default function ClanManager() {
         : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : `@${t('clan_role_leader', 'Лидер')}`);
 
       const defaultFormFields = [
-        { id: 'f_name', role: 'name', label: 'Ваше имя', placeholder: 'Иван', emoji: 'user', required: true, style: 'short' },
-        { id: 'f_age', role: 'age', label: 'Ваш возраст', placeholder: '18', emoji: 'user', required: true, style: 'short' },
-        { id: 'f_hours', role: 'hours', label: 'Часы в Rust (со всех аккаунтов)', placeholder: '3500ч', emoji: 'clock', required: true, style: 'short' },
+        { id: 'f_name', role: 'name', label: 'Ваше имя', placeholder: 'Иван', emoji: 'usercircle', required: true, style: 'short' },
+        { id: 'f_age', role: 'age', label: 'Ваш возраст', placeholder: '18', emoji: 'hourglassempty', required: true, style: 'short' },
+        { id: 'f_hours', role: 'hours', label: 'Часы в Rust (со всех аккаунтов)', placeholder: '3500ч', emoji: 'devicedesktop', required: true, style: 'short' },
         { id: 'f_steam', role: 'steam', label: 'Ссылка на Steam (на котором играете)', placeholder: 'https://steamcommunity.com/id/...', emoji: 'link', required: true, style: 'short' },
-        { id: 'f_exp', role: 'experience', label: 'Опыт игры / предыдущие кланы', placeholder: 'Играл в кланах ..., позиция фармер/пвп', emoji: 'listdetails', required: false, style: 'paragraph' }
+        { id: 'f_exp', role: 'experience', label: 'Опыт игры / предыдущие кланы', placeholder: 'Играл в кланах ..., позиция фармер/пвп', emoji: 'filedescription', required: false, style: 'paragraph' }
+      ];
+
+      const defaultTicketCardFields = [
+        { id: 'tcf_1', name: '<:usercircle:1571506569705824367> Имя', value: '{Имя}', inline: true },
+        { id: 'tcf_2', name: '<:hourglassempty:1571506480337915914> Возраст', value: '{Возраст} лет', inline: true },
+        { id: 'tcf_3', name: '<:devicedesktop:1571506456048566354> Игровые часы', value: '{Часы}', inline: true },
+        { id: 'tcf_4', name: '<:link:1571506483718258850> Steam профиль', value: '{Steam}', inline: false },
+        { id: 'tcf_5', name: '<:filedescription:1571506468723761233> Информация о кандидате', value: '{Опыт}', inline: false }
       ];
 
       const formConfig = {
@@ -4221,7 +4229,12 @@ export default function ClanManager() {
           type: 'ticket',
           tabTitle: t('clan_rec_sub_ticket', 'Отправленный тикет'),
           channelName: 'заявка-alex_rust',
-          rConfig,
+          rConfig: {
+            ...rConfig,
+            ticketCardConfig: (rConfig.ticketCardConfig && Array.isArray(rConfig.ticketCardConfig.fields) && rConfig.ticketCardConfig.fields.length > 0)
+              ? rConfig.ticketCardConfig
+              : { fields: defaultTicketCardFields }
+          },
           formConfig,
           config
         };

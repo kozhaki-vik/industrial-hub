@@ -493,6 +493,21 @@ export function getDiscordEmojiTag(keyOrName) {
 }
 
 /**
+ * Automatically converts text containing :emoji_name: into Discord application emoji tags <:name:id>
+ */
+export function formatDiscordEmojis(text) {
+  if (!text || typeof text !== 'string') return text;
+  return text.replace(/:([a-zA-Z0-9_-]+):/g, (match, rawName) => {
+    const cleanName = rawName.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const id = APP_EMOJI_NAME_TO_ID[cleanName] || APP_EMOJI_NAME_TO_ID[rawName.toLowerCase()];
+    if (id) {
+      return `<:${cleanName}:${id}>`;
+    }
+    return match;
+  });
+}
+
+/**
  * Strips leading Discord custom emoji (<:name:id>) or unicode emoji from text
  */
 export function stripLeadingEmoji(text) {
@@ -516,11 +531,11 @@ export function setLeadingEmoji(text, emojiTag) {
  */
 export const POPULAR_WHITE_EMOJIS = [
   { name: 'usercircle', id: '1571506569705824367', label: 'Имя', filename: 'user-circle.png', tag: '<:usercircle:1571506569705824367>' },
-  { name: 'calendarweek', id: '1571506435991543818', label: 'Возраст', filename: 'calendar-week.png', tag: '<:calendarweek:1571506435991543818>' },
-  { name: 'clock', id: '1571506445999017984', label: 'Часы', filename: 'clock.png', tag: '<:clock:1571506445999017984>' },
+  { name: 'hourglassempty', id: '1571506480337915914', label: 'Возраст', filename: 'hourglass-empty.png', tag: '<:hourglassempty:1571506480337915914>' },
+  { name: 'devicedesktop', id: '1571506456048566354', label: 'Игры / Rust', filename: 'device-desktop.png', tag: '<:devicedesktop:1571506456048566354>' },
   { name: 'link', id: '1571506483718258850', label: 'Steam', filename: 'link.png', tag: '<:link:1571506483718258850>' },
-  { name: 'listdetails', id: '1571506487929606224', label: 'Опыт', filename: 'list-details.png', tag: '<:listdetails:1571506487929606224>' },
-  { name: 'devicedesktop', id: '1571506456048566354', label: 'ПК', filename: 'device-desktop.png', tag: '<:devicedesktop:1571506456048566354>' },
+  { name: 'filedescription', id: '1571506468723761233', label: 'Информация', filename: 'file-description.png', tag: '<:filedescription:1571506468723761233>' },
+  { name: 'clock', id: '1571506445999017984', label: 'Часы', filename: 'clock.png', tag: '<:clock:1571506445999017984>' },
   { name: 'devicemobile', id: '1571506459152486533', label: 'Телефон', filename: 'device-mobile.png', tag: '<:devicemobile:1571506459152486533>' },
   { name: 'send', id: '1571506551242494013', label: 'Telegram', filename: 'send.png', tag: '<:send:1571506551242494013>' },
   { name: 'crown', id: '1571506453418610900', label: 'Роль', filename: 'crown.png', tag: '<:crown:1571506453418610900>' },
@@ -531,11 +546,11 @@ export const POPULAR_WHITE_EMOJIS = [
 ];
 
 /**
- * Renders text containing Discord custom emojis (<:name:id>) as inline images
+ * Renders text containing Discord custom emojis (<:name:id> or :name:) as inline images
  */
 export function renderTextWithDiscordEmojis(text, imgClass = 'w-3.5 h-3.5') {
   if (!text) return null;
-  const str = String(text);
+  const str = formatDiscordEmojis(String(text));
   const parts = str.split(/(<a?:\w+:\d+>)/g);
   if (parts.length === 1) return str;
 

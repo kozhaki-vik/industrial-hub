@@ -98,17 +98,31 @@ function DiscordTicketPreview({
     });
   };
 
+  const defaultTicketCardFields = useMemo(() => [
+    { id: 'tcf_1', name: '<:usercircle:1571506569705824367> Имя', value: '{Имя}', inline: true },
+    { id: 'tcf_2', name: '<:hourglassempty:1571506480337915914> Возраст', value: '{Возраст} лет', inline: true },
+    { id: 'tcf_3', name: '<:devicedesktop:1571506456048566354> Игровые часы', value: '{Часы}', inline: true },
+    { id: 'tcf_4', name: '<:link:1571506483718258850> Steam профиль', value: '{Steam}', inline: false },
+    { id: 'tcf_5', name: '<:filedescription:1571506468723761233> Информация о кандидате', value: '{Опыт}', inline: false }
+  ], []);
+
   const displayFields = useMemo(() => {
-    if (rConfig.ticketCardConfig && Array.isArray(rConfig.ticketCardConfig.fields) && rConfig.ticketCardConfig.fields.length > 0) {
-      return rConfig.ticketCardConfig.fields;
-    }
-    return fields.map((f, i) => ({
-      id: f.id || i,
-      name: f.label || `Вопрос #${i + 1}`,
-      value: `{${f.label || f.role || 'Ответ'}}`,
-      inline: f.style !== 'paragraph'
-    }));
-  }, [rConfig.ticketCardConfig, fields]);
+    const rawFields = (rConfig.ticketCardConfig && Array.isArray(rConfig.ticketCardConfig.fields) && rConfig.ticketCardConfig.fields.length > 0)
+      ? rConfig.ticketCardConfig.fields
+      : defaultTicketCardFields;
+
+    return rawFields.map(f => {
+      let name = f.name || f.label || '';
+      if (name === '<:calendarweek:1571506435991543818> Возраст') {
+        name = '<:hourglassempty:1571506480337915914> Возраст';
+      } else if (name === '<:clock:1571506445999017984> Игровые часы') {
+        name = '<:devicedesktop:1571506456048566354> Игровые часы';
+      } else if (name === '<:listdetails:1571506487929606224> Информация о кандидате') {
+        name = '<:filedescription:1571506468723761233> Информация о кандидате';
+      }
+      return name !== f.name ? { ...f, name } : f;
+    });
+  }, [rConfig.ticketCardConfig, defaultTicketCardFields]);
 
   // Group fields into rows matching Discord Desktop layout (up to 3 inline fields per row)
   const fieldRows = useMemo(() => {
@@ -283,16 +297,22 @@ function DiscordTicketPreview({
             {isRejected ? (
               <div className="mt-3 p-3.5 rounded-[4px] bg-[#232428] border border-[#35373c] text-xs space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[#f2f3f5] font-bold">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-[#949ba4]" />
+                  {renderTextWithDiscordEmojis('<:alerttriangle:1571506419998396568>')}
                   <span>Сработал автоматический отказ:</span>
                 </div>
                 {rConfig.notifyRejectReason !== false ? (
                   <div className="bg-[#1e1f22] p-2.5 rounded-[4px] text-[11px] text-[#dbdee1] border border-[#2b2d31] space-y-1">
                     {rConfig.minHours > 0 && (
-                      <div>• Недостаточно игровых часов: 1,400 ч. (требуется от {rConfig.minHours} ч.)</div>
+                      <div className="flex items-center gap-1.5">
+                        {renderTextWithDiscordEmojis('<:devicedesktop:1571506456048566354>')}
+                        <span>Недостаточно игровых часов: 1,400 ч. (требуется от {rConfig.minHours} ч.)</span>
+                      </div>
                     )}
                     {rConfig.minAge > 0 && (
-                      <div>• Возраст кандидата не соответствует порогу (требуется от {rConfig.minAge} лет)</div>
+                      <div className="flex items-center gap-1.5">
+                        {renderTextWithDiscordEmojis('<:hourglassempty:1571506480337915914>')}
+                        <span>Возраст кандидата не соответствует порогу (требуется от {rConfig.minAge} лет)</span>
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -305,21 +325,30 @@ function DiscordTicketPreview({
                   «{rejectMsg}»
                 </div>
                 <div className="flex items-center gap-1.5 text-[#949ba4] font-medium text-[11px] pt-0.5">
-                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                  {renderTextWithDiscordEmojis('<:clock:1571506445999017984>')}
                   <span>Канал будет автоматически удален ботом через 10 минут.</span>
                 </div>
               </div>
             ) : (
               <div className="mt-3 p-3.5 rounded-[4px] bg-[#232428] border border-[#35373c] text-xs space-y-2">
                 <div className="flex items-center gap-1.5 text-[#f2f3f5] font-bold">
-                  <ShieldCheck className="w-4 h-4 shrink-0 text-[#949ba4]" />
+                  {renderTextWithDiscordEmojis('<:rosettediscountcheck:1571506545936830544>')}
                   <span>Проверка Steam и критериев:</span>
                 </div>
-                <div className="text-[11px] text-[#dbdee1] space-y-1 bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
-                  <div>• Аккаунт Steam открыт и проверен</div>
-                  <div>• Игровые часы (3,850 ч.) превышают минимальный порог</div>
+                <div className="text-[11px] text-[#dbdee1] space-y-1.5 bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
+                  <div className="flex items-center gap-1.5">
+                    {renderTextWithDiscordEmojis('<:circlecheck:1571506443180310600>')}
+                    <span>Аккаунт Steam открыт и проверен</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {renderTextWithDiscordEmojis('<:circlecheck:1571506443180310600>')}
+                    <span>Игровые часы (3,850 ч.) превышают минимальный порог</span>
+                  </div>
                   {rConfig.steamPrefixCheck && (
-                    <div>• Приписка клана <code className="bg-[#2b2d31] px-1.5 py-0.5 rounded text-[#f2f3f5] font-mono">[{rConfig.steamPrefix || config?.name || 'GODS'}]</code> подтверждена в нике</div>
+                    <div className="flex items-center gap-1.5">
+                      {renderTextWithDiscordEmojis('<:circlecheck:1571506443180310600>')}
+                      <span>Приписка клана <code className="bg-[#2b2d31] px-1.5 py-0.5 rounded text-[#f2f3f5] font-mono">[{rConfig.steamPrefix || config?.name || 'GODS'}]</code> подтверждена в нике</span>
+                    </div>
                   )}
                 </div>
               </div>
