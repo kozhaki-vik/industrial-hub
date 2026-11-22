@@ -9,7 +9,6 @@ import RecruitmentTab from './ClanManagerTabs/RecruitmentTab';
 import VotesTab from './ClanManagerTabs/VotesTab';
 import AdsTab from './ClanManagerTabs/AdsTab';
 import RosterTab from './ClanManagerTabs/RosterTab';
-import DossierTab from './ClanManagerTabs/DossierTab';
 import StatsTab from './ClanManagerTabs/StatsTab';
 import LogsTab from './ClanManagerTabs/LogsTab';
 import ModerationTab from './ClanManagerTabs/ModerationTab';
@@ -1320,6 +1319,14 @@ export default function ClanManager() {
           }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'close_ad_ticket') {
           fetchAdTickets();
+        } else if (data.type === 'clan_proxy_res' && data.reqId === 'clear_ad_tickets') {
+          setLoadingAdTickets(false);
+          if (!data.error && data.data && data.data.success) {
+            setAdTicketsData([]);
+            addLog(t('clan_ad_tickets_cleared_log') || 'Журнал заявок на рекламу успешно очищен');
+          } else {
+            setError(data.error || (data.data && data.data.error) || t('msg_ad_tickets_clear_error', 'Ошибка очистки журнала заявок на рекламу'));
+          }
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_ticket_transcript') {
           setTranscriptModal(prev => ({
             ...prev,
@@ -2598,6 +2605,30 @@ export default function ClanManager() {
       payload: { action: 'clear_applications' }
     }));
   };
+
+  const handleUpdateAppStatus = useCallback((applicationId, status, rejectReason) => {
+    if (!ws || wsStatus !== 'online' || !applicationId) return Promise.resolve(null);
+    return sendProxyAction('update_application_status', {
+      action: 'update_application_status',
+      applicationId,
+      status,
+      rejectReason
+    }).then(res => {
+      if (res && res.success) {
+        setApplicationsData(prev => prev.map(a => a.id === applicationId ? {
+          ...a,
+          status,
+          rejectReason: rejectReason !== undefined ? rejectReason : a.rejectReason,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: 'Manager (App)'
+        } : a));
+        if (status === 'ACCEPTED') {
+          fetchRoster();
+        }
+      }
+      return res;
+    });
+  }, [ws, wsStatus, sendProxyAction, fetchRoster]);
 
   const handleViewTranscript = (app) => {
     if (!ws || wsStatus !== 'online' || !app) return;
@@ -4521,6 +4552,7 @@ const contextValue = {
   handleSendCrossClanMessage: typeof handleSendCrossClanMessage !== "undefined" ? handleSendCrossClanMessage : undefined,
   handleSyncDiscordRoles: typeof handleSyncDiscordRoles !== "undefined" ? handleSyncDiscordRoles : undefined,
   handleUnlink: typeof handleUnlink !== "undefined" ? handleUnlink : undefined,
+  handleUpdateAppStatus: typeof handleUpdateAppStatus !== "undefined" ? handleUpdateAppStatus : undefined,
   handleViewTranscript: typeof handleViewTranscript !== "undefined" ? handleViewTranscript : undefined,
   hasPromptedRef: typeof hasPromptedRef !== "undefined" ? hasPromptedRef : undefined,
   hwid: typeof hwid !== "undefined" ? hwid : undefined,
@@ -5495,8 +5527,6 @@ const contextValue = {
             {activeTab === 'ad_tickets' && <AdTicketsTab />}
 
             {activeTab === 'roster' && <RosterTab />}
-
-            {activeTab === 'dossier' && <DossierTab />}
 
             {activeTab === 'stats' && <StatsTab />}
 

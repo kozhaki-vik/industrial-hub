@@ -105,6 +105,10 @@ function MemberDossierModal({
   const [farmingRating, setFarmingRating] = useState(0);
   const [overallRating, setOverallRating] = useState(0);
 
+  // Telegram & Prefix check state
+  const [telegramUsername, setTelegramUsername] = useState('');
+  const [ignorePrefixChecks, setIgnorePrefixChecks] = useState(false);
+
   // Global search state
   const [globalData, setGlobalData] = useState(null);
   const [searchingGlobal, setSearchingGlobal] = useState(false);
@@ -134,6 +138,9 @@ function MemberDossierModal({
       setBuildingRating(Number(profile.buildingRating) || 0);
       setFarmingRating(Number(profile.farmingRating) || 0);
       setOverallRating(Number(profile.overallRating) || 0);
+
+      setTelegramUsername(profile.telegramUsername ? profile.telegramUsername.replace(/^@/, '') : '');
+      setIgnorePrefixChecks(Boolean(profile.ignorePrefixChecks));
 
       setGlobalData(null);
       setGlobalSearchError(null);
@@ -217,7 +224,9 @@ function MemberDossierModal({
         flyingRating,
         buildingRating,
         farmingRating,
-        overallRating
+        overallRating,
+        telegramUsername: telegramUsername.trim() ? telegramUsername.trim().replace(/^@/, '') : null,
+        ignorePrefixChecks
       };
 
       if (onSave) {
@@ -233,7 +242,7 @@ function MemberDossierModal({
   }, [
     canEdit, saving, violationStatus, violationReason, violationProofUrl, t, status,
     statusReason, notes, isBlacklisted, blacklistReason, shootingRating,
-    flyingRating, buildingRating, farmingRating, overallRating, onSave, profile?.userId
+    flyingRating, buildingRating, farmingRating, overallRating, telegramUsername, ignorePrefixChecks, onSave, profile?.userId
   ]);
 
   const handleRunGlobalSearch = useCallback(async () => {
@@ -522,6 +531,45 @@ function MemberDossierModal({
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-500">{t('dossier_age_label', 'Возраст:')}</span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">{profile.age ? `${profile.age} ${t('clan_years', 'лет')}` : t('dossier_not_specified_m', 'Не указан')}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500 flex items-center gap-1">
+                          <Send className="w-3 h-3 text-sky-500" />
+                          <span>Telegram:</span>
+                        </span>
+                        {canEdit ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-slate-400 font-mono text-[11px]">@</span>
+                            <input
+                              type="text"
+                              value={telegramUsername}
+                              onChange={e => setTelegramUsername(e.target.value)}
+                              placeholder="username"
+                              className="px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs w-28 outline-none focus:ring-1 focus:ring-sky-500"
+                            />
+                          </div>
+                        ) : (
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {telegramUsername ? `@${telegramUsername.replace(/^@/, '')}` : t('dossier_not_specified_m', 'Не указан')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between text-xs pt-1">
+                        <span className="text-slate-500" title={t('dossier_ignore_prefix_hint', 'Игнорировать отсутствие тега клана в нике Steam')}>
+                          {t('dossier_ignore_prefix', 'Игнорировать префикс:')}
+                        </span>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            disabled={!canEdit}
+                            checked={ignorePrefixChecks}
+                            onChange={e => setIgnorePrefixChecks(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded text-orange-500 focus:ring-orange-400"
+                          />
+                          <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
+                            {ignorePrefixChecks ? t('clan_yes', 'Да') : t('clan_no', 'Нет')}
+                          </span>
+                        </label>
                       </div>
                       <div className="flex-1 flex flex-col text-xs space-y-1">
                         <span className="text-slate-500 font-medium">{t('dossier_exp_label', 'Опыт / Прайм-тайм / О себе:')}</span>

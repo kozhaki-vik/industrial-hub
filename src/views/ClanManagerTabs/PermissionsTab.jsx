@@ -95,9 +95,18 @@ export default function PermissionsTab() {
     const roleKeys = [
       'leaderRoleId', 'deputyLeaderRoleId', 'callerRoleId', 'recruiterRoleId', 'mainRosterRoleId',
       'trialRoleId', 'farmerRoleId', 'plantFarmerRoleId', 'electricianRoleId',
-      'builderRoleId', 'pilotRoleId'
+      'builderRoleId', 'pilotRoleId', 'sponsorRoleId', 'vipRoleId'
     ];
-    const configuredRoleIds = roleKeys.map(k => config?.[k]).filter(Boolean);
+    let customRoleIds = [];
+    if (config?.customRolesJson) {
+      try {
+        const parsed = typeof config.customRolesJson === 'string' ? JSON.parse(config.customRolesJson) : config.customRolesJson;
+        if (Array.isArray(parsed)) {
+          customRoleIds = parsed.map(r => r.roleId).filter(Boolean);
+        }
+      } catch {}
+    }
+    const configuredRoleIds = [...roleKeys.map(k => config?.[k]), ...customRoleIds].filter(Boolean);
     return [...new Set(configuredRoleIds)]
       .map(id => roles.find(r => r.id === id))
       .filter(Boolean)
@@ -130,7 +139,7 @@ export default function PermissionsTab() {
       } catch {}
     }
 
-    const channelKeys = ['ticketsCategory', 'applications', 'autoRejectedApplications', 'rejectedApplications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
+    const channelKeys = ['ticketsCategory', 'applications', 'abandonedApplications', 'autoRejectedApplications', 'rejectedApplications', 'leaderboard', 'news', 'votes', 'ads', 'roster'];
     const configuredChannelIds = channelKeys.map(k => channelsConfig[k]).filter(Boolean);
     if (logCfg.defaultChannelId) configuredChannelIds.push(logCfg.defaultChannelId);
     

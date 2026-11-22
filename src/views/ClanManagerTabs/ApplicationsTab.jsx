@@ -14,7 +14,9 @@ const ApplicationRow = React.memo(function ApplicationRow({
   getSteamProfileUrl,
   openExternalUrl,
   handleViewTranscript,
-  cachedMeta
+  cachedMeta,
+  handleAcceptApp,
+  handleRejectApp
 }) {
   const steamUrl = getSteamProfileUrl ? getSteamProfileUrl(app.steamId) : null;
   const displaySteamId = steamUrl
@@ -86,9 +88,31 @@ const ApplicationRow = React.memo(function ApplicationRow({
       </td>
       <td className="px-3 py-3.5">
         {app.status === 'PENDING' && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
-            ⏳ {t('clan_recruitment_app_status_pending') || 'Ожидает'}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
+              ⏳ {t('clan_recruitment_app_status_pending') || 'Ожидает'}
+            </span>
+            {handleAcceptApp && (
+              <button
+                type="button"
+                onClick={() => handleAcceptApp(app)}
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 transition-colors shadow-2xs cursor-pointer"
+                title={t('clan_accept_app_btn', 'Принять в клан')}
+              >
+                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            )}
+            {handleRejectApp && (
+              <button
+                type="button"
+                onClick={() => handleRejectApp(app)}
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/60 transition-colors shadow-2xs cursor-pointer"
+                title={t('clan_reject_app_btn', 'Отклонить заявку')}
+              >
+                <X className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            )}
+          </div>
         )}
         {app.status === 'ACCEPTED' && (
           <span 
@@ -150,6 +174,7 @@ export default function ApplicationsTab() {
     setAppSearch,
     fetchApplications,
     handleClearApplications,
+    handleUpdateAppStatus,
     handleViewTranscript,
     getSteamProfileUrl,
     openExternalUrl,
@@ -182,6 +207,28 @@ export default function ApplicationsTab() {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     setAppSearch('');
   }, [setAppSearch]);
+
+  const handleAcceptApp = useCallback((app) => {
+    showConfirm({
+      title: t('clan_app_accept_title', 'Принять кандидата в клан'),
+      message: `${t('clan_app_accept_confirm', 'Вы действительно хотите принять кандидата')} ${app.username || app.userId}?`,
+      confirmText: t('clan_accept_btn', 'Принять'),
+      type: 'success',
+      onConfirm: () => {
+        if (typeof handleUpdateAppStatus === 'function') {
+          handleUpdateAppStatus(app.id, 'ACCEPTED');
+        }
+      }
+    });
+  }, [handleUpdateAppStatus, t]);
+
+  const handleRejectApp = useCallback((app) => {
+    const reason = window.prompt(t('clan_app_reject_reason_prompt', 'Укажите причину отклонения заявки (необязательно):'), '');
+    if (reason === null) return;
+    if (typeof handleUpdateAppStatus === 'function') {
+      handleUpdateAppStatus(app.id, 'REJECTED', reason || undefined);
+    }
+  }, [handleUpdateAppStatus, t]);
 
   useEffect(() => {
     return () => {
@@ -437,6 +484,8 @@ export default function ApplicationsTab() {
                     openExternalUrl={openExternalUrl}
                     handleViewTranscript={handleViewTranscript}
                     cachedMeta={getCachedMemberMeta ? getCachedMemberMeta(app.userId) : null}
+                    handleAcceptApp={handleAcceptApp}
+                    handleRejectApp={handleRejectApp}
                   />
                 ))}
               </tbody>
