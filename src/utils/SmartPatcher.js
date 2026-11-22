@@ -38,9 +38,7 @@ export async function checkUpdates(addLog = () => {}, force = false) {
   try {
     const repos = ['kozhaki-vik/industrial-hub', 'kozhaki-vik/industrial-hub-releases'];
     for (const repo of repos) {
-      const ghApiUrl = channel === 'main' 
-        ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
-        : `https://api.github.com/repos/${repo}/releases?per_page=10&t=${Date.now()}`;
+      const ghApiUrl = `https://api.github.com/repos/${repo}/releases?per_page=15&t=${Date.now()}`;
 
       try {
         const ghRes = await fetch(ghApiUrl, { cache: 'no-store' });
@@ -48,26 +46,32 @@ export async function checkUpdates(addLog = () => {}, force = false) {
           let ghData = await ghRes.json();
           let candidateReleases = [];
 
-          if (channel === 'test' && Array.isArray(ghData)) {
-            // Filter non-draft releases
-            candidateReleases = ghData.filter(r => r && !r.draft);
-            // Sort by semver descending
-            candidateReleases.sort((a, b) => {
-              const va = (a.tag_name || '').replace(/^v/, '');
-              const vb = (b.tag_name || '').replace(/^v/, '');
-              return compareSemver(vb, va);
-            });
-          } else if (ghData && !ghData.draft) {
-            candidateReleases = [ghData];
+          if (Array.isArray(ghData)) {
+            const nonDrafts = ghData.filter(r => r && !r.draft);
+            if (channel === 'main') {
+              // Prefer stable releases (prerelease === false) if newer than local
+              const stables = nonDrafts.filter(r => !r.prerelease);
+              stables.sort((a, b) => compareSemver((b.tag_name || '').replace(/^v/, ''), (a.tag_name || '').replace(/^v/, '')));
+
+              if (stables.length > 0 && compareSemver(stables[0].tag_name.replace(/^v/, ''), localVersion) > 0) {
+                candidateReleases = stables;
+              } else {
+                nonDrafts.sort((a, b) => compareSemver((b.tag_name || '').replace(/^v/, ''), (a.tag_name || '').replace(/^v/, '')));
+                candidateReleases = nonDrafts;
+              }
+            } else {
+              nonDrafts.sort((a, b) => compareSemver((b.tag_name || '').replace(/^v/, ''), (a.tag_name || '').replace(/^v/, '')));
+              candidateReleases = nonDrafts;
+            }
           }
 
           for (const release of candidateReleases) {
             if (release && release.tag_name) {
               const tagVersion = release.tag_name.replace(/^v/, '');
-              // Prioritize portable executable over installer setup
+              // STRICTLY pick the standalone/portable executable for in-place auto-update.
+              // NEVER select Setup or installer binaries for background in-place updates!
               const asset = release.assets
-                ? (release.assets.find(a => a.name.endsWith('.exe') && !a.name.toLowerCase().includes('setup') && !a.name.toLowerCase().includes('unins'))
-                   || release.assets.find(a => a.name.endsWith('.exe')))
+                ? release.assets.find(a => a.name.endsWith('.exe') && !a.name.toLowerCase().includes('setup') && !a.name.toLowerCase().includes('unins'))
                 : null;
 
               if (tagVersion && asset && asset.browser_download_url) {

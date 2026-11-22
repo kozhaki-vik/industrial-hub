@@ -354,6 +354,17 @@ function updateApplicationShortcuts(targetExe, workingDir) {
     if (process.env.USERPROFILE) {
       desktopDirs.add(path.join(process.env.USERPROFILE, 'Desktop'));
       desktopDirs.add(path.join(process.env.USERPROFILE, 'OneDrive', 'Desktop'));
+      try {
+        const userEntries = fs.readdirSync(process.env.USERPROFILE, { withFileTypes: true });
+        for (const entry of userEntries) {
+          if (entry.isDirectory() && entry.name.toLowerCase().startsWith('onedrive')) {
+            const oneDriveDesktop = path.join(process.env.USERPROFILE, entry.name, 'Desktop');
+            if (fs.existsSync(oneDriveDesktop)) {
+              desktopDirs.add(oneDriveDesktop);
+            }
+          }
+        }
+      } catch {}
     }
     if (process.env.PUBLIC) {
       desktopDirs.add(path.join(process.env.PUBLIC, 'Desktop'));
@@ -363,7 +374,10 @@ function updateApplicationShortcuts(targetExe, workingDir) {
       if (fs.existsSync(dir)) {
         const shortcutFile = path.join(dir, 'Industrial Hub.lnk');
         try {
-          shell.writeShortcutLink(shortcutFile, 'replace', {
+          if (fs.existsSync(shortcutFile)) {
+            try { fs.unlinkSync(shortcutFile); } catch {}
+          }
+          shell.writeShortcutLink(shortcutFile, 'create', {
             target,
             cwd,
             description: 'Industrial Hub - Ultimate Rust Assistant',
@@ -395,19 +409,23 @@ function updateApplicationShortcuts(targetExe, workingDir) {
 
       for (const shortcutFile of targetLinks) {
         const parentDir = path.dirname(shortcutFile);
-        if (fs.existsSync(shortcutFile) || (fs.existsSync(parentDir) && parentDir !== baseDir)) {
-          try {
-            shell.writeShortcutLink(shortcutFile, 'replace', {
-              target,
-              cwd,
-              description: 'Industrial Hub - Ultimate Rust Assistant',
-              icon: target,
-              iconIndex: 0
-            });
-            console.log(`[Shortcut] Updated Start Menu shortcut at ${shortcutFile} -> ${target}`);
-          } catch (err) {
-            console.warn(`[Shortcut] Could not write Start Menu shortcut to ${shortcutFile}:`, err.message);
+        if (!fs.existsSync(parentDir)) {
+          try { fs.mkdirSync(parentDir, { recursive: true }); } catch {}
+        }
+        try {
+          if (fs.existsSync(shortcutFile)) {
+            try { fs.unlinkSync(shortcutFile); } catch {}
           }
+          shell.writeShortcutLink(shortcutFile, 'create', {
+            target,
+            cwd,
+            description: 'Industrial Hub - Ultimate Rust Assistant',
+            icon: target,
+            iconIndex: 0
+          });
+          console.log(`[Shortcut] Updated Start Menu shortcut at ${shortcutFile} -> ${target}`);
+        } catch (err) {
+          console.warn(`[Shortcut] Could not write Start Menu shortcut to ${shortcutFile}:`, err.message);
         }
       }
 

@@ -1,4 +1,6 @@
 !macro customInstall
+  SetOutPath "$INSTDIR"
+
   ; When installing via Setup.exe, clean up any previous app-* update folders inside $INSTDIR
   FindFirst $0 $1 "$INSTDIR\app-*"
   loop_install_clean:
@@ -10,8 +12,20 @@
     FindClose $0
 
   ; Always recreate desktop and start menu shortcuts to guarantee they never vanish on updates
-  CreateShortCut "$DESKTOP\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0
-  CreateShortCut "$SMPROGRAMS\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0
+  ; 1. Standard Desktop
+  CreateShortCut "$DESKTOP\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0 "" "" "Industrial Hub - Ultimate Rust Assistant"
+
+  ; 2. Profile Desktop & OneDrive Desktop
+  IfFileExists "$PROFILE\Desktop\*.*" 0 +2
+    CreateShortCut "$PROFILE\Desktop\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0 "" "" "Industrial Hub - Ultimate Rust Assistant"
+
+  IfFileExists "$PROFILE\OneDrive\Desktop\*.*" 0 +2
+    CreateShortCut "$PROFILE\OneDrive\Desktop\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0 "" "" "Industrial Hub - Ultimate Rust Assistant"
+
+  ; 3. Start Menu shortcuts
+  CreateShortCut "$SMPROGRAMS\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0 "" "" "Industrial Hub - Ultimate Rust Assistant"
+  CreateDirectory "$SMPROGRAMS\Industrial Hub"
+  CreateShortCut "$SMPROGRAMS\Industrial Hub\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0 "" "" "Industrial Hub - Ultimate Rust Assistant"
 !macroend
 
 !macro customUnInstall

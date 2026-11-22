@@ -1,7 +1,7 @@
 {
     "name": "industrial-hub",
     "private": false,
-    "version": "2.23.58",
+    "version": "2.23.59",
     "author": "Kozhaki",
     "license": "MIT",
     "description": "Industrial Hub - Desktop Companion Application",
@@ -65,11 +65,11 @@
             "icon": "icon256.png"
         },
         "nsis": {
-            "oneClick": false,
-            "allowToChangeInstallationDirectory": true,
+            "oneClick": true,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": false,
             "createDesktopShortcut": "always",
             "createStartMenuShortcut": true,
-            "license": "LICENSE",
             "include": "build/installer.nsh"
         },
         "portable": {}
