@@ -125,12 +125,12 @@ export default function RecruitmentTab() {
       }
     } catch (e) { console.error('[Auto-caught Error]', e); }
 
-    if (!rc.autoRejectMessage || !rc.autoRejectMessage.trim()) {
+    if (rc.autoRejectMessage === undefined) {
       rc.autoRejectMessage = defaultRejectMsg;
     }
 
     if (config?.name) {
-      if (!rc.title || rc.title === t('clan_rec_base', 'Набор в клан') || rc.title.includes('GODS')) {
+      if (rc.title === undefined || rc.title === t('clan_rec_base', 'Набор в клан') || rc.title.includes('GODS')) {
         rc.title = `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}`;
       } else if (rc.title.includes('GODS')) {
         rc.title = rc.title.replace(/\bGODS\b/g, config.name);
@@ -220,7 +220,7 @@ export default function RecruitmentTab() {
 
   const formConfig = useMemo(() => {
     return {
-      title: rConfig.formConfig?.title || 'Подача заявки в клан',
+      title: rConfig.formConfig?.title !== undefined ? rConfig.formConfig.title : 'Подача заявки в клан',
       fields: (Array.isArray(rConfig.formConfig?.fields) && rConfig.formConfig.fields.length > 0)
         ? rConfig.formConfig.fields
         : defaultFormFields
@@ -299,8 +299,8 @@ export default function RecruitmentTab() {
     const currentFields = [...formConfig.fields];
     if (!currentFields[idx]) return;
     let cleaned = val;
-    if (key === 'label') cleaned = String(val).slice(0, 45);
-    if (key === 'placeholder') cleaned = String(val).slice(0, 100);
+    if (key === 'label') cleaned = String(val).slice(0, 100);
+    if (key === 'placeholder') cleaned = String(val).slice(0, 200);
     currentFields[idx] = { ...currentFields[idx], [key]: cleaned };
     updateRConfig('formConfig', { ...formConfig, fields: currentFields }, immediate);
   }, [formConfig, updateRConfig]);
@@ -1554,14 +1554,14 @@ export default function RecruitmentTab() {
                 </div>
                 <input
                   type="text"
-                  maxLength={DISCORD_LIMITS.MODAL_TITLE_MAX}
-                  value={formConfig.title || ''}
+                  maxLength={DISCORD_LIMITS.MODAL_TITLE_MAX + 50}
+                  value={formConfig.title ?? ''}
                   onChange={(e) => {
-                    const cleaned = cleanDiscordText(e.target.value).slice(0, DISCORD_LIMITS.MODAL_TITLE_MAX);
+                    const cleaned = cleanDiscordText(e.target.value);
                     updateRConfig('formConfig', { ...formConfig, title: cleaned }, false);
                   }}
                   onBlur={(e) => {
-                    const cleaned = cleanDiscordText(e.target.value).slice(0, DISCORD_LIMITS.MODAL_TITLE_MAX);
+                    const cleaned = cleanDiscordText(e.target.value);
                     updateRConfig('formConfig', { ...formConfig, title: cleaned }, true);
                   }}
                   placeholder="Подача заявки в клан"
@@ -1654,7 +1654,7 @@ export default function RecruitmentTab() {
                           </div>
                           <input
                             type="text"
-                            maxLength={DISCORD_LIMITS.TEXT_INPUT_LABEL_MAX}
+                            maxLength={DISCORD_LIMITS.TEXT_INPUT_LABEL_MAX + 50}
                             value={field.label || ''}
                             onChange={(e) => updateFormField(idx, 'label', e.target.value, false)}
                             onBlur={(e) => updateFormField(idx, 'label', e.target.value, true)}
@@ -1732,7 +1732,7 @@ export default function RecruitmentTab() {
                         </div>
                         <input
                           type="text"
-                          maxLength={DISCORD_LIMITS.TEXT_INPUT_PLACEHOLDER_MAX}
+                          maxLength={DISCORD_LIMITS.TEXT_INPUT_PLACEHOLDER_MAX + 50}
                           value={field.placeholder || ''}
                           onChange={(e) => updateFormField(idx, 'placeholder', e.target.value, false)}
                           onBlur={(e) => updateFormField(idx, 'placeholder', e.target.value, true)}

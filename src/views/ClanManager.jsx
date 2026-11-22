@@ -1221,6 +1221,9 @@ export default function ClanManager() {
             const err = data.error || data.data.error;
             setError(err);
             setSaveStatus(`error: ${err}`);
+            if (latestConfigRef.current) {
+              pendingConfigRef.current = latestConfigRef.current;
+            }
             setTimeout(() => setSaveStatus(null), 5000);
           } else {
             setSaveStatus('success');
@@ -1996,7 +1999,6 @@ export default function ClanManager() {
     const nowTime = Date.now();
     lastSaveTimeRef.current = nowTime;
     lastSaveDispatchTimeRef.current = nowTime;
-    lastSavedConfigRef.current = JSON.parse(JSON.stringify(cfgToSend));
     setSaveStatus('saving');
 
     const clanSecret = localStorage.getItem('hub_clan_secret') || undefined;
@@ -4968,7 +4970,7 @@ const contextValue = {
                   {saveStatus === 'success' 
                     ? `✓ ${t('clan_saved_success') || 'Сохранено'}` 
                     : typeof saveStatus === 'string' && saveStatus.startsWith('error')
-                      ? (t('clan_error') || 'Ошибка')
+                      ? (saveStatus.replace(/^error:\s*/, '') || t('clan_error') || 'Ошибка')
                       : (t('clan_roles_syncing') || 'Синхронизация...')}
                 </span>
               )}
@@ -5405,9 +5407,14 @@ const contextValue = {
                     <span>{t('clan_saved_success', 'Настройки сохранены')}</span>
                   </span>
                 ) : saveStatus && typeof saveStatus === 'string' && saveStatus.startsWith('error') ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80 shadow-2xs">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>{t('clan_error_save', 'Ошибка сохранения')}</span>
+                  <span 
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80 shadow-2xs max-w-sm truncate"
+                    title={saveStatus}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      {saveStatus.replace(/^error:\s*/, '') || t('clan_error_save', 'Ошибка сохранения')}
+                    </span>
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
