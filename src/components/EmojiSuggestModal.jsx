@@ -3,6 +3,45 @@ import { X, Send, Sparkles, Image as ImageIcon, Upload, CheckCircle2, AlertCircl
 import { useTranslation } from 'react-i18next';
 import { useNetwork } from '../contexts/NetworkContext';
 
+const resizeImageToIcon = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDim = 256;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, w);
+          canvas.height = Math.max(1, h);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          // PNG preserves transparency for icons
+          const dataUrl = canvas.toDataURL('image/png');
+          resolve(dataUrl);
+        } catch {
+          resolve(e.target.result);
+        }
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
 export default function EmojiSuggestModal({ isOpen, onClose }) {
   const { t } = useTranslation();
   const { createTicket, status } = useNetwork();
@@ -18,7 +57,7 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -27,19 +66,20 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Размер изображения не должен превышать 5 МБ');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Размер изображения не должен превышать 10 МБ');
       return;
     }
 
     setError(null);
     setImageFile(file);
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const optimizedDataUrl = await resizeImageToIcon(file);
+      setImagePreview(optimizedDataUrl);
+    } catch {
+      setError('Не удалось обработать изображение');
+    }
   };
 
   const handleRemoveImage = () => {
@@ -48,7 +88,10 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!name.trim()) {
       setError('Укажите название эмодзи');
       return;
@@ -64,8 +107,7 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
       if (createTicket && status === 'online') {
         await createTicket(message, logs, imagePreview);
       } else {
-        // Fallback simulate success if offline
-        await new Promise((res) => setTimeout(res, 800));
+        throw new Error('Сервер временно недоступен. Пожалуйста, проверьте подключение к сети.');
       }
 
       setSuccess(true);

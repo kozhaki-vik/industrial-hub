@@ -178,6 +178,7 @@ function DiscordMessagePreview({
   activeTemplateIndex = 0,
   onSelectTemplate = () => {},
   onClose = null,
+  onButtonClick = null,
   tabTitle = '',
   className = '',
   markdownEnabled = true
@@ -260,9 +261,9 @@ function DiscordMessagePreview({
             </span>
           </div>
 
-          {/* Embed Container - Exactly max-w-[520px] like in real Discord */}
+          {/* Embed Container with smooth rounded corners */}
           <div 
-            className="bg-[#2b2d31] rounded-r-[4px] rounded-bl-[4px] p-4 text-[#dbdee1] shadow-md w-full border-l-4 transition-all"
+            className="bg-[#2b2d31] rounded-r-2xl rounded-bl-2xl p-4 sm:p-5 text-[#dbdee1] shadow-md w-full border-l-4 transition-all"
             style={{ borderLeftColor: embedColor }}
           >
             {/* Embed Title */}
@@ -346,7 +347,10 @@ function DiscordMessagePreview({
                   <button
                     key={bIdx}
                     type="button"
-                    className={`h-8 px-4 rounded-[3px] text-sm font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer select-none ${btnStyle}`}
+                    onClick={() => {
+                      if (onButtonClick) onButtonClick(btn, bIdx);
+                    }}
+                    className={`h-8 px-5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none active:scale-[0.98] ${btnStyle}`}
                   >
                     {resolvedEmoji && (
                       resolvedEmoji.type === 'local' || resolvedEmoji.type === 'cdn' ? (

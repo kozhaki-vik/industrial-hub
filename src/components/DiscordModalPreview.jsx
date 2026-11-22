@@ -7,6 +7,7 @@ function DiscordModalPreview({
   channelName = 'набор-в-клан',
   modalTitle = 'Подача заявки в клан',
   fields = [],
+  onSubmit = null,
   className = ''
 }) {
   const { t } = useTranslation();
@@ -29,15 +30,15 @@ function DiscordModalPreview({
       {/* Backdrop overlay simulating Discord modal pop-up over channel */}
       <div className="relative flex-1 overflow-y-auto p-3 sm:p-4 flex items-center justify-center bg-black/55 backdrop-blur-[2px] custom-scrollbar">
         {/* Discord Modal Dialog Window */}
-        <div className="w-full max-w-[420px] bg-[#313338] rounded-lg shadow-2xl border border-[#232428] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div className="w-full max-w-[420px] bg-[#313338] rounded-2xl shadow-2xl border border-[#232428] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
           {/* Modal Header */}
-          <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#232428]/60 bg-[#313338]">
+          <div className="px-5 py-4 flex items-center justify-between border-b border-[#232428]/60 bg-[#313338]">
             <h3 className="font-bold text-[#f2f3f5] text-base truncate tracking-tight pr-2">
               {modalTitle || t('clan_rec_base', 'Подача заявки в клан')}
             </h3>
             <button
               type="button"
-              className="text-[#949ba4] hover:text-[#f2f3f5] p-1 rounded hover:bg-[#35373c] transition-colors shrink-0"
+              className="text-[#949ba4] hover:text-[#f2f3f5] p-1.5 rounded-full hover:bg-[#35373c] transition-colors shrink-0 cursor-pointer"
               title={t('preview_close', 'Закрыть')}
             >
               <X className="w-4 h-4" />
@@ -45,7 +46,7 @@ function DiscordModalPreview({
           </div>
 
           {/* Modal Form Fields */}
-          <div className="p-4 space-y-3.5 max-h-[calc(100vh-220px)] overflow-y-auto custom-scrollbar">
+          <div className="p-5 space-y-4 max-h-[calc(100vh-220px)] overflow-y-auto custom-scrollbar">
             {Array.isArray(fields) && fields.length > 0 ? (
               fields.map((field, idx) => {
                 const resolvedEmoji = resolveDiscordEmoji(field.emoji);
@@ -73,14 +74,14 @@ function DiscordModalPreview({
                       )}
                     </label>
 
-                    {/* Discord Input or Textarea */}
+                    {/* Discord Input or Textarea with smooth rounding */}
                     {isParagraph ? (
                       <textarea
                         readOnly
                         disabled
                         rows={3}
                         placeholder={field.placeholder || ''}
-                        className="w-full bg-[#1e1f22] text-[#dbdee1] placeholder-[#80848e] rounded-[4px] px-3 py-2 text-xs border border-transparent cursor-default resize-none leading-relaxed outline-none"
+                        className="w-full bg-[#1e1f22] text-[#dbdee1] placeholder-[#80848e] rounded-xl px-3.5 py-2.5 text-xs border border-transparent cursor-default resize-none leading-relaxed outline-none"
                       />
                     ) : (
                       <input
@@ -88,30 +89,34 @@ function DiscordModalPreview({
                         disabled
                         type="text"
                         placeholder={field.placeholder || ''}
-                        className="w-full bg-[#1e1f22] text-[#dbdee1] placeholder-[#80848e] rounded-[4px] px-3 py-2 text-xs border border-transparent cursor-default outline-none"
+                        className="w-full bg-[#1e1f22] text-[#dbdee1] placeholder-[#80848e] rounded-xl px-3.5 py-2.5 text-xs border border-transparent cursor-default outline-none"
                       />
                     )}
                   </div>
                 );
               })
             ) : (
-              <div className="p-4 rounded bg-[#1e1f22] text-[#949ba4] text-xs text-center">
+              <div className="p-4 rounded-xl bg-[#1e1f22] text-[#949ba4] text-xs text-center">
                 Поля формы ещё не добавлены в конструкторе.
               </div>
             )}
           </div>
 
-          {/* Modal Footer */}
-          <div className="px-4 py-3 bg-[#2b2d31] flex items-center justify-end gap-3 border-t border-[#232428]/60 shrink-0">
+          {/* Modal Footer with pill/oval shaped buttons */}
+          <div className="px-5 py-3.5 bg-[#2b2d31] flex items-center justify-end gap-3 border-t border-[#232428]/60 shrink-0">
             <button
               type="button"
-              className="text-xs font-medium text-white hover:underline px-3 py-1.5 rounded transition-colors"
+              className="text-xs font-semibold text-white hover:underline px-4 py-2 rounded-full transition-colors cursor-pointer"
             >
               Отмена
             </button>
             <button
               type="button"
-              className="bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold px-4 py-1.5 rounded-[3px] shadow-sm transition-colors"
+              onClick={() => {
+                if (onSubmit) onSubmit();
+              }}
+              title="Нажмите для перехода к отправленному тикету"
+              className="bg-[#5865f2] hover:bg-[#4752c4] active:scale-[0.98] text-white text-xs font-semibold px-6 py-2 rounded-full shadow-sm transition-all cursor-pointer"
             >
               Отправить
             </button>

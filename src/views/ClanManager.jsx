@@ -5149,6 +5149,9 @@ const contextValue = {
                 channelName={previewData.channelName}
                 modalTitle={previewData.modalTitle}
                 fields={previewData.fields}
+                onSubmit={() => {
+                  setRecruitmentSubTab('ticket');
+                }}
               />
             ) : previewData.type === 'ticket' ? (
               <DiscordTicketPreview
@@ -5166,6 +5169,11 @@ const contextValue = {
                 templates={previewData.templates}
                 activeTemplateIndex={previewData.activeTemplateIndex}
                 onSelectTemplate={(idx) => setPreviewVoteIndex(idx)}
+                onButtonClick={() => {
+                  if (activeTab === 'recruitment') {
+                    setRecruitmentSubTab('form');
+                  }
+                }}
                 tabTitle={previewData.tabTitle}
               />
             )}

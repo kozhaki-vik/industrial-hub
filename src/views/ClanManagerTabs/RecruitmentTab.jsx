@@ -3,7 +3,7 @@ import { ClanManagerContext } from '../ClanManagerContext';
 import {
   RefreshCw, Sliders, Hash, UserPlus,
   UserCheck, Check, AlertTriangle, AlertCircle, ScrollText, Bot, Clock,
-  ExternalLink, Eye, EyeOff, X, ArrowRight,
+  ExternalLink, Eye, EyeOff, X, ArrowRight, ArrowLeft,
   Upload, Loader2, CheckCircle2, HardDrive, Trash2,
   Sparkles, Image as ImageIcon, Info, ChevronDown, Palette,
   ArrowUp, ArrowDown, Plus, RotateCcw, Folder, Layers, Smile
@@ -518,15 +518,6 @@ export default function RecruitmentTab() {
         >
           <Bot className="w-4 h-4 shrink-0" />
           <span>{t('clan_rec_sub_ticket', 'Отправленный тикет')}</span>
-          {rConfig.autoRejectEnabled ? (
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-              Авто-отказ ВКЛ
-            </span>
-          ) : (
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-500">
-              Без фильтра
-            </span>
-          )}
         </button>
       </div>
 
@@ -1331,6 +1322,22 @@ export default function RecruitmentTab() {
               </div>
             </div>
           </div>
+
+          {/* Navigation to next step */}
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <span>Шаг 1 из 3:</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Панель для набора</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('form')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <span>Перейти к форме заявки</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
         </div>
       )}
@@ -1623,6 +1630,26 @@ export default function RecruitmentTab() {
               </div>
             </div>
           )}
+
+          {/* Navigation between steps */}
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('message')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Назад к панели набора</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('ticket')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <span>Перейти к отправленному тикету</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
         </div>
       )}
@@ -2029,6 +2056,22 @@ export default function RecruitmentTab() {
             </div>
           </div>
         )}
+
+        {/* Navigation back */}
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('form')}
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Назад к форме заявки</span>
+          </button>
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <span>Шаг 3 из 3:</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Отправленный тикет</span>
+          </div>
+        </div>
       </div>
       </div>
     )}
