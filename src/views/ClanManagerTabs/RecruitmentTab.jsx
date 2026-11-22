@@ -33,7 +33,7 @@ export function HelpTooltip({ text, className = '' }) {
   if (!text) return null;
   return (
     <span className={`group relative inline-flex items-center align-middle ml-1.5 ${className}`}>
-      <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-orange-100 dark:hover:bg-orange-950/50 hover:text-orange-600 dark:hover:text-orange-400 text-slate-500 dark:text-slate-400 flex items-center justify-center text-[10px] font-bold cursor-help transition-colors select-none">
+      <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-orange-100 dark:hover:bg-orange-950/50 hover:text-orange-600 dark:hover:text-orange-400 text-slate-500 dark:text-slate-400 flex items-center justify-center text-[10px] font-bold cursor-default transition-colors select-none">
         ?
       </span>
       <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-60 sm:w-72 p-2.5 bg-slate-900/95 text-slate-100 text-[11px] rounded-xl shadow-xl border border-slate-700/60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 pointer-events-none leading-relaxed text-left font-normal normal-case backdrop-blur-xs">
@@ -146,21 +146,22 @@ export default function RecruitmentTab() {
     return cc;
   }, [config?.channelsConfigJson]);
 
-  // --- Collapsible Sections with User Override Memory ---
-  const [userAutoRejectExpanded, setUserAutoRejectExpanded] = useState(null);
-  const isAutoRejectExpanded = userAutoRejectExpanded !== null
-    ? userAutoRejectExpanded
-    : true;
+  // --- Collapsible Sections (Default collapsed on entry to minimize clutter) ---
+  const [userAutoRejectExpanded, setUserAutoRejectExpanded] = useState(false);
+  const isAutoRejectExpanded = Boolean(userAutoRejectExpanded);
 
-  const [userSteamPrefixExpanded, setUserSteamPrefixExpanded] = useState(null);
-  const isSteamPrefixExpanded = userSteamPrefixExpanded !== null
-    ? userSteamPrefixExpanded
-    : Boolean(rConfig.steamPrefixCheck);
+  const [userSteamPrefixExpanded, setUserSteamPrefixExpanded] = useState(false);
+  const isSteamPrefixExpanded = Boolean(userSteamPrefixExpanded);
 
-  const [userMetaExpanded, setUserMetaExpanded] = useState(null);
-  const isMetaExpanded = userMetaExpanded !== null
-    ? userMetaExpanded
-    : (rConfig.includeMetadataLines !== false);
+  const [userMetaExpanded, setUserMetaExpanded] = useState(false);
+  const isMetaExpanded = Boolean(userMetaExpanded);
+
+  // When switching sub-tabs or re-entering the page, collapse parameter accordions
+  useEffect(() => {
+    setUserAutoRejectExpanded(false);
+    setUserSteamPrefixExpanded(false);
+    setUserMetaExpanded(false);
+  }, [activeSubTab]);
 
   const isMetaActive = rConfig.includeMetadataLines !== false;
 
@@ -221,6 +222,42 @@ export default function RecruitmentTab() {
     };
   }, [rConfig.formConfig, defaultFormFields]);
 
+  const defaultTicketCardFields = useMemo(() => [
+    { id: 'tcf_1', name: '👤 Кандидат', value: '{Имя}, {Возраст} лет', inline: true },
+    { id: 'tcf_2', name: '⏱️ Игровые часы', value: '{Часы} (со всех аккаунтов)', inline: true },
+    { id: 'tcf_3', name: '🔗 Steam профиль', value: '{Steam}', inline: false },
+    { id: 'tcf_4', name: '📝 Информация о кандидате', value: '{Опыт}', inline: false }
+  ], []);
+
+  const ticketCardConfig = useMemo(() => {
+    return {
+      fields: (Array.isArray(rConfig.ticketCardConfig?.fields) && rConfig.ticketCardConfig.fields.length > 0)
+        ? rConfig.ticketCardConfig.fields
+        : defaultTicketCardFields
+    };
+  }, [rConfig.ticketCardConfig, defaultTicketCardFields]);
+
+  const availableVariables = useMemo(() => {
+    const list = [
+      { tag: '{Имя}', label: 'Имя / Ник' },
+      { tag: '{Возраст}', label: 'Возраст' },
+      { tag: '{Часы}', label: 'Часы Rust' },
+      { tag: '{Steam}', label: 'Steam ссылка' },
+      { tag: '{Кланы}', label: 'История кланов' },
+      { tag: '{Навыки}', label: 'Навыки / Роль' },
+      { tag: '{ПК}', label: 'Характеристики ПК' },
+      { tag: '{Онлайн}', label: 'Прайм-тайм / Онлайн' },
+      { tag: '{Город}', label: 'Город / Пояс' },
+      { tag: '{Опыт}', label: 'О себе / Опыт' }
+    ];
+    (formConfig.fields || []).forEach(f => {
+      if (f.label && !list.some(item => item.tag.toLowerCase() === `{${f.label.toLowerCase()}}`)) {
+        list.push({ tag: `{${f.label}}`, label: f.label });
+      }
+    });
+    return list;
+  }, [formConfig.fields]);
+
   const modalTitleValidation = useMemo(
     () => validateModalTitle(formConfig.title),
     [formConfig.title]
@@ -252,14 +289,14 @@ export default function RecruitmentTab() {
     queueAutoSave(updated, immediate);
   }, [rConfig, config, queueAutoSave, latestConfigRef]);
 
-  const updateFormField = useCallback((idx, key, val) => {
+  const updateFormField = useCallback((idx, key, val, immediate = false) => {
     const currentFields = [...formConfig.fields];
     if (!currentFields[idx]) return;
     let cleaned = val;
     if (key === 'label') cleaned = String(val).slice(0, 45);
     if (key === 'placeholder') cleaned = String(val).slice(0, 100);
     currentFields[idx] = { ...currentFields[idx], [key]: cleaned };
-    updateRConfig('formConfig', { ...formConfig, fields: currentFields }, true);
+    updateRConfig('formConfig', { ...formConfig, fields: currentFields }, immediate);
   }, [formConfig, updateRConfig]);
 
   const handleRoleChange = useCallback((idx, newRole) => {
@@ -315,6 +352,46 @@ export default function RecruitmentTab() {
       fields: defaultFormFields
     }, true);
   }, [defaultFormFields, updateRConfig]);
+
+  const updateTicketCardField = useCallback((idx, key, val, immediate = false) => {
+    const currentFields = [...ticketCardConfig.fields];
+    if (!currentFields[idx]) return;
+    let cleaned = val;
+    if (key === 'name') cleaned = String(val).slice(0, 256);
+    if (key === 'value') cleaned = String(val).slice(0, 1024);
+    currentFields[idx] = { ...currentFields[idx], [key]: cleaned };
+    updateRConfig('ticketCardConfig', { ...ticketCardConfig, fields: currentFields }, immediate);
+  }, [ticketCardConfig, updateRConfig]);
+
+  const addTicketCardField = useCallback(() => {
+    if (ticketCardConfig.fields.length >= 10) return;
+    const newField = {
+      id: `tcf_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: 'Новое поле',
+      value: '{Имя}',
+      inline: false
+    };
+    updateRConfig('ticketCardConfig', { ...ticketCardConfig, fields: [...ticketCardConfig.fields, newField] }, true);
+  }, [ticketCardConfig, updateRConfig]);
+
+  const removeTicketCardField = useCallback((idx) => {
+    if (ticketCardConfig.fields.length <= 1) return;
+    const newFields = ticketCardConfig.fields.filter((_, i) => i !== idx);
+    updateRConfig('ticketCardConfig', { ...ticketCardConfig, fields: newFields }, true);
+  }, [ticketCardConfig, updateRConfig]);
+
+  const moveTicketCardField = useCallback((idx, delta) => {
+    const newIdx = idx + delta;
+    if (newIdx < 0 || newIdx >= ticketCardConfig.fields.length) return;
+    const newFields = [...ticketCardConfig.fields];
+    const item = newFields.splice(idx, 1)[0];
+    newFields.splice(newIdx, 0, item);
+    updateRConfig('ticketCardConfig', { ...ticketCardConfig, fields: newFields }, true);
+  }, [ticketCardConfig, updateRConfig]);
+
+  const resetTicketCardConfig = useCallback(() => {
+    updateRConfig('ticketCardConfig', { fields: defaultTicketCardFields }, true);
+  }, [defaultTicketCardFields, updateRConfig]);
 
   const handleRunProofreading = useCallback(async () => {
     const textToAnalyze = rConfig.text;
@@ -1497,11 +1574,13 @@ export default function RecruitmentTab() {
                           <span className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] flex items-center justify-center">
                             #{idx + 1}
                           </span>
-                          <span className="text-xs font-semibold text-slate-800 dark:text-white">
-                            {field.label || `Поле ${idx + 1}`}
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            Поле #{idx + 1}
                           </span>
-                          {field.required !== false && (
+                          {field.required !== false ? (
                             <span className="text-[10px] text-rose-500 font-bold">*Обязательное</span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-medium">Необязательное</span>
                           )}
                         </div>
 
@@ -1537,34 +1616,10 @@ export default function RecruitmentTab() {
                         </div>
                       </div>
 
-                      {/* Field config inputs grid without emoji */}
+                      {/* Field config inputs: 1. Название (слева), 2. Назначение, 3. Тип, 4. Обязательно */}
                       <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
-                        {/* 1. Semantic Role */}
+                        {/* 1. Field Label (слева) */}
                         <div className="sm:col-span-5">
-                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Назначение поля (роль)
-                          </label>
-                          <select
-                            value={field.role || 'custom'}
-                            onChange={(e) => handleRoleChange(idx, e.target.value)}
-                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none"
-                          >
-                            <option value="name">👤 Имя игрока / Никнейм</option>
-                            <option value="age">🎂 Возраст</option>
-                            <option value="hours">⏱️ Часы в игре (Rust)</option>
-                            <option value="steam">🔗 Ссылка на Steam / Battlemetrics</option>
-                            <option value="clan_history">🛡️ Предыдущие кланы / История кланов</option>
-                            <option value="skills">🎯 Роль / Навыки (ПВП, фарм, билдинг)</option>
-                            <option value="device">🖥️ Характеристики ПК / Девайсы</option>
-                            <option value="activity">🕒 Прайм-тайм / Онлайн в день</option>
-                            <option value="timezone">🌍 Город / Часовой пояс</option>
-                            <option value="experience">📝 О себе / Дополнительно</option>
-                            <option value="custom">📌 Произвольный вопрос</option>
-                          </select>
-                        </div>
-
-                        {/* 2. Field Label (max 45) */}
-                        <div className="sm:col-span-4">
                           <div className="flex items-center justify-between mb-1">
                             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
                               Название поля в форме
@@ -1577,7 +1632,8 @@ export default function RecruitmentTab() {
                             type="text"
                             maxLength={DISCORD_LIMITS.TEXT_INPUT_LABEL_MAX}
                             value={field.label || ''}
-                            onChange={(e) => updateFormField(idx, 'label', e.target.value)}
+                            onChange={(e) => updateFormField(idx, 'label', e.target.value, false)}
+                            onBlur={(e) => updateFormField(idx, 'label', e.target.value, true)}
                             placeholder="Название поля..."
                             className={`w-full px-2.5 py-1.5 text-xs border rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 outline-none ${
                               !isLabelValid
@@ -1587,33 +1643,56 @@ export default function RecruitmentTab() {
                           />
                         </div>
 
-                        {/* 3. Type & Required Toggle */}
-                        <div className="sm:col-span-3 flex items-center gap-2">
-                          <div className="flex-1">
-                            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                              Тип поля
-                            </label>
-                            <select
-                              value={field.style || 'short'}
-                              onChange={(e) => updateFormField(idx, 'style', e.target.value)}
-                              className="w-full px-2 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none"
-                            >
-                              <option value="short">Короткий</option>
-                              <option value="paragraph">Длинный</option>
-                            </select>
-                          </div>
+                        {/* 2. Semantic Role (компактная колонка, адаптированная под самый длинный текст) */}
+                        <div className="sm:col-span-4">
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            Назначение поля (роль)
+                          </label>
+                          <select
+                            value={field.role || 'custom'}
+                            onChange={(e) => handleRoleChange(idx, e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none truncate"
+                          >
+                            <option value="name">👤 Имя игрока / Никнейм</option>
+                            <option value="age">🎂 Возраст</option>
+                            <option value="hours">⏱️ Часы в игре (Rust)</option>
+                            <option value="steam">🔗 Ссылка на Steam</option>
+                            <option value="clan_history">🛡️ Предыдущие кланы / История</option>
+                            <option value="skills">🎯 Роль / Навыки (ПВП, фарм, билдинг)</option>
+                            <option value="device">🖥️ Характеристики ПК / Девайсы</option>
+                            <option value="activity">🕒 Прайм-тайм / Онлайн в день</option>
+                            <option value="timezone">🌍 Город / Часовой пояс</option>
+                            <option value="experience">📝 О себе / Дополнительно</option>
+                            <option value="custom">📌 Произвольный вопрос</option>
+                          </select>
+                        </div>
 
-                          <div className="pt-5">
-                            <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-700 dark:text-slate-300 font-medium select-none" title="Обязательно ли заполнять это поле при отправке">
-                              <input
-                                type="checkbox"
-                                checked={field.required !== false}
-                                onChange={(e) => updateFormField(idx, 'required', e.target.checked)}
-                                className="rounded text-orange-600 focus:ring-orange-500"
-                              />
-                              <span>Обяз.</span>
-                            </label>
-                          </div>
+                        {/* 3. Type */}
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            Тип поля
+                          </label>
+                          <select
+                            value={field.style || 'short'}
+                            onChange={(e) => updateFormField(idx, 'style', e.target.value, true)}
+                            className="w-full px-2 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none"
+                          >
+                            <option value="short">Короткий</option>
+                            <option value="paragraph">Длинный</option>
+                          </select>
+                        </div>
+
+                        {/* 4. Required Toggle */}
+                        <div className="sm:col-span-1 pb-2 flex items-center justify-center">
+                          <label className="flex items-center gap-1 cursor-pointer text-[11px] text-slate-700 dark:text-slate-300 font-medium select-none" title="Обязательно ли заполнять это поле при отправке">
+                            <input
+                              type="checkbox"
+                              checked={field.required !== false}
+                              onChange={(e) => updateFormField(idx, 'required', e.target.checked, true)}
+                              className="rounded text-orange-600 focus:ring-orange-500"
+                            />
+                            <span>Обяз.</span>
+                          </label>
                         </div>
                       </div>
 
@@ -1631,7 +1710,8 @@ export default function RecruitmentTab() {
                           type="text"
                           maxLength={DISCORD_LIMITS.TEXT_INPUT_PLACEHOLDER_MAX}
                           value={field.placeholder || ''}
-                          onChange={(e) => updateFormField(idx, 'placeholder', e.target.value)}
+                          onChange={(e) => updateFormField(idx, 'placeholder', e.target.value, false)}
+                          onBlur={(e) => updateFormField(idx, 'placeholder', e.target.value, true)}
                           placeholder="Пример ответа, который увидит кандидат..."
                           className="w-full px-2.5 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800/60 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none"
                         />
@@ -1703,6 +1783,175 @@ export default function RecruitmentTab() {
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 После заполнения формы бот создаёт приватный текстовый канал тикета в Discord. Если кандидат не проходит минимальные требования (возраст, часы, VAC-баны), бот публикует причину отказа и автоматически удаляет канал через 10 минут. Если анкета одобрена, рекрутеры принимают решение кнопками в тикете.
               </p>
+            </div>
+          </div>
+
+          {/* Конструктор карточки заявки в созданном тикете */}
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40 shrink-0">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Конструктор карточки заявки в тикете</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      Discord Embed
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Настройте вид и структуру карточки: объединяйте поля через переменные <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{'{Имя}'}</code>, <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{'{Возраст}'}</code> и меняйте порядок
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={resetTicketCardConfig}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+                  title="Восстановить стандартное расположение"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>По умолчанию</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={ticketCardConfig.fields.length >= 10}
+                  onClick={addTicketCardField}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Добавить поле ({ticketCardConfig.fields.length}/10)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Fields List */}
+            <div className="space-y-3.5 pt-1">
+              {ticketCardConfig.fields.map((field, idx) => {
+                return (
+                  <div
+                    key={field.id || idx}
+                    className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-3 transition-all hover:border-indigo-400/50"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] flex items-center justify-center">
+                          #{idx + 1}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          {field.name || `Поле #${idx + 1}`}
+                        </span>
+                        {field.inline ? (
+                          <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900/50">В одну строку</span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">На всю ширину</span>
+                        )}
+                      </div>
+
+                      {/* Reorder and Delete */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => moveTicketCardField(idx, -1)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                          title="Переместить выше"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === ticketCardConfig.fields.length - 1}
+                          onClick={() => moveTicketCardField(idx, 1)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                          title="Переместить ниже"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={ticketCardConfig.fields.length <= 1}
+                          onClick={() => removeTicketCardField(idx)}
+                          className="p-1 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ml-1"
+                          title="Удалить поле"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      {/* 1. Header Name */}
+                      <div className="sm:col-span-4">
+                        <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                          Заголовок блока в тикете
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={256}
+                          value={field.name || ''}
+                          onChange={(e) => updateTicketCardField(idx, 'name', e.target.value, false)}
+                          onBlur={(e) => updateTicketCardField(idx, 'name', e.target.value, true)}
+                          placeholder="Например: 👤 Кандидат"
+                          className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none"
+                        />
+                      </div>
+
+                      {/* 2. Value Template */}
+                      <div className="sm:col-span-6">
+                        <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                          Шаблон содержимого (поддерживает любой текст и {'{переменные}'})
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={1024}
+                          value={field.value || ''}
+                          onChange={(e) => updateTicketCardField(idx, 'value', e.target.value, false)}
+                          onBlur={(e) => updateTicketCardField(idx, 'value', e.target.value, true)}
+                          placeholder="Например: {Имя}, {Возраст} лет"
+                          className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none font-mono"
+                        />
+                      </div>
+
+                      {/* 3. Inline Toggle */}
+                      <div className="sm:col-span-2 pt-6 flex items-center justify-end">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-700 dark:text-slate-300 font-medium select-none" title="Отображать в 2 колонки в сообщении Discord">
+                          <input
+                            type="checkbox"
+                            checked={field.inline !== false}
+                            onChange={(e) => updateTicketCardField(idx, 'inline', e.target.checked, true)}
+                            className="rounded text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span>В 1 строку</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Quick Variable Insertion Chips */}
+                    <div className="flex items-center gap-1 flex-wrap pt-1 bg-white/60 dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200/50 dark:border-slate-800/60">
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">Вставить данные:</span>
+                      {availableVariables.map(v => (
+                        <button
+                          key={v.tag}
+                          type="button"
+                          onClick={() => {
+                            const curVal = field.value || '';
+                            const separator = (curVal.length > 0 && !curVal.endsWith(' ') && !curVal.endsWith(',')) ? ' ' : '';
+                            updateTicketCardField(idx, 'value', `${curVal}${separator}${v.tag}`, true);
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                          title={`Вставить ${v.label}`}
+                        >
+                          + {v.tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

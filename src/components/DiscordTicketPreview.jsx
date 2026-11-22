@@ -55,6 +55,60 @@ function DiscordTicketPreview({
     return field.placeholder || 'Ответ кандидата...';
   };
 
+  const resolveTemplateText = (template = '') => {
+    if (!template) return '—';
+    const sampleAnswers = {
+      'имя': 'Alex_Rust',
+      'name': 'Alex_Rust',
+      'ник': 'Alex_Rust',
+      'возраст': ticketMode === 'rejected' && rConfig.minAge > 0 ? `${Math.max(14, rConfig.minAge - 2)}` : '21',
+      'age': ticketMode === 'rejected' && rConfig.minAge > 0 ? `${Math.max(14, rConfig.minAge - 2)}` : '21',
+      'часы': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ч.` : '3,850 ч.',
+      'hours': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ч.` : '3,850 ч.',
+      'steam': 'https://steamcommunity.com/id/alex_rust',
+      'стим': 'https://steamcommunity.com/id/alex_rust',
+      'кланы': 'T9, RND',
+      'история': 'T9, RND',
+      'история кланов': 'T9, RND (ушел по инактивам)',
+      'навыки': 'ПВП, Билдинг',
+      'роль': 'Мейн-роумер, билдер',
+      'пк': 'i7 13700K, RTX 4070, 140 FPS',
+      'девайсы': 'Logitech G Pro X Superlight',
+      'онлайн': '18:00 - 02:00 МСК (7+ ч.)',
+      'прайм-тайм': 'Вечерний (18:00 - 02:00)',
+      'город': 'Москва (МСК +0)',
+      'часовой пояс': 'UTC+3',
+      'опыт': 'Опыт 5 лет, хороший микроконтроль',
+      'о себе': 'Адекватный, стабильный вечерний онлайн'
+    };
+
+    return template.replace(/\{([^}]+)\}/g, (match, token) => {
+      const key = token.trim().toLowerCase();
+      if (sampleAnswers[key] !== undefined) {
+        return sampleAnswers[key];
+      }
+      if (Array.isArray(fields)) {
+        const found = fields.find(f => (f.label || '').trim().toLowerCase() === key || (f.role || '').toLowerCase() === key);
+        if (found) {
+          return getSampleAnswer(found, 0);
+        }
+      }
+      return sampleAnswers[key] || match;
+    });
+  };
+
+  const displayFields = useMemo(() => {
+    if (rConfig.ticketCardConfig && Array.isArray(rConfig.ticketCardConfig.fields) && rConfig.ticketCardConfig.fields.length > 0) {
+      return rConfig.ticketCardConfig.fields;
+    }
+    return fields.map((f, i) => ({
+      id: f.id || i,
+      name: f.label || `Вопрос #${i + 1}`,
+      value: `{${f.label || f.role || 'Ответ'}}`,
+      inline: f.style !== 'paragraph'
+    }));
+  }, [rConfig.ticketCardConfig, fields]);
+
   const isRejected = ticketMode === 'rejected';
   const effectiveChannelName = isRejected ? 'отказ-alex_rust' : (channelName || 'заявка-alex_rust');
   const embedColor = isRejected ? '#da373c' : '#248046';
@@ -160,19 +214,25 @@ function DiscordTicketPreview({
               )}
             </div>
 
-            {/* Candidate Answers Grid with authentic 4px boxes */}
-            <div className="space-y-2.5 pt-1">
-              {fields.map((field, idx) => {
-                const answer = getSampleAnswer(field, idx);
+            {/* Candidate Answers Grid with authentic 4px boxes and Discord grid columns */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              {displayFields.map((field, idx) => {
+                const isInline = Boolean(field.inline);
+                const resolvedAnswer = (rConfig.ticketCardConfig && rConfig.ticketCardConfig.fields)
+                  ? resolveTemplateText(field.value)
+                  : getSampleAnswer(fields[idx] || field, idx);
 
                 return (
-                  <div key={field.id || idx} className="bg-[#1e1f22]/70 rounded-[4px] p-3 border border-[#232428]">
+                  <div 
+                    key={field.id || idx} 
+                    className={`bg-[#1e1f22]/70 rounded-[4px] p-3 border border-[#232428] ${isInline ? 'sm:col-span-1' : 'col-span-full'}`}
+                  >
                     <div className="text-[11px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      <span>{field.label || `Вопрос #${idx + 1}`}</span>
+                      <span>{field.name || field.label || `Поле #${idx + 1}`}</span>
                     </div>
                     {/* Natural Discord text: light grey/white, no arbitrary neon colors */}
-                    <div className="text-xs font-medium leading-relaxed text-[#f2f3f5]">
-                      {answer}
+                    <div className="text-xs font-medium leading-relaxed text-[#f2f3f5] whitespace-pre-wrap break-words">
+                      {resolvedAnswer}
                     </div>
                   </div>
                 );

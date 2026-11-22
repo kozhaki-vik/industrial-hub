@@ -584,6 +584,8 @@ export default function ClanManager() {
   latestConfigRef.current = config;
   const saveTimerRef = useRef(null);
   const lastSaveTimeRef = useRef(0);
+  const lastSaveDispatchTimeRef = useRef(0);
+  const lastLocalEditTimeRef = useRef(0);
   const pendingConfigRef = useRef(null);
 
   const latestVoiceConfigRef = useRef(dynamicVoiceData?.config);
@@ -1135,10 +1137,20 @@ export default function ClanManager() {
             const sanitized = sanitizeClanConfig(data.data?.config || data.data);
             if (sanitized) {
               lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
-              // Only overwrite state if user has no pending saves or active debounce timers
-              if (!pendingConfigRef.current && !saveTimerRef.current) {
+              // Priority: never overwrite active user typing or newer local state with server response!
+              const hasLocalEditsInFlight = (lastLocalEditTimeRef.current > lastSaveDispatchTimeRef.current);
+              const isUserTyping = typeof document !== 'undefined' && document.activeElement && 
+                (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+
+              if (!pendingConfigRef.current && !saveTimerRef.current && !hasLocalEditsInFlight && !isUserTyping) {
                 setConfig(prev => {
-                  return JSON.stringify(prev) === JSON.stringify(sanitized) ? prev : { ...prev, ...sanitized };
+                  if (!prev) return sanitized;
+                  return {
+                    ...sanitized,
+                    ...prev, // Keep program / local state in priority!
+                    configAuditLogJson: sanitized.configAuditLogJson || prev.configAuditLogJson,
+                    managerUserId: sanitized.managerUserId || prev.managerUserId
+                  };
                 });
               }
             }
@@ -1866,7 +1878,9 @@ export default function ClanManager() {
     }
 
     pendingConfigRef.current = null;
-    lastSaveTimeRef.current = Date.now();
+    const nowTime = Date.now();
+    lastSaveTimeRef.current = nowTime;
+    lastSaveDispatchTimeRef.current = nowTime;
     lastSavedConfigRef.current = JSON.parse(JSON.stringify(cfgToSend));
     setSaveStatus('saving');
 
@@ -1886,6 +1900,7 @@ export default function ClanManager() {
   };
 
   const queueAutoSave = (newConfig, immediate = false) => {
+    lastLocalEditTimeRef.current = Date.now();
     setConfig(newConfig);
     latestConfigRef.current = newConfig;
     pendingConfigRef.current = newConfig;
@@ -4332,6 +4347,7 @@ const contextValue = {
   l: typeof l !== "undefined" ? l : undefined,
   lastActivityRef: typeof lastActivityRef !== "undefined" ? lastActivityRef : undefined,
   lastLinkAttempt: typeof lastLinkAttempt !== "undefined" ? lastLinkAttempt : undefined,
+  lastLocalEditTimeRef: typeof lastLocalEditTimeRef !== "undefined" ? lastLocalEditTimeRef : undefined,
   lastSaveTimeRef: typeof lastSaveTimeRef !== "undefined" ? lastSaveTimeRef : undefined,
   lastSavedConfigRef: typeof lastSavedConfigRef !== "undefined" ? lastSavedConfigRef : undefined,
   lastVerifiedLinkRef: typeof lastVerifiedLinkRef !== "undefined" ? lastVerifiedLinkRef : undefined,
