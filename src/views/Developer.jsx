@@ -9,6 +9,7 @@ import { defaultConveyors } from '../data/defaultConveyors';
 import SplashScreen from '../components/SplashScreen';
 import { IntegrityCheckSkeleton } from '../components/Skeleton';
 import { showConfirm } from '../components/ConfirmModal';
+import BotUptimeMonitor from '../components/BotUptimeMonitor';
 
 import { useNetwork } from '../contexts/NetworkContext';
 import { compareSemver } from '../utils/semver';
@@ -594,6 +595,10 @@ export default function Developer() {
             )}
           </div>
         </div>
+
+        {/* Discord Bot 24h Uptime Monitor (288 5-min intervals) */}
+        <BotUptimeMonitor />
+
         {/* Discord Bot Admin & Guild Management Card */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 col-span-1 md:col-span-2 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
