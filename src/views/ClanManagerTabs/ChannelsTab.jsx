@@ -103,6 +103,7 @@ export default function ChannelsTab() {
   const channelsList = useMemo(() => [
     { key: 'ticketsCategory', label: t('clan_auto_v2_1012', 'Категория для тикетов'), desc: t('clan_auto_222', 'Здесь бот будет создавать приватные каналы тикетов заявок.'), typeFilter: 4, badge: 'Категория' },
     { key: 'applications', label: t('clan_auto_v2_1013', 'Одобренные заявки'), desc: t('clan_auto_223', 'Сюда будут пересылаться одобренные заявки из тикетов.'), typeFilter: [0, 2] },
+    { key: 'abandonedApplications', label: t('clan_recruitment_channel_abandoned') || 'Закрытые без решения (вышел с сервера)', desc: t('clan_recruitment_channel_abandoned_desc') || 'Канал для карточек анкет, закрытых из-за того, что кандидат покинул сервер или был исключен.', typeFilter: [0, 2] },
     { key: 'autoRejectedApplications', label: t('clan_channel_auto_rejected_app') || 'Отклоненные ботом заявки', desc: t('clan_channel_auto_rejected_app_desc') || 'Канал для автоматических отказов кандидатам (нехватка часов, возраст, блокировки VAC/Game).', typeFilter: [0, 2] },
     { key: 'rejectedApplications', label: t('clan_channel_rejected_app') || 'Отклоненные админами заявки', desc: t('clan_channel_rejected_app_desc') || 'Канал для заявок, отклоненных вручную модераторами/рекрутерами с указанием причины.', typeFilter: [0, 2] },
     { key: 'leaderboard', label: t('clan_auto_v2_1014', 'Leaderboard (Статистика)'), desc: t('clan_auto_224', 'Канал, где публикуется статистика по вайпам и топам.'), typeFilter: [0, 2] },

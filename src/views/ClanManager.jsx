@@ -15,6 +15,7 @@ import LogsTab from './ClanManagerTabs/LogsTab';
 import ModerationTab from './ClanManagerTabs/ModerationTab';
 import ApplicationsTab from './ClanManagerTabs/ApplicationsTab';
 import AdTicketsTab from './ClanManagerTabs/AdTicketsTab';
+import SupportTab from './ClanManagerTabs/SupportTab';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNetwork } from '../contexts/NetworkContext';
@@ -32,7 +33,7 @@ import {
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
   BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, ArrowLeft, Eye, EyeOff, Copy, ChevronDown, ChevronRight,
-  Inbox, MessageSquare, Layers
+  Inbox, MessageSquare, Layers, LifeBuoy
 } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
@@ -1133,8 +1134,13 @@ export default function ClanManager() {
             setSaveStatus('success');
             const sanitized = sanitizeClanConfig(data.data?.config || data.data);
             if (sanitized) {
-              setConfig(sanitized);
               lastSavedConfigRef.current = JSON.parse(JSON.stringify(sanitized));
+              // Only overwrite state if user has no pending saves or active debounce timers
+              if (!pendingConfigRef.current && !saveTimerRef.current) {
+                setConfig(prev => {
+                  return JSON.stringify(prev) === JSON.stringify(sanitized) ? prev : { ...prev, ...sanitized };
+                });
+              }
             }
             setTimeout(() => setSaveStatus(null), 3000);
           }
@@ -1889,18 +1895,18 @@ export default function ClanManager() {
     const timeSinceLastSave = now - lastSaveTimeRef.current;
 
     if (immediate) {
-      if (timeSinceLastSave >= 1000) {
+      if (timeSinceLastSave >= 600) {
         flushSave();
       } else {
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-        const delay = Math.max(50, 1000 - timeSinceLastSave);
+        const delay = Math.max(50, 350 - timeSinceLastSave);
         saveTimerRef.current = setTimeout(() => {
           flushSave();
         }, delay);
       }
     } else {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      const delay = Math.max(1000, 1000 - timeSinceLastSave);
+      const delay = Math.max(500, 1000 - timeSinceLastSave);
       saveTimerRef.current = setTimeout(() => {
         flushSave();
       }, delay);
@@ -3317,7 +3323,8 @@ export default function ClanManager() {
 
   const tabs = [
     ...clanTabs,
-    ...botConfigGroups.flatMap(g => g.tabs)
+    ...botConfigGroups.flatMap(g => g.tabs),
+    { id: 'support', label: t('clan_tab_support', 'Поддержка и идеи'), icon: LifeBuoy }
   ];
 
   const modSubTabs = [
@@ -4863,6 +4870,29 @@ const contextValue = {
                     );
                   })}
                 </div>
+
+                {/* Bottom-left pinned Support & Ideas section */}
+                <div className="mt-auto pt-3 border-t border-slate-200/80 dark:border-slate-800 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('support')}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                      activeTab === 'support'
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <LifeBuoy className={`w-4 h-4 shrink-0 ${activeTab === 'support' ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
+                      <span className="truncate">{t('clan_tab_support', 'Поддержка и идеи')}</span>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      activeTab === 'support' ? 'bg-white/20 text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                    }`}>
+                      Help
+                    </span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col flex-1 min-h-0 space-y-2">
@@ -4958,6 +4988,29 @@ const contextValue = {
                       })}
                     </div>
                   ))}
+                </div>
+
+                {/* Bottom-left pinned Support & Ideas section */}
+                <div className="mt-auto pt-3 border-t border-slate-200/80 dark:border-slate-800 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('support')}
+                    className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                      activeTab === 'support'
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <LifeBuoy className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'support' ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
+                      <span className="truncate">{t('clan_tab_support', 'Поддержка и идеи')}</span>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      activeTab === 'support' ? 'bg-white/20 text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                    }`}>
+                      Help
+                    </span>
+                  </button>
                 </div>
               </div>
             )}
@@ -5137,6 +5190,8 @@ const contextValue = {
             {activeTab === 'logs' && <LogsTab />}
 
             {activeTab === 'moderation' && <ModerationTab />}
+
+            {activeTab === 'support' && <SupportTab />}
             
           </div>
         </div>

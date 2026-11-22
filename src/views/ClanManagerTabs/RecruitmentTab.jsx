@@ -51,7 +51,7 @@ export default function RecruitmentTab() {
     recruitmentInviteStatus, setRecruitmentInviteStatus,
     checkingRecruitmentInvite, verifyRecruitmentInvite,
     isFullScreenWindow, isCompanionWindowVisible, showDiscordLivePreview, setShowDiscordLivePreview,
-    queueAutoSave, saveConfig, sendProxyAction, addLog,
+    queueAutoSave, saveConfig, sendProxyAction, addLog, latestConfigRef,
     openExternalUrl, setActiveTab, t,
     currentActiveGuildId, guildId,
     aiPreviewOverride, setAiPreviewOverride,
@@ -236,10 +236,21 @@ export default function RecruitmentTab() {
     if (typeof val === 'string' && (key === 'title' || key === 'text' || key === 'footerText' || key === 'buttonText' || key === 'closedButtonText' || key === 'autoRejectMessage')) {
       cleaned = cleanDiscordText(val);
     }
-    const newConfig = { ...rConfig, [key]: cleaned };
-    const updated = { ...config, recruitmentConfigJson: JSON.stringify(newConfig) };
+    const baseConfig = (latestConfigRef && latestConfigRef.current) ? latestConfigRef.current : config;
+    let baseRConfig = rConfig;
+    try {
+      if (baseConfig?.recruitmentConfigJson) {
+        baseRConfig = typeof baseConfig.recruitmentConfigJson === 'string'
+          ? JSON.parse(baseConfig.recruitmentConfigJson)
+          : baseConfig.recruitmentConfigJson;
+      }
+    } catch (e) {
+      baseRConfig = rConfig;
+    }
+    const newConfig = { ...baseRConfig, [key]: cleaned };
+    const updated = { ...baseConfig, recruitmentConfigJson: JSON.stringify(newConfig) };
     queueAutoSave(updated, immediate);
-  }, [rConfig, config, queueAutoSave]);
+  }, [rConfig, config, queueAutoSave, latestConfigRef]);
 
   const updateFormField = useCallback((idx, key, val) => {
     const currentFields = [...formConfig.fields];
@@ -437,10 +448,21 @@ export default function RecruitmentTab() {
   };
 
   const updateChannelConfig = useCallback((key, val) => {
-    const newCConfig = { ...cConfig, [key]: val };
-    const updated = { ...config, channelsConfigJson: JSON.stringify(newCConfig) };
+    const baseConfig = (latestConfigRef && latestConfigRef.current) ? latestConfigRef.current : config;
+    let baseCConfig = cConfig;
+    try {
+      if (baseConfig?.channelsConfigJson) {
+        baseCConfig = typeof baseConfig.channelsConfigJson === 'string'
+          ? JSON.parse(baseConfig.channelsConfigJson)
+          : baseConfig.channelsConfigJson;
+      }
+    } catch (e) {
+      baseCConfig = cConfig;
+    }
+    const newCConfig = { ...baseCConfig, [key]: val };
+    const updated = { ...baseConfig, channelsConfigJson: JSON.stringify(newCConfig) };
     queueAutoSave(updated, true);
-  }, [cConfig, config, queueAutoSave]);
+  }, [cConfig, config, queueAutoSave, latestConfigRef]);
 
   const leaders = useMemo(() => {
     return rosterData?.roster?.filter(m => m.roles?.includes(config?.leaderRoleId)) || [];
@@ -1075,8 +1097,20 @@ export default function RecruitmentTab() {
               }`}
               value={rConfig.banner}
               onChange={e => updateRConfig('banner', e.target.value, false)}
-              onBlur={e => {
-                const normalized = normalizeImageUrl(e.target.value);
+              onBlur={async e => {
+                let normalized = normalizeImageUrl(e.target.value);
+                if (normalized && /(?:cdn|media)\.discordapp\.(?:com|net)\/attachments\//i.test(normalized)) {
+                  if (typeof sendProxyAction === 'function') {
+                    try {
+                      const res = await sendProxyAction('refresh_attachment_urls', { urls: [normalized] });
+                      if (res?.refreshedUrls && res.refreshedUrls.length > 0 && res.refreshedUrls[0].refreshed) {
+                        normalized = res.refreshedUrls[0].refreshed;
+                      }
+                    } catch (err) {
+                      console.warn('[RecruitmentTab] Failed to refresh discord attachment url:', err);
+                    }
+                  }
+                }
                 updateRConfig('banner', normalized, true);
               }}
               placeholder="https://..."
@@ -1788,12 +1822,12 @@ export default function RecruitmentTab() {
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none flex items-center">
-                    <span>{t('clan_recruitment_silent_reject') || 'Экономить лимит каналов'}</span>
-                    <HelpTooltip text="Мгновенный отказ кандидату во всплывающем окне Discord без создания отдельного текстового тикет-канала (Discord ограничивает сервер 500 каналами)." />
+                    <span>{t('clan_recruitment_notify_reject_reason') || 'Сообщать кандидату причину отказа'}</span>
+                    <HelpTooltip text="Если включено, бот укажет кандидату в тикете, почему анкета была отклонена. Если выключено — кандидат увидит лишь общий статус отклонения, но в логах администраторов полная причина отказа будет сохранена всегда." />
                   </span>
                   <ToggleSwitch
-                    checked={rConfig.silentAutoReject !== false}
-                    onChange={val => updateRConfig('silentAutoReject', val, true)}
+                    checked={rConfig.notifyRejectReason !== false}
+                    onChange={val => updateRConfig('notifyRejectReason', val, true)}
                     activeColor="orange"
                     size="sm"
                   />
@@ -1855,17 +1889,42 @@ export default function RecruitmentTab() {
                 </select>
               </div>
 
-              {/* Выбор каналов для отправки отклоненных заявок */}
+              {/* Выбор каналов для отправки результатов заявок */}
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                 <div className="flex items-center gap-1.5">
                   <h5 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Hash className="w-3.5 h-3.5 text-orange-500" />
-                    <span>{t('clan_recruitment_channels_title') || 'Куда отсылать отклоненные заявки'}</span>
+                    <span>{t('clan_recruitment_channels_title') || 'Куда отсылать результаты заявок'}</span>
                   </h5>
-                  <HelpTooltip text="Каналы Discord, в которые бот отправляет информационные карточки отсеянных и отклоненных анкет." />
+                  <HelpTooltip text="Каналы Discord, в которые бот отправляет информационные карточки по итогам рассмотрения анкет (принятые, отклоненные и закрытые при выходе с сервера)." />
                 </div>
 
                 <div className={isCompanionWindowVisible ? "grid grid-cols-1 2xl:grid-cols-2 gap-3 pt-1" : "grid grid-cols-1 md:grid-cols-2 gap-3 pt-1"}>
+                  <div>
+                    <ChannelSelect
+                      label={t('clan_recruitment_channel_accepted') || 'Принятые заявки'}
+                      description={t('clan_recruitment_channel_accepted_desc') || 'Канал для карточек одобренных анкет и принятых кандидатов'}
+                      value={cConfig.acceptedApplications || cConfig.applications || ''}
+                      onChange={val => {
+                        updateChannelConfig('acceptedApplications', val);
+                        updateChannelConfig('applications', val);
+                      }}
+                      discordChannels={discordInfo?.channels || []}
+                      typeFilter={[0, 2]}
+                      isLoading={!discordInfo}
+                    />
+                  </div>
+                  <div>
+                    <ChannelSelect
+                      label={t('clan_recruitment_channel_abandoned') || 'Закрытые без решения (вышел с сервера)'}
+                      description={t('clan_recruitment_channel_abandoned_desc') || 'Канал для карточек анкет, закрытых из-за того, что кандидат покинул сервер'}
+                      value={cConfig.abandonedApplications || ''}
+                      onChange={val => updateChannelConfig('abandonedApplications', val)}
+                      discordChannels={discordInfo?.channels || []}
+                      typeFilter={[0, 2]}
+                      isLoading={!discordInfo}
+                    />
+                  </div>
                   <div>
                     <ChannelSelect
                       label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}

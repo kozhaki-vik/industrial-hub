@@ -14,6 +14,9 @@ export function normalizeImageUrl(url) {
   let trimmed = url.trim();
   if (!trimmed) return '';
 
+  // Clean trailing ampersands or question marks accidentally copied by user
+  trimmed = trimmed.replace(/[&?]+$/, '');
+
   // 1. Dropbox link normalization
   // e.g. https://www.dropbox.com/scl/fi/...?...&dl=0 -> replace dl=0 with raw=1
   if (trimmed.includes('dropbox.com')) {

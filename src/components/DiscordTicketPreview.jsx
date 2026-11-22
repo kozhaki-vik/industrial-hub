@@ -186,17 +186,23 @@ function DiscordTicketPreview({
                   <AlertTriangle className="w-4 h-4 shrink-0 text-[#949ba4]" />
                   <span>Сработал автоматический отказ:</span>
                 </div>
-                <div className="bg-[#1e1f22] p-2.5 rounded-[4px] text-[11px] text-[#dbdee1] border border-[#2b2d31] space-y-1">
-                  {rConfig.minHours > 0 && (
-                    <div>• Недостаточно игровых часов: 1,400 ч. (требуется от {rConfig.minHours} ч.)</div>
-                  )}
-                  {rConfig.minAge > 0 && (
-                    <div>• Возраст кандидата не соответствует порогу (требуется от {rConfig.minAge} лет)</div>
-                  )}
-                  {rConfig.rejectBanned && (
-                    <div>• Проверка Valve Anti-Cheat / Game Bans: Чисто (блокировок нет)</div>
-                  )}
-                </div>
+                {rConfig.notifyRejectReason !== false ? (
+                  <div className="bg-[#1e1f22] p-2.5 rounded-[4px] text-[11px] text-[#dbdee1] border border-[#2b2d31] space-y-1">
+                    {rConfig.minHours > 0 && (
+                      <div>• Недостаточно игровых часов: 1,400 ч. (требуется от {rConfig.minHours} ч.)</div>
+                    )}
+                    {rConfig.minAge > 0 && (
+                      <div>• Возраст кандидата не соответствует порогу (требуется от {rConfig.minAge} лет)</div>
+                    )}
+                    {rConfig.rejectBanned && (
+                      <div>• Проверка Valve Anti-Cheat / Game Bans: Чисто (блокировок нет)</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-[#1e1f22] p-2.5 rounded-[4px] text-[11px] text-[#949ba4] border border-[#2b2d31] italic">
+                    Детальная причина скрыта от кандидата (сохранена в аудит-логах администрации)
+                  </div>
+                )}
                 <div className="text-[11px] text-[#dbdee1] bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
                   <span className="font-semibold text-[#f2f3f5] block mb-0.5">Сообщение кандидату:</span>
                   «{rejectMsg}»

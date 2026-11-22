@@ -210,28 +210,8 @@ export default function EmojiPickerModal({ isOpen, onClose, onSelect, currentEmo
               </form>
             )}
           </div>
-
-          {/* Footer - "Предложить свой эмодзи" */}
-          <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/40 flex items-center justify-between gap-2">
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-              Не нашли нужную иконку?
-            </span>
-            <button
-              type="button"
-              onClick={() => setIsSuggestOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/50 border border-orange-200/60 dark:border-orange-800/40 rounded-xl transition-all cursor-pointer shadow-2xs"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Предложить свой эмодзи</span>
-            </button>
-          </div>
         </div>
       </div>
-
-      <EmojiSuggestModal
-        isOpen={isSuggestOpen}
-        onClose={() => setIsSuggestOpen(false)}
-      />
     </>
   );
 }

@@ -303,6 +303,7 @@ function DiscordMessagePreview({
                 <img
                   src={bannerUrl}
                   alt="Embed Banner"
+                  referrerPolicy="no-referrer"
                   className="w-full max-h-72 object-cover"
                   onError={() => setImgError(true)}
                 />
