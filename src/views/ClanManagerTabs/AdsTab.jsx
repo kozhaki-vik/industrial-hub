@@ -2,8 +2,9 @@ import React, { useContext, useMemo, useCallback, useState, useRef } from 'react
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
   Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2,
-  Upload, Loader2, AlertCircle, HardDrive, ScrollText, ArrowRight,
-  Palette, Sparkles
+  Upload, Loader2, AlertCircle, HardDrive, ScrollText, ArrowRight, ArrowLeft,
+  Palette, Sparkles, ShoppingBag, Handshake, DollarSign, HelpCircle, Bot,
+  Lock, RefreshCw, MessageSquare, ShieldCheck, Check
 } from 'lucide-react';
 import { DEFAULT_ADS_BANNER, normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
@@ -28,15 +29,22 @@ export default function AdsTab() {
     sendProxyAction,
     queueAutoSave,
     saveConfig,
-    isFullScreenWindow,
     showDiscordLivePreview,
     setShowDiscordLivePreview,
     currentActiveGuildId,
     guildId,
     adTicketsData,
     openAdTicketsCount,
-    setActiveTab
+    setActiveTab,
+    adsSubTab,
+    setAdsSubTab,
+    adsSubTabs: contextAdsSubTabs,
+    isDevAdminActive
   } = useContext(ClanManagerContext);
+
+  const [localSubTab, setLocalSubTab] = useState('panel');
+  const activeSubTab = adsSubTab || localSubTab;
+  const setActiveSubTab = setAdsSubTab || setLocalSubTab;
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -52,7 +60,11 @@ export default function AdsTab() {
       priceText: '',
       priceClicks: 0,
       footerText: '',
-      color: '#2ecc71'
+      color: '#2ecc71',
+      buyWelcome: '',
+      partnerWelcome: '',
+      partnerRequirements: '',
+      questionWelcome: ''
     };
     try {
       if (config?.adConfigJson) {
@@ -78,11 +90,14 @@ export default function AdsTab() {
     queueAutoSave(updated, immediate);
   }, [aConfig, config, queueAutoSave]);
 
+  const handleResetPriceClicks = useCallback(() => {
+    updateAConfig('priceClicks', 0, true);
+  }, [updateAConfig]);
+
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset value so user can upload the same file again if desired
     e.target.value = '';
 
     if (file.size > 2 * 1024 * 1024) {
@@ -96,7 +111,6 @@ export default function AdsTab() {
     try {
       const res = await uploadBanner(file, 'ads', effectiveGuildId);
       if (res.success && res.url) {
-        // Verify image fully loaded and valid on server
         await new Promise((resolve, reject) => {
           const img = new Image();
           const timer = setTimeout(() => {
@@ -185,6 +199,20 @@ export default function AdsTab() {
     }
   }, [sendProxyAction, setConfig, aConfig, config, queueAutoSave]);
 
+  const localSubTabsList = useMemo(() => {
+    if (Array.isArray(contextAdsSubTabs) && contextAdsSubTabs.length > 0) {
+      return contextAdsSubTabs;
+    }
+    return [
+      { id: 'panel', label: t('clan_ads_sub_panel', 'Панель рекламы'), icon: Megaphone },
+      { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
+      { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
+      { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
+      { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle },
+      ...(isDevAdminActive ? [{ id: 'bot', label: t('clan_ads_sub_bot', 'Разработка бота (Dev)'), icon: Bot }] : [])
+    ];
+  }, [contextAdsSubTabs, t, isDevAdminActive]);
+
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl animate-main-fade-in">
       {/* Discord Advertising Panel Channel Status & Manager */}
@@ -202,10 +230,38 @@ export default function AdsTab() {
         accentColor="purple"
       />
 
-      {/* Action / Controls Header Bar */}
-      <div className="flex items-center justify-between gap-4 mb-4">
+      {/* Subtabs Switcher Bar */}
+      <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-x-auto scrollbar-none">
+        {localSubTabsList.map(sub => {
+          const isSubActive = activeSubTab === sub.id;
+          const SubIcon = sub.icon;
+          return (
+            <button
+              key={sub.id}
+              type="button"
+              onClick={() => setActiveSubTab(sub.id)}
+              className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
+                isSubActive
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm border-slate-200/80 dark:border-slate-700'
+                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              <SubIcon className={`w-4 h-4 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
+              <span className="truncate">{sub.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Controls Header Bar */}
+      <div className="flex items-center justify-between gap-4">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {t('clan_ads_settings_desc', 'Настройте текст рекламного Embed-сообщения, ссылки на прайс-лист и баннер.')}
+          {activeSubTab === 'panel' && t('clan_ads_settings_desc', 'Настройте текст рекламного Embed-сообщения, цвет полосы и баннер.')}
+          {activeSubTab === 'buy' && 'Настройка параметров тикета при заказе платной рекламы.'}
+          {activeSubTab === 'partner' && 'Настройка условий и приветствия при заключении взаимного партнерства.'}
+          {activeSubTab === 'price' && 'Управление прайс-листом и статистика просмотров цен участниками Discord.'}
+          {activeSubTab === 'question' && 'Настройка приветственного сообщения в тикетах обращений к руководству.'}
+          {activeSubTab === 'bot' && 'Системная кнопка мультисерверного продвижения Industrial Studio.'}
         </p>
         <button
           type="button"
@@ -222,239 +278,584 @@ export default function AdsTab() {
         </button>
       </div>
 
-      <div className="space-y-5 p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {t('clan_auto_66', 'Заголовок Embed-сообщения *')}
-          </label>
-          <input 
-            type="text" 
-            required
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow text-sm"
-            value={aConfig.title || ''}
-            onChange={e => updateAConfig('title', e.target.value, false)}
-            onBlur={e => updateAConfig('title', e.target.value, true)}
-            placeholder={t('clan_auto_111', t('clan_ads_buy', 'Покупка рекламы'))}
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {t('clan_auto_67', 'Основной текст сообщения *')}
-          </label>
-          <textarea 
-            required
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px] resize-none text-sm leading-relaxed"
-            value={aConfig.text || ''}
-            onChange={e => updateAConfig('text', e.target.value, false)}
-            onBlur={e => updateAConfig('text', e.target.value, true)}
-            placeholder={t('clan_auto_112', 'Информация о рекламе...')}
-          />
-        </div>
+      {/* SUBTAB 1: PANEL (Внешний вид и публикация) */}
+      {activeSubTab === 'panel' && (
+        <div className="space-y-6">
+          <div className="space-y-5 p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                {t('clan_auto_66', 'Заголовок Embed-сообщения *')}
+              </label>
+              <input 
+                type="text" 
+                required
+                className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow text-sm"
+                value={aConfig.title || ''}
+                onChange={e => updateAConfig('title', e.target.value, false)}
+                onBlur={e => updateAConfig('title', e.target.value, true)}
+                placeholder={t('clan_auto_111', t('clan_ads_buy', 'Покупка рекламы'))}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                {t('clan_auto_67', 'Основной текст сообщения *')}
+              </label>
+              <textarea 
+                required
+                className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px] resize-none text-sm leading-relaxed"
+                value={aConfig.text || ''}
+                onChange={e => updateAConfig('text', e.target.value, false)}
+                onBlur={e => updateAConfig('text', e.target.value, true)}
+                placeholder={t('clan_auto_112', 'Информация о рекламе...')}
+              />
+            </div>
 
-        {/* Color and Footer Customization Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-          {/* Embed Color picker */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <Palette className="w-3.5 h-3.5 text-blue-500" />
-              <span>{t('clan_embed_color', 'Цвет полосы Embed')}</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={aConfig.color?.startsWith('#') ? aConfig.color : '#2ecc71'}
-                onChange={e => updateAConfig('color', e.target.value, true)}
-                className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-800 shrink-0"
-              />
-              <input
-                type="text"
-                value={aConfig.color || '#2ecc71'}
-                onChange={e => updateAConfig('color', e.target.value, false)}
-                onBlur={e => updateAConfig('color', e.target.value, true)}
-                placeholder="#2ecc71"
-                className="w-28 px-3 py-1.5 font-mono text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white uppercase"
-              />
-              <div className="flex items-center gap-1 flex-wrap">
-                {COLOR_SWATCHES.map(sw => (
-                  <button
-                    key={sw.name}
-                    type="button"
-                    onClick={() => updateAConfig('color', sw.value, true)}
-                    className="w-6 h-6 rounded-lg border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform cursor-pointer"
-                    style={{ backgroundColor: sw.value }}
-                    title={sw.name}
+            {/* Color and Footer Customization Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {/* Embed Color picker */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{t('clan_embed_color', 'Цвет полосы Embed')}</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={aConfig.color?.startsWith('#') ? aConfig.color : '#2ecc71'}
+                    onChange={e => updateAConfig('color', e.target.value, true)}
+                    className="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-800 shrink-0"
                   />
-                ))}
+                  <input
+                    type="text"
+                    value={aConfig.color || '#2ecc71'}
+                    onChange={e => updateAConfig('color', e.target.value, false)}
+                    onBlur={e => updateAConfig('color', e.target.value, true)}
+                    placeholder="#2ecc71"
+                    className="w-28 px-3 py-1.5 font-mono text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white uppercase"
+                  />
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {COLOR_SWATCHES.map(sw => (
+                      <button
+                        key={sw.name}
+                        type="button"
+                        onClick={() => updateAConfig('color', sw.value, true)}
+                        className="w-6 h-6 rounded-lg border border-slate-200 dark:border-slate-700 hover:scale-110 transition-transform cursor-pointer"
+                        style={{ backgroundColor: sw.value }}
+                        title={sw.name}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Embed Footer Text */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-              <span>{t('clan_embed_footer', 'Текст футера Embed (подвал)')}</span>
-            </label>
-            <input
-              type="text"
-              value={aConfig.footerText || ''}
-              onChange={e => updateAConfig('footerText', e.target.value, false)}
-              onBlur={e => updateAConfig('footerText', e.target.value, true)}
-              placeholder={t('clan_embed_footer_placeholder', 'Например: Официальный рекламный раздел')}
-              className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none"
-            />
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              {t('clan_ads_price_text_label', 'Текст прайс-листа и цены (кнопка «Узнать цену» в Discord)')}
-            </label>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
-              {t('clan_ads_clicks_count', 'Кликов по цене')}: {aConfig.priceClicks || 0}
-            </span>
-          </div>
-          <textarea 
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[90px] resize-none text-sm"
-            value={aConfig.priceText || ''}
-            onChange={e => updateAConfig('priceText', e.target.value, false)}
-            onBlur={e => updateAConfig('priceText', e.target.value, true)}
-            placeholder="📢 Реклама в общем чате: 300₽ / неделя&#10;📌 Закрепленное объявление: 700₽ / неделя&#10;🤝 Партнерство: бесплатно по согласованию"
-          />
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-            {t('clan_ads_price_text_hint', 'Этот текст высветится скрытым (ephemeral) сообщением пользователю при нажатии кнопки «Узнать цену» в Discord.')}
-          </p>
-        </div>
-        
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              {t('clan_ads_banner_label', 'Ссылка на баннер (изображение)')}
-            </label>
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Hidden file input */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                className="hidden"
-              />
-
-              {/* Upload button */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800/40 cursor-pointer disabled:opacity-50"
-                title={t('clan_banner_upload_btn_hint', 'Загрузить изображение напрямую на наш сервер (до 2 МБ, 1 шт)')}
-              >
-                {uploading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Upload className="w-3.5 h-3.5" />
-                )}
-                <span>
-                  {uploading
-                    ? t('clan_banner_uploading', 'Загрузка...')
-                    : t('clan_banner_upload_btn', 'Загрузить с ПК')}
-                </span>
-              </button>
-
-              {aConfig.banner !== DEFAULT_ADS_BANNER && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUploadError('');
-                    updateAConfig('banner', DEFAULT_ADS_BANNER, true);
-                  }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800/40 cursor-pointer"
-                  title={t('clan_ads_banner_default_hint', 'Установить официальный баннер по умолчанию')}
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>{t('clan_ads_banner_default_btn', 'По умолчанию')}</span>
-                </button>
-              )}
-
-              {aConfig.banner && (
-                <button
-                  type="button"
-                  onClick={handleRemoveBanner}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors border border-rose-200 dark:border-rose-800/40 cursor-pointer"
-                  title={t('clan_ads_banner_clear_hint', 'Убрать баннер (сообщение будет без картинки)')}
-                >
-                  <Trash2 className="w-3 h-3" />
-                  <span>{t('clan_ads_banner_clear_btn', 'Убрать баннер')}</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          <input 
-            type="text" 
-            className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow text-sm"
-            value={aConfig.banner || ''}
-            onChange={e => updateAConfig('banner', e.target.value, false)}
-            onBlur={e => {
-              const normalized = normalizeImageUrl(e.target.value);
-              updateAConfig('banner', normalized, true);
-            }}
-            placeholder={DEFAULT_ADS_BANNER}
-          />
-
-          {uploadError && (
-            <div className="mt-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{uploadError}</span>
-            </div>
-          )}
-
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed">
-            {t('clan_ads_banner_hint', 'По умолчанию используется официальный баннер. Вы можете загрузить свой файл с ПК (до 2 МБ), указать ссылку или очистить поле, чтобы скрыть баннер.')}
-          </p>
-
-          {/* Mini preview & status inside tab */}
-          {aConfig.banner ? (
-            <div className="mt-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center gap-3">
-              <div className="w-20 h-12 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 border border-slate-300 dark:border-slate-600 flex items-center justify-center">
-                <img 
-                  src={normalizeImageUrl(aConfig.banner)} 
-                  alt="Banner preview" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
+              {/* Embed Footer Text */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{t('clan_embed_footer', 'Текст футера Embed (подвал)')}</span>
+                </label>
+                <input
+                  type="text"
+                  value={aConfig.footerText || ''}
+                  onChange={e => updateAConfig('footerText', e.target.value, false)}
+                  onBlur={e => updateAConfig('footerText', e.target.value, true)}
+                  placeholder={t('clan_embed_footer_placeholder', 'Например: Официальный рекламный раздел')}
+                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none"
                 />
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                  {isServerHosted ? (
-                    <HardDrive className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  ) : (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            </div>
+
+            {/* Banner Section */}
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {t('clan_ads_banner_label', 'Ссылка на баннер (изображение)')}
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800/40 cursor-pointer disabled:opacity-50"
+                    title={t('clan_banner_upload_btn_hint', 'Загрузить изображение напрямую на наш сервер (до 2 МБ, 1 шт)')}
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {uploading
+                        ? t('clan_banner_uploading', 'Загрузка...')
+                        : t('clan_banner_upload_btn', 'Загрузить с ПК')}
+                    </span>
+                  </button>
+
+                  {aConfig.banner !== DEFAULT_ADS_BANNER && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadError('');
+                        updateAConfig('banner', DEFAULT_ADS_BANNER, true);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800/40 cursor-pointer"
+                      title={t('clan_ads_banner_default_hint', 'Установить официальный баннер по умолчанию')}
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>{t('clan_ads_banner_default_btn', 'По умолчанию')}</span>
+                    </button>
                   )}
-                  <span>
-                    {isServerHosted
-                      ? t('clan_banner_uploaded_server', 'Размещено на сервере Industrial Hub')
-                      : aConfig.banner === DEFAULT_ADS_BANNER
-                      ? t('clan_ads_banner_is_default', 'Установлен официальный баннер по умолчанию')
-                      : t('clan_ads_banner_active', 'Установлен кастомный баннер')}
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                  {aConfig.banner}
+
+                  {aConfig.banner && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveBanner}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors border border-rose-200 dark:border-rose-800/40 cursor-pointer"
+                      title={t('clan_ads_banner_clear_hint', 'Убрать баннер (сообщение будет без картинки)')}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>{t('clan_ads_banner_clear_btn', 'Убрать баннер')}</span>
+                    </button>
+                  )}
                 </div>
               </div>
+
+              <input 
+                type="text" 
+                className="w-full px-4 py-2 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow text-sm"
+                value={aConfig.banner || ''}
+                onChange={e => updateAConfig('banner', e.target.value, false)}
+                onBlur={e => {
+                  const normalized = normalizeImageUrl(e.target.value);
+                  updateAConfig('banner', normalized, true);
+                }}
+                placeholder={DEFAULT_ADS_BANNER}
+              />
+
+              {uploadError && (
+                <div className="mt-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{uploadError}</span>
+                </div>
+              )}
+
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 leading-relaxed">
+                {t('clan_ads_banner_hint', 'По умолчанию используется официальный баннер. Вы можете загрузить свой файл с ПК (до 2 МБ), указать ссылку или очистить поле, чтобы скрыть баннер.')}
+              </p>
+
+              {aConfig.banner ? (
+                <div className="mt-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center gap-3">
+                  <div className="w-20 h-12 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 border border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                    <img 
+                      src={normalizeImageUrl(aConfig.banner)} 
+                      alt="Banner preview" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                      {isServerHosted ? (
+                        <HardDrive className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      )}
+                      <span>
+                        {isServerHosted
+                          ? t('clan_banner_uploaded_server', 'Размещено на сервере Industrial Hub')
+                          : aConfig.banner === DEFAULT_ADS_BANNER
+                          ? t('clan_ads_banner_is_default', 'Установлен официальный баннер по умолчанию')
+                          : t('clan_ads_banner_active', 'Установлен кастомный баннер')}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                      {aConfig.banner}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-2 text-xs text-slate-400 dark:text-slate-500 italic">
+                  {t('clan_ads_banner_disabled', 'Баннер отключен — Embed-сообщение в Discord будет опубликовано без изображения.')}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="mt-2 text-xs text-slate-400 dark:text-slate-500 italic">
-              {t('clan_ads_banner_disabled', 'Баннер отключен — Embed-сообщение в Discord будет опубликовано без изображения.')}
+          </div>
+
+          {/* System Bot Promotion Notice */}
+          <div className="p-4 border border-blue-200/80 dark:border-blue-900/40 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-950/30 dark:via-indigo-950/10 dark:to-transparent flex items-start gap-3.5 shadow-xs">
+            <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 shrink-0 mt-0.5">
+              <Bot className="w-5 h-5" />
             </div>
-          )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Системная кнопка «🤖 Разработать Discord-бота»
+                </h4>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                  Принудительная
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                На панели рекламы всегда принудительно отображается кнопка разработки Discord-бота. При нажатии на неё заявка направляется напрямую создателям Industrial Studio в ЛС. Эта кнопка не может быть отключена или переназначена.
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation to Next Subtab */}
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('buy')}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            >
+              <span>Перейти к настройке кнопки «Заказать рекламу»</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* SUBTAB 2: BUY (Заказать рекламу) */}
+      {activeSubTab === 'buy' && (
+        <div className="space-y-6">
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Кнопка «Заказать рекламу»
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  При нажатии на эту кнопку участник Discord создает приватный тикет для покупки рекламы на вашем сервере.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Приветственное сообщение в тикете заказа рекламы
+              </label>
+              <textarea 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[110px] resize-none text-sm leading-relaxed"
+                value={aConfig.buyWelcome || ''}
+                onChange={e => updateAConfig('buyWelcome', e.target.value, false)}
+                onBlur={e => updateAConfig('buyWelcome', e.target.value, true)}
+                placeholder="Привет, {user}! Опишите, какую рекламу вы хотите заказать (срок, формат, ссылку на ресурс). Администрация ответит вам в ближайшее время."
+              />
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+                Используйте переменные <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-blue-500 font-mono text-xs">{'{user}'}</code> для упоминания автора тикета.
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('panel')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Назад к панели рекламы</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('partner')}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            >
+              <span>Перейти к разделу «Партнерство»</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 3: PARTNER (Заключить партнерство) */}
+      {activeSubTab === 'partner' && (
+        <div className="space-y-6">
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 shrink-0">
+                <Handshake className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Кнопка «Заключить партнерство»
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Создает приватный тикет для обсуждения условий взаимного сотрудничества с другими серверами.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Условия и требования для партнерства
+              </label>
+              <textarea 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[90px] resize-none text-sm leading-relaxed"
+                value={aConfig.partnerRequirements || ''}
+                onChange={e => updateAConfig('partnerRequirements', e.target.value, false)}
+                onBlur={e => updateAConfig('partnerRequirements', e.target.value, true)}
+                placeholder="• От 200 реальных участников на сервере&#10;• Активный голосовой и текстовый онлайн&#10;• Взаимный анонс в закрепленном партнерском канале"
+              />
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                Кратко опишите, с какими серверами вы готовы сотрудничать.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Приветственное сообщение в тикете партнерства
+              </label>
+              <textarea 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[100px] resize-none text-sm leading-relaxed"
+                value={aConfig.partnerWelcome || ''}
+                onChange={e => updateAConfig('partnerWelcome', e.target.value, false)}
+                onBlur={e => updateAConfig('partnerWelcome', e.target.value, true)}
+                placeholder="Привет, {user}! Прикрепите ссылку на ваш сервер, укажите количество участников и предложите условия взаимного партнерства."
+              />
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+                Используйте переменную <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-blue-500 font-mono text-xs">{'{user}'}</code>.
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('buy')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Назад к заказу рекламы</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('price')}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            >
+              <span>Перейти к разделу «Узнать цену»</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 4: PRICE (Узнать цену) */}
+      {activeSubTab === 'price' && (
+        <div className="space-y-6">
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs space-y-5">
+            <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    Кнопка «Узнать цену» (Прайс-лист)
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Отправляет пользователю скрытое (ephemeral) сообщение в Discord с прайс-листом без создания тикета.
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Click Counter & Reset */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    Кликов по цене: <strong className="font-mono text-sm">{aConfig.priceClicks || 0}</strong>
+                  </span>
+                </div>
+                {Number(aConfig.priceClicks) > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleResetPriceClicks}
+                    className="p-1.5 text-xs rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                    title="Сбросить счётчик кликов"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Текст прайс-листа и цены
+              </label>
+              <textarea 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[120px] resize-none text-sm leading-relaxed"
+                value={aConfig.priceText || ''}
+                onChange={e => updateAConfig('priceText', e.target.value, false)}
+                onBlur={e => updateAConfig('priceText', e.target.value, true)}
+                placeholder="📢 Реклама в общем чате: 300₽ / неделя&#10;📌 Закрепленное объявление: 700₽ / неделя&#10;🤝 Партнерство: бесплатно по согласованию"
+              />
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+                Этот текст моментально открывается только нажавшему пользователю. Это экономит каналы сервера и избавляет от пустых тикетов «просто спросить цену».
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('partner')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Назад к разделу «Партнерство»</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('question')}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            >
+              <span>Перейти к разделу «Вопрос администрации»</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 5: QUESTION (Вопрос к администрации) */}
+      {activeSubTab === 'question' && (
+        <div className="space-y-6">
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 shrink-0">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Кнопка «Вопрос администрации»
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Создает приватный тикет для вопросов участников руководству сервера.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Приветственное сообщение в тикете вопроса
+              </label>
+              <textarea 
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-shadow min-h-[110px] resize-none text-sm leading-relaxed"
+                value={aConfig.questionWelcome || ''}
+                onChange={e => updateAConfig('questionWelcome', e.target.value, false)}
+                onBlur={e => updateAConfig('questionWelcome', e.target.value, true)}
+                placeholder="Привет, {user}! Задайте ваш вопрос администрации сервера. Мы ответим вам в ближайшее время."
+              />
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+                Используйте переменную <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-blue-500 font-mono text-xs">{'{user}'}</code>.
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('price')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Назад к прайс-листу</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('panel')}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+            >
+              <span>Вернуться к панели рекламы</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 6: BOT DEV (Только для Developer или справка) */}
+      {activeSubTab === 'bot' && (
+        <div className="space-y-6">
+          <div className="p-6 border border-blue-200 dark:border-blue-900/50 rounded-2xl bg-white dark:bg-slate-900 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 shrink-0">
+                <Bot className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    Кнопка «Разработать Discord-бота» (Industrial Studio)
+                  </h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
+                    Системная
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Сквозная функция продвижения разработки ботов на всех клиентских серверах платформы.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700 space-y-3 text-xs text-slate-700 dark:text-slate-300">
+              <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <span>Принцип работы сквозного моста:</span>
+              </div>
+              <ul className="space-y-2 pl-4 list-disc marker:text-blue-500 leading-relaxed">
+                <li>
+                  Кнопка <strong>«🤖 Разработать Discord-бота»</strong> размещается на рекламной панели принудительно и не может быть скрыта владельцем сервера.
+                </li>
+                <li>
+                  При нажатии на кнопку участником любого сервера, тикет создается <strong>не на клиентском сервере</strong>, а на <strong>сервере разработчика Industrial Studio</strong> (в категории <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded font-mono text-[11px]">1551281865795838134</code>).
+                </li>
+                <li>
+                  Пользователь получает сообщение и общается с разработчиком через <strong>личные сообщения (DM)</strong> бота.
+                </li>
+                <li>
+                  Разработчик отвечает в тикет-канале, а бот моментально пересылает ответ пользователю в ЛС в обе стороны.
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center gap-3 text-xs text-amber-800 dark:text-amber-300">
+              <Lock className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>
+                Настройка текстов и перенаправление этой кнопки для обычных пользователей отключены. Кнопка продвигает разработку ботов от Industrial Studio.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('panel')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Вернуться к панели рекламы</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Заявки на рекламу - Блок перехода в журнал */}
       <div className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

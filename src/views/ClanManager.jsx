@@ -33,7 +33,7 @@ import {
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
   BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, ArrowLeft, Eye, EyeOff, Copy, ChevronDown, ChevronRight,
-  Inbox, MessageSquare, Layers, LifeBuoy
+  Inbox, MessageSquare, Layers, LifeBuoy, ShoppingBag, Handshake, DollarSign, HelpCircle
 } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
@@ -438,6 +438,8 @@ export default function ClanManager() {
   const [isModExpanded, setIsModExpanded] = useState(true);
   const [recruitmentSubTab, setRecruitmentSubTab] = useState('message'); // 'message' | 'form' | 'ticket'
   const [isRecruitmentExpanded, setIsRecruitmentExpanded] = useState(true);
+  const [adsSubTab, setAdsSubTab] = useState('panel'); // 'panel' | 'buy' | 'partner' | 'price' | 'question' | 'bot'
+  const [isAdsExpanded, setIsAdsExpanded] = useState(true);
   const [rosterData, setRosterData] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [activityStatsData, setActivityStatsData] = useState(null);
@@ -505,6 +507,9 @@ export default function ClanManager() {
     }
     if (tab === 'recruitment' && subCategory) {
       setRecruitmentSubTab(subCategory);
+    }
+    if (tab === 'ads' && subCategory) {
+      setAdsSubTab(subCategory);
     }
   }, []);
 
@@ -1540,6 +1545,23 @@ export default function ClanManager() {
               channels: data.data.channels
             }));
             addLog('Discord channels auto-updated from server');
+          } else if (data.event === 'ad_price_click') {
+            const clicks = data.data?.priceClicks;
+            if (typeof clicks === 'number') {
+              setConfig(prev => {
+                let parsed = {};
+                try {
+                  if (prev?.adConfigJson) {
+                    parsed = typeof prev.adConfigJson === 'string' ? JSON.parse(prev.adConfigJson) : prev.adConfigJson;
+                  }
+                } catch {}
+                return {
+                  ...prev,
+                  adConfigJson: JSON.stringify({ ...parsed, priceClicks: clicks })
+                };
+              });
+              addLog(`[Реклама] Зафиксирован клик по цене в Discord: всего просмотров ${clicks}`);
+            }
           }
         }
       } catch (err) { console.error('[Auto-caught Error]', err); }
@@ -3355,6 +3377,15 @@ export default function ClanManager() {
     { id: 'ticket', label: t('clan_rec_sub_ticket', 'Отправленный тикет'), icon: Bot }
   ];
 
+  const adsSubTabs = useMemo(() => [
+    { id: 'panel', label: t('clan_ads_sub_panel', 'Панель рекламы'), icon: Megaphone },
+    { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
+    { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
+    { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
+    { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle },
+    ...(isDevAdminActive ? [{ id: 'bot', label: t('clan_ads_sub_bot', 'Разработка бота (Dev)'), icon: Bot }] : [])
+  ], [t, isDevAdminActive]);
+
   const botSearchIndex = [
     // General
     {
@@ -4172,6 +4203,84 @@ export default function ClanManager() {
       const adsChannel = discordInfo?.channels?.find(c => c.id === cConfig.ads);
       const channelName = adsChannel ? adsChannel.name : t('clan_default_ads_ch', 'реклама');
 
+      if (adsSubTab === 'buy') {
+        return {
+          type: 'message',
+          tabTitle: t('clan_ads_sub_buy', 'Тикет: Заказ рекламы'),
+          channelName: 'тикет-ivan_rust',
+          embed: {
+            title: t('clan_ads_ticket_buy_title', 'Заказ рекламы'),
+            color: '#f1c40f',
+            description: (aConfig.buyWelcome || 'Привет, {user}! Опишите, какую рекламу вы хотите заказать (срок, формат, ссылку на ресурс). Администрация ответит вам в ближайшее время.').replace(/{user}/g, '@Ivan_Rust')
+          },
+          buttons: [
+            { label: 'Закрыть тикет', emoji: '🔒', style: 'danger' }
+          ]
+        };
+      }
+
+      if (adsSubTab === 'partner') {
+        return {
+          type: 'message',
+          tabTitle: t('clan_ads_sub_partner', 'Тикет: Заключить партнерство'),
+          channelName: 'тикет-partner_clan',
+          embed: {
+            title: t('clan_ads_ticket_partner_title', 'Партнерство'),
+            color: '#f1c40f',
+            description: (aConfig.partnerWelcome || 'Привет, {user}! Прикрепите ссылку на ваш сервер, укажите количество участников и опишите формат желаемого сотрудничества.').replace(/{user}/g, '@Ivan_Rust')
+          },
+          buttons: [
+            { label: 'Закрыть тикет', emoji: '🔒', style: 'danger' }
+          ]
+        };
+      }
+
+      if (adsSubTab === 'price') {
+        return {
+          type: 'message',
+          tabTitle: t('clan_ads_sub_price', 'Узнать цену (Ephemeral)'),
+          channelName,
+          embed: {
+            title: '💵 Прайс-лист на рекламу',
+            color: '#2ecc71',
+            description: aConfig.priceText?.trim() || '📢 Реклама в общем чате: 300₽ / неделя\n📌 Закрепленное объявление: 700₽ / неделя\n🤝 Партнерство: бесплатно по согласованию',
+            footer: 'Чтобы заказать рекламу или связаться, нажмите кнопку «Заказать рекламу»'
+          },
+          buttons: []
+        };
+      }
+
+      if (adsSubTab === 'question') {
+        return {
+          type: 'message',
+          tabTitle: t('clan_ads_sub_question', 'Тикет: Вопрос администрации'),
+          channelName: 'тикет-admin_question',
+          embed: {
+            title: t('clan_ads_ticket_question_title', 'Вопрос администрации'),
+            color: '#f1c40f',
+            description: (aConfig.questionWelcome || 'Привет, {user}! Задайте ваш вопрос администрации сервера. Мы ответим вам в ближайшее время.').replace(/{user}/g, '@Ivan_Rust')
+          },
+          buttons: [
+            { label: 'Закрыть тикет', emoji: '🔒', style: 'danger' }
+          ]
+        };
+      }
+
+      if (adsSubTab === 'bot') {
+        return {
+          type: 'message',
+          tabTitle: t('clan_ads_sub_bot', 'Разработка Discord-бота (DM)'),
+          channelName: 'Диалог с Industrial Studio Bot',
+          embed: {
+            title: '🤖 Разработка Discord-бота | Industrial Studio',
+            color: '#5865F2',
+            description: 'Здравствуйте, Ivan_Rust!\n\nВы оставили заявку на индивидуальную разработку Discord-бота через панель на сервере.\n\n📌 Напишите сюда ваши пожелания: функционал, интеграции с Rust/Steam, база данных или бот под ключ.\nРазработчик ответит вам прямо в этот диалог!',
+            footer: 'Industrial Studio • Автоматизация и разработка Discord'
+          },
+          buttons: []
+        };
+      }
+
       return {
         tabTitle: t('clan_auto_v2_1020', 'Панель рекламы'),
         channelName,
@@ -4186,7 +4295,7 @@ export default function ClanManager() {
           { label: t('clan_auto_v2_1006', 'Заказать рекламу'), emoji: '<:speakerphone:1571506556254552156>', style: 'primary' },
           { label: t('clan_auto_v2_1007', 'Заключить партнерство'), emoji: '🤝', style: 'primary' },
           { label: t('clan_auto_v2_1009', 'Узнать цену'), emoji: '<:cash:1571506385412423851>', style: 'success' },
-          { label: t('clan_auto_v2_1010', 'Разработка бота'), emoji: '<:adjustmentshorizontal:1571506352935932066>', style: 'secondary' },
+          { label: 'Разработать Discord-бота', emoji: '🤖', style: 'secondary' },
           { label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '<:infocircle:1571506482585927770>', style: 'secondary' }
         ]
       };
@@ -4418,6 +4527,11 @@ const contextValue = {
   isRecruitmentExpanded: typeof isRecruitmentExpanded !== "undefined" ? isRecruitmentExpanded : undefined,
   setIsRecruitmentExpanded: typeof setIsRecruitmentExpanded !== "undefined" ? setIsRecruitmentExpanded : undefined,
   recruitmentSubTabs: typeof recruitmentSubTabs !== "undefined" ? recruitmentSubTabs : undefined,
+  adsSubTab: typeof adsSubTab !== "undefined" ? adsSubTab : undefined,
+  setAdsSubTab: typeof setAdsSubTab !== "undefined" ? setAdsSubTab : undefined,
+  isAdsExpanded: typeof isAdsExpanded !== "undefined" ? isAdsExpanded : undefined,
+  setIsAdsExpanded: typeof setIsAdsExpanded !== "undefined" ? setIsAdsExpanded : undefined,
+  adsSubTabs: typeof adsSubTabs !== "undefined" ? adsSubTabs : undefined,
   reqId: typeof reqId !== "undefined" ? reqId : undefined,
   res: typeof res !== "undefined" ? res : undefined,
   resetSecs: typeof resetSecs !== "undefined" ? resetSecs : undefined,
@@ -4800,7 +4914,9 @@ const contextValue = {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
                     const isRecruitment = tab.id === 'recruitment';
+                    const isAds = tab.id === 'ads';
                     const showRecSub = isRecruitment && isRecruitmentExpanded;
+                    const showAdsSub = isAds && isAdsExpanded;
 
                     return (
                       <React.Fragment key={tab.id}>
@@ -4813,6 +4929,13 @@ const contextValue = {
                               } else {
                                 setActiveTab('recruitment');
                                 setIsRecruitmentExpanded(true);
+                              }
+                            } else if (isAds) {
+                              if (activeTab === 'ads') {
+                                setIsAdsExpanded(prev => !prev);
+                              } else {
+                                setActiveTab('ads');
+                                setIsAdsExpanded(true);
                               }
                             } else {
                               setActiveTab(tab.id);
@@ -4828,8 +4951,8 @@ const contextValue = {
                             {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
                             <span className="truncate">{tab.label}</span>
                           </div>
-                          {isRecruitment && (
-                            <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${showRecSub ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
+                          {(isRecruitment || isAds) && (
+                            <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${(isRecruitment ? showRecSub : showAdsSub) ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
                           )}
                           {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
                             <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
@@ -4868,6 +4991,35 @@ const contextValue = {
                                     e.stopPropagation();
                                     setActiveTab('recruitment');
                                     setRecruitmentSubTab(sub.id);
+                                  }}
+                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
+                                    isSubActive
+                                      ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-500 pl-2 shadow-2xs'
+                                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                                  }`}
+                                >
+                                  {SubIcon && <SubIcon className={`w-3 h-3 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />}
+                                  <span className="truncate">{sub.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Ads Sub-Tabs */}
+                        {showAdsSub && (
+                          <div className="pl-3 pr-1 py-0.5 space-y-1 flex flex-col transition-all">
+                            {adsSubTabs.map(sub => {
+                              const isSubActive = activeTab === 'ads' && adsSubTab === sub.id;
+                              const SubIcon = sub.icon;
+                              return (
+                                <button
+                                  key={sub.id}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveTab('ads');
+                                    setAdsSubTab(sub.id);
                                   }}
                                   className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
                                     isSubActive
@@ -5240,9 +5392,19 @@ const contextValue = {
                 templates={previewData.templates}
                 activeTemplateIndex={previewData.activeTemplateIndex}
                 onSelectTemplate={(idx) => setPreviewVoteIndex(idx)}
-                onButtonClick={() => {
+                onButtonClick={(btn, bIdx) => {
                   if (activeTab === 'recruitment') {
                     setRecruitmentSubTab('form');
+                  } else if (activeTab === 'ads') {
+                    if (adsSubTab === 'panel') {
+                      if (bIdx === 0) setAdsSubTab('buy');
+                      else if (bIdx === 1) setAdsSubTab('partner');
+                      else if (bIdx === 2) setAdsSubTab('price');
+                      else if (bIdx === 3) setAdsSubTab('bot');
+                      else if (bIdx === 4) setAdsSubTab('question');
+                    } else {
+                      setAdsSubTab('panel');
+                    }
                   }
                 }}
                 tabTitle={previewData.tabTitle}
