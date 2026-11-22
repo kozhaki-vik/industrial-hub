@@ -108,10 +108,23 @@ export default function EmojiPickerModal({ isOpen, onClose, onSelect, currentEmo
 
           {/* Emoji Grid / Content */}
           <div className="p-3 overflow-y-auto flex-1 min-h-[260px] max-h-[360px]">
+            <button
+              type="button"
+              onClick={() => {
+                onSelect('');
+                onClose();
+              }}
+              className="w-full mb-2.5 py-1.5 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-rose-400 dark:hover:border-rose-500 text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Без иконки (очистить)</span>
+            </button>
+
             {activeTab === 'white' && (
               <div className="grid grid-cols-6 sm:grid-cols-7 gap-2">
                 {filteredWhiteIcons.map(([key, filename]) => {
-                  const isSelected = currentEmoji === key || currentEmoji === key.replace(/-/g, '');
+                  const cleanKey = key.replace(/-/g, '');
+                  const isSelected = Boolean(currentEmoji && (currentEmoji === key || currentEmoji.includes(`:${cleanKey}:`) || currentEmoji.includes(`:${key}:`)));
                   return (
                     <button
                       key={key}

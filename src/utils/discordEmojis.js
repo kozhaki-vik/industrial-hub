@@ -508,6 +508,33 @@ export function formatDiscordEmojis(text) {
 }
 
 /**
+ * Splits text into leading Discord emoji tag (if any) and clean title text
+ */
+export function parseEmojiAndText(fullStr) {
+  if (!fullStr) return { emojiTag: '', cleanText: '' };
+  const str = String(fullStr).trim();
+  const match = str.match(/^(<a?:[a-zA-Z0-9_.-]+:\d+>)\s*(.*)$/);
+  if (match) {
+    return { emojiTag: match[1], cleanText: match[2] };
+  }
+  const shortMatch = str.match(/^(:[a-zA-Z0-9_.-]+:)\s*(.*)$/);
+  if (shortMatch) {
+    const tag = getDiscordEmojiTag(shortMatch[1]);
+    return { emojiTag: tag, cleanText: shortMatch[2] };
+  }
+  return { emojiTag: '', cleanText: str };
+}
+
+/**
+ * Combines an emoji tag and clean title text into a Discord-ready string
+ */
+export function combineEmojiAndText(emojiTag, text) {
+  const clean = String(text ?? '').trim();
+  if (!emojiTag) return clean;
+  return clean ? `${emojiTag} ${clean}` : emojiTag;
+}
+
+/**
  * Strips leading Discord custom emoji (<:name:id>) or unicode emoji from text
  */
 export function stripLeadingEmoji(text) {
@@ -550,24 +577,42 @@ export const POPULAR_WHITE_EMOJIS = [
  */
 export function renderTextWithDiscordEmojis(text, imgClass = 'w-3.5 h-3.5') {
   if (!text) return null;
-  const str = formatDiscordEmojis(String(text));
-  const parts = str.split(/(<a?:\w+:\d+>)/g);
+  const str = String(text);
+  const regex = /(<a?:[a-zA-Z0-9_.-]+:\d+>|:[a-zA-Z0-9_.-]+:)/g;
+  const parts = str.split(regex);
   if (parts.length === 1) return str;
 
   return parts.map((part, pIdx) => {
-    const match = part.match(/^<a?:(\w+):(\d+)>$/);
-    if (!match) return part;
-    const name = match[1];
-    const id = match[2];
-    const resolved = resolveDiscordEmoji(`<:${name}:${id}>`);
-    if (resolved && (resolved.type === 'local' || resolved.type === 'cdn')) {
-      return React.createElement('img', {
-        key: pIdx,
-        src: resolved.url,
-        alt: name,
-        className: `${imgClass} object-contain inline-block mr-1 align-middle shrink-0`,
-        onError: (e) => { e.currentTarget.style.display = 'none'; }
-      });
+    const customMatch = part.match(/^<a?:([a-zA-Z0-9_.-]+):(\d+)>$/);
+    if (customMatch) {
+      const name = customMatch[1];
+      const id = customMatch[2];
+      const resolved = resolveDiscordEmoji(`<:${name}:${id}>`);
+      if (resolved && (resolved.type === 'local' || resolved.type === 'cdn')) {
+        return React.createElement('img', {
+          key: pIdx,
+          src: resolved.url,
+          alt: name,
+          className: `${imgClass} object-contain inline-block mr-1 align-middle shrink-0`,
+          onError: (e) => { e.currentTarget.style.display = 'none'; }
+        });
+      }
+      return part;
+    }
+    const shortMatch = part.match(/^:([a-zA-Z0-9_.-]+):$/);
+    if (shortMatch) {
+      const name = shortMatch[1];
+      const resolved = resolveDiscordEmoji(`:${name}:`);
+      if (resolved && (resolved.type === 'local' || resolved.type === 'cdn')) {
+        return React.createElement('img', {
+          key: pIdx,
+          src: resolved.url,
+          alt: name,
+          className: `${imgClass} object-contain inline-block mr-1 align-middle shrink-0`,
+          onError: (e) => { e.currentTarget.style.display = 'none'; }
+        });
+      }
+      return part;
     }
     return part;
   });

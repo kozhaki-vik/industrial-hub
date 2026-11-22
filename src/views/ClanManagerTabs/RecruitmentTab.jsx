@@ -11,7 +11,7 @@ import {
 import ChannelSelect from '../../components/ChannelSelect';
 import EmojiSuggestModal from '../../components/EmojiSuggestModal';
 import EmojiPickerModal from '../../components/EmojiPickerModal';
-import { POPULAR_WHITE_EMOJIS, setLeadingEmoji, renderTextWithDiscordEmojis } from '../../utils/discordEmojis';
+import { resolveDiscordEmoji, parseEmojiAndText, combineEmojiAndText, renderTextWithDiscordEmojis } from '../../utils/discordEmojis';
 import { ToggleSwitch } from '../ClanManager';
 import { normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
@@ -413,6 +413,34 @@ export default function RecruitmentTab() {
     updateRConfig('ticketCardConfig', { fields: defaultTicketCardFields }, true);
   }, [defaultTicketCardFields, updateRConfig]);
 
+  const resetRecruitmentMessageConfig = useCallback(() => {
+    const defaultTitle = config?.name ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}` : 'Набор в клан';
+    const defaultText = t('clan_auto_v2_1023', 'Требования:\n\n**MAIN**\nВозраст: 20+\nЧасы: 5000+\nТребования: 8+ часов онлайна\nНавыки: Желательна универсальность\n\n**Билдер:**\nВозраст: 18+\nЧасы: 3000+\nТребования: 6+ часов онлайна\nНавыки: Умение быстро строить кастомные базы');
+    const defaultBanner = 'https://i.imgur.com/UaMfYMK.png';
+    const defaultBtn = t('clan_recruit_btn_default', 'Подать заявку');
+    const baseConfig = (latestConfigRef && latestConfigRef.current) ? latestConfigRef.current : config;
+    let baseRConfig = rConfig;
+    try {
+      if (baseConfig?.recruitmentConfigJson) {
+        baseRConfig = typeof baseConfig.recruitmentConfigJson === 'string'
+          ? JSON.parse(baseConfig.recruitmentConfigJson)
+          : baseConfig.recruitmentConfigJson;
+      }
+    } catch (e) {
+      baseRConfig = rConfig;
+    }
+    const newConfig = {
+      ...baseRConfig,
+      title: defaultTitle,
+      text: defaultText,
+      banner: defaultBanner,
+      buttonText: defaultBtn,
+      footerText: ''
+    };
+    const updated = { ...baseConfig, recruitmentConfigJson: JSON.stringify(newConfig) };
+    queueAutoSave(updated, true);
+  }, [config, rConfig, queueAutoSave, latestConfigRef, t]);
+
   const handleSelectTicketCardEmoji = useCallback((emojiTag) => {
     if (!emojiPickerTarget) return;
     const { idx, fieldKey } = emojiPickerTarget;
@@ -421,12 +449,13 @@ export default function RecruitmentTab() {
     if (!field) return;
 
     if (fieldKey === 'name') {
-      const updatedName = setLeadingEmoji(field.name || '', emojiTag);
+      const { cleanText } = parseEmojiAndText(field.name || '');
+      const updatedName = combineEmojiAndText(emojiTag, cleanText || `Поле #${idx + 1}`);
       updateTicketCardField(idx, 'name', updatedName, true);
     } else if (fieldKey === 'value') {
-      const curVal = field.value || '';
-      const separator = (curVal.length > 0 && !curVal.endsWith(' ')) ? ' ' : '';
-      updateTicketCardField(idx, 'value', `${curVal}${separator}${emojiTag}`, true);
+      const { cleanText } = parseEmojiAndText(field.value || '');
+      const updatedValue = combineEmojiAndText(emojiTag, cleanText);
+      updateTicketCardField(idx, 'value', updatedValue, true);
     }
     setEmojiPickerTarget(null);
   }, [emojiPickerTarget, ticketCardConfig.fields, updateTicketCardField]);
@@ -743,10 +772,21 @@ export default function RecruitmentTab() {
 
         {/* 1. Основные параметры панели набора */}
         <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
-          <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-orange-500" />
-            {t('clan_auto_42', 'Панель набора в Discord')}
-          </h4>
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-orange-500" />
+              {t('clan_auto_42', 'Панель набора в Discord')}
+            </h4>
+            <button
+              type="button"
+              onClick={resetRecruitmentMessageConfig}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+              title="Сбросить параметры сообщения к значениям по умолчанию"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>По умолчанию</span>
+            </button>
+          </div>
 
           {/* 1.1 Заголовок Embed-сообщения */}
           <div>
@@ -1531,7 +1571,27 @@ export default function RecruitmentTab() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={resetFormFields}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+                title="Восстановить стандартные 5 полей"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>По умолчанию</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={formConfig.fields.length >= 5}
+                onClick={addFormField}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Добавить поле ({formConfig.fields.length}/5)</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setIsEmojiSuggestOpen(true)}
@@ -1539,16 +1599,6 @@ export default function RecruitmentTab() {
                 title="Предложить новый эмодзи разработчику для добавления в стандартный набор"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Предложить свой эмодзи</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsFormBuilderExpanded(!isFormBuilderExpanded)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200/60 dark:border-slate-700/60"
-              >
-                <span>{isFormBuilderExpanded ? 'Скрыть форму' : 'Настроить форму'}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isFormBuilderExpanded ? 'rotate-180' : ''}`} />
               </button>
             </div>
           </div>
@@ -1760,7 +1810,7 @@ export default function RecruitmentTab() {
               </div>
 
               {/* Form Action Buttons Bar */}
-              <div className="pt-2 flex items-center justify-between gap-3 flex-wrap">
+              <div className="pt-2 flex items-center justify-end gap-3 flex-wrap">
                 <button
                   type="button"
                   disabled={formConfig.fields.length >= 5}
@@ -1769,15 +1819,6 @@ export default function RecruitmentTab() {
                 >
                   <Plus className="w-4 h-4" />
                   <span>Добавить поле ({formConfig.fields.length}/5)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={resetFormFields}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Восстановить стандартные 5 полей</span>
                 </button>
               </div>
             </div>
@@ -1869,6 +1910,11 @@ export default function RecruitmentTab() {
             {/* Fields List */}
             <div className="space-y-3.5 pt-1">
               {ticketCardConfig.fields.map((field, idx) => {
+                const nameParsed = parseEmojiAndText(field.name || '');
+                const nameResolvedEmoji = resolveDiscordEmoji(nameParsed.emojiTag);
+                const valParsed = parseEmojiAndText(field.value || '');
+                const valResolvedEmoji = resolveDiscordEmoji(valParsed.emojiTag);
+
                 return (
                   <div
                     key={field.id || idx}
@@ -1879,8 +1925,15 @@ export default function RecruitmentTab() {
                         <span className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] flex items-center justify-center shrink-0">
                           #{idx + 1}
                         </span>
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                          {renderTextWithDiscordEmojis(field.name || `Поле #${idx + 1}`)}
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          {nameResolvedEmoji && (nameResolvedEmoji.type === 'local' || nameResolvedEmoji.type === 'cdn') ? (
+                            <img
+                              src={nameResolvedEmoji.url}
+                              alt="emoji"
+                              className="w-3.5 h-3.5 object-contain inline-block"
+                            />
+                          ) : null}
+                          <span>{nameParsed.cleanText || `Поле #${idx + 1}`}</span>
                         </span>
                         {field.inline ? (
                           <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900/50">В одну строку</span>
@@ -1927,24 +1980,40 @@ export default function RecruitmentTab() {
                         <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
                           Заголовок блока в тикете
                         </label>
-                        <div className="relative flex items-center">
-                          <input
-                            type="text"
-                            maxLength={256}
-                            value={field.name || ''}
-                            onChange={(e) => updateTicketCardField(idx, 'name', e.target.value, false)}
-                            onBlur={(e) => updateTicketCardField(idx, 'name', e.target.value, true)}
-                            placeholder="Например: <:usercircle:1571506569705824367> Имя"
-                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none pr-8 font-medium"
-                          />
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => setEmojiPickerTarget({ idx, fieldKey: 'name' })}
-                            className="absolute right-1.5 p-1 text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded cursor-pointer transition-colors"
-                            title="Открыть выбор эмодзи Discord для заголовка"
+                            className="h-8 w-8 shrink-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 flex items-center justify-center transition-colors cursor-pointer group shadow-2xs"
+                            title={nameResolvedEmoji ? `Сменить эмодзи (${nameParsed.emojiTag})` : 'Выбрать эмодзи'}
                           >
-                            <Smile className="w-3.5 h-3.5" />
+                            {nameResolvedEmoji && (nameResolvedEmoji.type === 'local' || nameResolvedEmoji.type === 'cdn') ? (
+                              <img
+                                src={nameResolvedEmoji.url}
+                                alt="emoji"
+                                className="w-4 h-4 object-contain filter drop-shadow group-hover:scale-110 transition-transform"
+                              />
+                            ) : (
+                              <Smile className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                            )}
                           </button>
+                          <div className="relative flex-1">
+                            <input
+                              type="text"
+                              maxLength={256}
+                              value={nameParsed.cleanText}
+                              onChange={(e) => {
+                                const updated = combineEmojiAndText(nameParsed.emojiTag, e.target.value);
+                                updateTicketCardField(idx, 'name', updated, false);
+                              }}
+                              onBlur={(e) => {
+                                const updated = combineEmojiAndText(nameParsed.emojiTag, e.target.value);
+                                updateTicketCardField(idx, 'name', updated, true);
+                              }}
+                              placeholder="Например: Имя"
+                              className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none font-medium"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -1969,24 +2038,40 @@ export default function RecruitmentTab() {
                             <ChevronDown className={`w-3 h-3 transition-transform ${activeVarPickerIdx === idx ? 'rotate-180' : ''}`} />
                           </button>
                         </div>
-                        <div className="relative flex items-center">
-                          <input
-                            type="text"
-                            maxLength={1024}
-                            value={field.value || ''}
-                            onChange={(e) => updateTicketCardField(idx, 'value', e.target.value, false)}
-                            onBlur={(e) => updateTicketCardField(idx, 'value', e.target.value, true)}
-                            placeholder="Например: {Имя}, {Возраст} лет"
-                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none font-mono pr-8"
-                          />
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => setEmojiPickerTarget({ idx, fieldKey: 'value' })}
-                            className="absolute right-1.5 p-1 text-slate-400 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded cursor-pointer transition-colors"
-                            title="Открыть выбор эмодзи Discord для шаблона"
+                            className="h-8 w-8 shrink-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 flex items-center justify-center transition-colors cursor-pointer group shadow-2xs"
+                            title={valResolvedEmoji ? `Сменить эмодзи (${valParsed.emojiTag})` : 'Выбрать эмодзи'}
                           >
-                            <Smile className="w-3.5 h-3.5" />
+                            {valResolvedEmoji && (valResolvedEmoji.type === 'local' || valResolvedEmoji.type === 'cdn') ? (
+                              <img
+                                src={valResolvedEmoji.url}
+                                alt="emoji"
+                                className="w-4 h-4 object-contain filter drop-shadow group-hover:scale-110 transition-transform"
+                              />
+                            ) : (
+                              <Smile className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                            )}
                           </button>
+                          <div className="relative flex-1">
+                            <input
+                              type="text"
+                              maxLength={1024}
+                              value={valParsed.cleanText}
+                              onChange={(e) => {
+                                const updated = combineEmojiAndText(valParsed.emojiTag, e.target.value);
+                                updateTicketCardField(idx, 'value', updated, false);
+                              }}
+                              onBlur={(e) => {
+                                const updated = combineEmojiAndText(valParsed.emojiTag, e.target.value);
+                                updateTicketCardField(idx, 'value', updated, true);
+                              }}
+                              placeholder="Например: {Имя}, {Возраст} лет"
+                              className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none font-mono"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -2007,20 +2092,22 @@ export default function RecruitmentTab() {
                     {/* Expandable Variable Chips (only shown when user clicks '{ } Переменные') */}
                     {activeVarPickerIdx === idx && (
                       <div className="flex items-center gap-1.5 flex-wrap pt-1.5 pb-1 px-2.5 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-lg border border-indigo-200/60 dark:border-indigo-900/50 animate-in fade-in duration-100">
-                        <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-semibold mr-1">Вставить переменную:</span>
+                        <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-semibold mr-1">Переменные:</span>
                         {availableVariables.map(v => (
                           <button
                             key={v.tag}
                             type="button"
                             onClick={() => {
-                              const curVal = field.value || '';
+                              const curVal = valParsed.cleanText || '';
                               const separator = (curVal.length > 0 && !curVal.endsWith(' ') && !curVal.endsWith(',')) ? ' ' : '';
-                              updateTicketCardField(idx, 'value', `${curVal}${separator}${v.tag}`, true);
+                              const updatedClean = `${curVal}${separator}${v.tag}`;
+                              const updated = combineEmojiAndText(valParsed.emojiTag, updatedClean);
+                              updateTicketCardField(idx, 'value', updated, true);
                             }}
                             className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-white dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
                             title={`Вставить ${v.label}`}
                           >
-                            + {v.tag}
+                            {v.tag}
                           </button>
                         ))}
                       </div>
@@ -2451,6 +2538,7 @@ export default function RecruitmentTab() {
       isOpen={Boolean(emojiPickerTarget)}
       onClose={() => setEmojiPickerTarget(null)}
       onSelect={handleSelectTicketCardEmoji}
+      currentEmoji={emojiPickerTarget ? (emojiPickerTarget.fieldKey === 'name' ? parseEmojiAndText(ticketCardConfig.fields[emojiPickerTarget.idx]?.name || '').emojiTag : parseEmojiAndText(ticketCardConfig.fields[emojiPickerTarget.idx]?.value || '').emojiTag) : ''}
       mode="discord_tag"
       title={emojiPickerTarget?.fieldKey === 'name' ? 'Выбор иконки Discord для заголовка' : 'Выбор эмодзи Discord'}
     />
