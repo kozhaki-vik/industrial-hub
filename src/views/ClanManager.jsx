@@ -2739,6 +2739,15 @@ export default function ClanManager() {
       : 0;
   }, [adTicketsData]);
 
+  const adsSubTabs = useMemo(() => [
+    { id: 'panel', label: t('clan_ads_sub_panel', 'Панель рекламы'), icon: Megaphone },
+    { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
+    { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
+    { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
+    { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle },
+    ...(isDevAdminActive ? [{ id: 'bot', label: t('clan_ads_sub_bot', 'Разработка бота (Dev)'), icon: Bot }] : [])
+  ], [t, isDevAdminActive]);
+
   useEffect(() => {
     if (!selectedProfileForDossier?.userId || !ws || wsStatus !== 'online') return;
     if (selectedProfileForDossier.shootingRating === undefined && selectedProfileForDossier.claimedHours === undefined) {
@@ -3462,15 +3471,6 @@ export default function ClanManager() {
     { id: 'form', label: t('clan_rec_sub_form', 'Форма заявки'), icon: Layers },
     { id: 'ticket', label: t('clan_rec_sub_ticket', 'Отправленный тикет'), icon: Bot }
   ];
-
-  const adsSubTabs = useMemo(() => [
-    { id: 'panel', label: t('clan_ads_sub_panel', 'Панель рекламы'), icon: Megaphone },
-    { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
-    { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
-    { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
-    { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle },
-    ...(isDevAdminActive ? [{ id: 'bot', label: t('clan_ads_sub_bot', 'Разработка бота (Dev)'), icon: Bot }] : [])
-  ], [t, isDevAdminActive]);
 
   const botSearchIndex = [
     // General

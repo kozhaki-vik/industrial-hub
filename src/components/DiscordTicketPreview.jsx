@@ -109,6 +109,31 @@ function DiscordTicketPreview({
     }));
   }, [rConfig.ticketCardConfig, fields]);
 
+  // Group fields into rows matching Discord Desktop layout (up to 3 inline fields per row)
+  const fieldRows = useMemo(() => {
+    const rows = [];
+    let currentInlineRow = [];
+    for (const f of displayFields) {
+      if (!f.inline) {
+        if (currentInlineRow.length > 0) {
+          rows.push(currentInlineRow);
+          currentInlineRow = [];
+        }
+        rows.push([f]);
+      } else {
+        currentInlineRow.push(f);
+        if (currentInlineRow.length === 3) {
+          rows.push(currentInlineRow);
+          currentInlineRow = [];
+        }
+      }
+    }
+    if (currentInlineRow.length > 0) {
+      rows.push(currentInlineRow);
+    }
+    return rows;
+  }, [displayFields]);
+
   const isRejected = ticketMode === 'rejected';
   const effectiveChannelName = isRejected ? 'отказ-alex_rust' : (channelName || 'заявка-alex_rust');
   const embedColor = isRejected ? '#da373c' : '#248046';
@@ -214,26 +239,40 @@ function DiscordTicketPreview({
               )}
             </div>
 
-            {/* Candidate Answers Grid with authentic 4px boxes and Discord grid columns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              {displayFields.map((field, idx) => {
-                const isInline = Boolean(field.inline);
-                const resolvedAnswer = (rConfig.ticketCardConfig && rConfig.ticketCardConfig.fields)
-                  ? resolveTemplateText(field.value)
-                  : getSampleAnswer(fields[idx] || field, idx);
+            {/* Candidate Answers Grid - Authentic Discord Desktop: up to 3 inline fields per row */}
+            <div className="space-y-2 pt-1">
+              {fieldRows.map((row, rIdx) => {
+                const isFullWidth = row.length === 1 && !row[0].inline;
+                const gridClass = isFullWidth
+                  ? 'grid grid-cols-1'
+                  : row.length === 3
+                  ? 'grid grid-cols-1 sm:grid-cols-3 gap-2'
+                  : row.length === 2
+                  ? 'grid grid-cols-1 sm:grid-cols-2 gap-2'
+                  : 'grid grid-cols-1 sm:grid-cols-3 gap-2';
 
                 return (
-                  <div 
-                    key={field.id || idx} 
-                    className={`bg-[#1e1f22]/70 rounded-[4px] p-3 border border-[#232428] ${isInline ? 'sm:col-span-1' : 'col-span-full'}`}
-                  >
-                    <div className="text-[11px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      <span>{field.name || field.label || `Поле #${idx + 1}`}</span>
-                    </div>
-                    {/* Natural Discord text: light grey/white, no arbitrary neon colors */}
-                    <div className="text-xs font-medium leading-relaxed text-[#f2f3f5] whitespace-pre-wrap break-words">
-                      {resolvedAnswer}
-                    </div>
+                  <div key={rIdx} className={gridClass}>
+                    {row.map((field, idx) => {
+                      const resolvedAnswer = (rConfig.ticketCardConfig && rConfig.ticketCardConfig.fields)
+                        ? resolveTemplateText(field.value)
+                        : getSampleAnswer(fields[idx] || field, idx);
+
+                      return (
+                        <div 
+                          key={field.id || `${rIdx}-${idx}`} 
+                          className="bg-[#1e1f22]/70 rounded-[4px] p-2.5 border border-[#232428] min-w-0"
+                        >
+                          <div className="text-[11px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 truncate">
+                            {field.name || field.label || `Поле #${idx + 1}`}
+                          </div>
+                          {/* Natural Discord text: light grey/white, no arbitrary neon colors */}
+                          <div className="text-xs font-medium leading-relaxed text-[#f2f3f5] whitespace-pre-wrap break-words">
+                            {resolvedAnswer}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -253,9 +292,6 @@ function DiscordTicketPreview({
                     )}
                     {rConfig.minAge > 0 && (
                       <div>• Возраст кандидата не соответствует порогу (требуется от {rConfig.minAge} лет)</div>
-                    )}
-                    {rConfig.rejectBanned && (
-                      <div>• Проверка Valve Anti-Cheat / Game Bans: Чисто (блокировок нет)</div>
                     )}
                   </div>
                 ) : (
@@ -279,7 +315,7 @@ function DiscordTicketPreview({
                   <span>Проверка Steam и критериев:</span>
                 </div>
                 <div className="text-[11px] text-[#dbdee1] space-y-1 bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
-                  <div>• Аккаунт Steam открыт, VAC/Game банов нет</div>
+                  <div>• Аккаунт Steam открыт и проверен</div>
                   <div>• Игровые часы (3,850 ч.) превышают минимальный порог</div>
                   {rConfig.steamPrefixCheck && (
                     <div>• Приписка клана <code className="bg-[#2b2d31] px-1.5 py-0.5 rounded text-[#f2f3f5] font-mono">[{rConfig.steamPrefix || config?.name || 'GODS'}]</code> подтверждена в нике</div>

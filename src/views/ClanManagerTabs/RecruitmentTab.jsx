@@ -223,10 +223,11 @@ export default function RecruitmentTab() {
   }, [rConfig.formConfig, defaultFormFields]);
 
   const defaultTicketCardFields = useMemo(() => [
-    { id: 'tcf_1', name: '👤 Кандидат', value: '{Имя}, {Возраст} лет', inline: true },
-    { id: 'tcf_2', name: '⏱️ Игровые часы', value: '{Часы} (со всех аккаунтов)', inline: true },
-    { id: 'tcf_3', name: '🔗 Steam профиль', value: '{Steam}', inline: false },
-    { id: 'tcf_4', name: '📝 Информация о кандидате', value: '{Опыт}', inline: false }
+    { id: 'tcf_1', name: '👤 Кандидат', value: '{Имя}', inline: true },
+    { id: 'tcf_2', name: '🎂 Возраст', value: '{Возраст} лет', inline: true },
+    { id: 'tcf_3', name: '⏱️ Игровые часы', value: '{Часы}', inline: true },
+    { id: 'tcf_4', name: '🔗 Steam профиль', value: '{Steam}', inline: false },
+    { id: 'tcf_5', name: '📝 Информация о кандидате', value: '{Опыт}', inline: false }
   ], []);
 
   const ticketCardConfig = useMemo(() => {
@@ -1781,7 +1782,7 @@ export default function RecruitmentTab() {
                 Обработка отправленного тикета в Discord
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                После заполнения формы бот создаёт приватный текстовый канал тикета в Discord. Если кандидат не проходит минимальные требования (возраст, часы, VAC-баны), бот публикует причину отказа и автоматически удаляет канал через 10 минут. Если анкета одобрена, рекрутеры принимают решение кнопками в тикете.
+                После заполнения формы бот создаёт приватный текстовый канал тикета в Discord. Если кандидат не проходит минимальные требования (возраст, часы), бот публикует причину отказа и автоматически удаляет канал через 10 минут. Если анкета одобрена, рекрутеры принимают решение кнопками в тикете.
               </p>
             </div>
           </div>
@@ -1801,7 +1802,7 @@ export default function RecruitmentTab() {
                     </span>
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Настройте вид и структуру карточки: объединяйте поля через переменные <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{'{Имя}'}</code>, <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{'{Возраст}'}</code> и меняйте порядок
+                    Настройте вид и структуру карточки: объединяйте поля через переменные <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{'{Имя}'}</code>, <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{'{Возраст}'}</code>, настраивайте до 3 полей в одной строке и меняйте порядок
                   </p>
                 </div>
               </div>
@@ -1901,7 +1902,7 @@ export default function RecruitmentTab() {
                       </div>
 
                       {/* 2. Value Template */}
-                      <div className="sm:col-span-6">
+                      <div className="sm:col-span-5">
                         <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
                           Шаблон содержимого (поддерживает любой текст и {'{переменные}'})
                         </label>
@@ -1917,15 +1918,15 @@ export default function RecruitmentTab() {
                       </div>
 
                       {/* 3. Inline Toggle */}
-                      <div className="sm:col-span-2 pt-6 flex items-center justify-end">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-700 dark:text-slate-300 font-medium select-none" title="Отображать в 2 колонки в сообщении Discord">
+                      <div className="sm:col-span-3 pt-6 flex items-center justify-end">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-700 dark:text-slate-300 font-medium select-none" title="Отображать в одну строку (Discord размещает до 3 полей в ряд)">
                           <input
                             type="checkbox"
                             checked={field.inline !== false}
                             onChange={(e) => updateTicketCardField(idx, 'inline', e.target.checked, true)}
                             className="rounded text-indigo-600 focus:ring-indigo-500"
                           />
-                          <span>В 1 строку</span>
+                          <span>В 1 строку (до 3 в ряд)</span>
                         </label>
                       </div>
                     </div>
@@ -2043,19 +2044,6 @@ export default function RecruitmentTab() {
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none flex items-center">
-                    <span>{t('clan_recruitment_reject_banned') || 'Автоматически отклонять игроков с VAC/Game блокировками'}</span>
-                    <HelpTooltip text="Бот сверяет Steam ID кандидата с базой Valve и отклоняет анкеты с активными банами." />
-                  </span>
-                  <ToggleSwitch
-                    checked={rConfig.rejectBanned ?? true}
-                    onChange={val => updateRConfig('rejectBanned', val, true)}
-                    activeColor="orange"
-                    size="sm"
-                  />
-                </div>
-
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none flex items-center">
                     <span>{t('clan_recruitment_strict_steam') || 'Строгая проверка Steam'}</span>
@@ -2177,7 +2165,7 @@ export default function RecruitmentTab() {
                   <div>
                     <ChannelSelect
                       label={t('clan_recruitment_channel_auto') || 'Отклоненные ботом заявки'}
-                      description={t('clan_auto_113', 'Канал для карточек авто-отказа (нехватка часов, возраст, VAC-баны)')}
+                      description={t('clan_auto_113', 'Канал для карточек авто-отказа (нехватка часов, возраст)')}
                       value={cConfig.autoRejectedApplications || ''}
                       onChange={val => updateChannelConfig('autoRejectedApplications', val)}
                       discordChannels={discordInfo?.channels || []}
