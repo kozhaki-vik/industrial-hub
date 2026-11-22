@@ -32,10 +32,12 @@ import {
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
   BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, ArrowLeft, Eye, EyeOff, Copy, ChevronDown, ChevronRight,
-  Inbox
+  Inbox, MessageSquare, Layers
 } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
+import DiscordModalPreview from '../components/DiscordModalPreview';
+import DiscordTicketPreview from '../components/DiscordTicketPreview';
 import { validateForm, scrollToAndHighlight } from '../utils/formValidation';
 import { showConfirm } from '../components/ConfirmModal';
 import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
@@ -433,6 +435,8 @@ export default function ClanManager() {
   const [activeTab, setActiveTabRaw] = useState('roster');
   const [modSubTab, setModSubTab] = useState('antiMention');
   const [isModExpanded, setIsModExpanded] = useState(true);
+  const [recruitmentSubTab, setRecruitmentSubTab] = useState('message'); // 'message' | 'form' | 'ticket'
+  const [isRecruitmentExpanded, setIsRecruitmentExpanded] = useState(true);
   const [rosterData, setRosterData] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [activityStatsData, setActivityStatsData] = useState(null);
@@ -497,6 +501,9 @@ export default function ClanManager() {
     setActiveTabRaw(tab);
     if (tab === 'applications' && subCategory) {
       setApplicationsCategory(subCategory);
+    }
+    if (tab === 'recruitment' && subCategory) {
+      setRecruitmentSubTab(subCategory);
     }
   }, []);
 
@@ -3320,6 +3327,12 @@ export default function ClanManager() {
     { id: 'whitelist', label: t('clan_mod_sub_whitelist', 'Исключения и логи'), icon: ShieldCheck }
   ];
 
+  const recruitmentSubTabs = [
+    { id: 'message', label: t('clan_rec_sub_message', 'Панель набора'), icon: MessageSquare },
+    { id: 'form', label: t('clan_rec_sub_form', 'Форма заявки'), icon: Layers },
+    { id: 'ticket', label: t('clan_rec_sub_ticket', 'Отправленный тикет'), icon: Bot }
+  ];
+
   const botSearchIndex = [
     // General
     {
@@ -3989,8 +4002,44 @@ export default function ClanManager() {
         ? `<@${rConfig.customLeaderId}>` 
         : (firstLeader ? `@${firstLeader.displayName || firstLeader.username}` : `@${t('clan_role_leader', 'Лидер')}`);
 
+      const defaultFormFields = [
+        { id: 'f_name', role: 'name', label: 'Ваше имя', placeholder: 'Иван', emoji: 'user', required: true, style: 'short' },
+        { id: 'f_age', role: 'age', label: 'Ваш возраст', placeholder: '18', emoji: 'user', required: true, style: 'short' },
+        { id: 'f_hours', role: 'hours', label: 'Часы в Rust (со всех аккаунтов)', placeholder: '3500ч', emoji: 'clock', required: true, style: 'short' },
+        { id: 'f_steam', role: 'steam', label: 'Ссылка на Steam (на котором играете)', placeholder: 'https://steamcommunity.com/id/...', emoji: 'link', required: true, style: 'short' },
+        { id: 'f_exp', role: 'experience', label: 'Опыт игры / предыдущие кланы', placeholder: 'Играл в кланах ..., позиция фармер/пвп', emoji: 'listdetails', required: false, style: 'paragraph' }
+      ];
+
+      const formConfig = {
+        title: rConfig.formConfig?.title || 'Подача заявки в клан',
+        fields: (Array.isArray(rConfig.formConfig?.fields) && rConfig.formConfig.fields.length > 0)
+          ? rConfig.formConfig.fields
+          : defaultFormFields
+      };
+
       const appChannel = discordInfo?.channels?.find(c => c.id === cConfig.applications);
       const channelName = appChannel ? appChannel.name : t('clan_default_rec_ch', 'набор-в-клан');
+
+      if (recruitmentSubTab === 'form') {
+        return {
+          type: 'modal',
+          tabTitle: t('clan_rec_sub_form', 'Форма заявки'),
+          channelName,
+          modalTitle: formConfig.title,
+          fields: formConfig.fields
+        };
+      }
+
+      if (recruitmentSubTab === 'ticket') {
+        return {
+          type: 'ticket',
+          tabTitle: t('clan_rec_sub_ticket', 'Отправленный тикет'),
+          channelName: 'заявка-alex_rust',
+          rConfig,
+          formConfig,
+          config
+        };
+      }
 
       const currentText = aiPreviewOverride || rConfig.text || t('clan_auto_110', 'Опишите требования...');
       const description = rConfig.includeMetadataLines !== false
@@ -3998,7 +4047,8 @@ export default function ClanManager() {
         : currentText;
 
       return {
-        tabTitle: aiPreviewOverride ? `${t('clan_rec_base', 'Набор в клан')} (${t('clan_ai_preview_badge', 'Предпросмотр ИИ')})` : t('clan_auto_v2_1018', t('clan_rec_base', 'Набор в клан')),
+        type: 'message',
+        tabTitle: aiPreviewOverride ? `${t('clan_rec_base', 'Набор в клан')} (${t('clan_ai_preview_badge', 'Предпросмотр ИИ')})` : t('clan_rec_sub_message', 'Панель набора'),
         channelName,
         embed: {
           title: rConfig.title || (config?.name ? `${t('clan_recruit_title_prefix', 'Набор в клан')} ${config.name}` : t('clan_rec_base', 'Набор в клан')),
@@ -4340,6 +4390,11 @@ const contextValue = {
   rcLink: typeof rcLink !== "undefined" ? rcLink : undefined,
   recruitmentInviteDetails: typeof recruitmentInviteDetails !== "undefined" ? recruitmentInviteDetails : undefined,
   recruitmentInviteStatus: typeof recruitmentInviteStatus !== "undefined" ? recruitmentInviteStatus : undefined,
+  recruitmentSubTab: typeof recruitmentSubTab !== "undefined" ? recruitmentSubTab : undefined,
+  setRecruitmentSubTab: typeof setRecruitmentSubTab !== "undefined" ? setRecruitmentSubTab : undefined,
+  isRecruitmentExpanded: typeof isRecruitmentExpanded !== "undefined" ? isRecruitmentExpanded : undefined,
+  setIsRecruitmentExpanded: typeof setIsRecruitmentExpanded !== "undefined" ? setIsRecruitmentExpanded : undefined,
+  recruitmentSubTabs: typeof recruitmentSubTabs !== "undefined" ? recruitmentSubTabs : undefined,
   reqId: typeof reqId !== "undefined" ? reqId : undefined,
   res: typeof res !== "undefined" ? res : undefined,
   resetSecs: typeof resetSecs !== "undefined" ? resetSecs : undefined,
@@ -4721,44 +4776,90 @@ const contextValue = {
                   {clanTabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
+                    const isRecruitment = tab.id === 'recruitment';
+                    const showRecSub = isRecruitment && isRecruitmentExpanded;
 
                     return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
-                          isActive
-                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
-                          <span className="truncate">{tab.label}</span>
-                        </div>
-                        {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
-                          <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-                            {rosterData.roster.length}
-                          </span>
-                        )}
-                        {tab.id === 'applications' && pendingAppsCount > 0 && (
-                          <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
-                            {pendingAppsCount}
-                          </span>
-                        )}
-                        {tab.id === 'ad_tickets' && (
-                          openAdTicketsCount > 0 ? (
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
-                              {openAdTicketsCount}
-                            </span>
-                          ) : adTicketsData?.length > 0 ? (
+                      <React.Fragment key={tab.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isRecruitment) {
+                              if (activeTab === 'recruitment') {
+                                setIsRecruitmentExpanded(prev => !prev);
+                              } else {
+                                setActiveTab('recruitment');
+                                setIsRecruitmentExpanded(true);
+                              }
+                            } else {
+                              setActiveTab(tab.id);
+                            }
+                          }}
+                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                            isActive
+                              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                            <span className="truncate">{tab.label}</span>
+                          </div>
+                          {isRecruitment && (
+                            <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${showRecSub ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
+                          )}
+                          {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
                             <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-                              {adTicketsData.length}
+                              {rosterData.roster.length}
                             </span>
-                          ) : null
+                          )}
+                          {tab.id === 'applications' && pendingAppsCount > 0 && (
+                            <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
+                              {pendingAppsCount}
+                            </span>
+                          )}
+                          {tab.id === 'ad_tickets' && (
+                            openAdTicketsCount > 0 ? (
+                              <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
+                                {openAdTicketsCount}
+                              </span>
+                            ) : adTicketsData?.length > 0 ? (
+                              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                                {adTicketsData.length}
+                              </span>
+                            ) : null
+                          )}
+                        </button>
+
+                        {/* Recruitment Sub-Tabs */}
+                        {showRecSub && (
+                          <div className="pl-3 pr-1 py-0.5 space-y-1 flex flex-col transition-all">
+                            {recruitmentSubTabs.map(sub => {
+                              const isSubActive = activeTab === 'recruitment' && recruitmentSubTab === sub.id;
+                              const SubIcon = sub.icon;
+                              return (
+                                <button
+                                  key={sub.id}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveTab('recruitment');
+                                    setRecruitmentSubTab(sub.id);
+                                  }}
+                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
+                                    isSubActive
+                                      ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-500 pl-2 shadow-2xs'
+                                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                                  }`}
+                                >
+                                  {SubIcon && <SubIcon className={`w-3 h-3 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />}
+                                  <span className="truncate">{sub.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         )}
-                      </button>
+                      </React.Fragment>
                     );
                   })}
                 </div>
@@ -5043,16 +5144,31 @@ const contextValue = {
         {/* Discord Companion Window (Real Discord Desktop Dimensions) */}
         {isCompanionWindowVisible && previewData && (
           <aside className="w-[360px] lg:w-[390px] xl:w-[420px] 2xl:w-[450px] shrink-0 h-full flex flex-col min-h-0 transition-all duration-200">
-            <DiscordMessagePreview
-              channelName={previewData.channelName}
-              botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
-              embed={previewData.embed}
-              buttons={previewData.buttons}
-              templates={previewData.templates}
-              activeTemplateIndex={previewData.activeTemplateIndex}
-              onSelectTemplate={(idx) => setPreviewVoteIndex(idx)}
-              tabTitle={previewData.tabTitle}
-            />
+            {previewData.type === 'modal' ? (
+              <DiscordModalPreview
+                channelName={previewData.channelName}
+                modalTitle={previewData.modalTitle}
+                fields={previewData.fields}
+              />
+            ) : previewData.type === 'ticket' ? (
+              <DiscordTicketPreview
+                channelName={previewData.channelName}
+                rConfig={previewData.rConfig}
+                formConfig={previewData.formConfig}
+                config={previewData.config}
+              />
+            ) : (
+              <DiscordMessagePreview
+                channelName={previewData.channelName}
+                botName={config?.name ? `Clan Manager (${config.name})` : 'Clan Manager'}
+                embed={previewData.embed}
+                buttons={previewData.buttons}
+                templates={previewData.templates}
+                activeTemplateIndex={previewData.activeTemplateIndex}
+                onSelectTemplate={(idx) => setPreviewVoteIndex(idx)}
+                tabTitle={previewData.tabTitle}
+              />
+            )}
           </aside>
         )}
       </>

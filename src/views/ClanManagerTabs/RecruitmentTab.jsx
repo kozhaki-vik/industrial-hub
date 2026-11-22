@@ -57,8 +57,13 @@ export default function RecruitmentTab() {
     queueAutoSave, saveConfig, sendProxyAction, addLog,
     openExternalUrl, setActiveTab, t,
     currentActiveGuildId, guildId,
-    aiPreviewOverride, setAiPreviewOverride
+    aiPreviewOverride, setAiPreviewOverride,
+    recruitmentSubTab, setRecruitmentSubTab
   } = useContext(ClanManagerContext);
+
+  const [localSubTab, setLocalSubTab] = useState('message');
+  const activeSubTab = recruitmentSubTab || localSubTab;
+  const setActiveSubTab = setRecruitmentSubTab || setLocalSubTab;
 
   const [isAiPreviewing, setIsAiPreviewing] = useState(false);
 
@@ -148,7 +153,7 @@ export default function RecruitmentTab() {
   const [userAutoRejectExpanded, setUserAutoRejectExpanded] = useState(null);
   const isAutoRejectExpanded = userAutoRejectExpanded !== null
     ? userAutoRejectExpanded
-    : Boolean(rConfig.autoRejectEnabled);
+    : true;
 
   const [userSteamPrefixExpanded, setUserSteamPrefixExpanded] = useState(null);
   const isSteamPrefixExpanded = userSteamPrefixExpanded !== null
@@ -471,23 +476,79 @@ export default function RecruitmentTab() {
 
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6">
-      {/* Discord Recruitment Panel Channel Status & Manager */}
-      <DiscordPanelChannelBar
-        title={t('clan_recruitment_panel_title', 'Панель набора в клан')}
-        channelId={rConfig?.channelId}
-        messageId={rConfig?.messageId}
-        discordChannels={discordInfo?.channels || []}
-        onPublishOrMove={handlePublishOrMoveRecruitment}
-        onSync={handleSyncRecruitment}
-        onDelete={handleDeleteRecruitment}
-        activeDesc={t('clan_recruitment_panel_active_desc', 'Кандидаты видят эту панель и нажимают кнопку для подачи заявки в клан.')}
-        promptText={t('clan_recruitment_panel_prompt', 'Выберите канал для публикации интерактивной панели набора в клан с кнопкой подачи заявки. При смене канала бот удалит старую панель.')}
-        icon={UserPlus}
-        accentColor="orange"
-      />
+      {/* 3 Sub-tabs Navigation: Панель набора / Форма заявки / Отправленный тикет */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-850/80 rounded-2xl border border-slate-200/80 dark:border-slate-800 shrink-0">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('message')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+            activeSubTab === 'message'
+              ? 'bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60 font-bold'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
+          }`}
+        >
+          <UserPlus className="w-4 h-4 shrink-0" />
+          <span>{t('clan_rec_sub_message', 'Панель набора')}</span>
+        </button>
 
-      <div className="space-y-6">
-        {/* Быстрый переход: Журнал и статус заявок в клан */}
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('form')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+            activeSubTab === 'form'
+              ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60 font-bold'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
+          }`}
+        >
+          <Layers className="w-4 h-4 shrink-0" />
+          <span>{t('clan_rec_sub_form', 'Форма заявки')}</span>
+          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
+            {formConfig.fields.length}/5
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('ticket')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+            activeSubTab === 'ticket'
+              ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60 font-bold'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
+          }`}
+        >
+          <Bot className="w-4 h-4 shrink-0" />
+          <span>{t('clan_rec_sub_ticket', 'Отправленный тикет')}</span>
+          {rConfig.autoRejectEnabled ? (
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+              Авто-отказ ВКЛ
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-500">
+              Без фильтра
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ПОДРАЗДЕЛ 1: Панель набора в Discord */}
+      {activeSubTab === 'message' && (
+        <div className="space-y-6">
+          {/* Discord Recruitment Panel Channel Status & Manager */}
+          <DiscordPanelChannelBar
+            title={t('clan_recruitment_panel_title', 'Панель набора в клан')}
+            channelId={rConfig?.channelId}
+            messageId={rConfig?.messageId}
+            discordChannels={discordInfo?.channels || []}
+            onPublishOrMove={handlePublishOrMoveRecruitment}
+            onSync={handleSyncRecruitment}
+            onDelete={handleDeleteRecruitment}
+            activeDesc={t('clan_recruitment_panel_active_desc', 'Кандидаты видят эту панель и нажимают кнопку для подачи заявки в клан.')}
+            promptText={t('clan_recruitment_panel_prompt', 'Выберите канал для публикации интерактивной панели набора в клан с кнопкой подачи заявки. При смене канала бот удалит старую панель.')}
+            icon={UserPlus}
+            accentColor="orange"
+          />
+
+          {/* Быстрый переход: Журнал и статус заявок в клан */}
         <div className="p-4 sm:p-5 border border-orange-200/80 dark:border-orange-900/40 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-950/30 dark:via-amber-950/10 dark:to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-center space-x-3.5">
             <div className="p-2.5 rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/20 shrink-0">
@@ -1271,9 +1332,13 @@ export default function RecruitmentTab() {
             </div>
           </div>
         </div>
+        </div>
+      )}
 
-        {/* 2. Конструктор формы подачи заявки (Discord Modal) */}
-        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
+      {/* ПОДРАЗДЕЛ 2: Конструктор формы подачи заявки (Discord Modal) */}
+      {activeSubTab === 'form' && (
+        <div className="space-y-6">
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center space-x-3">
               <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40 shrink-0">
@@ -1559,9 +1624,29 @@ export default function RecruitmentTab() {
             </div>
           )}
         </div>
+        </div>
+      )}
 
-        {/* 3. Автоматическое отклонение заявок (Auto-Reject) */}
-        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
+      {/* ПОДРАЗДЕЛ 3: Отправленный тикет, авто-отказ и проверка профиля */}
+      {activeSubTab === 'ticket' && (
+        <div className="space-y-6">
+          {/* Информационный баннер о жизненном цикле тикета в Discord */}
+          <div className="p-4 sm:p-5 border border-blue-200/80 dark:border-blue-900/40 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-950/30 dark:via-indigo-950/10 dark:to-transparent flex items-start gap-3.5 shadow-xs">
+            <div className="p-2.5 rounded-xl bg-blue-500 text-white shadow-md shadow-blue-500/20 shrink-0">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                Обработка отправленного тикета в Discord
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                После заполнения формы бот создаёт приватный текстовый канал тикета в Discord. Если кандидат не проходит минимальные требования (возраст, часы, VAC-баны), бот публикует причину отказа и автоматически удаляет канал через 10 минут. Если анкета одобрена, рекрутеры принимают решение кнопками в тикете.
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Автоматическое отклонение заявок (Auto-Reject) */}
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center space-x-3">
               <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/40 shrink-0">
@@ -1945,9 +2030,8 @@ export default function RecruitmentTab() {
           </div>
         )}
       </div>
-
-
       </div>
+    )}
 
       {/* Emoji Picker Modal */}
       <EmojiPickerModal
