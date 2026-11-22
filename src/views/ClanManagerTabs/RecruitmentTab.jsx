@@ -6,7 +6,7 @@ import {
   ExternalLink, Eye, EyeOff, X, ArrowRight,
   Upload, Loader2, CheckCircle2, HardDrive, Trash2,
   Sparkles, Image as ImageIcon, Info, ChevronDown, Palette,
-  ArrowUp, ArrowDown, Plus, RotateCcw, Folder, Layers, Smile, MessageSquare
+  ArrowUp, ArrowDown, Plus, RotateCcw, Folder, Layers, Smile
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import { ToggleSwitch } from '../ClanManager';
@@ -16,7 +16,6 @@ import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
 import { proofreadRecruitmentText, getPresetBanners } from '../../services/aiService';
 import EmojiPickerModal from '../../components/EmojiPickerModal';
 import EmojiSuggestModal from '../../components/EmojiSuggestModal';
-import RecruitmentFlowPipeline from '../../components/RecruitmentFlowPipeline';
 import { resolveDiscordEmoji } from '../../utils/discordEmojis';
 import {
   validateEmbedTitle,
@@ -32,18 +31,6 @@ import {
   cleanDiscordText,
   DISCORD_LIMITS
 } from '../../utils/discordValidation';
-
-function renderEmojiPreview(emojiKeyOrStr) {
-  if (!emojiKeyOrStr) return null;
-  const resolved = resolveDiscordEmoji(emojiKeyOrStr);
-  if (resolved?.type === 'local') {
-    return <img src={resolved.url} alt={resolved.alt || 'emoji'} className="w-3.5 h-3.5 inline-block object-contain mr-1 filter drop-shadow" />;
-  }
-  if (resolved?.type === 'cdn') {
-    return <img src={resolved.url} alt={resolved.alt || 'emoji'} className="w-3.5 h-3.5 inline-block object-contain mr-1" />;
-  }
-  return <span className="mr-1 text-xs">{resolved?.text || emojiKeyOrStr}</span>;
-}
 
 export function HelpTooltip({ text, className = '' }) {
   if (!text) return null;
@@ -70,13 +57,8 @@ export default function RecruitmentTab() {
     queueAutoSave, saveConfig, sendProxyAction, addLog,
     openExternalUrl, setActiveTab, t,
     currentActiveGuildId, guildId,
-    aiPreviewOverride, setAiPreviewOverride,
-    recruitmentSubTab, setRecruitmentSubTab
+    aiPreviewOverride, setAiPreviewOverride
   } = useContext(ClanManagerContext);
-
-  const activeSubTab = recruitmentSubTab || 'message';
-  const [testModalValues, setTestModalValues] = useState({});
-  const [ticketPreviewMode, setTicketPreviewMode] = useState('accepted'); // 'accepted' | 'rejected'
 
   const [isAiPreviewing, setIsAiPreviewing] = useState(false);
 
@@ -489,67 +471,62 @@ export default function RecruitmentTab() {
 
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6">
-      {/* 3 Sub-tabs Navigation Bar */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100/90 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs mb-6 flex-wrap">
-        <button
-          type="button"
-          onClick={() => setRecruitmentSubTab?.('message')}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeSubTab === 'message'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>1. {t('clan_rec_sub_message', 'Сообщение набора')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setRecruitmentSubTab?.('form')}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeSubTab === 'form'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>2. {t('clan_rec_sub_form', 'Форма заявки')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setRecruitmentSubTab?.('ticket')}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeSubTab === 'ticket'
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/50'
-          }`}
-        >
-          <Bot className="w-4 h-4" />
-          <span>3. {t('clan_rec_sub_ticket', 'Тикет и авто-проверка')}</span>
-        </button>
-      </div>
+      {/* Discord Recruitment Panel Channel Status & Manager */}
+      <DiscordPanelChannelBar
+        title={t('clan_recruitment_panel_title', 'Панель набора в клан')}
+        channelId={rConfig?.channelId}
+        messageId={rConfig?.messageId}
+        discordChannels={discordInfo?.channels || []}
+        onPublishOrMove={handlePublishOrMoveRecruitment}
+        onSync={handleSyncRecruitment}
+        onDelete={handleDeleteRecruitment}
+        activeDesc={t('clan_recruitment_panel_active_desc', 'Кандидаты видят эту панель и нажимают кнопку для подачи заявки в клан.')}
+        promptText={t('clan_recruitment_panel_prompt', 'Выберите канал для публикации интерактивной панели набора в клан с кнопкой подачи заявки. При смене канала бот удалит старую панель.')}
+        icon={UserPlus}
+        accentColor="orange"
+      />
 
-      {/* Sub-tab 1: Message */}
-      {activeSubTab === 'message' && (
-        <div className="space-y-6">
-          <DiscordPanelChannelBar
-            title={t('clan_recruitment_panel_title', 'Панель набора в клан')}
-            channelId={rConfig?.channelId}
-            messageId={rConfig?.messageId}
-            discordChannels={discordInfo?.channels || []}
-            onPublishOrMove={handlePublishOrMoveRecruitment}
-            onSync={handleSyncRecruitment}
-            onDelete={handleDeleteRecruitment}
-            activeDesc={t('clan_recruitment_panel_active_desc', 'Кандидаты видят эту панель и нажимают кнопку для подачи заявки в клан.')}
-            promptText={t('clan_recruitment_panel_prompt', 'Выберите канал для публикации интерактивной панели набора в клан с кнопкой подачи заявки. При смене канала бот удалит старую панель.')}
-            icon={UserPlus}
-            accentColor="orange"
-          />
+      <div className="space-y-6">
+        {/* Быстрый переход: Журнал и статус заявок в клан */}
+        <div className="p-4 sm:p-5 border border-orange-200/80 dark:border-orange-900/40 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-950/30 dark:via-amber-950/10 dark:to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-2.5 rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/20 shrink-0">
+              <ScrollText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  {t('clan_tab_applications', 'Заявки в клан')}
+                </h4>
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-orange-500 text-white shadow-xs">
+                  {pendingAppsCount > 0 ? `${pendingAppsCount} новых` : `${Array.isArray(applicationsData) ? applicationsData.length : 0} всего`}
+                </span>
+                {pendingAppsCount > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    Ожидают решения
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {t('clan_recruitment_apps_banner_desc', 'Просмотр анкет кандидатов, оперативное рассмотрение и архив тикетов.')}
+              </p>
+            </div>
+          </div>
+          {setActiveTab && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('applications')}
+              className="w-full sm:w-auto px-4 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white rounded-xl text-xs font-bold shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            >
+              <span>{t('clan_open_applications_btn', 'Открыть журнал заявок')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-            <div className="xl:col-span-7 space-y-6">
-              {/* 1. Основные параметры панели набора */}
-              <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
+        {/* 1. Основные параметры панели набора */}
+        <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
           <h4 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Sliders className="w-4 h-4 text-orange-500" />
             {t('clan_auto_42', 'Панель набора в Discord')}
@@ -614,6 +591,14 @@ export default function RecruitmentTab() {
                   <span className={`text-xs font-mono font-medium ${descValidation.isValid ? 'text-slate-400' : 'text-rose-500 font-bold'}`}>
                     {descValidation.totalLength} / {DISCORD_LIMITS.DESCRIPTION_MAX}
                   </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    {t('clan_markdown_supported', 'Markdown поддерживается')}
+                  </span>
+                  <ToggleSwitch
+                    checked={rConfig.markdownEnabled !== false}
+                    onChange={val => updateRConfig('markdownEnabled', val, true)}
+                    activeColor="orange"
+                  />
                 </div>
               </div>
             </div>
@@ -1286,105 +1271,7 @@ export default function RecruitmentTab() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Stage 1 Preview: Live Discord Message */}
-        <div className="xl:col-span-5 sticky top-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[11px] font-bold flex items-center justify-center">1</span>
-              <span>Превью сообщения в Discord</span>
-            </span>
-            <span className="text-[11px] text-slate-400 font-medium">Канал набора</span>
-          </div>
-
-          <div className="bg-[#313338] text-[#dbdee1] rounded-2xl border border-slate-700/60 shadow-lg overflow-hidden flex flex-col font-sans text-xs">
-            {/* Discord Channel header mockup */}
-            <div className="px-4 py-2.5 bg-[#2b2d31] border-b border-[#1f2023] flex items-center gap-2 text-slate-400 text-[11px]">
-              <span className="font-bold text-[#80848e]">#</span>
-              <span className="text-[#f2f3f5] font-semibold">заявки-в-клан</span>
-            </div>
-
-            <div className="p-4 space-y-3 flex-1 flex flex-col">
-              {/* Embed Box */}
-              <div 
-                className="rounded-lg bg-[#2b2d31] overflow-hidden border border-[#1e1f22] flex flex-col shadow-xs"
-                style={{ borderLeft: `4px solid ${rConfig.color || '#f97316'}` }}
-              >
-                {/* Banner */}
-                {rConfig.banner && (
-                  <div className="w-full max-h-40 overflow-hidden bg-black/40">
-                    <img 
-                      src={normalizeImageUrl(rConfig.banner)} 
-                      alt="Clan Banner" 
-                      className="w-full h-full object-cover object-center"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                  </div>
-                )}
-
-                <div className="p-3.5 space-y-2">
-                  <h4 className="text-sm font-bold text-[#f2f3f5] leading-snug">
-                    {rConfig.title || (config?.name ? `Набор в клан ${config.name}` : 'Набор в клан')}
-                  </h4>
-
-                  <div className="text-[11px] text-[#dbdee1] whitespace-pre-line leading-relaxed">
-                    {aiPreviewOverride || rConfig.text || 'Мы ищем активных игроков...'}
-                  </div>
-
-                  {rConfig.includeMetadataLines !== false && (
-                    <div className="pt-2 border-t border-[#3f4147] text-[10px] text-[#949ba4] space-y-0.5">
-                      {rConfig.customLeaderId && (
-                        <div>👑 Лидер: <span className="text-[#5865f2] font-medium">&lt;@{rConfig.customLeaderId}&gt;</span></div>
-                      )}
-                      {(rConfig.link || config?.discordLink) && (
-                        <div>🔗 Ссылка: <span className="text-[#00a8fc] underline">{rConfig.link || config?.discordLink}</span></div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Recruitment Button */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => setRecruitmentSubTab?.('form')}
-                  className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-98 ${
-                    rConfig.buttonStyle === 'primary' ? 'bg-[#5865F2] hover:bg-[#4752C4] text-white' :
-                    rConfig.buttonStyle === 'secondary' ? 'bg-[#4e5058] hover:bg-[#6d6f78] text-white' :
-                    rConfig.buttonStyle === 'danger' ? 'bg-[#DA373C] hover:bg-[#A12828] text-white' :
-                    'bg-[#248046] hover:bg-[#1a6334] text-white'
-                  }`}
-                  title="Нажмите, чтобы настроить форму заявки"
-                >
-                  <ScrollText className="w-3.5 h-3.5" />
-                  <span>{rConfig.buttonText || 'Подать заявку'}</span>
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setRecruitmentSubTab?.('form')}
-                className="p-2.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/15 border border-orange-500/30 text-orange-600 dark:text-orange-400 text-[11px] font-semibold flex items-center justify-between gap-2 transition-all cursor-pointer group"
-              >
-                <span className="flex items-center gap-1.5">
-                  <span>👉</span>
-                  <span>Кликните по кнопке «{rConfig.buttonText || 'Подать заявку'}» для перехода к форме</span>
-                </span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {/* Sub-tab 2: Form */}
-  {activeSubTab === 'form' && (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-      <div className="xl:col-span-7 space-y-6">
         {/* 2. Конструктор формы подачи заявки (Discord Modal) */}
         <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -1672,116 +1559,7 @@ export default function RecruitmentTab() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Stage 2 Preview: Live Interactive Discord Modal */}
-      <div className="xl:col-span-5 sticky top-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[11px] font-bold flex items-center justify-center">2</span>
-            <span>Интерактивное превью формы (Modal)</span>
-          </span>
-          <span className="text-[11px] font-mono text-orange-500 font-semibold">{formConfig.fields.length} / 5 полей</span>
-        </div>
-
-        <div className="bg-[#313338] rounded-2xl border-2 border-orange-500/40 shadow-xl overflow-hidden flex flex-col font-sans text-xs">
-          {/* Modal Window Header */}
-          <div className="px-4 py-3 bg-[#2b2d31] border-b border-[#1f2023] flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-              <h4 className="text-xs font-bold text-[#f2f3f5] truncate">
-                {formConfig.title || 'Подача заявки в клан'}
-              </h4>
-            </div>
-            <span className="text-[10px] text-slate-400 font-mono">Discord Form</span>
-          </div>
-
-          {/* Interactive Testing Tip */}
-          <div className="px-3.5 py-2 bg-indigo-500/15 border-b border-indigo-500/20 text-indigo-300 text-[11px] flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span>Интерактивный тест: вы можете кликать в поля и вводить текст прямо здесь!</span>
-          </div>
-
-          {/* Modal Input Fields */}
-          <div className="p-4 space-y-3.5 flex-1 overflow-y-auto max-h-[420px] scrollbar-thin">
-            {formConfig.fields.map((f, idx) => (
-              <div key={f.id || idx} className="space-y-1.5">
-                <label className="text-[11px] font-bold text-[#b5bac1] flex items-center justify-between">
-                  <span className="flex items-center">
-                    {renderEmojiPreview(f.emoji)}
-                    <span>{f.label || `Поле ${idx + 1}`}</span>
-                    {f.required !== false && <span className="text-[#fa777c] ml-1">*</span>}
-                  </span>
-                  <span className="text-[9px] font-mono text-[#80848e]">
-                    {f.style === 'paragraph' ? 'многострочное' : 'строка'}
-                  </span>
-                </label>
-
-                {f.style === 'paragraph' ? (
-                  <textarea
-                    value={testModalValues[f.id] || ''}
-                    onChange={e => setTestModalValues(prev => ({ ...prev, [f.id]: e.target.value }))}
-                    placeholder={f.placeholder || 'Введите развернутый ответ...'}
-                    rows={3}
-                    className="w-full px-3 py-2 bg-[#1e1f22] border border-[#3f4147] focus:border-[#5865f2] rounded-md text-[11px] text-[#dbdee1] placeholder-[#80848e] outline-none transition-colors resize-none font-sans"
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={testModalValues[f.id] || ''}
-                    onChange={e => setTestModalValues(prev => ({ ...prev, [f.id]: e.target.value }))}
-                    placeholder={f.placeholder || 'Введите ответ...'}
-                    className="w-full h-8 px-3 bg-[#1e1f22] border border-[#3f4147] focus:border-[#5865f2] rounded-md text-[11px] text-[#dbdee1] placeholder-[#80848e] outline-none transition-colors font-sans"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Modal Buttons Footer */}
-          <div className="p-3 bg-[#2b2d31] border-t border-[#1f2023] flex items-center justify-between gap-2">
-            <span className="text-[11px] text-slate-400">
-              Текст не сохраняется в БД
-            </span>
-            <div className="flex items-center gap-2">
-              <span 
-                onClick={() => setTestModalValues({})}
-                className="text-[11px] font-semibold text-slate-400 hover:text-white px-2 py-1 rounded cursor-pointer"
-              >
-                Очистить
-              </span>
-              <button
-                type="button"
-                onClick={() => setRecruitmentSubTab?.('ticket')}
-                className="px-4 py-1.5 bg-[#5865F2] hover:bg-[#4752C4] active:scale-95 text-white text-xs font-semibold rounded-md shadow-xs flex items-center gap-1.5 cursor-pointer"
-                title="Нажмите «Отправить», чтобы увидеть тикет после подачи"
-              >
-                <span>Отправить</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setRecruitmentSubTab?.('ticket')}
-          className="w-full p-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 text-[11px] font-semibold flex items-center justify-between gap-2 transition-all cursor-pointer group"
-        >
-          <span className="flex items-center gap-1.5">
-            <span>👉</span>
-            <span>Нажмите «Отправить», чтобы перейти к настройке тикета и авто-проверки</span>
-          </span>
-          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
-        </button>
-      </div>
-    </div>
-  )}
-
-  {/* Sub-tab 3: Ticket */}
-  {activeSubTab === 'ticket' && (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-      <div className="xl:col-span-7 space-y-6">
         {/* 3. Автоматическое отклонение заявок (Auto-Reject) */}
         <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -2167,150 +1945,9 @@ export default function RecruitmentTab() {
           </div>
         )}
       </div>
-    </div>
 
-      {/* Stage 3 Preview: Live Ticket Channel */}
-      <div className="xl:col-span-5 sticky top-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <span className="w-5 h-5 rounded-full bg-orange-500 text-white text-[11px] font-bold flex items-center justify-center">3</span>
-            <span>Превью созданного тикета</span>
-          </span>
 
-          {/* Outcome Switcher */}
-          <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200/60 dark:border-slate-700/60 text-[10px]">
-            <button
-              type="button"
-              onClick={() => setTicketPreviewMode('accepted')}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
-                ticketPreviewMode === 'accepted'
-                  ? 'bg-emerald-500 text-white shadow-2xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Одобрен
-            </button>
-            <button
-              type="button"
-              onClick={() => setTicketPreviewMode('rejected')}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
-                ticketPreviewMode === 'rejected'
-                  ? 'bg-rose-500 text-white shadow-2xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Авто-отказ
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-[#313338] text-[#dbdee1] rounded-2xl border border-slate-700/60 shadow-lg overflow-hidden flex flex-col font-sans text-xs">
-          {/* Channel bar */}
-          <div className="px-4 py-2.5 bg-[#2b2d31] border-b border-[#1f2023] flex items-center justify-between text-slate-400 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-[#80848e]">#</span>
-              <span className="text-[#f2f3f5] font-semibold">
-                {ticketPreviewMode === 'rejected' ? 'отказ-alex_rust' : 'заявка-alex_rust'}
-              </span>
-            </div>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-              ticketPreviewMode === 'rejected' ? 'bg-rose-950/80 text-rose-300 border border-rose-800/60' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/60'
-            }`}>
-              {ticketPreviewMode === 'rejected' ? '10 мин до удаления' : 'Ожидает модератора'}
-            </span>
-          </div>
-
-          {/* Ticket Content */}
-          <div className="p-4 space-y-3 flex-1 flex flex-col overflow-y-auto max-h-[420px] scrollbar-thin">
-            {/* Bot Mention Notification */}
-            <div className="text-[10px] text-[#949ba4]">
-              <span className="text-[#5865F2] font-medium">@Alex_Rust</span> <span className="text-[#e6c02a] font-medium">@Лидер</span> <span className="text-[#e6c02a] font-medium">@Рекрутер</span>
-            </div>
-
-            {/* Ticket Card Embed */}
-            <div 
-              className="rounded-lg bg-[#2b2d31] p-3.5 space-y-2.5 border border-[#1e1f22]"
-              style={{ borderLeft: `4px solid ${ticketPreviewMode === 'rejected' ? '#ed4245' : '#57f287'}` }}
-            >
-              <div className="flex items-center justify-between border-b border-[#3f4147] pb-2">
-                <span className="font-bold text-[#f2f3f5] text-xs">
-                  {ticketPreviewMode === 'rejected' ? '❌ Заявка отклонена ботом' : '📋 Новая анкета кандидата'}
-                </span>
-                <span className="text-[10px] font-mono text-[#949ba4]">ID: 749210</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div>
-                  <span className="text-[#949ba4] block text-[10px]">Кандидат</span>
-                  <span className="text-[#f2f3f5] font-semibold">Alex_Rust</span>
-                </div>
-                <div>
-                  <span className="text-[#949ba4] block text-[10px]">Возраст</span>
-                  <span className={`font-semibold ${ticketPreviewMode === 'rejected' ? 'text-rose-400' : 'text-[#f2f3f5]'}`}>
-                    {ticketPreviewMode === 'rejected' ? '16 лет' : '20 лет'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[#949ba4] block text-[10px]">Часы в Rust</span>
-                  <span className={`font-semibold ${ticketPreviewMode === 'rejected' ? 'text-rose-400' : 'text-[#f2f3f5]'}`}>
-                    {ticketPreviewMode === 'rejected' ? '850 ч.' : '3 800 ч.'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[#949ba4] block text-[10px]">Steam</span>
-                  <span className="text-[#00a8fc] underline truncate block">/id/rust_pro_alex</span>
-                </div>
-              </div>
-
-              <div className="pt-1.5 border-t border-[#3f4147]">
-                <span className="text-[#949ba4] block text-[10px]">Опыт / Кланы</span>
-                <span className="text-[#dbdee1] text-[11px]">Играл в RED, TORN, опыт 4 вайпа на Main, стрелок/электрик.</span>
-              </div>
-            </div>
-
-            {/* Rejected Details Embed */}
-            {ticketPreviewMode === 'rejected' ? (
-              <div className="rounded-lg bg-[#2b2d31] p-3 border-l-4 border-[#ed4245] space-y-1.5">
-                <div className="text-[#ed4245] font-bold text-xs flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  <span>Причина авто-отказа:</span>
-                </div>
-                <div className="text-[11px] text-[#dbdee1] leading-relaxed">
-                  {rConfig.autoRejectMessage || 'Возраст меньше установленного минимума (18 лет).'}
-                </div>
-                <div className="pt-2 text-[10px] text-rose-400/90 flex items-center gap-1 font-medium">
-                  <Clock className="w-3 h-3" />
-                  <span>⏱️ Этот канал будет автоматически удален ботом через 10 минут.</span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 pt-1">
-                <button type="button" className="flex-1 py-1.5 bg-[#248046] hover:bg-[#1a6334] text-white rounded font-medium text-[11px]">
-                  Принять
-                </button>
-                <button type="button" className="flex-1 py-1.5 bg-[#da373c] hover:bg-[#a12828] text-white rounded font-medium text-[11px]">
-                  Отклонить
-                </button>
-                <button type="button" className="px-3 py-1.5 bg-[#4e5058] hover:bg-[#6d6f78] text-white rounded font-medium text-[11px]">
-                  Закрыть
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 space-y-1">
-          <div className="font-bold flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
-            <span>Авто-удаление тикетов через 10 минут:</span>
-          </div>
-          <p className="text-[11px] opacity-90 leading-relaxed">
-            Если анкета отклонена ботом или модератором, бот автоматически удаляет тикет через 10 минут. Если кандидат выходит с сервера Discord, тикет удаляется немедленно.
-          </p>
-        </div>
       </div>
-    </div>
-  )}
 
       {/* Emoji Picker Modal */}
       <EmojiPickerModal

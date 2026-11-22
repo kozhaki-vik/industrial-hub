@@ -32,7 +32,7 @@ import {
   Settings, Users, Hash, ShieldCheck, UserPlus, Vote, Megaphone, UserCheck, BarChart3, Plus, Check,
   RotateCcw, AlertTriangle, ScrollText, ShieldAlert, Zap, CheckCheck, Ban, X, Bot, Clock, Filter,
   BookOpen, Star, Search, ExternalLink, Archive, ArrowUp, ArrowLeft, Eye, EyeOff, Copy, ChevronDown, ChevronRight,
-  Inbox, MessageSquare, Layers
+  Inbox
 } from 'lucide-react';
 import { getConfigKey, setConfigKey } from '../services/store';
 import DiscordMessagePreview from '../components/DiscordMessagePreview';
@@ -431,8 +431,6 @@ export default function ClanManager() {
   const [aiPreviewOverride, setAiPreviewOverride] = useState(null);
   const [viewMode, setViewMode] = useState('clan'); // 'clan' (Daily Clan operations) | 'botConfig' (Technical Bot & Server setup)
   const [activeTab, setActiveTabRaw] = useState('roster');
-  const [recruitmentSubTab, setRecruitmentSubTab] = useState('message'); // 'message' | 'form' | 'ticket'
-  const [isRecruitmentExpanded, setIsRecruitmentExpanded] = useState(true);
   const [modSubTab, setModSubTab] = useState('antiMention');
   const [isModExpanded, setIsModExpanded] = useState(true);
   const [rosterData, setRosterData] = useState(null);
@@ -497,10 +495,6 @@ export default function ClanManager() {
       return;
     }
     setActiveTabRaw(tab);
-    if (tab === 'recruitment' && subCategory) {
-      setRecruitmentSubTab(subCategory);
-      setIsRecruitmentExpanded(true);
-    }
     if (tab === 'applications' && subCategory) {
       setApplicationsCategory(subCategory);
     }
@@ -3326,12 +3320,6 @@ export default function ClanManager() {
     { id: 'whitelist', label: t('clan_mod_sub_whitelist', 'Исключения и логи'), icon: ShieldCheck }
   ];
 
-  const recruitmentSubTabs = [
-    { id: 'message', label: t('clan_rec_sub_message', 'Сообщение набора'), icon: MessageSquare },
-    { id: 'form', label: t('clan_rec_sub_form', 'Форма заявки'), icon: Layers },
-    { id: 'ticket', label: t('clan_rec_sub_ticket', 'Тикет и авто-проверка'), icon: Bot },
-  ];
-
   const botSearchIndex = [
     // General
     {
@@ -4020,7 +4008,11 @@ export default function ClanManager() {
           footer: rConfig.footerText || undefined
         },
         buttons: [
-          { label: rConfig.buttonText || t('clan_auto_v2_1001', 'Подать заявку'), emoji: '📝', style: 'success' }
+          {
+            label: rConfig.buttonText || t('clan_auto_v2_1001', 'Подать заявку'),
+            emoji: rConfig.buttonEmoji || '📝',
+            style: rConfig.buttonStyle || 'success'
+          }
         ]
       };
     }
@@ -4132,7 +4124,7 @@ export default function ClanManager() {
   };
 
   const previewData = getLivePreviewData();
-  const isCompanionWindowVisible = isFullScreenWindow && showDiscordLivePreview && Boolean(previewData);
+  const isCompanionWindowVisible = Boolean(previewData);
 
 const contextValue = {
   BOT_INVITE_URL: typeof BOT_INVITE_URL !== "undefined" ? BOT_INVITE_URL : undefined,
@@ -4348,11 +4340,6 @@ const contextValue = {
   rcLink: typeof rcLink !== "undefined" ? rcLink : undefined,
   recruitmentInviteDetails: typeof recruitmentInviteDetails !== "undefined" ? recruitmentInviteDetails : undefined,
   recruitmentInviteStatus: typeof recruitmentInviteStatus !== "undefined" ? recruitmentInviteStatus : undefined,
-  recruitmentSubTab: typeof recruitmentSubTab !== "undefined" ? recruitmentSubTab : undefined,
-  setRecruitmentSubTab: typeof setRecruitmentSubTab !== "undefined" ? setRecruitmentSubTab : undefined,
-  isRecruitmentExpanded: typeof isRecruitmentExpanded !== "undefined" ? isRecruitmentExpanded : undefined,
-  setIsRecruitmentExpanded: typeof setIsRecruitmentExpanded !== "undefined" ? setIsRecruitmentExpanded : undefined,
-  recruitmentSubTabs: typeof recruitmentSubTabs !== "undefined" ? recruitmentSubTabs : undefined,
   reqId: typeof reqId !== "undefined" ? reqId : undefined,
   res: typeof res !== "undefined" ? res : undefined,
   resetSecs: typeof resetSecs !== "undefined" ? resetSecs : undefined,
@@ -4734,88 +4721,44 @@ const contextValue = {
                   {clanTabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
-                    const isRecruitment = tab.id === 'recruitment';
-                    const showRecruitmentSub = isRecruitment && isRecruitmentExpanded;
 
                     return (
-                      <React.Fragment key={tab.id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isRecruitment) {
-                              if (activeTab === 'recruitment') {
-                                setIsRecruitmentExpanded(prev => !prev);
-                              } else {
-                                setActiveTab('recruitment');
-                                setIsRecruitmentExpanded(true);
-                              }
-                            } else {
-                              setActiveTab(tab.id);
-                            }
-                          }}
-                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
-                            isActive
-                              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
-                            <span className="truncate">{tab.label}</span>
-                          </div>
-                          {isRecruitment ? (
-                            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showRecruitmentSub ? 'rotate-180 text-white' : 'text-slate-400'}`} />
-                          ) : null}
-                          {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-                              {rosterData.roster.length}
-                            </span>
-                          )}
-                          {tab.id === 'applications' && pendingAppsCount > 0 && (
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
-                              {pendingAppsCount}
-                            </span>
-                          )}
-                          {tab.id === 'ad_tickets' && (
-                            openAdTicketsCount > 0 ? (
-                              <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
-                                {openAdTicketsCount}
-                              </span>
-                            ) : adTicketsData?.length > 0 ? (
-                              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-                                {adTicketsData.length}
-                              </span>
-                            ) : null
-                          )}
-                        </button>
-
-                        {showRecruitmentSub && (
-                          <div className="pl-6 pr-1 py-1 space-y-1">
-                            {recruitmentSubTabs.map(sub => {
-                              const SubIcon = sub.icon;
-                              const isSubActive = activeTab === 'recruitment' && recruitmentSubTab === sub.id;
-                              return (
-                                <button
-                                  key={sub.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveTab('recruitment', sub.id);
-                                    setRecruitmentSubTab(sub.id);
-                                  }}
-                                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
-                                    isSubActive
-                                      ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-semibold border-l-2 border-blue-500 shadow-2xs'
-                                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-800 dark:hover:text-slate-200'
-                                  }`}
-                                >
-                                  <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`} />
-                                  <span className="truncate">{sub.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                          <span className="truncate">{tab.label}</span>
+                        </div>
+                        {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
+                          <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                            {rosterData.roster.length}
+                          </span>
                         )}
-                      </React.Fragment>
+                        {tab.id === 'applications' && pendingAppsCount > 0 && (
+                          <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
+                            {pendingAppsCount}
+                          </span>
+                        )}
+                        {tab.id === 'ad_tickets' && (
+                          openAdTicketsCount > 0 ? (
+                            <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
+                              {openAdTicketsCount}
+                            </span>
+                          ) : adTicketsData?.length > 0 ? (
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                              {adTicketsData.length}
+                            </span>
+                          ) : null
+                        )}
+                      </button>
                     );
                   })}
                 </div>
@@ -5108,7 +5051,6 @@ const contextValue = {
               templates={previewData.templates}
               activeTemplateIndex={previewData.activeTemplateIndex}
               onSelectTemplate={(idx) => setPreviewVoteIndex(idx)}
-              onClose={() => setShowDiscordLivePreview(false)}
               tabTitle={previewData.tabTitle}
             />
           </aside>
