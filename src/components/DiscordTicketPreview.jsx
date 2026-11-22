@@ -1,7 +1,6 @@
 import React, { useState, useMemo, memo } from 'react';
 import { Lock, Hash, ShieldCheck, AlertTriangle, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { resolveDiscordEmoji } from '../utils/discordEmojis';
 
 function DiscordTicketPreview({
   channelName = 'заявка-alex_rust',
@@ -141,9 +140,9 @@ function DiscordTicketPreview({
             )}
           </div>
 
-          {/* Embed Container with smooth rounded corners */}
+          {/* Embed Container - Authentic Discord 4px radius */}
           <div 
-            className="bg-[#2b2d31] rounded-r-2xl rounded-bl-2xl p-4 sm:p-5 text-[#dbdee1] shadow-md w-full border-l-4 transition-all space-y-3.5"
+            className="bg-[#2b2d31] rounded-r-[4px] rounded-bl-[4px] p-4 text-[#dbdee1] shadow-md w-full border-l-4 transition-all space-y-3.5"
             style={{ borderLeftColor: embedColor }}
           >
             {/* Embed Title */}
@@ -161,27 +160,14 @@ function DiscordTicketPreview({
               )}
             </div>
 
-            {/* Candidate Answers Grid with oval/rounded boxes */}
+            {/* Candidate Answers Grid with authentic 4px boxes */}
             <div className="space-y-2.5 pt-1">
               {fields.map((field, idx) => {
-                const resolvedEmoji = resolveDiscordEmoji(field.emoji);
                 const answer = getSampleAnswer(field, idx);
 
                 return (
-                  <div key={field.id || idx} className="bg-[#1e1f22]/70 rounded-xl p-3 border border-[#232428]">
+                  <div key={field.id || idx} className="bg-[#1e1f22]/70 rounded-[4px] p-3 border border-[#232428]">
                     <div className="text-[11px] font-bold text-[#949ba4] uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      {resolvedEmoji && (
-                        resolvedEmoji.type === 'local' || resolvedEmoji.type === 'cdn' ? (
-                          <img
-                            src={resolvedEmoji.url}
-                            alt="emoji"
-                            className="w-3.5 h-3.5 object-contain inline-block shrink-0"
-                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                          />
-                        ) : (
-                          <span className="text-xs normal-case">{resolvedEmoji.text}</span>
-                        )
-                      )}
                       <span>{field.label || `Вопрос #${idx + 1}`}</span>
                     </div>
                     {/* Natural Discord text: light grey/white, no arbitrary neon colors */}
@@ -193,14 +179,14 @@ function DiscordTicketPreview({
               })}
             </div>
 
-            {/* Status / Verification Card with rounded-xl corners & authentic Discord text colors */}
+            {/* Status / Verification Card with rounded-[4px] corners & authentic Discord text colors */}
             {isRejected ? (
-              <div className="mt-3 p-3.5 rounded-xl bg-[#232428] border border-[#35373c] text-xs space-y-2.5">
+              <div className="mt-3 p-3.5 rounded-[4px] bg-[#232428] border border-[#35373c] text-xs space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[#f2f3f5] font-bold">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-[#949ba4]" />
                   <span>Сработал автоматический отказ:</span>
                 </div>
-                <div className="bg-[#1e1f22] p-2.5 rounded-lg text-[11px] text-[#dbdee1] border border-[#2b2d31] space-y-1">
+                <div className="bg-[#1e1f22] p-2.5 rounded-[4px] text-[11px] text-[#dbdee1] border border-[#2b2d31] space-y-1">
                   {rConfig.minHours > 0 && (
                     <div>• Недостаточно игровых часов: 1,400 ч. (требуется от {rConfig.minHours} ч.)</div>
                   )}
@@ -211,7 +197,7 @@ function DiscordTicketPreview({
                     <div>• Проверка Valve Anti-Cheat / Game Bans: Чисто (блокировок нет)</div>
                   )}
                 </div>
-                <div className="text-[11px] text-[#dbdee1] bg-[#1e1f22] p-2.5 rounded-lg border border-[#2b2d31]">
+                <div className="text-[11px] text-[#dbdee1] bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
                   <span className="font-semibold text-[#f2f3f5] block mb-0.5">Сообщение кандидату:</span>
                   «{rejectMsg}»
                 </div>
@@ -221,12 +207,12 @@ function DiscordTicketPreview({
                 </div>
               </div>
             ) : (
-              <div className="mt-3 p-3.5 rounded-xl bg-[#232428] border border-[#35373c] text-xs space-y-2">
+              <div className="mt-3 p-3.5 rounded-[4px] bg-[#232428] border border-[#35373c] text-xs space-y-2">
                 <div className="flex items-center gap-1.5 text-[#f2f3f5] font-bold">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-[#949ba4]" />
                   <span>Проверка Steam и критериев:</span>
                 </div>
-                <div className="text-[11px] text-[#dbdee1] space-y-1 bg-[#1e1f22] p-2.5 rounded-lg border border-[#2b2d31]">
+                <div className="text-[11px] text-[#dbdee1] space-y-1 bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
                   <div>• Аккаунт Steam открыт, VAC/Game банов нет</div>
                   <div>• Игровые часы (3,850 ч.) превышают минимальный порог</div>
                   {rConfig.steamPrefixCheck && (
@@ -237,19 +223,19 @@ function DiscordTicketPreview({
             )}
           </div>
 
-          {/* Action Row with smooth oval/pill-shaped buttons */}
+          {/* Action Row with authentic rounded-[6px] buttons */}
           <div className="flex items-center gap-2 mt-3 flex-wrap">
             {isRejected ? (
               <>
                 <button
                   type="button"
-                  className="h-8 px-5 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-[#da373c] hover:bg-[#a12828] text-white shadow-xs cursor-pointer transition-colors"
+                  className="h-8 px-4 rounded-[6px] text-xs font-semibold flex items-center gap-1.5 bg-[#da373c] hover:bg-[#a12828] text-white shadow-xs cursor-pointer transition-colors"
                 >
                   <span>Удалить канал</span>
                 </button>
                 <button
                   type="button"
-                  className="h-8 px-5 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-[#5865f2] hover:bg-[#4752c4] text-white shadow-xs cursor-pointer transition-colors"
+                  className="h-8 px-4 rounded-[6px] text-xs font-semibold flex items-center gap-1.5 bg-[#5865f2] hover:bg-[#4752c4] text-white shadow-xs cursor-pointer transition-colors"
                 >
                   <span>Пересмотреть вручную</span>
                 </button>
@@ -258,19 +244,19 @@ function DiscordTicketPreview({
               <>
                 <button
                   type="button"
-                  className="h-8 px-5 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-[#248046] hover:bg-[#1a6334] text-white shadow-xs cursor-pointer transition-colors"
+                  className="h-8 px-4 rounded-[6px] text-xs font-semibold flex items-center gap-1.5 bg-[#248046] hover:bg-[#1a6334] text-white shadow-xs cursor-pointer transition-colors"
                 >
                   <span>Принять в клан</span>
                 </button>
                 <button
                   type="button"
-                  className="h-8 px-5 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-[#da373c] hover:bg-[#a12828] text-white shadow-xs cursor-pointer transition-colors"
+                  className="h-8 px-4 rounded-[6px] text-xs font-semibold flex items-center gap-1.5 bg-[#da373c] hover:bg-[#a12828] text-white shadow-xs cursor-pointer transition-colors"
                 >
                   <span>Отклонить заявку</span>
                 </button>
                 <button
                   type="button"
-                  className="h-8 px-5 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-[#4e5058] hover:bg-[#6d6f78] text-white shadow-xs cursor-pointer transition-colors"
+                  className="h-8 px-4 rounded-[6px] text-xs font-semibold flex items-center gap-1.5 bg-[#4e5058] hover:bg-[#6d6f78] text-white shadow-xs cursor-pointer transition-colors"
                 >
                   <span>Закрыть тикет</span>
                 </button>

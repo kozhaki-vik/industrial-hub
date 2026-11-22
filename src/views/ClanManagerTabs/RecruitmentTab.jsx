@@ -14,9 +14,6 @@ import { normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
 import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
 import { proofreadRecruitmentText, getPresetBanners } from '../../services/aiService';
-import EmojiPickerModal from '../../components/EmojiPickerModal';
-import EmojiSuggestModal from '../../components/EmojiSuggestModal';
-import { resolveDiscordEmoji } from '../../utils/discordEmojis';
 import {
   validateEmbedTitle,
   validateEmbedDescription,
@@ -191,16 +188,28 @@ export default function RecruitmentTab() {
   );
 
   // --- Modal Form Configuration State & Hooks ---
-  const [activeEmojiPickerIdx, setActiveEmojiPickerIdx] = useState(null);
-  const [isEmojiSuggestOpen, setIsEmojiSuggestOpen] = useState(false);
   const [isFormBuilderExpanded, setIsFormBuilderExpanded] = useState(true);
 
+  const ROLE_PRESETS = useMemo(() => ({
+    name: { label: 'Ваше имя / Никнейм', placeholder: 'Иван / Alex_Rust', style: 'short' },
+    age: { label: 'Ваш возраст', placeholder: '18', style: 'short' },
+    hours: { label: 'Часы в игре', placeholder: '3500ч', style: 'short' },
+    steam: { label: 'Ссылка на Steam / Battlemetrics', placeholder: 'https://steamcommunity.com/id/...', style: 'short' },
+    clan_history: { label: 'Предыдущие кланы / История', placeholder: 'Играл в кланах ..., причины ухода...', style: 'paragraph' },
+    skills: { label: 'Роль в команде / Навыки', placeholder: 'ПВП, фармер, билдер, электрик...', style: 'short' },
+    device: { label: 'Характеристики ПК / FPS в игре', placeholder: 'i7 13700k, RTX 4070, 140 fps', style: 'short' },
+    activity: { label: 'Прайм-тайм / Онлайн в день', placeholder: '18:00 - 02:00 МСК (6+ часов)', style: 'short' },
+    timezone: { label: 'Город / Часовой пояс', placeholder: 'Москва (МСК +0)', style: 'short' },
+    experience: { label: 'О себе / Дополнительно', placeholder: 'Расскажите немного о себе...', style: 'paragraph' },
+    custom: { label: 'Вопрос кандидату', placeholder: 'Ваш ответ...', style: 'short' }
+  }), []);
+
   const defaultFormFields = useMemo(() => [
-    { id: 'f_name', role: 'name', label: 'Ваше имя', placeholder: 'Иван', emoji: 'user', required: true, style: 'short' },
-    { id: 'f_age', role: 'age', label: 'Ваш возраст', placeholder: '18', emoji: 'user', required: true, style: 'short' },
-    { id: 'f_hours', role: 'hours', label: 'Часы в Rust (со всех аккаунтов)', placeholder: '3500ч', emoji: 'clock', required: true, style: 'short' },
-    { id: 'f_steam', role: 'steam', label: 'Ссылка на Steam (на котором играете)', placeholder: 'https://steamcommunity.com/id/...', emoji: 'link', required: true, style: 'short' },
-    { id: 'f_exp', role: 'experience', label: 'Опыт игры / предыдущие кланы', placeholder: 'Играл в кланах ..., позиция фармер/пвп', emoji: 'listdetails', required: false, style: 'paragraph' }
+    { id: 'f_name', role: 'name', label: 'Ваше имя', placeholder: 'Иван', required: true, style: 'short' },
+    { id: 'f_age', role: 'age', label: 'Ваш возраст', placeholder: '18', required: true, style: 'short' },
+    { id: 'f_hours', role: 'hours', label: 'Часы в Rust (со всех аккаунтов)', placeholder: '3500ч', required: true, style: 'short' },
+    { id: 'f_steam', role: 'steam', label: 'Ссылка на Steam (на котором играете)', placeholder: 'https://steamcommunity.com/id/...', required: true, style: 'short' },
+    { id: 'f_exp', role: 'experience', label: 'Опыт игры / предыдущие кланы', placeholder: 'Играл в кланах ..., позиция фармер/пвп', required: false, style: 'paragraph' }
   ], []);
 
   const formConfig = useMemo(() => {
@@ -242,6 +251,25 @@ export default function RecruitmentTab() {
     updateRConfig('formConfig', { ...formConfig, fields: currentFields }, true);
   }, [formConfig, updateRConfig]);
 
+  const handleRoleChange = useCallback((idx, newRole) => {
+    const currentFields = [...formConfig.fields];
+    const current = currentFields[idx];
+    if (!current) return;
+    const preset = ROLE_PRESETS[newRole];
+    
+    // Auto-fill label and placeholder if they are empty or match any default preset label
+    const isPresetLabel = !current.label || Object.values(ROLE_PRESETS).some(p => p.label === current.label);
+    const updated = {
+      ...current,
+      role: newRole,
+      label: isPresetLabel && preset ? preset.label : current.label,
+      placeholder: isPresetLabel && preset ? preset.placeholder : current.placeholder,
+      style: isPresetLabel && preset ? preset.style : current.style
+    };
+    currentFields[idx] = updated;
+    updateRConfig('formConfig', { ...formConfig, fields: currentFields }, true);
+  }, [formConfig, updateRConfig, ROLE_PRESETS]);
+
   const moveFormField = useCallback((idx, delta) => {
     const newIdx = idx + delta;
     if (newIdx < 0 || newIdx >= formConfig.fields.length) return;
@@ -262,9 +290,8 @@ export default function RecruitmentTab() {
     const newField = {
       id: `f_${Date.now()}`,
       role: 'custom',
-      label: `Доп. вопрос ${formConfig.fields.length + 1}`,
+      label: `Вопрос ${formConfig.fields.length + 1}`,
       placeholder: 'Ваш ответ...',
-      emoji: 'listdetails',
       required: false,
       style: 'short'
     };
@@ -481,10 +508,10 @@ export default function RecruitmentTab() {
         <button
           type="button"
           onClick={() => setActiveSubTab('message')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold border transition-colors duration-150 cursor-pointer ${
             activeSubTab === 'message'
-              ? 'bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60 font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
+              ? 'bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 shadow-sm border-slate-200/80 dark:border-slate-700'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
           }`}
         >
           <UserPlus className="w-4 h-4 shrink-0" />
@@ -494,10 +521,10 @@ export default function RecruitmentTab() {
         <button
           type="button"
           onClick={() => setActiveSubTab('form')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold border transition-colors duration-150 cursor-pointer ${
             activeSubTab === 'form'
-              ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60 font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
+              ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border-slate-200/80 dark:border-slate-700'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
           }`}
         >
           <Layers className="w-4 h-4 shrink-0" />
@@ -510,10 +537,10 @@ export default function RecruitmentTab() {
         <button
           type="button"
           onClick={() => setActiveSubTab('ticket')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold border transition-colors duration-150 cursor-pointer ${
             activeSubTab === 'ticket'
-              ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60 font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
+              ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm border-slate-200/80 dark:border-slate-700'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
           }`}
         >
           <Bot className="w-4 h-4 shrink-0" />
@@ -539,43 +566,43 @@ export default function RecruitmentTab() {
             accentColor="orange"
           />
 
-          {/* Быстрый переход: Журнал и статус заявок в клан */}
-        <div className="p-4 sm:p-5 border border-orange-200/80 dark:border-orange-900/40 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-950/30 dark:via-amber-950/10 dark:to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-2.5 rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/20 shrink-0">
-              <ScrollText className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  {t('clan_tab_applications', 'Заявки в клан')}
-                </h4>
-                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-orange-500 text-white shadow-xs">
-                  {pendingAppsCount > 0 ? `${pendingAppsCount} новых` : `${Array.isArray(applicationsData) ? applicationsData.length : 0} всего`}
-                </span>
-                {pendingAppsCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    Ожидают решения
-                  </span>
-                )}
+          {/* Быстрый переход: Журнал и статус заявок в клан (только если есть активные заявки) */}
+          {pendingAppsCount > 0 && (
+            <div className="p-4 sm:p-5 border border-orange-200/80 dark:border-orange-900/40 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-950/30 dark:via-amber-950/10 dark:to-transparent flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-center space-x-3.5">
+                <div className="p-2.5 rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/20 shrink-0">
+                  <ScrollText className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                      {t('clan_tab_applications', 'Заявки в клан')}
+                    </h4>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-orange-500 text-white shadow-xs">
+                      {pendingAppsCount === 1 ? '1 активная заявка' : `${pendingAppsCount} активных заявок`}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      Ожидают решения
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {t('clan_recruitment_apps_banner_desc', 'Просмотр анкет кандидатов, оперативное рассмотрение и архив тикетов.')}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {t('clan_recruitment_apps_banner_desc', 'Просмотр анкет кандидатов, оперативное рассмотрение и архив тикетов.')}
-              </p>
+              {setActiveTab && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('applications')}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white rounded-xl text-xs font-bold shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                >
+                  <span>{t('clan_open_applications_btn', 'Открыть журнал заявок')}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
-          </div>
-          {setActiveTab && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('applications')}
-              className="w-full sm:w-auto px-4 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white rounded-xl text-xs font-bold shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
-            >
-              <span>{t('clan_open_applications_btn', 'Открыть журнал заявок')}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
           )}
-        </div>
 
         {/* 1. Основные параметры панели набора */}
         <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/60 shadow-sm space-y-5">
@@ -616,13 +643,13 @@ export default function RecruitmentTab() {
             )}
           </div>
 
-          {/* 1.2 Содержимое сообщения (Текст с требованиями) и переключатель Markdown */}
+          {/* 1.2 Содержимое сообщения (Текст с требованиями) */}
           <div>
             <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {t('clan_auto_49', 'Текст с требованиями *')}
               </label>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 {/* Зелёная кнопка «Анализ и исправление» */}
                 <button
                   type="button"
@@ -639,19 +666,10 @@ export default function RecruitmentTab() {
                   <span>{isAnalyzing ? t('clan_recruitment_ai_analyzing', 'Анализ...') : t('clan_recruitment_ai_analyze_btn', 'Анализ и исправление')}</span>
                 </button>
 
-                <div className="flex items-center gap-2 pl-1 border-l border-slate-200 dark:border-slate-700">
-                  <span className={`text-xs font-mono font-medium ${descValidation.isValid ? 'text-slate-400' : 'text-rose-500 font-bold'}`}>
-                    {descValidation.totalLength} / {DISCORD_LIMITS.DESCRIPTION_MAX}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    {t('clan_markdown_supported', 'Markdown поддерживается')}
-                  </span>
-                  <ToggleSwitch
-                    checked={rConfig.markdownEnabled !== false}
-                    onChange={val => updateRConfig('markdownEnabled', val, true)}
-                    activeColor="orange"
-                  />
-                </div>
+                {/* Лимит символов на правом краю */}
+                <span className={`text-xs font-mono font-medium ${descValidation.isValid ? 'text-slate-400' : 'text-rose-500 font-bold'}`}>
+                  {descValidation.totalLength} / {DISCORD_LIMITS.DESCRIPTION_MAX}
+                </span>
               </div>
             </div>
 
@@ -1434,7 +1452,6 @@ export default function RecruitmentTab() {
                 {formConfig.fields.map((field, idx) => {
                   const labelLength = (field.label || '').length;
                   const isLabelValid = labelLength <= DISCORD_LIMITS.TEXT_INPUT_LABEL_MAX && labelLength > 0;
-                  const resolvedEmoji = resolveDiscordEmoji(field.emoji);
 
                   return (
                     <div
@@ -1486,50 +1503,33 @@ export default function RecruitmentTab() {
                         </div>
                       </div>
 
-                      {/* Field config inputs grid */}
+                      {/* Field config inputs grid without emoji */}
                       <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
                         {/* 1. Semantic Role */}
-                        <div className="sm:col-span-3">
+                        <div className="sm:col-span-5">
                           <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
                             Назначение поля (роль)
                           </label>
                           <select
                             value={field.role || 'custom'}
-                            onChange={(e) => updateFormField(idx, 'role', e.target.value)}
+                            onChange={(e) => handleRoleChange(idx, e.target.value)}
                             className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none"
                           >
-                            <option value="name">👤 Имя игрока (name)</option>
-                            <option value="age">🎂 Возраст (age)</option>
-                            <option value="hours">⏱️ Часы в Rust (hours)</option>
-                            <option value="steam">🔗 Steam профиль (steam)</option>
-                            <option value="experience">📝 Опыт игры (experience)</option>
-                            <option value="custom">📌 Произвольное поле (custom)</option>
+                            <option value="name">👤 Имя игрока / Никнейм</option>
+                            <option value="age">🎂 Возраст</option>
+                            <option value="hours">⏱️ Часы в игре (Rust)</option>
+                            <option value="steam">🔗 Ссылка на Steam / Battlemetrics</option>
+                            <option value="clan_history">🛡️ Предыдущие кланы / История кланов</option>
+                            <option value="skills">🎯 Роль / Навыки (ПВП, фарм, билдинг)</option>
+                            <option value="device">🖥️ Характеристики ПК / Девайсы</option>
+                            <option value="activity">🕒 Прайм-тайм / Онлайн в день</option>
+                            <option value="timezone">🌍 Город / Часовой пояс</option>
+                            <option value="experience">📝 О себе / Дополнительно</option>
+                            <option value="custom">📌 Произвольный вопрос</option>
                           </select>
                         </div>
 
-                        {/* 2. Emoji selector */}
-                        <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Иконка
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => setActiveEmojiPickerIdx(idx)}
-                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white hover:border-orange-500/50 flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                            title="Нажмите для смены иконки поля"
-                          >
-                            {resolvedEmoji?.type === 'local' ? (
-                              <img src={resolvedEmoji.url} alt="emoji" className="w-4 h-4 object-contain filter drop-shadow" />
-                            ) : resolvedEmoji?.type === 'cdn' ? (
-                              <img src={resolvedEmoji.url} alt="emoji" className="w-4 h-4 object-contain" />
-                            ) : (
-                              <span className="text-sm">{resolvedEmoji?.text || field.emoji || '📌'}</span>
-                            )}
-                            <span className="text-[10px] text-slate-400">Сменить</span>
-                          </button>
-                        </div>
-
-                        {/* 3. Field Label (max 45) */}
+                        {/* 2. Field Label (max 45) */}
                         <div className="sm:col-span-4">
                           <div className="flex items-center justify-between mb-1">
                             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
@@ -1553,7 +1553,7 @@ export default function RecruitmentTab() {
                           />
                         </div>
 
-                        {/* 4. Type & Required Toggle */}
+                        {/* 3. Type & Required Toggle */}
                         <div className="sm:col-span-3 flex items-center gap-2">
                           <div className="flex-1">
                             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -1564,8 +1564,8 @@ export default function RecruitmentTab() {
                               onChange={(e) => updateFormField(idx, 'style', e.target.value)}
                               className="w-full px-2 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500/40 outline-none"
                             >
-                              <option value="short">Строка (Short)</option>
-                              <option value="paragraph">Абзац (Multiline)</option>
+                              <option value="short">Короткий</option>
+                              <option value="paragraph">Длинный</option>
                             </select>
                           </div>
 
@@ -2075,24 +2075,6 @@ export default function RecruitmentTab() {
       </div>
       </div>
     )}
-
-      {/* Emoji Picker Modal */}
-      <EmojiPickerModal
-        isOpen={activeEmojiPickerIdx !== null}
-        onClose={() => setActiveEmojiPickerIdx(null)}
-        currentEmoji={activeEmojiPickerIdx !== null ? formConfig.fields[activeEmojiPickerIdx]?.emoji : ''}
-        onSelect={(selectedEmoji) => {
-          if (activeEmojiPickerIdx !== null) {
-            updateFormField(activeEmojiPickerIdx, 'emoji', selectedEmoji);
-          }
-        }}
-      />
-
-      {/* Emoji Suggestion Modal */}
-      <EmojiSuggestModal
-        isOpen={isEmojiSuggestOpen}
-        onClose={() => setIsEmojiSuggestOpen(false)}
-      />
     </form>
   );
 }

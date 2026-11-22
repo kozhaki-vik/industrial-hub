@@ -77,6 +77,10 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
     try {
       const optimizedDataUrl = await resizeImageToIcon(file);
       setImagePreview(optimizedDataUrl);
+      if (!name.trim()) {
+        const autoName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+        if (autoName) setName(autoName);
+      }
     } catch {
       setError('Не удалось обработать изображение');
     }
@@ -93,7 +97,7 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
       e.stopPropagation();
     }
     if (!name.trim()) {
-      setError('Укажите название эмодзи');
+      setError('Укажите название эмодзи (например: ak47, c4)');
       return;
     }
 
@@ -104,11 +108,11 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
       const message = `[Предложение нового эмодзи]\nНазвание: ${name.trim()}\nСимвол/Код: ${emojiCode.trim() || '—'}\nОписание: ${description.trim() || '—'}`;
       const logs = `URL: ${window.location.href} | UserAgent: ${navigator.userAgent}`;
 
-      if (createTicket && status === 'online') {
-        await createTicket(message, logs, imagePreview);
-      } else {
-        throw new Error('Сервер временно недоступен. Пожалуйста, проверьте подключение к сети.');
+      if (!createTicket) {
+        throw new Error('Сервис отправки предложений временно недоступен');
       }
+
+      await createTicket(message, logs, imagePreview);
 
       setSuccess(true);
       setTimeout(() => {
@@ -121,6 +125,7 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
         onClose();
       }, 2000);
     } catch (err) {
+      console.error('Failed to submit emoji suggestion:', err);
       setError(err.message || 'Не удалось отправить предложение. Попробуйте позже.');
     } finally {
       setIsSubmitting(false);
@@ -273,8 +278,8 @@ export default function EmojiSuggestModal({ isOpen, onClose }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || !name.trim()}
-                  className="px-5 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
                 >
                   {isSubmitting ? (
                     <>

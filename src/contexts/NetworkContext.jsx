@@ -346,36 +346,41 @@ export const NetworkProvider = ({ children }) => {
   const [unreadAdminCount, setUnreadAdminCount] = useState(0);
 
   const createTicket = useCallback((message, logs = "", image_data = null) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        return reject(new Error("Server offline"));
+        return reject(new Error("Сервер оффлайн. Проверьте подключение к интернету."));
       }
+
+      let currentHwid = null;
+      try {
+        currentHwid = await getHwid();
+      } catch {}
 
       const ticketHandler = (event) => {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'ticket_success') {
-            wsRef.current.removeEventListener('message', ticketHandler);
+            wsRef.current?.removeEventListener('message', ticketHandler);
             resolve(data.ticket_id);
-          } else if (data.type === 'ticket_error') {
-            wsRef.current.removeEventListener('message', ticketHandler);
-            reject(new Error(data.message));
+          } else if (data.type === 'ticket_error' || data.type === 'error') {
+            wsRef.current?.removeEventListener('message', ticketHandler);
+            reject(new Error(data.message || 'Ошибка отправки'));
           }
         } catch {}
       };
 
       wsRef.current.addEventListener('message', ticketHandler);
-      wsRef.current.send(JSON.stringify({ type: 'ticket', message, logs, image_data }));
+      wsRef.current.send(JSON.stringify({ type: 'ticket', hwid: currentHwid, message, logs, image_data }));
       
       // Optimizaton: eagerly add to local history for instant feedback
       setTicketHistory(prev => [...prev, { sender: 'user', message, image_data, created_at: new Date().toISOString() }]);
       
       setTimeout(() => {
         wsRef.current?.removeEventListener('message', ticketHandler);
-        reject(new Error("Timeout waiting for server"));
+        reject(new Error("Превышено время ожидания ответа сервера"));
       }, 10000);
     });
-  }, []);
+  }, [getHwid]);
 
   const getTicketHistory = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
