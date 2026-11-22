@@ -1,13 +1,15 @@
-import React, { useContext, useMemo, useCallback, useState, useRef } from 'react';
+import React, { useContext, useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
   Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2,
   Upload, Loader2, AlertCircle, HardDrive, ScrollText, ArrowRight, ArrowLeft,
   Palette, Sparkles, ShoppingBag, Handshake, DollarSign, HelpCircle, Bot,
-  Lock, RefreshCw, MessageSquare, ShieldCheck, Check
+  Lock, RefreshCw, MessageSquare, ShieldCheck, Check, Image as ImageIcon
 } from 'lucide-react';
 import { DEFAULT_ADS_BANNER, normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
+import { ToggleSwitch } from '../ClanManager';
+import { getPresetBanners } from '../../services/aiService';
 import DiscordPanelChannelBar from '../../components/DiscordPanelChannelBar';
 
 const COLOR_SWATCHES = [
@@ -48,9 +50,20 @@ export default function AdsTab() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [presetBanners, setPresetBanners] = useState([]);
   const fileInputRef = useRef(null);
 
   const effectiveGuildId = currentActiveGuildId || guildId || config?.guildId;
+
+  useEffect(() => {
+    let isMounted = true;
+    getPresetBanners().then(data => {
+      if (isMounted && Array.isArray(data)) {
+        setPresetBanners(data);
+      }
+    }).catch(err => console.warn('[AdsTab] Error loading preset banners:', err.message));
+    return () => { isMounted = false; };
+  }, []);
 
   const aConfig = useMemo(() => {
     const defaults = {
@@ -64,7 +77,11 @@ export default function AdsTab() {
       buyWelcome: '',
       partnerWelcome: '',
       partnerRequirements: '',
-      questionWelcome: ''
+      questionWelcome: '',
+      btnBuyEnabled: true,
+      btnPartnerEnabled: true,
+      btnPriceEnabled: true,
+      btnQuestionEnabled: true
     };
     try {
       if (config?.adConfigJson) {
@@ -76,7 +93,11 @@ export default function AdsTab() {
             ...defaults,
             ...parsed,
             banner: parsed.banner !== undefined && parsed.banner !== null ? parsed.banner : DEFAULT_ADS_BANNER,
-            color: parsed.color || parsed.embedColor || defaults.color
+            color: parsed.color || parsed.embedColor || defaults.color,
+            btnBuyEnabled: parsed.btnBuyEnabled !== undefined ? Boolean(parsed.btnBuyEnabled) : true,
+            btnPartnerEnabled: parsed.btnPartnerEnabled !== undefined ? Boolean(parsed.btnPartnerEnabled) : true,
+            btnPriceEnabled: parsed.btnPriceEnabled !== undefined ? Boolean(parsed.btnPriceEnabled) : true,
+            btnQuestionEnabled: parsed.btnQuestionEnabled !== undefined ? Boolean(parsed.btnQuestionEnabled) : true
           };
         }
       }
@@ -90,9 +111,21 @@ export default function AdsTab() {
     queueAutoSave(updated, immediate);
   }, [aConfig, config, queueAutoSave]);
 
-  const handleResetPriceClicks = useCallback(() => {
-    updateAConfig('priceClicks', 0, true);
+  const handleSelectPresetBanner = useCallback((url) => {
+    setUploadError('');
+    updateAConfig('banner', url, true);
   }, [updateAConfig]);
+
+  const handleResetPriceClicks = useCallback(async () => {
+    updateAConfig('priceClicks', 0, true);
+    if (typeof sendProxyAction === 'function') {
+      try {
+        await sendProxyAction('reset_ad_clicks', {});
+      } catch (e) {
+        console.warn('[AdsTab] reset_ad_clicks error:', e.message);
+      }
+    }
+  }, [updateAConfig, sendProxyAction]);
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -208,10 +241,9 @@ export default function AdsTab() {
       { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
       { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
       { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
-      { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle },
-      ...(isDevAdminActive ? [{ id: 'bot', label: t('clan_ads_sub_bot', 'Разработка бота (Dev)'), icon: Bot }] : [])
+      { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle }
     ];
-  }, [contextAdsSubTabs, t, isDevAdminActive]);
+  }, [contextAdsSubTabs, t]);
 
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl animate-main-fade-in">
@@ -256,26 +288,12 @@ export default function AdsTab() {
       {/* Controls Header Bar */}
       <div className="flex items-center justify-between gap-4">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {activeSubTab === 'panel' && t('clan_ads_settings_desc', 'Настройте текст рекламного Embed-сообщения, цвет полосы и баннер.')}
+          {activeSubTab === 'panel' && t('clan_ads_settings_desc', 'Настройте текст рекламного Embed-сообщения, цвет полосы, кнопки и баннер.')}
           {activeSubTab === 'buy' && 'Настройка параметров тикета при заказе платной рекламы.'}
           {activeSubTab === 'partner' && 'Настройка условий и приветствия при заключении взаимного партнерства.'}
           {activeSubTab === 'price' && 'Управление прайс-листом и статистика просмотров цен участниками Discord.'}
           {activeSubTab === 'question' && 'Настройка приветственного сообщения в тикетах обращений к руководству.'}
-          {activeSubTab === 'bot' && 'Системная кнопка мультисерверного продвижения Industrial Studio.'}
         </p>
-        <button
-          type="button"
-          onClick={() => setShowDiscordLivePreview(prev => !prev)}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer shrink-0 ${
-            showDiscordLivePreview
-              ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
-          }`}
-          title={showDiscordLivePreview ? t('clan_auto_v2_1034', 'Скрыть живой предпросмотр Discord') : t('clan_auto_v2_1035', 'Показать живой предпросмотр Discord')}
-        >
-          {showDiscordLivePreview ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-          <span>{showDiscordLivePreview ? t('clan_auto_v2_1036', 'Превью Discord') : t('clan_auto_v2_1037', 'Включить превью')}</span>
-        </button>
       </div>
 
       {/* SUBTAB 1: PANEL (Внешний вид и публикация) */}
@@ -489,26 +507,214 @@ export default function AdsTab() {
                   {t('clan_ads_banner_disabled', 'Баннер отключен — Embed-сообщение в Discord будет опубликовано без изображения.')}
                 </div>
               )}
+
+              {/* Готовые баннеры рекламы и Rust с сервера */}
+              {presetBanners && presetBanners.length > 0 && (
+                <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-slate-800">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                      <span>{t('clan_recruitment_presets_title', 'Готовые баннеры (с сервера):')}</span>
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {t('clan_recruitment_presets_hint', 'Кликните по картинке для применения')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {/* Default Banner Card */}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPresetBanner(DEFAULT_ADS_BANNER)}
+                      className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
+                        aConfig.banner === DEFAULT_ADS_BANNER
+                          ? 'border-blue-500 shadow-md ring-2 ring-blue-500/40'
+                          : 'border-slate-200 dark:border-slate-700/80 hover:border-blue-400/80 opacity-75 hover:opacity-100'
+                      }`}
+                      title="Официальный баннер рекламы по умолчанию"
+                    >
+                      <div className="aspect-[16/9] w-full overflow-hidden relative">
+                        <img
+                          src={DEFAULT_ADS_BANNER}
+                          alt="Default Ads Banner"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        {aConfig.banner === DEFAULT_ADS_BANNER && (
+                          <div className="absolute top-1.5 right-1.5 bg-blue-500 text-white p-1 rounded-full shadow-md z-10">
+                            <Check className="w-3 h-3 stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-2 bg-white dark:bg-slate-900">
+                        <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 block truncate">
+                          По умолчанию
+                        </span>
+                      </div>
+                    </button>
+
+                    {presetBanners.map(preset => {
+                      const isSelected = aConfig.banner === preset.fullUrl || (preset.fileName && aConfig.banner?.includes(preset.fileName));
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => handleSelectPresetBanner(preset.fullUrl)}
+                          className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
+                            isSelected
+                              ? 'border-blue-500 shadow-md ring-2 ring-blue-500/40'
+                              : 'border-slate-200 dark:border-slate-700/80 hover:border-blue-400/80 opacity-75 hover:opacity-100'
+                          }`}
+                          title={`${preset.title}: ${preset.desc}`}
+                        >
+                          <div className="aspect-[16/9] w-full overflow-hidden relative">
+                            <img
+                              src={preset.previewUrl || preset.fullUrl}
+                              alt={preset.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                              onError={(e) => {
+                                if (e.target.src !== preset.fullUrl) {
+                                  e.target.src = preset.fullUrl;
+                                }
+                              }}
+                            />
+                            {isSelected && (
+                              <div className="absolute top-1.5 right-1.5 bg-blue-500 text-white p-1 rounded-full shadow-md z-10">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-2 bg-white dark:bg-slate-900">
+                            <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 block truncate">
+                              {preset.title}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* System Bot Promotion Notice */}
-          <div className="p-4 border border-blue-200/80 dark:border-blue-900/40 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-950/30 dark:via-indigo-950/10 dark:to-transparent flex items-start gap-3.5 shadow-xs">
-            <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 shrink-0 mt-0.5">
-              <Bot className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Системная кнопка «🤖 Разработать Discord-бота»
+          {/* Управление кнопками на панели рекламы в Discord */}
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-xs space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Кнопки на панели рекламы в Discord</span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                    Discord Components
+                  </span>
                 </h4>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 uppercase tracking-wide">
-                  Принудительная
-                </span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Включайте или отключайте нужные кнопки для участников сервера. Кнопка «Разработать Discord-бота» всегда активна и расположена в самом низу.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                На панели рекламы всегда принудительно отображается кнопка разработки Discord-бота. При нажатии на неё заявка направляется напрямую создателям Industrial Studio в ЛС. Эта кнопка не может быть отключена или переназначена.
-              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {/* 1. Заказать рекламу */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">Заказать рекламу</span>
+                    <span className="text-[11px] text-slate-400 block truncate">Создание тикета заказа рекламы</span>
+                  </div>
+                </div>
+                <ToggleSwitch
+                  checked={aConfig.btnBuyEnabled !== false}
+                  onChange={val => updateAConfig('btnBuyEnabled', val, true)}
+                  activeColor="blue"
+                  size="sm"
+                />
+              </div>
+
+              {/* 2. Заключить партнерство */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                    <Handshake className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">Заключить партнерство</span>
+                    <span className="text-[11px] text-slate-400 block truncate">Тикет взаимного сотрудничества</span>
+                  </div>
+                </div>
+                <ToggleSwitch
+                  checked={aConfig.btnPartnerEnabled !== false}
+                  onChange={val => updateAConfig('btnPartnerEnabled', val, true)}
+                  activeColor="blue"
+                  size="sm"
+                />
+              </div>
+
+              {/* 3. Узнать цену */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">Узнать цену</span>
+                    <span className="text-[11px] text-slate-400 block truncate">Скрытый прайс-лист в Discord</span>
+                  </div>
+                </div>
+                <ToggleSwitch
+                  checked={aConfig.btnPriceEnabled !== false}
+                  onChange={val => updateAConfig('btnPriceEnabled', val, true)}
+                  activeColor="emerald"
+                  size="sm"
+                />
+              </div>
+
+              {/* 4. Вопрос администрации */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+                    <HelpCircle className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">Вопрос администрации</span>
+                    <span className="text-[11px] text-slate-400 block truncate">Приватный вопрос руководству</span>
+                  </div>
+                </div>
+                <ToggleSwitch
+                  checked={aConfig.btnQuestionEnabled !== false}
+                  onChange={val => updateAConfig('btnQuestionEnabled', val, true)}
+                  activeColor="purple"
+                  size="sm"
+                />
+              </div>
+            </div>
+
+            {/* 5. Разработать Discord-бота (Всегда активна и всегда внизу) */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/25 border border-indigo-200/80 dark:border-indigo-800/60">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Разработать Discord-бота</span>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                      Всегда внизу
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                    Кнопка заказа Discord-бота от Industrial Studio. Всегда активна и размещается в самом низу панели.
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-semibold px-3 py-1.5 bg-white dark:bg-slate-900 rounded-xl border border-indigo-200 dark:border-indigo-800/60 shadow-2xs shrink-0">
+                <Lock className="w-3.5 h-3.5" />
+                <span>Активна</span>
+              </div>
             </div>
           </div>
 
@@ -792,70 +998,7 @@ export default function AdsTab() {
         </div>
       )}
 
-      {/* SUBTAB 6: BOT DEV (Только для Developer или справка) */}
-      {activeSubTab === 'bot' && (
-        <div className="space-y-6">
-          <div className="p-6 border border-blue-200 dark:border-blue-900/50 rounded-2xl bg-white dark:bg-slate-900 shadow-xs space-y-5">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 shrink-0">
-                <Bot className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                    Кнопка «Разработать Discord-бота» (Industrial Studio)
-                  </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
-                    Системная
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Сквозная функция продвижения разработки ботов на всех клиентских серверах платформы.
-                </p>
-              </div>
-            </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700 space-y-3 text-xs text-slate-700 dark:text-slate-300">
-              <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span>Принцип работы сквозного моста:</span>
-              </div>
-              <ul className="space-y-2 pl-4 list-disc marker:text-blue-500 leading-relaxed">
-                <li>
-                  Кнопка <strong>«🤖 Разработать Discord-бота»</strong> размещается на рекламной панели принудительно и не может быть скрыта владельцем сервера.
-                </li>
-                <li>
-                  При нажатии на кнопку участником любого сервера, тикет создается <strong>не на клиентском сервере</strong>, а на <strong>сервере разработчика Industrial Studio</strong> (в категории <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded font-mono text-[11px]">1551281865795838134</code>).
-                </li>
-                <li>
-                  Пользователь получает сообщение и общается с разработчиком через <strong>личные сообщения (DM)</strong> бота.
-                </li>
-                <li>
-                  Разработчик отвечает в тикет-канале, а бот моментально пересылает ответ пользователю в ЛС в обе стороны.
-                </li>
-              </ul>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center gap-3 text-xs text-amber-800 dark:text-amber-300">
-              <Lock className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <span>
-                Настройка текстов и перенаправление этой кнопки для обычных пользователей отключены. Кнопка продвигает разработку ботов от Industrial Studio.
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 pt-2">
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('panel')}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Вернуться к панели рекламы</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Заявки на рекламу - Блок перехода в журнал */}
       <div className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/70 dark:bg-slate-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

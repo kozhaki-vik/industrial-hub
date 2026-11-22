@@ -13,6 +13,7 @@ import { uploadBanner, deleteBanner } from '../../services/uploadService';
 import { normalizeImageUrl } from '../../utils/urlHelper';
 import { resolveDiscordEmoji } from '../../utils/discordEmojis';
 import { showConfirm } from '../../components/ConfirmModal';
+import { getPresetBanners } from '../../services/aiService';
 
 function LocalEmoji({ name, fallback, className = "w-4 h-4 inline-block object-contain shrink-0" }) {
   const resolved = resolveDiscordEmoji(name);
@@ -38,6 +39,17 @@ const VoteTemplateCard = React.memo(function VoteTemplateCard({
   const fileInputRef = useRef(null);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [presetBanners, setPresetBanners] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getPresetBanners().then(data => {
+      if (isMounted && Array.isArray(data)) {
+        setPresetBanners(data);
+      }
+    }).catch(err => console.warn('[VotesTab] Error loading preset banners:', err.message));
+    return () => { isMounted = false; };
+  }, []);
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0];
@@ -290,6 +302,63 @@ const VoteTemplateCard = React.memo(function VoteTemplateCard({
                   <span>{t('clan_ads_banner_active', 'Установлен кастомный баннер')}</span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Готовые баннеры голосований и серверов Rust с сервера */}
+          {presetBanners && presetBanners.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{t('clan_recruitment_presets_title', 'Готовые баннеры (с сервера):')}</span>
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {t('clan_recruitment_presets_hint', 'Кликните по картинке для применения')}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {presetBanners.map(preset => {
+                  const isSelected = tpl.banner === preset.fullUrl || (preset.fileName && tpl.banner?.includes(preset.fileName));
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      disabled={isReadOnly}
+                      onClick={() => {
+                        setUploadError('');
+                        onUpdate(index, 'banner', preset.fullUrl, true);
+                      }}
+                      className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
+                        isSelected
+                          ? 'border-blue-500 shadow-md ring-2 ring-blue-500/40'
+                          : 'border-slate-200 dark:border-slate-700/80 hover:border-blue-400/80 opacity-75 hover:opacity-100'
+                      }`}
+                      title={preset.name}
+                    >
+                      <div className="aspect-[16/9] w-full overflow-hidden relative">
+                        <img
+                          src={preset.fullUrl}
+                          alt={preset.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 bg-blue-500 text-white p-1 rounded-full shadow-md z-10">
+                            <Check className="w-3 h-3 stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-1.5 bg-white dark:bg-slate-900">
+                        <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 block truncate">
+                          {preset.name}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

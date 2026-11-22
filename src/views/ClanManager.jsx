@@ -2744,9 +2744,8 @@ export default function ClanManager() {
     { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
     { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
     { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
-    { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle },
-    ...(isDevAdminActive ? [{ id: 'bot', label: t('clan_ads_sub_bot', 'Разработка бота (Dev)'), icon: Bot }] : [])
-  ], [t, isDevAdminActive]);
+    { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle }
+  ], [t]);
 
   useEffect(() => {
     if (!selectedProfileForDossier?.userId || !ws || wsStatus !== 'online') return;
@@ -3421,11 +3420,15 @@ export default function ClanManager() {
   const clanTabs = [
     { id: 'roster', label: t('clan_tab_roster', 'Состав'), icon: UserCheck },
     { id: 'votes', label: t('clan_tab_votes', 'Голосования'), icon: Vote },
-    { id: 'recruitment', label: t('clan_tab_recruitment', 'Наборы'), icon: UserPlus },
-    { id: 'applications', label: t('clan_tab_applications', 'Заявки в клан'), icon: ScrollText },
     { id: 'stats', label: t('clan_tab_stats', 'Статистика'), icon: BarChart3 },
+    ...(pendingAppsCount > 0 || activeTab === 'applications' ? [
+      { id: 'applications', label: t('clan_tab_applications', 'Заявки в клан'), icon: ScrollText }
+    ] : []),
+    ...(openAdTicketsCount > 0 || activeTab === 'ad_tickets' ? [
+      { id: 'ad_tickets', label: t('clan_tab_ad_tickets', 'Заявки на рекламу'), icon: Inbox }
+    ] : []),
+    { id: 'recruitment', label: t('clan_tab_recruitment', 'Наборы'), icon: UserPlus },
     { id: 'ads', label: t('clan_tab_ads', 'Реклама'), icon: Megaphone },
-    { id: 'ad_tickets', label: t('clan_tab_ad_tickets', 'Заявки на рекламу'), icon: Inbox },
   ];
 
   const botConfigGroups = [
@@ -4352,20 +4355,21 @@ export default function ClanManager() {
         };
       }
 
-      if (adsSubTab === 'bot') {
-        return {
-          type: 'message',
-          tabTitle: t('clan_ads_sub_bot', 'Разработка Discord-бота (DM)'),
-          channelName: 'Диалог с Industrial Studio Bot',
-          embed: {
-            title: '🤖 Разработка Discord-бота | Industrial Studio',
-            color: '#5865F2',
-            description: 'Здравствуйте, Ivan_Rust!\n\nВы оставили заявку на индивидуальную разработку Discord-бота через панель на сервере.\n\n📌 Напишите сюда ваши пожелания: функционал, интеграции с Rust/Steam, база данных или бот под ключ.\nРазработчик ответит вам прямо в этот диалог!',
-            footer: 'Industrial Studio • Автоматизация и разработка Discord'
-          },
-          buttons: []
-        };
+      const adButtons = [];
+      if (aConfig.btnBuyEnabled !== false) {
+        adButtons.push({ id: 'buy', label: t('clan_auto_v2_1006', 'Заказать рекламу'), emoji: '<:speakerphone:1571506556254552156>', style: 'primary' });
       }
+      if (aConfig.btnPartnerEnabled !== false) {
+        adButtons.push({ id: 'partner', label: t('clan_auto_v2_1007', 'Заключить партнерство'), emoji: '🤝', style: 'primary' });
+      }
+      if (aConfig.btnPriceEnabled !== false) {
+        adButtons.push({ id: 'price', label: t('clan_auto_v2_1009', 'Узнать цену'), emoji: '<:cash:1571506385412423851>', style: 'success' });
+      }
+      if (aConfig.btnQuestionEnabled !== false) {
+        adButtons.push({ id: 'question', label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '<:infocircle:1571506482585927770>', style: 'secondary' });
+      }
+      // 'Разработать Discord-бота' всегда активна и всегда внизу
+      adButtons.push({ id: 'bot', label: 'Разработать Discord-бота', emoji: '🤖', style: 'secondary' });
 
       return {
         tabTitle: t('clan_auto_v2_1020', 'Панель рекламы'),
@@ -4377,13 +4381,7 @@ export default function ClanManager() {
           banner: aConfig.banner,
           footer: aConfig.footerText || undefined
         },
-        buttons: [
-          { label: t('clan_auto_v2_1006', 'Заказать рекламу'), emoji: '<:speakerphone:1571506556254552156>', style: 'primary' },
-          { label: t('clan_auto_v2_1007', 'Заключить партнерство'), emoji: '🤝', style: 'primary' },
-          { label: t('clan_auto_v2_1009', 'Узнать цену'), emoji: '<:cash:1571506385412423851>', style: 'success' },
-          { label: 'Разработать Discord-бота', emoji: '🤖', style: 'secondary' },
-          { label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '<:infocircle:1571506482585927770>', style: 'secondary' }
-        ]
+        buttons: adButtons
       };
     }
 
@@ -5544,11 +5542,10 @@ const contextValue = {
                     setRecruitmentSubTab('form');
                   } else if (activeTab === 'ads') {
                     if (adsSubTab === 'panel') {
-                      if (bIdx === 0) setAdsSubTab('buy');
-                      else if (bIdx === 1) setAdsSubTab('partner');
-                      else if (bIdx === 2) setAdsSubTab('price');
-                      else if (bIdx === 3) setAdsSubTab('bot');
-                      else if (bIdx === 4) setAdsSubTab('question');
+                      const target = btn?.id || (bIdx === 0 ? 'buy' : bIdx === 1 ? 'partner' : bIdx === 2 ? 'price' : bIdx === 3 ? 'question' : null);
+                      if (target && target !== 'bot') {
+                        setAdsSubTab(target);
+                      }
                     } else {
                       setAdsSubTab('panel');
                     }

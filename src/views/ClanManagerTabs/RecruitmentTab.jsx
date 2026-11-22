@@ -223,7 +223,7 @@ export default function RecruitmentTab() {
   }, [rConfig.formConfig, defaultFormFields]);
 
   const defaultTicketCardFields = useMemo(() => [
-    { id: 'tcf_1', name: '👤 Кандидат', value: '{Имя}', inline: true },
+    { id: 'tcf_1', name: '👤 Имя', value: '{Имя}', inline: true },
     { id: 'tcf_2', name: '🎂 Возраст', value: '{Возраст} лет', inline: true },
     { id: 'tcf_3', name: '⏱️ Игровые часы', value: '{Часы}', inline: true },
     { id: 'tcf_4', name: '🔗 Steam профиль', value: '{Steam}', inline: false },
