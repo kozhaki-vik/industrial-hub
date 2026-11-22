@@ -8,6 +8,10 @@
     Goto loop_install_clean
   done_install_clean:
     FindClose $0
+
+  ; Always recreate desktop and start menu shortcuts to guarantee they never vanish on updates
+  CreateShortCut "$DESKTOP\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0
+  CreateShortCut "$SMPROGRAMS\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0
 !macroend
 
 !macro customUnInstall
