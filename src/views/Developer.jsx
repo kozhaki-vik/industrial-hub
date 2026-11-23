@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, Key, Eye, EyeOff, Server, Lock, Trash2, DownloadCloud } from 'lucide-react';
+import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, Key, Eye, EyeOff, Server, Lock, Trash2, DownloadCloud, Wrench, Terminal, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath, openLogFolder, getRecentLogs } from '../services/diagnostics';
 import { getButtonStats } from '../services/analytics';
@@ -36,6 +36,7 @@ export default function Developer() {
   const [flamesResetSuccess, setFlamesResetSuccess] = useState(false);
   const [updateChannel, setUpdateChannel] = useState(getConfigKey('updateChannel') || 'main');
   const [logCopied, setLogCopied] = useState(false);
+  const [showLogsConsole, setShowLogsConsole] = useState(false);
 
   // Developer Discord Bot Management States
   const [devKeyInput, setDevKeyInput] = useState('');
@@ -248,7 +249,7 @@ export default function Developer() {
   const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="mb-8 max-w-4xl mx-auto pb-12 animate-main-fade-in">
+    <div className="mb-8 max-w-5xl 2xl:max-w-6xl mx-auto pb-12 animate-main-fade-in px-2 sm:px-4">
       {isTestingSplash && <SplashScreen onComplete={() => setIsTestingSplash(false)} />}
       
       <div className="flex items-center gap-4 mb-6">
@@ -393,102 +394,152 @@ export default function Developer() {
           )}
         </div>
 
-        {/* App Meta & UI Testing */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-5 h-5 text-green-500" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{t('dev_app_title')}</h3>
-          </div>
-          
-          <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-6">
-            <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_local_version')}</span> v{appVersionInfo.version} {isTestBuild && <span className="text-orange-500 font-bold ml-2">{t('dev_test_build')}</span>}</p>
-            <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_server_version')}</span> {serverVersion ? `v${serverVersion}` : t('dev_loading')}</p>
-            <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_last_updated')}</span> {appVersionInfo.lastUpdated ? new Date(appVersionInfo.lastUpdated).toLocaleString() : t('dev_not_updated')}</p>
-            <p><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_app_first_launch')}</span> {new Date(firstLaunch).toLocaleString()}</p>
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <Clock className="w-4 h-4 text-green-500" />
-              <span><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_app_uptime')}</span> {formatUptime(hwInfo?.appUptime)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-500" />
-              <span><span className="font-semibold text-slate-800 dark:text-slate-200">{t('dev_total_uptime')}</span> {formatUptime(hwInfo?.totalAppUptime)}</span>
-            </div>
-          </div>
-
-          {/* Update Channel */}
-          <div className="mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
-            <div className="flex items-center gap-2 mb-3">
-              <RefreshCw className="w-4 h-4 text-orange-500" />
-              <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('settings_update_channel', 'Канал обновлений')}</h4>
-            </div>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="devUpdateChannel" 
-                  value="main" 
-                  checked={updateChannel === 'main'} 
-                  onChange={() => handleChannelChange('main')}
-                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
-                />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('settings_update_main', 'Стабильная (Main)')}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="devUpdateChannel" 
-                  value="test" 
-                  checked={updateChannel === 'test'} 
-                  onChange={() => handleChannelChange('test')}
-                  className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 focus:ring-orange-500 dark:bg-slate-800"
-                />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">{t('settings_update_test', 'Тестовая (Test)')}</span>
-              </label>
-            </div>
-            <p className="text-xs text-slate-500 mt-2">
-              {updateChannel === 'test' 
-                ? t('dev_update_test_desc', 'Канал предварительных сборок (Pre-release). Обновления загружаются из тестовой ветки.') 
-                : t('dev_update_main_desc', 'Канал стабильных релизов (Release).')}
-            </p>
-          </div>
-
-          <div className="mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
-            <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('dev_update_status')}</h4>
-            {updateProgress ? (
-              <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <p>{t('dev_status_label')} <span className="font-medium">{updateProgress.status}</span></p>
-                {updateProgress.status === 'downloading' || updateProgress.status === 'extracting' ? (
-                  <>
-                    <p>{t('dev_progress_label')} {updateProgress.totalBytes ? Math.round((updateProgress.downloadedBytes / updateProgress.totalBytes) * 100) : 0}%</p>
-                    <p className="text-xs truncate">{updateProgress.currentFile}</p>
-                  </>
-                ) : updateProgress.status === 'error' ? (
-                  <p className="text-red-500">{updateProgress.error || updateProgress.currentFile || t('dev_unknown_error')}</p>
-                ) : null}
+        {/* Update Management & Versions */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-xs">
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-orange-500/10 text-orange-500">
+                  <RefreshCw className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {t('dev_update_center_title', 'Центр обновлений')}
+                </h3>
               </div>
-            ) : (
-              <p className="text-sm text-slate-500">{t('dev_auto_update_active')}</p>
-            )}
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold font-mono border ${
+                updateChannel === 'test' 
+                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' 
+                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+              }`}>
+                {updateChannel === 'test' ? 'TEST BRANCH' : 'MAIN BRANCH'}
+              </span>
+            </div>
+
+            {/* Version Meta */}
+            <div className="grid grid-cols-2 gap-2.5 p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs mb-4">
+              <div>
+                <span className="text-slate-400 block text-[11px]">{t('dev_local_version', 'Версия приложения')}:</span>
+                <span className="font-bold font-mono text-slate-800 dark:text-slate-200">
+                  v{appVersionInfo.version}
+                  {isTestBuild && <span className="text-orange-500 font-bold ml-1.5">(Тест)</span>}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[11px]">{t('dev_server_version', 'Ветка на сервере')}:</span>
+                <span className="font-bold font-mono text-slate-800 dark:text-slate-200">
+                  {serverVersion ? `v${serverVersion}` : t('dev_loading', 'Загрузка...')}
+                </span>
+              </div>
+              <div className="col-span-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-slate-500 dark:text-slate-400">
+                <span>{t('dev_last_updated', 'Дата сборки')}:</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {appVersionInfo.lastUpdated ? new Date(appVersionInfo.lastUpdated).toLocaleString() : t('dev_not_updated', 'Не обновлялось')}
+                </span>
+              </div>
+            </div>
+
+            {/* Update Channel Selector */}
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                {t('settings_update_channel', 'Канал обновлений')}
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleChannelChange('main')}
+                  className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                    updateChannel === 'main'
+                      ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/20 text-orange-900 dark:text-orange-100 ring-2 ring-orange-500/20'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold">{t('settings_update_main', 'Стабильная')}</span>
+                    {updateChannel === 'main' && <Check className="w-3.5 h-3.5 text-orange-500 stroke-[3]" />}
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    Только стабильные проверенные релизы
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleChannelChange('test')}
+                  className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                    updateChannel === 'test'
+                      ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-100 ring-2 ring-purple-500/20'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold">{t('settings_update_test', 'Тестовая')}</span>
+                    {updateChannel === 'test' && <Check className="w-3.5 h-3.5 text-purple-500 stroke-[3]" />}
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    Тестовые предрелизы и стабильные
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* Update Status / Progress */}
+            <div className="mb-4 bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700/50">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-slate-500">{t('dev_status_label', 'Статус:')}</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {updateProgress?.status === 'downloading'
+                    ? 'Скачивание обновления...'
+                    : updateProgress?.status === 'extracting'
+                    ? 'Применение и распаковка...'
+                    : updateProgress?.status === 'deferred'
+                    ? 'Готово к установке'
+                    : updateProgress?.status === 'error'
+                    ? 'Ошибка обновления'
+                    : t('dev_auto_update_active', 'Автоматическое обновление активно')}
+                </span>
+              </div>
+
+              {(updateProgress?.status === 'downloading' || updateProgress?.status === 'extracting') && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-blue-500 h-full transition-all duration-300 rounded-full"
+                      style={{ width: `${updateProgress.totalBytes ? Math.round((updateProgress.downloadedBytes / updateProgress.totalBytes) * 100) : 0}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-400">
+                    <span className="truncate max-w-[200px]">{updateProgress.currentFile}</span>
+                    <span>{updateProgress.totalBytes ? Math.round((updateProgress.downloadedBytes / updateProgress.totalBytes) * 100) : 0}%</span>
+                  </div>
+                </div>
+              )}
+
+              {updateProgress?.status === 'error' && (
+                <p className="text-xs text-red-500 mt-1 font-medium">
+                  {updateProgress.error || updateProgress.currentFile || t('dev_unknown_error')}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-3">
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
             <button 
               onClick={async () => {
                 const btn = document.getElementById('forceCheckBtnIcon');
                 const txt = document.getElementById('forceCheckBtnText');
                 if (btn) btn.classList.add('animate-spin');
-                if (txt) txt.innerText = t('dev_check_update_progress');
+                if (txt) txt.innerText = t('dev_check_update_progress', 'Проверка...');
                 await triggerUpdateCheck();
                 if (btn) btn.classList.remove('animate-spin');
-                if (txt) txt.innerText = t('dev_check_update_btn');
+                if (txt) txt.innerText = t('dev_check_update_btn', 'Проверить обновления');
               }} 
-              className="flex items-center justify-center gap-2 w-full py-2 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-2 py-2 px-3 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
             >
-              <RefreshCw id="forceCheckBtnIcon" className="w-4 h-4" /> 
-              <span id="forceCheckBtnText">{t('dev_check_update_btn')}</span>
+              <RefreshCw id="forceCheckBtnIcon" className="w-3.5 h-3.5" /> 
+              <span id="forceCheckBtnText">{t('dev_check_update_btn', 'Проверить обновления')}</span>
             </button>
 
-            {/* Кнопка "Скачать обновление принудительно" */}
             <button 
               type="button"
               disabled={isForceDownloading || updateProgress?.status === 'downloading' || updateProgress?.status === 'extracting'}
@@ -500,68 +551,127 @@ export default function Developer() {
                   setIsForceDownloading(false);
                 }
               }} 
-              className="flex items-center justify-center gap-2 w-full py-2 bg-orange-500 hover:bg-orange-600 active:scale-95 disabled:opacity-50 disabled:hover:bg-orange-500 text-white rounded-lg text-sm font-bold shadow-md shadow-orange-500/20 transition-all cursor-pointer"
-              title={t('dev_force_download_update_tooltip', 'Принудительно скачать и переустановить последний релиз из выбранной ветки (даже если версия совпадает)')}
+              className="flex items-center justify-center gap-2 py-2 px-3 bg-orange-500 hover:bg-orange-600 active:scale-95 disabled:opacity-50 disabled:hover:bg-orange-500 text-white rounded-xl text-xs font-bold shadow-sm shadow-orange-500/20 transition-all cursor-pointer"
+              title={t('dev_force_download_update_tooltip', 'Принудительно скачать и переустановить последний релиз из выбранной ветки')}
             >
-              <DownloadCloud className={`w-4 h-4 ${isForceDownloading || updateProgress?.status === 'downloading' ? 'animate-bounce' : ''}`} /> 
+              <DownloadCloud className={`w-3.5 h-3.5 ${isForceDownloading || updateProgress?.status === 'downloading' ? 'animate-bounce' : ''}`} /> 
               <span>
                 {isForceDownloading || updateProgress?.status === 'downloading'
-                  ? t('dev_force_downloading_progress', 'Скачивание обновления...')
+                  ? t('dev_force_downloading_progress', 'Скачивание...')
                   : updateProgress?.status === 'extracting'
-                  ? t('dev_force_extracting_progress', 'Переустановка и запуск...')
-                  : t('dev_force_download_update_btn', 'Скачать обновление принудительно')}
+                  ? t('dev_force_extracting_progress', 'Установка...')
+                  : t('dev_force_download_update_btn', 'Скачать принудительно')}
               </span>
             </button>
-            <button onClick={() => setIsTestingSplash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors">
-              <PlayCircle className="w-4 h-4" /> {t('dev_app_test_splash')}
-            </button>
+          </div>
+        </div>
+
+        {/* Debug Tools & Diagnostics (Full width card) */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 col-span-1 md:col-span-2 shadow-xs space-y-4">
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-400">
+                <Wrench className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {t('dev_debug_tools_title', 'Инструменты отладки и диагностика')}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('dev_debug_tools_desc', 'Тестирование экранов, экспорт логов, сброс кэша и аварийные инструменты')}
+                </p>
+              </div>
+            </div>
+            {updateLogs && updateLogs.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowLogsConsole(!showLogsConsole)}
+                className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>Консоль логов ({updateLogs.length})</span>
+                {showLogsConsole ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <button 
-              onClick={() => openLogFolder()} 
-              className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-100 dark:bg-emerald-950/40 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-lg text-sm font-medium transition-colors border border-emerald-200 dark:border-emerald-800"
+              type="button"
+              onClick={() => setIsTestingSplash(true)} 
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
             >
-              <FolderOpen className="w-4 h-4" /> {t('dev_open_log_folder', 'Открыть папку с логами')}
+              <PlayCircle className="w-4 h-4 text-blue-500" />
+              <span>{t('dev_app_test_splash', 'Тест Splash Screen')}</span>
             </button>
+
             <button 
+              type="button"
+              onClick={() => openLogFolder()} 
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-semibold transition-colors border border-emerald-200/80 dark:border-emerald-800/50 cursor-pointer"
+            >
+              <FolderOpen className="w-4 h-4 text-emerald-500" />
+              <span>{t('dev_open_log_folder', 'Открыть папку с логами')}</span>
+            </button>
+
+            <button 
+              type="button"
               onClick={handleCopyLogs} 
-              className={`flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 logCopied 
                   ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' 
-                  : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  : 'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300'
               }`}
             >
-              {logCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{logCopied ? t('dev_copy_log_success', 'Лог скопирован в буфер!') : t('dev_copy_log_btn', 'Скопировать последние логи')}</span>
+              {logCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4 text-indigo-500" />}
+              <span>{logCopied ? t('dev_copy_log_success', 'Лог скопирован!') : t('dev_copy_log_btn', 'Скопировать логи')}</span>
             </button>
+
             <button 
+              type="button"
               onClick={handleResetFlames}
-              className={`flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 flamesResetSuccess 
                   ? 'bg-green-500 text-white shadow-md shadow-green-500/20' 
-                  : 'bg-orange-100 dark:bg-orange-950/40 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20'
+                  : 'bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 border border-orange-200/80 dark:border-orange-500/20'
               }`}
             >
               {flamesResetSuccess ? <Check className="w-4 h-4" /> : <Flame className="w-4 h-4 text-orange-500" />}
-              <span>{flamesResetSuccess ? t('dev_reset_flames_success') : t('dev_reset_flames')}</span>
+              <span>{flamesResetSuccess ? t('dev_reset_flames_success', 'Огни сброшены!') : t('dev_reset_flames', 'Сбросить анимацию огней')}</span>
             </button>
-            <button onClick={() => setShouldCrash(true)} className="flex items-center justify-center gap-2 w-full py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors hover:bg-red-200 dark:hover:bg-red-900/40">
-              <AlertTriangle className="w-4 h-4" /> {t('dev_trigger_error')}
+
+            <button 
+              type="button"
+              onClick={() => setShouldCrash(true)} 
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold transition-colors hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200/60 dark:border-red-900/40 cursor-pointer"
+            >
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <span>{t('dev_trigger_error', 'Вызвать CrashBoundary')}</span>
             </button>
-            <button onClick={async () => { 
-              const confirmed = await showConfirm({
-                title: t('dev_factory_reset_btn', 'Сброс настроек (Factory Reset)'),
-                message: t('dev_factory_reset_confirm', 'Сбросить данные до заводских настроек? Программа будет перезапущена.'),
-                confirmText: t('confirm_btn', 'Сбросить'),
-                danger: true
-              });
-              if (confirmed) factoryReset(); 
-            }} className="flex items-center justify-center gap-2 w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/30">
-              <RefreshCw className="w-4 h-4" /> {t('dev_factory_reset_btn', 'Сбросить настройки (Factory Reset)')}
+
+            <button 
+              type="button"
+              onClick={async () => { 
+                const confirmed = await showConfirm({
+                  title: t('dev_factory_reset_btn', 'Сброс настроек (Factory Reset)'),
+                  message: t('dev_factory_reset_confirm', 'Сбросить данные до заводских настроек? Программа будет перезапущена.'),
+                  confirmText: t('confirm_btn', 'Сбросить'),
+                  danger: true
+                });
+                if (confirmed) factoryReset(); 
+              }} 
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm shadow-red-600/20 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>{t('dev_factory_reset_btn', 'Сброс настроек (Reset)')}</span>
             </button>
           </div>
 
-          {updateLogs && updateLogs.length > 0 && (
-            <div className="mt-4 bg-slate-900 rounded-lg p-3 text-xs font-mono text-green-400 h-40 overflow-y-auto custom-scrollbar">
-              {updateLogs.map((log, i) => <div key={i}>{log}</div>)}
+          {showLogsConsole && updateLogs && updateLogs.length > 0 && (
+            <div className="mt-4 bg-slate-950 rounded-xl p-3.5 text-xs font-mono text-emerald-400 max-h-48 overflow-y-auto custom-scrollbar border border-slate-800 space-y-1">
+              {updateLogs.map((log, i) => (
+                <div key={i} className="leading-relaxed opacity-90">{log}</div>
+              ))}
             </div>
           )}
         </div>

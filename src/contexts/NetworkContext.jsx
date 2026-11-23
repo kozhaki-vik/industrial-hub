@@ -78,26 +78,25 @@ export const NetworkProvider = ({ children }) => {
         let foundVersion = null;
 
         for (const repo of repos) {
-          const ghApiUrl = channel === 'main' 
-            ? `https://api.github.com/repos/${repo}/releases/latest?t=${Date.now()}`
-            : `https://api.github.com/repos/${repo}/releases?per_page=10&t=${Date.now()}`;
+          const ghApiUrl = `https://api.github.com/repos/${repo}/releases?per_page=15&t=${Date.now()}`;
           const res = await fetch(ghApiUrl, { cache: 'no-store' });
           if (res.ok) {
             let data = await res.json();
-            if (channel === 'test' && Array.isArray(data)) {
-              const nonDrafts = data.filter(r => r && !r.draft);
-              nonDrafts.sort((a, b) => {
+            if (Array.isArray(data)) {
+              let candidateList = data.filter(r => r && !r.draft);
+              if (channel === 'main') {
+                // Stable branch: ONLY non-prereleases
+                candidateList = candidateList.filter(r => !r.prerelease);
+              }
+              candidateList.sort((a, b) => {
                 const va = (a.tag_name || '').replace(/^v/, '');
                 const vb = (b.tag_name || '').replace(/^v/, '');
                 return compareSemver(vb, va);
               });
-              if (nonDrafts.length > 0 && nonDrafts[0].tag_name) {
-                foundVersion = nonDrafts[0].tag_name.replace(/^v/, '');
+              if (candidateList.length > 0 && candidateList[0].tag_name) {
+                foundVersion = candidateList[0].tag_name.replace(/^v/, '');
                 break;
               }
-            } else if (data && !data.draft && data.tag_name) {
-              foundVersion = data.tag_name.replace(/^v/, '');
-              break;
             }
           }
         }

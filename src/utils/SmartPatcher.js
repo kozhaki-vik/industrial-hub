@@ -49,17 +49,12 @@ export async function checkUpdates(addLog = () => {}, force = false) {
           if (Array.isArray(ghData)) {
             const nonDrafts = ghData.filter(r => r && !r.draft);
             if (channel === 'main') {
-              // Prefer stable releases (prerelease === false) if newer than local
+              // Stable branch: ONLY stable (non-prerelease) releases are allowed. Never download test pre-releases.
               const stables = nonDrafts.filter(r => !r.prerelease);
               stables.sort((a, b) => compareSemver((b.tag_name || '').replace(/^v/, ''), (a.tag_name || '').replace(/^v/, '')));
-
-              if (stables.length > 0 && compareSemver(stables[0].tag_name.replace(/^v/, ''), localVersion) > 0) {
-                candidateReleases = stables;
-              } else {
-                nonDrafts.sort((a, b) => compareSemver((b.tag_name || '').replace(/^v/, ''), (a.tag_name || '').replace(/^v/, '')));
-                candidateReleases = nonDrafts;
-              }
+              candidateReleases = stables;
             } else {
+              // Test branch: accepts both stable and test (pre-release) releases, picking the highest version
               nonDrafts.sort((a, b) => compareSemver((b.tag_name || '').replace(/^v/, ''), (a.tag_name || '').replace(/^v/, '')));
               candidateReleases = nonDrafts;
             }
