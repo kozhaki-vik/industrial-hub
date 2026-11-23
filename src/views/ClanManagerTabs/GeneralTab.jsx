@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
   Sparkles, Unlink, RotateCcw, AlertTriangle, Check, Languages
@@ -25,6 +25,13 @@ export default function GeneralTab() {
     setShowResetModal,
     t
   } = useContext(ClanManagerContext);
+
+  // Enforce bot server language to Russian only
+  useEffect(() => {
+    if (config && config.language && config.language !== 'ru') {
+      queueAutoSave({ ...config, language: 'ru' }, true);
+    }
+  }, [config?.language]);
 
   return (
     <form onSubmit={saveConfig} noValidate className="space-y-6 w-full max-w-5xl 2xl:max-w-6xl">
@@ -151,9 +158,9 @@ export default function GeneralTab() {
         )}
       </div>
 
-      {/* Bot Server Language Selection */}
-      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+      {/* Bot Server Language */}
+      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h4 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
               <Languages className="w-4 h-4 text-blue-500 shrink-0" />
@@ -163,48 +170,15 @@ export default function GeneralTab() {
               {t('clan_bot_language_desc', 'Язык динамического состава, панелей набора, тикетов и объявлений бота. Не зависит от языка этого приложения.')}
             </p>
           </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 self-start sm:self-auto font-medium">
-            {config?.language === 'ua' ? 'Українська' : config?.language === 'en' ? 'English' : config?.language === 'auto' ? 'Auto (Discord)' : 'Русский'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-          {[
-            { id: 'ru', flag: '🇷🇺', label: 'Русский', desc: 'Все карточки на русском' },
-            { id: 'ua', flag: '🇺🇦', label: 'Українська', desc: 'Усі картки українською' },
-            { id: 'en', flag: '🇬🇧', label: 'English', desc: 'All cards in English' },
-            { id: 'auto', flag: '🌐', label: 'Авто / Discord', desc: 'По локали сервера/юзера' }
-          ].map(item => {
-            const isSelected = (config?.language || 'ru') === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  const updated = { ...config, language: item.id };
-                  queueAutoSave(updated, true);
-                }}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  isSelected
-                    ? 'border-blue-500 bg-blue-500/10 shadow-sm ring-1 ring-blue-500'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300 dark:hover:border-slate-600'
-                }`}
-              >
-                <div className="flex items-center justify-between w-full mb-1">
-                  <span className="text-lg leading-none">{item.flag}</span>
-                  {isSelected && <Check className="w-4 h-4 text-blue-500 shrink-0" />}
-                </div>
-                <div>
-                  <div className={`text-xs font-semibold ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-800 dark:text-white'}`}>
-                    {item.label}
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
-                    {item.desc}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs shrink-0 self-start sm:self-auto">
+            <span className="text-base leading-none">🇷🇺</span>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-slate-800 dark:text-white leading-tight">Русский</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                {t('clan_bot_language_ru_only', 'Только русский язык')}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

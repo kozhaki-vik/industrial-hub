@@ -1975,5 +1975,6 @@
   "warns": "Warns",
   "wipesPlayed": "Wipes Played",
   "clan_bot_language_title": "Bot Server Language",
-  "clan_bot_language_desc": "Language for dynamic roster, recruitment panels, tickets, and bot announcements on Discord. Independent of this desktop app's UI language."
+  "clan_bot_language_desc": "Language for dynamic roster, recruitment panels, tickets, and bot announcements on Discord. Independent of this desktop app's UI language.",
+  "clan_bot_language_ru_only": "Russian only"
 }
