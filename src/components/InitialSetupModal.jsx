@@ -108,7 +108,7 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6 max-h-[95vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 max-h-[95vh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center gap-3.5">
@@ -128,7 +128,7 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
         {/* Step 1: Language */}
         {step === 1 && (
           <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
               {languages.map((item) => {
                 const isSelected = selectedLang === item.code;
                 return (
@@ -136,16 +136,16 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
                     key={item.code}
                     type="button"
                     onClick={() => handleSelectLang(item.code)}
-                    className={`relative p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
+                    className={`relative p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col items-center justify-center gap-2.5 cursor-pointer ${
                       isSelected
                         ? 'border-orange-500 bg-orange-500/10 text-orange-600 dark:text-orange-400 ring-2 ring-orange-500/20 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <Globe className={`w-6 h-6 ${isSelected ? 'text-orange-500' : 'text-slate-400'}`} />
+                    <Globe className={`w-7 h-7 ${isSelected ? 'text-orange-500' : 'text-slate-400'}`} />
                     <span className="text-sm font-bold">{item.native}</span>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center">
+                      <div className="absolute top-2.5 right-2.5 w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center">
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
                       </div>
                     )}
@@ -159,33 +159,37 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
         {/* Step 2: Theme */}
         {step === 2 && (
           <div className="space-y-4 animate-in slide-in-from-right-4 fade-in">
-            <ThemeSelector value={selectedTheme} onChange={handleSelectTheme} />
+            <ThemeSelector 
+              value={selectedTheme} 
+              onChange={handleSelectTheme} 
+              gridClassName="grid-cols-1 sm:grid-cols-2 gap-4"
+            />
           </div>
         )}
 
         {/* Step 3: Settings */}
         {step === 3 && (
-          <div className="space-y-3 animate-in slide-in-from-right-4 fade-in">
+          <div className="space-y-3.5 animate-in slide-in-from-right-4 fade-in">
             {/* AutoStart */}
             <div
               onClick={() => setAutoStart(!autoStart)}
-              className={`p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
+              className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
                 autoStart
                   ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                   autoStart ? 'bg-orange-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}>
-                  <Power className="w-4 h-4" />
+                  <Power className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {t('initial_setup_autostart_title', 'Автозапуск при старте Windows')}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {t('initial_setup_autostart_desc', 'Запускать Industrial Hub в фоне при включении ПК')}
                   </div>
                 </div>
@@ -202,23 +206,23 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
             {/* Start Minimized */}
             <div
               onClick={() => setStartMinimized(!startMinimized)}
-              className={`p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
+              className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
                 startMinimized
                   ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                   startMinimized ? 'bg-orange-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}>
-                  <Minimize2 className="w-4 h-4" />
+                  <Minimize2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {t('settings_start_minimized_title', 'Запускать свернутой в трей')}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {t('settings_start_minimized_desc', 'Не показывать окно программы при запуске')}
                   </div>
                 </div>
@@ -235,23 +239,23 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
             {/* Show Release Notes */}
             <div
               onClick={() => setShowReleaseNotes(!showReleaseNotes)}
-              className={`p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
+              className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
                 showReleaseNotes
                   ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                   showReleaseNotes ? 'bg-orange-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}>
-                  <Bell className="w-4 h-4" />
+                  <Bell className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {t('settings_show_release_notes_title', 'Показывать обновления')}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {t('settings_show_release_notes_desc', 'Окно с изменениями после обновления')}
                   </div>
                 </div>
@@ -268,23 +272,23 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
             {/* Anonymous Diagnostic Telemetry */}
             <div
               onClick={() => setTelemetryEnabled(!telemetryEnabled)}
-              className={`p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
+              className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer select-none ${
                 telemetryEnabled
                   ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-950/60'
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                   telemetryEnabled ? 'bg-orange-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}>
-                  <Activity className="w-4 h-4" />
+                  <Activity className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {t('initial_setup_telemetry_title', 'Анонимная диагностическая телеметрия')}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {t('initial_setup_telemetry_desc', 'Отправка базовых характеристик ПК для улучшения стабильности')}
                   </div>
                 </div>
@@ -340,7 +344,7 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
             <button
               type="button"
               onClick={handleBack}
-              className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition-all flex items-center gap-2"
+              className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm transition-all flex items-center gap-2 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{t('back', 'Назад')}</span>
@@ -353,7 +357,7 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
             <button
               type="button"
               onClick={handleNext}
-              className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center gap-2"
+              className="px-7 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white rounded-xl font-bold text-sm shadow-md shadow-orange-500/20 transition-all flex items-center gap-2 cursor-pointer"
             >
               <span>{t('next', 'Далее')}</span>
               <ArrowRight className="w-4 h-4" />
@@ -362,7 +366,7 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
             <button
               type="button"
               onClick={handleConfirm}
-              className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center gap-2"
+              className="px-7 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white rounded-xl font-bold text-sm shadow-md shadow-orange-500/20 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>{t('initial_setup_finish', 'Завершить')}</span>

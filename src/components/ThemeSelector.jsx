@@ -4,7 +4,12 @@ import { Sun, Moon, MessageSquare, Check, Palette, SlidersHorizontal, Plus } fro
 import { useTheme } from '../contexts/ThemeContext';
 import CustomThemeModal from './CustomThemeModal';
 
-export default function ThemeSelector({ value, onChange, className = '' }) {
+export default function ThemeSelector({ 
+  value, 
+  onChange, 
+  className = '', 
+  gridClassName = 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4' 
+}) {
   const { t } = useTranslation();
   const { customTheme, hasCustomTheme } = useTheme();
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
@@ -24,7 +29,7 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
     {
       id: 'dark',
       name: t('theme_dark', 'Тёмная'),
-      desc: t('theme_dark_desc', 'Тёмный графит'),
+      desc: t('theme_dark_desc', 'Тёмный графит с синим акцентом'),
       icon: Moon,
       surfaceColor: '#1B2024',
       bgColor: '#14191D',
@@ -35,7 +40,7 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
     {
       id: 'discord',
       name: t('theme_discord', 'Discord'),
-      desc: t('theme_discord_desc', 'Оригинальный Discord с красным'),
+      desc: t('theme_discord_desc', 'Оригинальный Discord с красным акцентом'),
       icon: MessageSquare,
       surfaceColor: '#323339',
       bgColor: '#2C2D32',
@@ -47,7 +52,7 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
 
   return (
     <>
-      <div className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 ${className}`}>
+      <div className={`grid ${gridClassName} gap-3.5 ${className}`}>
         {/* The 3 Standard Themes */}
         {standardThemes.map((item) => {
           const isSelected = value === item.id;
@@ -58,14 +63,14 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
               key={item.id}
               type="button"
               onClick={() => onChange(item.id)}
-              className={`group relative text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden ${
+              className={`group relative text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden ${
                 isSelected
                   ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/50 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
               }`}
             >
               {/* Visual Preview Box with 2 background colors split by diagonal */}
-              <div className="relative w-full h-16 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-inner mb-3 transition-transform duration-200 group-hover:scale-[1.02]">
+              <div className="relative w-full h-18 sm:h-20 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-inner mb-3 transition-transform duration-200 group-hover:scale-[1.01]">
                 <svg className="w-full h-full block" viewBox="0 0 100 60" preserveAspectRatio="none">
                   {/* Surface color triangle */}
                   <polygon points="0,0 100,0 0,60" fill={item.surfaceColor} />
@@ -84,22 +89,22 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                 </svg>
 
                 {/* Accent Color Badge */}
-                <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-xs border border-white/10 shadow-xs">
+                <div className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/50 backdrop-blur-xs border border-white/10 shadow-xs">
                   <span
-                    className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                    className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
                     style={{ backgroundColor: item.accentColor }}
                   />
-                  <span className="text-[10px] font-medium text-white/90 leading-none">
+                  <span className="text-[11px] font-semibold text-white/90 leading-none">
                     {item.accentLabel}
                   </span>
                 </div>
               </div>
 
               {/* Title, Icon & Description */}
-              <div className="flex items-start justify-between gap-2 w-full">
-                <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center justify-between gap-3 w-full">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                       isSelected
                         ? 'bg-orange-500 text-white shadow-xs'
                         : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
@@ -107,11 +112,11 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                   >
                     <IconComponent className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                      <span>{item.name}</span>
+                      <span className="truncate">{item.name}</span>
                     </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-snug" title={item.desc}>
                       {item.desc}
                     </div>
                   </div>
@@ -139,14 +144,14 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                 onChange('custom');
               }
             }}
-            className={`group relative text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden ${
+            className={`group relative text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden ${
               value === 'custom'
                 ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20 shadow-sm'
                 : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/60 dark:bg-slate-900/50 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
             }`}
           >
             {/* Visual Preview Box */}
-            <div className="relative w-full h-16 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-inner mb-3 transition-transform duration-200 group-hover:scale-[1.02]">
+            <div className="relative w-full h-18 sm:h-20 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-inner mb-3 transition-transform duration-200 group-hover:scale-[1.01]">
               <svg className="w-full h-full block" viewBox="0 0 100 60" preserveAspectRatio="none">
                 <polygon points="0,0 100,0 0,60" fill={customTheme.surface} />
                 <polygon points="100,0 100,60 0,60" fill={customTheme.bg} />
@@ -162,12 +167,12 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
               </svg>
 
               {/* Accent Color Badge */}
-              <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 shadow-xs">
+              <div className="absolute bottom-2 left-2 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 shadow-xs">
                 <span
-                  className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                  className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
                   style={{ backgroundColor: customTheme.accent }}
                 />
-                <span className="text-[10px] font-medium text-white/90 leading-none">
+                <span className="text-[11px] font-semibold text-white/90 leading-none">
                   Custom
                 </span>
               </div>
@@ -179,19 +184,19 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                   e.stopPropagation();
                   setIsCustomModalOpen(true);
                 }}
-                className="absolute top-1.5 right-1.5 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-orange-500 text-white backdrop-blur-sm border border-white/20 shadow-sm text-[11px] font-semibold transition-all hover:scale-105 cursor-pointer z-10"
+                className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-orange-500 text-white backdrop-blur-sm border border-white/20 shadow-sm text-xs font-semibold transition-all hover:scale-105 cursor-pointer z-10"
                 title={t('theme_custom_edit', 'Настроить цвета')}
               >
-                <SlidersHorizontal className="w-3 h-3" />
+                <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span>{t('theme_custom_edit_btn', 'Настроить')}</span>
               </button>
             </div>
 
             {/* Title, Icon & Description + Actions */}
-            <div className="flex items-start justify-between gap-2 w-full">
-              <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                     value === 'custom'
                       ? 'bg-orange-500 text-white shadow-xs'
                       : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'
@@ -199,11 +204,11 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
                 >
                   <Palette className="w-4 h-4" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <span>{t('theme_custom', 'Своя тема')}</span>
+                    <span className="truncate">{t('theme_custom', 'Своя тема')}</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-snug">
                     {value === 'custom'
                       ? t('theme_custom_selected_hint', 'Выбрана (настроить)')
                       : t('theme_custom_click_to_apply', 'Нажмите для выбора')}
@@ -224,27 +229,27 @@ export default function ThemeSelector({ value, onChange, className = '' }) {
           <button
             type="button"
             onClick={() => setIsCustomModalOpen(true)}
-            className="group relative text-left p-3.5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700/80 hover:border-orange-500 dark:hover:border-orange-500/80 bg-slate-50/40 dark:bg-slate-900/30 hover:bg-orange-500/5 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden"
+            className="group relative text-left p-4 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700/80 hover:border-orange-500 dark:hover:border-orange-500/80 bg-slate-50/40 dark:bg-slate-900/30 hover:bg-orange-500/5 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden"
           >
             {/* Visual Placeholder Box */}
-            <div className="relative w-full h-16 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center gap-1.5 mb-3 bg-slate-100/50 dark:bg-slate-950/40 group-hover:bg-orange-500/10 group-hover:border-orange-500/40 transition-colors">
+            <div className="relative w-full h-18 sm:h-20 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center gap-1.5 mb-3 bg-slate-100/50 dark:bg-slate-950/40 group-hover:bg-orange-500/10 group-hover:border-orange-500/40 transition-colors">
               <Plus className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-orange-500 group-hover:scale-110 transition-all" />
-              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 group-hover:text-orange-500 transition-colors">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
                 {t('theme_custom_create_label', 'Создать палитру')}
               </span>
             </div>
 
             {/* Title, Icon & Description */}
-            <div className="flex items-start justify-between gap-2 w-full">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-800 text-slate-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+            <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-slate-200 dark:bg-slate-800 text-slate-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                   <Palette className="w-4 h-4" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-orange-500 transition-colors">
-                    {t('theme_custom', 'Своя тема')}
+                    <span className="truncate">{t('theme_custom', 'Своя тема')}</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-snug">
                     {t('theme_custom_create_desc', 'Настроить свои цвета')}
                   </div>
                 </div>
