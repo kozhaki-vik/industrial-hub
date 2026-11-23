@@ -75,7 +75,7 @@ export default function Developer() {
       const res = await window.electronAPI.dev.saveKey(trimmed);
       if (res && res.success) {
         setHasSavedKey(true);
-        setKeyStatusMsg({ text: 'Ключ зашифрован через Windows DPAPI и сохранен!', type: 'success' });
+        setKeyStatusMsg({ text: 'Ключ успешно сохранен!', type: 'success' });
       } else {
         setKeyStatusMsg({ text: 'Ошибка сохранения: ' + (res?.error || 'Неизвестная ошибка'), type: 'error' });
       }
@@ -819,17 +819,9 @@ export default function Developer() {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                   {t('dev_discord_mgmt_title', 'Управление Discord-серверами (Режим разработчика)')}
-                  {hasSavedKey && (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
-                      {t('dev_dpapi_protected', 'DPAPI Защищен')}
-                    </span>
-                  )}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('dev_dpapi_desc', 'Безопасное управление серверами через 32-значный мастер-ключ (PSK). Ключ шифруется Windows DPAPI и не хранится в открытом виде.')}
-                </p>
               </div>
             </div>
 
