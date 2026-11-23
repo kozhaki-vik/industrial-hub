@@ -1,7 +1,7 @@
 {
     "name": "industrial-hub",
     "private": false,
-    "version": "2.24.2",
+    "version": "2.24.3",
     "author": "Kozhaki",
     "license": "MIT",
     "description": "Industrial Hub - Desktop Companion Application",

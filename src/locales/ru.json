@@ -778,7 +778,7 @@
   "clan_recruitment_open_title": "Набор в клан открыт",
   "clan_recruitment_reject_banned": "Автоматически отклонять игроков с VAC/Game блокировками",
   "clan_recruitment_reject_msg": "Сообщение кандидату при автоматическом отклонении",
-  "clan_recruitment_reject_msg_ph": "К сожалению, ваша анкета не соответствует минимальным требованиям клана...",
+  "clan_recruitment_reject_msg_ph": "Вы не подходите.",
   "clan_recruitment_notify_reject_reason": "Сообщать кандидату причину отказа",
   "clan_recruitment_notify_reject_reason_hint": "Если включено, бот укажет кандидату в тикете, почему анкета была отклонена. Если выключено — кандидат увидит лишь общий статус отклонения, но в логах администраторов полная причина отказа будет сохранена всегда.",
   "clan_recruitment_channel_accepted": "Принятые заявки",

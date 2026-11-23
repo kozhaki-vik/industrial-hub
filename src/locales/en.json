@@ -764,7 +764,7 @@
   "clan_recruitment_open_title": "Recruitment Open",
   "clan_recruitment_reject_banned": "Automatically reject players with VAC/Game bans",
   "clan_recruitment_reject_msg": "Custom rejection message shown to candidate",
-  "clan_recruitment_reject_msg_ph": "Unfortunately, your application does not meet the clan minimum requirements...",
+  "clan_recruitment_reject_msg_ph": "You do not meet our criteria.",
   "clan_recruitment_notify_reject_reason": "Notify candidate of rejection reason",
   "clan_recruitment_notify_reject_reason_hint": "If enabled, the bot informs candidate in ticket why application was rejected. If disabled, candidate sees generic rejection, while audit logs always contain full reason.",
   "clan_recruitment_channel_accepted": "Accepted Applications",

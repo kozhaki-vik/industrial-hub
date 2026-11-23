@@ -6,7 +6,7 @@ import {
   ExternalLink, Eye, EyeOff, X, ArrowRight, ArrowLeft,
   Upload, Loader2, CheckCircle2, HardDrive, Trash2,
   Sparkles, Image as ImageIcon, Info, ChevronDown, Palette,
-  ArrowUp, ArrowDown, Plus, RotateCcw, Folder, Layers, Smile
+  ArrowUp, ArrowDown, Plus, RotateCcw, Folder, Layers, Smile, Undo2, Redo2
 } from 'lucide-react';
 import ChannelSelect from '../../components/ChannelSelect';
 import EmojiSuggestModal from '../../components/EmojiSuggestModal';
@@ -97,7 +97,7 @@ export default function RecruitmentTab() {
 
   // --- Memoized Configurations ---
   const defaultRejectMsg = useMemo(() => {
-    return t('clan_recruitment_reject_msg_ph') || 'К сожалению, ваша анкета не соответствует минимальным требованиям клана...';
+    return t('clan_recruitment_reject_msg_ph') || 'Вы не подходите.';
   }, [t]);
 
   const rConfig = useMemo(() => {
@@ -262,6 +262,7 @@ export default function RecruitmentTab() {
       { tag: '{Имя}', label: 'Имя / Ник' },
       { tag: '{Возраст}', label: 'Возраст' },
       { tag: '{Часы}', label: 'Часы Rust' },
+      { tag: '{Реальные часы}', label: 'Реальные часы' },
       { tag: '{Steam}', label: 'Steam ссылка' },
       { tag: '{Кланы}', label: 'История кланов' },
       { tag: '{Навыки}', label: 'Навыки / Роль' },
@@ -489,8 +490,93 @@ export default function RecruitmentTab() {
     }
   }, [rConfig.text, rConfig.markdownEnabled, t]);
 
+  // --- Text Undo/Redo History Stack (Ctrl+Z / Ctrl+Y) ---
+  const textHistoryRef = useRef([rConfig.text || '']);
+  const historyIndexRef = useRef(0);
+  const typingTimerRef = useRef(null);
+  const isUndoRedoActionRef = useRef(false);
+  const [, setHistoryTick] = useState(0);
+
+  useEffect(() => {
+    if (textHistoryRef.current.length === 1 && textHistoryRef.current[0] === '' && rConfig.text) {
+      textHistoryRef.current = [rConfig.text];
+      historyIndexRef.current = 0;
+      setHistoryTick(t => t + 1);
+    }
+  }, [rConfig.text]);
+
+  const pushTextHistory = useCallback((newText) => {
+    if (isUndoRedoActionRef.current) return;
+    const currentHist = textHistoryRef.current;
+    const currentIndex = historyIndexRef.current;
+    if (currentHist[currentIndex] === newText) return;
+
+    const nextHist = currentHist.slice(0, currentIndex + 1);
+    nextHist.push(newText);
+    if (nextHist.length > 50) nextHist.shift();
+    textHistoryRef.current = nextHist;
+    historyIndexRef.current = nextHist.length - 1;
+    setHistoryTick(t => t + 1);
+  }, []);
+
+  const handleUndoText = useCallback(() => {
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    if (historyIndexRef.current > 0) {
+      historyIndexRef.current -= 1;
+      const prevText = textHistoryRef.current[historyIndexRef.current];
+      isUndoRedoActionRef.current = true;
+      updateRConfig('text', prevText, false);
+      setHistoryTick(t => t + 1);
+      setTimeout(() => { isUndoRedoActionRef.current = false; }, 50);
+    }
+  }, [updateRConfig]);
+
+  const handleRedoText = useCallback(() => {
+    if (historyIndexRef.current < textHistoryRef.current.length - 1) {
+      historyIndexRef.current += 1;
+      const nextText = textHistoryRef.current[historyIndexRef.current];
+      isUndoRedoActionRef.current = true;
+      updateRConfig('text', nextText, false);
+      setHistoryTick(t => t + 1);
+      setTimeout(() => { isUndoRedoActionRef.current = false; }, 50);
+    }
+  }, [updateRConfig]);
+
+  const handleTextChange = useCallback((newVal) => {
+    updateRConfig('text', newVal, false);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      pushTextHistory(newVal);
+    }, 350);
+  }, [updateRConfig, pushTextHistory]);
+
+  const handleTextKeyDown = useCallback((e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z' || e.code === 'KeyZ')) {
+      if (e.shiftKey) {
+        e.preventDefault();
+        handleRedoText();
+      } else {
+        e.preventDefault();
+        if (typingTimerRef.current) {
+          clearTimeout(typingTimerRef.current);
+          typingTimerRef.current = null;
+          pushTextHistory(rConfig.text);
+        }
+        handleUndoText();
+      }
+    } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y' || e.code === 'KeyY')) {
+      e.preventDefault();
+      handleRedoText();
+    }
+  }, [handleUndoText, handleRedoText, pushTextHistory, rConfig.text]);
+
   const handleApplyAiSuggestion = useCallback(() => {
     if (!aiSuggestion) return;
+    pushTextHistory(rConfig.text);
+    pushTextHistory(aiSuggestion.improvedText);
     const newConfig = {
       ...rConfig,
       text: aiSuggestion.improvedText
@@ -504,7 +590,7 @@ export default function RecruitmentTab() {
     setAiError('');
     setIsAiPreviewing(false);
     if (setAiPreviewOverride) setAiPreviewOverride(null);
-  }, [aiSuggestion, rConfig, config, queueAutoSave, setAiPreviewOverride]);
+  }, [aiSuggestion, rConfig, config, queueAutoSave, setAiPreviewOverride, pushTextHistory]);
 
   const handleDeclineAiSuggestion = useCallback(() => {
     setAiSuggestion(null);
@@ -826,7 +912,29 @@ export default function RecruitmentTab() {
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {t('clan_auto_49', 'Текст с требованиями *')}
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {/* Кнопки Отменить (Ctrl+Z) и Повторить (Ctrl+Y) */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={handleUndoText}
+                    disabled={historyIndexRef.current <= 0}
+                    className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    title="Отменить последнее действие (Ctrl+Z)"
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRedoText}
+                    disabled={historyIndexRef.current >= textHistoryRef.current.length - 1}
+                    className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    title="Повторить отмененное действие (Ctrl+Y)"
+                  >
+                    <Redo2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 {/* Зелёная кнопка «Анализ и исправление» */}
                 <button
                   type="button"
@@ -858,8 +966,16 @@ export default function RecruitmentTab() {
                   : 'border-slate-200 dark:border-slate-700 focus:ring-orange-500/50'
               }`}
               value={rConfig.text}
-              onChange={e => updateRConfig('text', e.target.value, false)}
-              onBlur={e => updateRConfig('text', e.target.value, true)}
+              onChange={e => handleTextChange(e.target.value)}
+              onKeyDown={handleTextKeyDown}
+              onBlur={e => {
+                if (typingTimerRef.current) {
+                  clearTimeout(typingTimerRef.current);
+                  typingTimerRef.current = null;
+                }
+                pushTextHistory(e.target.value);
+                updateRConfig('text', e.target.value, true);
+              }}
               placeholder={t('clan_auto_110', 'Опишите требования...')}
             ></textarea>
 
@@ -1591,15 +1707,6 @@ export default function RecruitmentTab() {
                 <Plus className="w-3.5 h-3.5" />
                 <span>Добавить поле ({formConfig.fields.length}/5)</span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => setIsEmojiSuggestOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/40 border border-orange-200/60 dark:border-orange-800/40 transition-colors cursor-pointer shadow-2xs"
-                title="Предложить новый эмодзи разработчику для добавления в стандартный набор"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-              </button>
             </div>
           </div>
 
@@ -1663,7 +1770,7 @@ export default function RecruitmentTab() {
                             #{idx + 1}
                           </span>
                           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            Поле #{idx + 1}
+                            {field.label || `Вопрос`}
                           </span>
                           {field.required !== false ? (
                             <span className="text-[10px] text-rose-500 font-bold">*Обязательное</span>

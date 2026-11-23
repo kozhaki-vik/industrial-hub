@@ -778,7 +778,7 @@
   "clan_recruitment_open_title": "Набір у клан відкрито",
   "clan_recruitment_reject_banned": "Автоматично відхиляти гравців з блокуваннями (VAC/Game)",
   "clan_recruitment_reject_msg": "Повідомлення кандидату при автоматичному відхиленні",
-  "clan_recruitment_reject_msg_ph": "На жаль, ваша анкета не відповідає мінімальним вимогам клану...",
+  "clan_recruitment_reject_msg_ph": "Ви не підходите.",
   "clan_recruitment_notify_reject_reason": "Повідомляти кандидату причину відмови",
   "clan_recruitment_notify_reject_reason_hint": "Якщо увімкнено, бот вкаже кандидату в тікеті, чому заявка була відхилена. Якщо вимкнено — кандидат побачить лише загальний статус відхилення, але в логах адміністраторів повна причина відмови буде збережена завжди.",
   "clan_recruitment_channel_accepted": "Прийняті заявки",

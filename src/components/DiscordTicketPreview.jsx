@@ -73,6 +73,11 @@ function DiscordTicketPreview({
       'часы в rust (со всех аккаунтов)': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ч.` : '3,850 ч.',
       'часы в игре': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ч.` : '3,850 ч.',
       'hours': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ч.` : '3,850 ч.',
+      'реальные часы': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ("${Math.max(100, rConfig.minHours - 600)}")` : '3500 ("3850")',
+      'реальные_часы': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ("${Math.max(100, rConfig.minHours - 600)}")` : '3500 ("3850")',
+      'реальныечасы': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ("${Math.max(100, rConfig.minHours - 600)}")` : '3500 ("3850")',
+      'real_hours': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ("${Math.max(100, rConfig.minHours - 600)}")` : '3500 ("3850")',
+      'realhours': ticketMode === 'rejected' && rConfig.minHours > 0 ? `${Math.max(100, rConfig.minHours - 600)} ("${Math.max(100, rConfig.minHours - 600)}")` : '3500 ("3850")',
       'steam': 'https://steamcommunity.com/id/alex_rust',
       'стим': 'https://steamcommunity.com/id/alex_rust',
       'ссылка на steam': 'https://steamcommunity.com/id/alex_rust',
@@ -171,7 +176,7 @@ function DiscordTicketPreview({
   const effectiveChannelName = isRejected ? 'отказ-alex_rust' : (channelName || 'заявка-alex_rust');
   const embedColor = isRejected ? '#da373c' : '#248046';
 
-  const defaultRejectMsg = 'К сожалению, ваша анкета не соответствует минимальным требованиям клана. Вы можете подать повторную заявку позже.';
+  const defaultRejectMsg = 'Вы не подходите.';
   const rejectMsg = rConfig.autoRejectMessage || defaultRejectMsg;
 
   return (
@@ -311,8 +316,8 @@ function DiscordTicketPreview({
               })}
             </div>
 
-            {/* Status / Verification Card with rounded-[4px] corners & authentic Discord text colors */}
-            {isRejected ? (
+            {/* Status / Auto-Reject Embed Section (authentic Discord embed fields) */}
+            {isRejected && (
               <div className="mt-3 p-3.5 rounded-[4px] bg-[#232428] border border-[#35373c] text-xs space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[#f2f3f5] font-bold">
                   {renderTextWithDiscordEmojis('<:alerttriangle:1571506419998396568>')}
@@ -334,8 +339,8 @@ function DiscordTicketPreview({
                     )}
                   </div>
                 ) : (
-                  <div className="bg-[#1e1f22] p-2.5 rounded-[4px] text-[11px] text-[#949ba4] border border-[#2b2d31] italic">
-                    Детальная причина скрыта от кандидата (сохранена в аудит-логах администрации)
+                  <div className="bg-[#1e1f22] p-2.5 rounded-[4px] text-[11px] text-[#dbdee1] border border-[#2b2d31]">
+                    Вы не подходите.
                   </div>
                 )}
                 <div className="text-[11px] text-[#dbdee1] bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
@@ -345,29 +350,6 @@ function DiscordTicketPreview({
                 <div className="flex items-center gap-1.5 text-[#949ba4] font-medium text-[11px] pt-0.5">
                   {renderTextWithDiscordEmojis('<:clock:1571506445999017984>')}
                   <span>Канал будет автоматически удален ботом через 10 минут.</span>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-3 p-3.5 rounded-[4px] bg-[#232428] border border-[#35373c] text-xs space-y-2">
-                <div className="flex items-center gap-1.5 text-[#f2f3f5] font-bold">
-                  {renderTextWithDiscordEmojis('<:rosettediscountcheck:1571506545936830544>')}
-                  <span>Проверка Steam и критериев:</span>
-                </div>
-                <div className="text-[11px] text-[#dbdee1] space-y-1.5 bg-[#1e1f22] p-2.5 rounded-[4px] border border-[#2b2d31]">
-                  <div className="flex items-center gap-1.5">
-                    {renderTextWithDiscordEmojis('<:circlecheck:1571506443180310600>')}
-                    <span>Аккаунт Steam открыт и проверен</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {renderTextWithDiscordEmojis('<:circlecheck:1571506443180310600>')}
-                    <span>Игровые часы (3,850 ч.) превышают минимальный порог</span>
-                  </div>
-                  {rConfig.steamPrefixCheck && (
-                    <div className="flex items-center gap-1.5">
-                      {renderTextWithDiscordEmojis('<:circlecheck:1571506443180310600>')}
-                      <span>Приписка клана <code className="bg-[#2b2d31] px-1.5 py-0.5 rounded text-[#f2f3f5] font-mono">[{rConfig.steamPrefix || config?.name || 'GODS'}]</code> подтверждена в нике</span>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
