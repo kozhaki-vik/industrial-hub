@@ -5703,8 +5703,8 @@ const contextValue = {
             </h3>
             {error && (
               <p className="text-xs text-red-500 dark:text-red-400/80 font-mono max-w-md">
-                {error === 'Not linked or bot offline' 
-                  ? (t('clan_err_bot_offline') || 'Бот не в сети или сервер не привязан. Убедитесь, что бот запущен.')
+                {(error === 'Not linked or bot offline' || (typeof error === 'string' && (error.includes('Timeout waiting for bot') || error.includes('бот не в сети'))))
+                  ? (t('clan_err_bot_offline') || 'Бот не в сети. Ведутся технические работы.')
                   : error}
               </p>
             )}

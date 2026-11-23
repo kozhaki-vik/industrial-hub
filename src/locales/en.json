@@ -458,7 +458,7 @@
   "clan_dossier_view_transcript": "View Transcript",
   "clan_dossier_votes_history": "Voting Participation",
   "clan_ds_link_prefix": "DISCORD LINK ->",
-  "clan_err_bot_offline": "Bot is offline or server is not linked. Make sure the bot is running.",
+  "clan_err_bot_offline": "Bot is offline. Technical maintenance is underway.",
   "clan_error": "Error",
   "clan_failed": "Failed to load configuration.",
   "clan_feature_logging_desc": "Comprehensive server activity log, chat auto-moderation, warning system (warns), and transparent permission audits.",
