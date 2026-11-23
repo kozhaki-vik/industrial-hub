@@ -1076,6 +1076,7 @@ export default function ClanManager() {
             localStorage.setItem('hub_clan_secret', data.clan_secret);
           } else if (!data.linked) {
             localStorage.removeItem('hub_clan_secret');
+            setError(null);
           }
           if (data.current_controller) {
             setControllerState({
@@ -1150,7 +1151,16 @@ export default function ClanManager() {
           setStatus('unlinked');
           setGuildId(null);
           setConfig(null);
+          setError(null);
           hasPromptedRef.current = false;
+        } else if (data.type === 'clan_proxy_res' && (
+          (typeof data.error === 'string' && (data.error.includes('Unauthorized') || data.error.includes('clan_secret'))) ||
+          (typeof data.data?.error === 'string' && (data.data.error.includes('Unauthorized') || data.data.error.includes('clan_secret')))
+        )) {
+          localStorage.removeItem('hub_clan_secret');
+          setStatus('unlinked');
+          setError(null);
+          return;
         } else if (data.type === 'clan_proxy_res' && data.reqId === 'get_config') {
           setLoadingConfig(false);
           const configError = data.error || (data.data && !data.data.success ? data.data.error : null);
@@ -2683,7 +2693,7 @@ export default function ClanManager() {
   };
 
   useEffect(() => {
-    if (!ws || wsStatus !== 'online') return;
+    if (!ws || wsStatus !== 'online' || status !== 'linked') return;
     if (activeTab === 'general' && config?.discordLink) {
       if (config.discordLink.trim() && config.discordLink.trim() !== lastVerifiedLinkRef.current) {
         verifyInvite(config.discordLink);
@@ -2742,7 +2752,7 @@ export default function ClanManager() {
     } else if ((activeTab === 'roles' || activeTab === 'channels' || activeTab === 'permissions' || activeTab === 'logs' || activeTab === 'recruitment' || activeTab === 'applications' || activeTab === 'votes' || activeTab === 'ads') && !discordInfo) {
       fetchDiscordInfo();
     }
-  }, [activeTab, ws, wsStatus, rosterData, statsData, discordInfo, dynamicVoiceData, config?.discordLink]);
+  }, [activeTab, ws, wsStatus, status, rosterData, statsData, discordInfo, dynamicVoiceData, config?.discordLink]);
 
   const handleCloseDossier = useCallback(() => {
     setSelectedProfileForDossier(null);
@@ -3242,7 +3252,7 @@ export default function ClanManager() {
                             maxLength={6}
                           />
                         </div>
-                        {error && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
+                        {error && !error.includes('clan_secret') && !error.includes('Unauthorized') && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
                         <button 
                           type="submit" 
                           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl focus:ring-4 focus:ring-blue-500/20 transition-all shadow-md shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2"
@@ -3442,7 +3452,7 @@ export default function ClanManager() {
                         autoFocus
                       />
                     </div>
-                    {error && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
+                    {error && !error.includes('clan_secret') && !error.includes('Unauthorized') && <div className="text-red-500 text-xs font-medium text-center">{error}</div>}
                     <button 
                       type="submit" 
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl focus:ring-4 focus:ring-blue-500/20 transition-all shadow-md shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2"
