@@ -2054,11 +2054,13 @@ instanceLockPromise.then(() => {
     const TRUSTED_PREFIXES = [
       'https://github.com/kozhaki-vik/industrial-hub/',
       'https://github.com/kozhaki-vik/industrial-hub-releases/',
-      'https://objects.githubusercontent.com/'
+      'https://objects.githubusercontent.com/',
+      'https://release-assets.githubusercontent.com/'
     ];
     const isTrustedSource = exeUrl && (
       TRUSTED_PREFIXES.some(prefix => exeUrl.startsWith(prefix)) ||
-      exeUrl.startsWith('https://api.github.com/')
+      exeUrl.startsWith('https://api.github.com/') ||
+      /^https:\/\/([a-zA-Z0-9-]+\.)?githubusercontent\.com\//.test(exeUrl)
     );
     if (!isTrustedSource) {
       throw new Error('Недоверенный источник обновления');
