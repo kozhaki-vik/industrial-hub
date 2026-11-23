@@ -525,7 +525,7 @@ export default function AdsTab() {
                     {/* Default Banner Card */}
                     <button
                       type="button"
-                      onClick={() => handleSelectPresetBanner(DEFAULT_ADS_BANNER)}
+                      onClick={() => handleSelectPresetBanner(aConfig.banner === DEFAULT_ADS_BANNER ? '' : DEFAULT_ADS_BANNER)}
                       className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
                         aConfig.banner === DEFAULT_ADS_BANNER
                           ? 'border-blue-500 shadow-md ring-2 ring-blue-500/40'
@@ -559,7 +559,7 @@ export default function AdsTab() {
                         <button
                           key={preset.id}
                           type="button"
-                          onClick={() => handleSelectPresetBanner(preset.fullUrl)}
+                          onClick={() => handleSelectPresetBanner(isSelected ? '' : preset.fullUrl)}
                           className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
                             isSelected
                               ? 'border-blue-500 shadow-md ring-2 ring-blue-500/40'

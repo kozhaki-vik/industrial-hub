@@ -1337,7 +1337,7 @@ export default function RecruitmentTab() {
                       <button
                         key={preset.id}
                         type="button"
-                        onClick={() => handleSelectPresetBanner(preset.fullUrl)}
+                        onClick={() => handleSelectPresetBanner(isSelected ? '' : preset.fullUrl)}
                         className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
                           isSelected
                             ? 'border-orange-500 shadow-md ring-2 ring-orange-500/40'

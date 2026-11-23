@@ -328,7 +328,7 @@ const VoteTemplateCard = React.memo(function VoteTemplateCard({
                       disabled={isReadOnly}
                       onClick={() => {
                         setUploadError('');
-                        onUpdate(index, 'banner', preset.fullUrl, true);
+                        onUpdate(index, 'banner', isSelected ? '' : preset.fullUrl, true);
                       }}
                       className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left bg-slate-900 ${
                         isSelected
