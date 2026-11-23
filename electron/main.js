@@ -138,6 +138,85 @@ function getRealExecutablePath() {
   return process.execPath;
 }
 
+function getStableLauncherExePath() {
+  // 1. Portable executable path
+  if (process.env.PORTABLE_EXECUTABLE_FILE && fs.existsSync(process.env.PORTABLE_EXECUTABLE_FILE)) {
+    return process.env.PORTABLE_EXECUTABLE_FILE;
+  }
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    const candidate = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Industrial Hub.exe');
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
+  // 2. Installed root launcher: always point to "$INSTDIR\Industrial Hub.exe",
+  // which forwards automatically and NEVER gets deleted during updates or reinstallations!
+  const rootDir = getAppRootDir();
+  if (rootDir && fs.existsSync(rootDir)) {
+    const rootExe = path.join(rootDir, 'Industrial Hub.exe');
+    if (fs.existsSync(rootExe)) {
+      return rootExe;
+    }
+  }
+
+  // 3. If running inside an app-* subfolder, point to parent directory root executable
+  if (process.execPath && !process.execPath.toLowerCase().includes('\\temp\\') && !process.execPath.toLowerCase().includes('/temp/')) {
+    const parentDir = path.dirname(process.execPath);
+    if (path.basename(parentDir).startsWith('app-')) {
+      const parentRootExe = path.join(path.dirname(parentDir), 'Industrial Hub.exe');
+      if (fs.existsSync(parentRootExe)) {
+        return parentRootExe;
+      }
+    }
+    return process.execPath;
+  }
+
+  return process.execPath;
+}
+
+function syncAutoStart(enabled) {
+  try {
+    const targetExe = getStableLauncherExePath();
+    if (!targetExe || targetExe.toLowerCase().includes('\\temp\\') || targetExe.toLowerCase().includes('/temp/')) {
+      console.warn('[AutoStart] Refusing to set autostart to temporary directory:', targetExe);
+      return false;
+    }
+
+    // 1. Electron login item settings
+    app.setLoginItemSettings({
+      openAtLogin: !!enabled,
+      path: targetExe,
+      args: enabled ? ['--autostart'] : []
+    });
+
+    // 2. Direct Windows Registry synchronization
+    if (process.platform === 'win32') {
+      const regKeyName = 'electron.app.Industrial Hub';
+      if (enabled) {
+        const quotedExe = `"${targetExe}" --autostart`;
+        try {
+          child_process.execSync(`reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "${regKeyName}" /t REG_SZ /d "${quotedExe.replace(/"/g, '\\"')}" /f`, { windowsHide: true });
+        } catch (e) {
+          console.warn('[AutoStart] Registry write warning:', e.message);
+        }
+      } else {
+        const keysToRemove = [regKeyName, 'Industrial Hub', 'industrial-hub'];
+        for (const k of keysToRemove) {
+          try {
+            child_process.execSync(`reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "${k}" /f`, { windowsHide: true });
+          } catch {}
+        }
+      }
+    }
+
+    store.set('autoStart', !!enabled);
+    console.log(`[AutoStart] Autostart successfully ${enabled ? 'enabled' : 'disabled'} for ${targetExe}`);
+    return true;
+  } catch (err) {
+    console.error('[AutoStart] Failed to sync autostart:', err);
+    return false;
+  }
+}
+
 function getLatestInstalledExePath() {
   const currentExec = getRealExecutablePath();
   const rootDir = getAppRootDir();
@@ -1095,21 +1174,18 @@ instanceLockPromise.then(() => {
 
   // Self-heal application shortcuts & sync auto-start on startup
   try {
-    const realExe = getRealExecutablePath();
-    if (realExe && !realExe.toLowerCase().includes('\\temp\\') && !realExe.toLowerCase().includes('/temp/')) {
-      updateApplicationShortcuts(realExe);
+    const stableExe = getStableLauncherExePath();
+    if (stableExe && !stableExe.toLowerCase().includes('\\temp\\') && !stableExe.toLowerCase().includes('/temp/')) {
+      updateApplicationShortcuts(stableExe);
       
       const isAutoStartConfigured = store.get('autoStart');
-      const isCurrentlyRegistered = app.getLoginItemSettings().openAtLogin || app.getLoginItemSettings({ path: realExe }).openAtLogin;
+      const isCurrentlyRegistered = app.getLoginItemSettings().openAtLogin || app.getLoginItemSettings({ path: stableExe }).openAtLogin;
       const shouldAutoStart = isAutoStartConfigured ?? isCurrentlyRegistered;
 
       if (shouldAutoStart) {
-        app.setLoginItemSettings({
-          openAtLogin: true,
-          path: realExe,
-          args: ['--autostart']
-        });
-        store.set('autoStart', true);
+        syncAutoStart(true);
+      } else if (isAutoStartConfigured === false) {
+        syncAutoStart(false);
       }
     }
   } catch (e) {
@@ -2107,16 +2183,11 @@ instanceLockPromise.then(() => {
       // Robustly update desktop and Start Menu shortcuts to point to new version
       updateApplicationShortcuts(targetExePath, newAppDir);
 
-      // If auto-start was enabled, update login item settings to point to new exe
+      // If auto-start was enabled, maintain autostart pointing to stable launcher
       try {
-        const isAutoStartEnabled = store.get('autoStart') ?? (app.getLoginItemSettings().openAtLogin || app.getLoginItemSettings({ path: targetExePath }).openAtLogin);
+        const isAutoStartEnabled = store.get('autoStart');
         if (isAutoStartEnabled) {
-          app.setLoginItemSettings({
-            openAtLogin: true,
-            path: targetExePath,
-            args: ['--autostart']
-          });
-          store.set('autoStart', true);
+          syncAutoStart(true);
         }
       } catch (e) {
         console.error('Failed to update login item settings on update:', e);
@@ -2190,8 +2261,8 @@ instanceLockPromise.then(() => {
 
   ipcMain.handle('app:getAutoStart', () => {
     try {
-      const realExe = getRealExecutablePath();
-      const settings = app.getLoginItemSettings({ path: realExe, args: ['--autostart'] });
+      const stableExe = getStableLauncherExePath();
+      const settings = app.getLoginItemSettings({ path: stableExe, args: ['--autostart'] });
       const stored = store.get('autoStart');
       if (typeof stored === 'boolean') {
         return stored;
@@ -2205,17 +2276,12 @@ instanceLockPromise.then(() => {
 
   ipcMain.handle('app:setAutoStart', (_event, enabled) => {
     try {
-      const realExe = getRealExecutablePath();
-      if (!realExe || realExe.toLowerCase().includes('\\temp\\') || realExe.toLowerCase().includes('/temp/')) {
+      const stableExe = getStableLauncherExePath();
+      if (!stableExe || stableExe.toLowerCase().includes('\\temp\\') || stableExe.toLowerCase().includes('/temp/')) {
         throw new Error('Недопустимый путь к исполняемому файлу (Temp)');
       }
-      app.setLoginItemSettings({
-        openAtLogin: !!enabled,
-        path: realExe,
-        args: enabled ? ['--autostart'] : []
-      });
-      store.set('autoStart', !!enabled);
-      return { success: true, enabled: !!enabled };
+      const success = syncAutoStart(!!enabled);
+      return { success, enabled: !!enabled };
     } catch (e) {
       console.error('Failed to set auto-start setting:', e);
       return { success: false, error: e.message };

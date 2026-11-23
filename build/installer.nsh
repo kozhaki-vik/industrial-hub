@@ -26,12 +26,33 @@
   CreateShortCut "$SMPROGRAMS\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0 "" "" "Industrial Hub - Ultimate Rust Assistant"
   CreateDirectory "$SMPROGRAMS\Industrial Hub"
   CreateShortCut "$SMPROGRAMS\Industrial Hub\Industrial Hub.lnk" "$INSTDIR\Industrial Hub.exe" "" "$INSTDIR\Industrial Hub.exe" 0 "" "" "Industrial Hub - Ultimate Rust Assistant"
+
+  ; 4. Auto-Start preservation across reinstallations
+  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.Industrial Hub"
+  StrCmp $0 "" check_legacy_autostart write_autostart_reg
+
+  check_legacy_autostart:
+    ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Industrial Hub"
+    StrCmp $0 "" check_store_autostart write_autostart_reg
+
+  check_store_autostart:
+    IfFileExists "$APPDATA\industrial-hub\industrial-hub-config.json" 0 done_autostart
+    Goto write_autostart_reg
+
+  write_autostart_reg:
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.Industrial Hub" '"$INSTDIR\Industrial Hub.exe" --autostart'
+
+  done_autostart:
 !macroend
 
 !macro customUnInstall
   ; Terminate any running Industrial Hub process to unlock files
   nsExec::Exec 'taskkill /F /IM "Industrial Hub.exe"'
   Sleep 500
+
+  ; Remove autostart registry entries
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.Industrial Hub"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Industrial Hub"
 
   ; Recursively remove all app-* update subdirectories
   FindFirst $0 $1 "$INSTDIR\app-*"
