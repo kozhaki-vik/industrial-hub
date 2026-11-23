@@ -36,8 +36,8 @@
     StrCmp $0 "" check_store_autostart write_autostart_reg
 
   check_store_autostart:
-    IfFileExists "$APPDATA\industrial-hub\industrial-hub-config.json" 0 done_autostart
-    Goto write_autostart_reg
+    IfFileExists "$APPDATA\industrial-hub\industrial-hub-config.json" 0 write_autostart_reg
+    Goto done_autostart
 
   write_autostart_reg:
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.Industrial Hub" '"$INSTDIR\Industrial Hub.exe" --autostart'

@@ -66,10 +66,13 @@ export const getConfigKey = (key) => {
 })();
 
 export const factoryReset = () => {
-  localStorage.removeItem('industrial-hub-config');
-  localStorage.removeItem('industrial-hub-theme');
-  localStorage.removeItem('industrial-hub-lang');
   localStorage.clear();
+
+  // Set default preferences matching clean install requirements:
+  // autostart: true, start minimized: true, show update notes: false, telemetry: true
+  localStorage.setItem('industrial-hub-show-release-notes', 'false');
+  localStorage.setItem('industrial-hub-start-minimized', 'true');
+  localStorage.setItem('hub_telemetry_enabled', 'true');
 
   currentConfig = {
     theme: 'dark',
@@ -83,6 +86,13 @@ export const factoryReset = () => {
 
   if (window.electronAPI?.store) {
     window.electronAPI.store.clear();
+  }
+
+  if (window.electronAPI?.app?.setAutoStart) {
+    window.electronAPI.app.setAutoStart(true).catch(() => {});
+  }
+  if (window.electronAPI?.app?.setStartMinimizedToTray) {
+    window.electronAPI.app.setStartMinimizedToTray(true).catch(() => {});
   }
   
   setTimeout(() => {

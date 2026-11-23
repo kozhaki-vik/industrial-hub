@@ -16,12 +16,13 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
   const [autoStart, setAutoStart] = useState(true);
   
   const [startMinimized, setStartMinimized] = useState(() => {
-    return localStorage.getItem('industrial-hub-start-minimized') === 'true' || false;
+    const val = localStorage.getItem('industrial-hub-start-minimized');
+    return val === null ? true : val === 'true';
   });
   
   const [showReleaseNotes, setShowReleaseNotes] = useState(() => {
     const val = localStorage.getItem('industrial-hub-show-release-notes');
-    return val === null ? true : val === 'true';
+    return val === null ? false : val === 'true';
   });
 
   const [telemetryEnabled, setTelemetryEnabled] = useState(() => {
@@ -72,8 +73,8 @@ export default function InitialSetupModal({ isOpen, onComplete }) {
     localStorage.setItem('industrial-hub-lang', selectedLang);
     localStorage.setItem('industrial-hub-theme', selectedTheme);
     localStorage.setItem('industrial-hub-initial-setup', 'true');
-    localStorage.setItem('industrial-hub-start-minimized', startMinimized);
-    localStorage.setItem('industrial-hub-show-release-notes', showReleaseNotes);
+    localStorage.setItem('industrial-hub-start-minimized', startMinimized ? 'true' : 'false');
+    localStorage.setItem('industrial-hub-show-release-notes', showReleaseNotes ? 'true' : 'false');
     localStorage.setItem('hub_telemetry_enabled', telemetryEnabled ? 'true' : 'false');
     setConfigKey('language', selectedLang);
     setConfigKey('theme', selectedTheme);

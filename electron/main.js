@@ -675,7 +675,7 @@ function createWindow() {
 
   const isAutoStarted = process.argv.includes('--autostart');
   const isExplicitMinimized = process.argv.includes('--minimized');
-  const startMinimized = store.get('startMinimizedToTray', false);
+  const startMinimized = store.get('startMinimizedToTray', true);
   // Manual launch via shortcut always shows the window once so the user can interact.
   // Starting hidden in tray only applies to Windows autostart or explicit --minimized argument.
   const shouldStartHidden = Boolean((isAutoStarted && startMinimized) || isExplicitMinimized);
@@ -1180,7 +1180,7 @@ instanceLockPromise.then(() => {
       
       const isAutoStartConfigured = store.get('autoStart');
       const isCurrentlyRegistered = app.getLoginItemSettings().openAtLogin || app.getLoginItemSettings({ path: stableExe }).openAtLogin;
-      const shouldAutoStart = isAutoStartConfigured ?? isCurrentlyRegistered;
+      const shouldAutoStart = isAutoStartConfigured ?? true;
 
       if (shouldAutoStart) {
         syncAutoStart(true);
@@ -2269,10 +2269,10 @@ instanceLockPromise.then(() => {
       if (typeof stored === 'boolean') {
         return stored;
       }
-      return settings.openAtLogin;
+      return settings.openAtLogin ?? true;
     } catch (e) {
       console.error('Failed to get auto-start setting:', e);
-      return false;
+      return true;
     }
   });
 
@@ -2290,7 +2290,7 @@ instanceLockPromise.then(() => {
     }
   });
 
-  ipcMain.handle('app:getStartMinimizedToTray', () => store.get('startMinimizedToTray', false));
+  ipcMain.handle('app:getStartMinimizedToTray', () => store.get('startMinimizedToTray', true));
   ipcMain.handle('app:setStartMinimizedToTray', (e, val) => {
     store.set('startMinimizedToTray', !!val);
     return true;

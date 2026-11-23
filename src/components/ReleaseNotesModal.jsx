@@ -277,11 +277,18 @@ export default function ReleaseNotesModal() {
         const lastSeenVersion = localStorage.getItem('industrial-hub-last-seen-version');
         const showReleaseNotes = localStorage.getItem('industrial-hub-show-release-notes');
         
-        // Always update last seen version so we don't show it again for this version
+        // First run or after factory reset: record version so future updates are detected,
+        // but do NOT show "App updated!" release notes modal because no actual update took place.
+        if (!lastSeenVersion) {
+          localStorage.setItem('industrial-hub-last-seen-version', currentVersion);
+          return;
+        }
+
+        // Only show release notes if updating from an existing older version AND feature is enabled
         if (lastSeenVersion !== currentVersion) {
           localStorage.setItem('industrial-hub-last-seen-version', currentVersion);
           
-          if (showReleaseNotes !== 'false') {
+          if (showReleaseNotes === 'true') {
             setVersion(currentVersion);
             const hasNotes = await fetchReleaseNotes(currentVersion);
             if (hasNotes) {

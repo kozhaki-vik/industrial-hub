@@ -88,11 +88,11 @@ export default function Settings() {
   const [sponsorError, setSponsorError] = React.useState(null);
 
   // Auto-Start State
-  const [autoStart, setAutoStart] = React.useState(false);
-  const [startMinimized, setStartMinimized] = React.useState(false);
+  const [autoStart, setAutoStart] = React.useState(true);
+  const [startMinimized, setStartMinimized] = React.useState(true);
   const [showReleaseNotes, setShowReleaseNotes] = React.useState(() => {
     const val = localStorage.getItem('industrial-hub-show-release-notes');
-    return val === null ? true : val === 'true';
+    return val === null ? false : val === 'true';
   });
   const [telemetryEnabled, setTelemetryEnabled] = React.useState(() => {
     const val = localStorage.getItem('hub_telemetry_enabled');
@@ -271,7 +271,7 @@ export default function Settings() {
                   checked={showReleaseNotes} 
                   onChange={(e) => {
                     setShowReleaseNotes(e.target.checked);
-                    localStorage.setItem('industrial-hub-show-release-notes', e.target.checked);
+                    localStorage.setItem('industrial-hub-show-release-notes', e.target.checked ? 'true' : 'false');
                   }}
                   className="sr-only peer"
                 />
