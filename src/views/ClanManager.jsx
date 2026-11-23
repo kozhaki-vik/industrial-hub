@@ -642,7 +642,7 @@ export default function ClanManager() {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
   };
 
-  const sendProxyAction = (action, payload = {}) => {
+  const sendProxyAction = useCallback((action, payload = {}) => {
     return new Promise((resolve) => {
       if (!ws || ws.readyState !== WebSocket.OPEN) {
         resolve({ success: false, error: 'WebSocket not connected' });
@@ -683,7 +683,7 @@ export default function ClanManager() {
         }
       }));
     });
-  };
+  }, [ws, t, isDevAdminActive]);
 
   const sendClanProxy = useCallback((reqId, payload) => {
     if (!ws || wsStatus !== 'online') return false;
@@ -982,7 +982,7 @@ export default function ClanManager() {
     const handleMessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.type && data.type.startsWith('clan_')) {
+        if (data.type && data.type.startsWith('clan_') && data.type !== 'clan_proxy_res') {
           addLog(`Received: ${JSON.stringify(data)}`);
         }
         

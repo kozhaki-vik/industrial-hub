@@ -754,21 +754,29 @@ export default function VotesTab() {
     }
   }, [wTemplates, config, queueAutoSave, selectedPreviewIndex]);
 
-  // Fetch Vote History
+  const sendProxyActionRef = useRef(sendProxyAction);
+  useEffect(() => {
+    sendProxyActionRef.current = sendProxyAction;
+  }, [sendProxyAction]);
+
+  // Fetch Vote History (stable reference to avoid re-triggering effects)
   const fetchVoteHistory = useCallback(async () => {
-    if (typeof sendProxyAction !== 'function') return;
+    if (typeof sendProxyActionRef.current !== 'function') return;
     setLoadingHistory(true);
     try {
-      const res = await sendProxyAction('get_vote_history');
+      const res = await sendProxyActionRef.current('get_vote_history');
       if (res && res.success && Array.isArray(res.votes)) {
         setVoteHistory(res.votes);
+      } else {
+        setVoteHistory([]);
       }
     } catch (err) {
       console.warn('[VotesTab] Failed to fetch vote history:', err.message);
+      setVoteHistory([]);
     } finally {
       setLoadingHistory(false);
     }
-  }, [sendProxyAction]);
+  }, []);
 
   useEffect(() => {
     if (activeSubTab === 'history') {
