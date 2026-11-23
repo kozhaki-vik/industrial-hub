@@ -4436,6 +4436,21 @@ export default function ClanManager() {
         adButtons.push({ id: 'question', label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '<:infocircle:1571506482585927770>', style: 'secondary' });
       }
 
+      // Hardcoded developer promotion buttons (always included in code, not configurable by clan)
+      adButtons.push({
+        id: 'download_hub',
+        label: 'Скачать Industrial Hub',
+        emoji: '<:download:1571506463476678858>',
+        style: 'link',
+        url: 'https://github.com/kozhaki-vik/industrial-hub-releases'
+      });
+      adButtons.push({
+        id: 'contact_dev',
+        label: 'Связаться с разработчиком',
+        emoji: '<:message:1571506496964010086>',
+        style: 'secondary'
+      });
+
       return {
         tabTitle: t('clan_auto_v2_1020', 'Панель рекламы'),
         channelName,

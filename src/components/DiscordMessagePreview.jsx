@@ -349,7 +349,15 @@ function DiscordMessagePreview({
                     key={bIdx}
                     type="button"
                     onClick={() => {
-                      if (onButtonClick) onButtonClick(btn, bIdx);
+                      if (btn.url) {
+                        if (window.electronAPI?.shell?.openExternal) {
+                          window.electronAPI.shell.openExternal(btn.url);
+                        } else {
+                          window.open(btn.url, '_blank');
+                        }
+                      } else if (onButtonClick) {
+                        onButtonClick(btn, bIdx);
+                      }
                     }}
                     className={`h-8 px-4 rounded-[6px] text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none active:scale-[0.98] ${btnStyle}`}
                   >

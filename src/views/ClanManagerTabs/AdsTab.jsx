@@ -694,6 +694,66 @@ export default function AdsTab() {
                 />
               </div>
             </div>
+
+            {/* Системные компоненты разработчика (Вшиты в код бота) */}
+            <div className="mt-5 p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      Системные кнопки разработчика (Вшито в код бота)
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-md">
+                      Автореклама
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                    Эти две кнопки всегда публикуются вторым рядом на панели рекламы. Они настраиваются разработчиком в коде и не могут быть отключены через панель управления кланом. Любая публикация сторонней рекламы автоматически рекламирует Industrial Hub и прямое обращение к разработчику. Рекрутеры клана не имеют доступа к переписке с разработчиком.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <HardDrive className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                        Скачать Industrial Hub
+                      </span>
+                      <span className="text-[10px] text-slate-400 block truncate">
+                        Прямая ссылка на GitHub Releases
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 rounded-full border border-emerald-200/50 dark:border-emerald-800/50 shrink-0">
+                    Активна
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                        Связаться с разработчиком
+                      </span>
+                      <span className="text-[10px] text-slate-400 block truncate">
+                        Приватный тикет разработчику
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-full border border-indigo-200/50 dark:border-indigo-800/50 shrink-0">
+                    Вшито
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Navigation to Next Subtab */}
