@@ -5000,7 +5000,7 @@ const contextValue = {
             </div>
 
             {/* Search Input above tabs */}
-            <div className="mb-1.5 px-1 shrink-0 w-44 md:w-auto">
+            <div className="mb-2 px-1 shrink-0 w-44 md:w-auto">
               <div className="relative">
                 <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${activeTab === 'search' ? 'text-blue-500' : 'text-slate-400'}`} />
                 <input
@@ -5014,11 +5014,11 @@ const contextValue = {
                     }
                   }}
                   placeholder={t('clan_search_placeholder') || 'Поиск настроек...'}
-                  className={`w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border transition-all ${
+                  className={`w-full pl-8 pr-7 py-1.5 text-xs rounded-lg bg-slate-200/50 dark:bg-slate-850 border-0 transition-all ${
                     activeTab === 'search'
-                      ? 'border-blue-500 ring-2 ring-blue-500/20 text-slate-900 dark:text-white font-medium'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
-                  } placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30`}
+                      ? 'ring-1 ring-blue-500 text-slate-900 dark:text-white font-medium'
+                      : 'text-slate-800 dark:text-slate-200'
+                  } placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500`}
                 />
                 {botSearchQuery && (
                   <button
@@ -5035,7 +5035,7 @@ const contextValue = {
 
             {viewMode === 'clan' ? (
               <div className="flex flex-col flex-1 min-h-0 space-y-2">
-                {/* Switch to Bot Configuration Button (Top) */}
+                {/* Switch to Bot Configuration Button */}
                 <button
                   type="button"
                   onClick={() => {
@@ -5044,19 +5044,14 @@ const contextValue = {
                       setActiveTab('general');
                     }
                   }}
-                  className="w-full flex items-center justify-between p-2.5 mb-1 rounded-xl bg-slate-100/90 hover:bg-slate-200/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 transition-all shadow-2xs group cursor-pointer"
+                  className="w-full flex items-center justify-between px-3 py-2 mb-1.5 rounded-xl bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer group"
                   title={t('clan_btn_bot_config_tooltip', 'Перейти к технической настройке бота и сервера')}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-orange-500 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                      <Settings className="w-4 h-4" />
-                    </div>
-                    <div className="text-left min-w-0">
-                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{t('clan_btn_bot_config', 'Настройки бота')}</div>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{t('clan_btn_bot_config_desc', 'Роли, каналы, защита')}</div>
-                    </div>
+                    <Settings className="w-4 h-4 text-slate-500 group-hover:text-blue-500 transition-colors shrink-0" />
+                    <span className="text-xs font-semibold truncate">{t('clan_btn_bot_config', 'Настройки бота')}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-200 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
                 </button>
 
                 <div className="space-y-1 overflow-y-auto pr-1 scrollbar-thin flex-1">
@@ -5097,36 +5092,36 @@ const contextValue = {
                               setActiveTab(tab.id);
                             }
                           }}
-                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
                             isActive
-                              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
+                              ? 'bg-blue-600 text-white shadow-2xs font-semibold'
                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
                           }`}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            {Icon && <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {Icon && <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
                             <span className="truncate">{tab.label}</span>
                           </div>
                           {(isRecruitment || isAds) && (
                             <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${(isRecruitment ? showRecSub : showAdsSub) ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
                           )}
                           {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                               {rosterData.roster.length}
                             </span>
                           )}
                           {tab.id === 'applications' && pendingAppsCount > 0 && (
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
                               {pendingAppsCount}
                             </span>
                           )}
                           {tab.id === 'ad_tickets' && (
                             openAdTicketsCount > 0 ? (
-                              <span className="text-[11px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
                                 {openAdTicketsCount}
                               </span>
                             ) : adTicketsData?.length > 0 ? (
-                              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                              <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                                 {adTicketsData.length}
                               </span>
                             ) : null
@@ -5195,26 +5190,20 @@ const contextValue = {
                   })}
                 </div>
 
-                {/* Bottom-left pinned Support & Ideas section */}
-                <div className="mt-auto pt-3 border-t border-slate-200/80 dark:border-slate-800 shrink-0">
+                {/* Subtle Support section */}
+                <div className="mt-auto pt-2 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0">
                   <button
                     type="button"
                     onClick={() => setActiveTab('support')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors text-left cursor-pointer shrink-0 ${
                       activeTab === 'support'
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-950/30 font-semibold'
+                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
                     }`}
+                    title={t('clan_tab_support', 'Поддержка и идеи')}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <LifeBuoy className={`w-4 h-4 shrink-0 ${activeTab === 'support' ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
-                      <span className="truncate">{t('clan_tab_support', 'Поддержка и идеи')}</span>
-                    </div>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      activeTab === 'support' ? 'bg-white/20 text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                    }`}>
-                      Help
-                    </span>
+                    <LifeBuoy className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                    <span className="truncate text-[11px]">{t('clan_tab_support', 'Поддержка и идеи')}</span>
                   </button>
                 </div>
               </div>
@@ -5229,10 +5218,10 @@ const contextValue = {
                       setActiveTab('roster');
                     }
                   }}
-                  className="group w-full flex items-center gap-2 px-3 py-2.5 mb-1 rounded-xl bg-blue-50 hover:bg-blue-100/90 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-xs border border-blue-200 dark:border-blue-900/50 transition-all cursor-pointer shadow-2xs"
+                  className="w-full flex items-center gap-2 px-3 py-2 mb-1.5 rounded-xl bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer group"
                 >
-                  <ArrowLeft className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:-translate-x-1" />
-                  <span>{t('clan_btn_back_to_clan', '← Назад к клану')}</span>
+                  <ArrowLeft className="w-3.5 h-3.5 shrink-0 group-hover:-translate-x-0.5 transition-transform" />
+                  <span>{t('clan_btn_back_to_clan', 'Назад к клану')}</span>
                 </button>
 
                 {/* Grouped Tabs */}
@@ -5314,26 +5303,20 @@ const contextValue = {
                   ))}
                 </div>
 
-                {/* Bottom-left pinned Support & Ideas section */}
-                <div className="mt-auto pt-3 border-t border-slate-200/80 dark:border-slate-800 shrink-0">
+                {/* Subtle Support section */}
+                <div className="mt-auto pt-2 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0">
                   <button
                     type="button"
                     onClick={() => setActiveTab('support')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors text-left cursor-pointer shrink-0 ${
                       activeTab === 'support'
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20 font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-950/30 font-semibold'
+                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
                     }`}
+                    title={t('clan_tab_support', 'Поддержка и идеи')}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <LifeBuoy className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'support' ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
-                      <span className="truncate">{t('clan_tab_support', 'Поддержка и идеи')}</span>
-                    </div>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      activeTab === 'support' ? 'bg-white/20 text-white' : 'bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                    }`}>
-                      Help
-                    </span>
+                    <LifeBuoy className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                    <span className="truncate text-[11px]">{t('clan_tab_support', 'Поддержка и идеи')}</span>
                   </button>
                 </div>
               </div>
@@ -5395,17 +5378,45 @@ const contextValue = {
             )}
 
             {/* Unified Top Header Bar with Live Save Status */}
-            <div className="flex items-center justify-between pb-3.5 mb-5 border-b border-slate-200/80 dark:border-slate-800 gap-4 flex-wrap">
-              <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 mb-5 border-b border-slate-200/60 dark:border-slate-800/60 gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 {(() => {
                   const currentTabObj = tabs.find(t => t.id === activeTab);
                   const Icon = currentTabObj?.icon;
+                  const tabDescMap = {
+                    roster: t('clan_roster_header_desc', 'Управление активным составом клана, онлайн и голосовая активность'),
+                    votes: t('clan_votes_header_desc', 'Внутриклановые опросы, выбор сервера и голосования за вайпы'),
+                    stats: t('clan_stats_header_desc', 'Аналитика активности бойцов, голосовые сессии и рейтинг вайпов'),
+                    applications: t('clan_apps_header_desc', 'Входящие заявки от кандидатов на вступление в клан'),
+                    recruitment: t('clan_rec_header_desc', 'Интерактивная панель набора, опросник и тикеты в Discord'),
+                    ads: t('clan_ads_header_desc', 'Панель платной рекламы, партнерские тикеты и спонсоры'),
+                    ad_tickets: t('clan_ad_tickets_header_desc', 'Обработка и ведение поступивших заявок на рекламу'),
+                    general: t('clan_general_header_desc', 'Основные параметры клана, название, тег и ссылки на Discord'),
+                    roles: t('clan_roles_header_desc', 'Привязка и конфигурация иерархии ролей Discord сервера'),
+                    channels: t('clan_channels_header_desc', 'Служебные каналы Discord для уведомлений, логов и тикетов'),
+                    permissions: t('clan_perms_header_desc', 'Разграничение прав доступа офицеров к функциям панели'),
+                    moderation: t('clan_mod_header_desc', 'Автомодерация, фильтр спама, система предупреждений и варнов'),
+                    logs: t('clan_logs_header_desc', 'Журнал аудита действий администрации и событий Discord'),
+                    voice: t('clan_voice_header_desc', 'Автоматическое создание и управление временными войс-комнатами'),
+                    support: t('clan_support_header_desc', 'Связь с разработчиками, предложения новых функций и поддержка')
+                  };
+                  const desc = tabDescMap[activeTab] || (activeTab === 'search' ? t('clan_search_sub', 'Быстрый переход к разделам и параметрам бота') : null);
+
                   return (
-                    <div className="flex items-center gap-2 min-w-0">
-                      {Icon && <Icon className="w-5 h-5 text-blue-500 shrink-0" />}
-                      <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white truncate">
-                        {activeTab === 'search' ? (t('clan_search_results_title') || 'Поиск настроек') : (currentTabObj?.label || t('clan_tab_general', 'Управление'))}
-                      </h2>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        {Icon && <Icon className="w-5 h-5" />}
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white truncate">
+                          {activeTab === 'search' ? (t('clan_search_results_title') || 'Поиск настроек') : (currentTabObj?.label || t('clan_tab_general', 'Управление'))}
+                        </h2>
+                        {desc && (
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                            {desc}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   );
                 })()}
