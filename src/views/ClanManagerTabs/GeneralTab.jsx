@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import { ClanManagerContext } from '../ClanManagerContext';
 import {
-  Sparkles, Unlink, RotateCcw, AlertTriangle, Check, Languages
+  Sparkles, Unlink, RotateCcw, AlertTriangle, Check
 } from 'lucide-react';
 import { ToggleSwitch } from '../ClanManager';
 
@@ -156,30 +156,6 @@ export default function GeneralTab() {
             </p>
           </div>
         )}
-      </div>
-
-      {/* Bot Server Language */}
-      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-              <Languages className="w-4 h-4 text-blue-500 shrink-0" />
-              <span>{t('clan_bot_language_title', 'Язык бота на сервере Discord')}</span>
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {t('clan_bot_language_desc', 'Язык динамического состава, панелей набора, тикетов и объявлений бота. Не зависит от языка этого приложения.')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs shrink-0 self-start sm:self-auto">
-            <span className="text-base leading-none">🇷🇺</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-800 dark:text-white leading-tight">Русский</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                {t('clan_bot_language_ru_only', 'Только русский язык')}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Actions: Setup Wizard, Unlink Server, & Factory Reset in 3 columns */}
