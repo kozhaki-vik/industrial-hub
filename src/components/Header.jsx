@@ -11,6 +11,11 @@ export default function Header() {
   const { status, onlineCount, unreadAdminCount, updateProgress, deferredUpdatePayload } = useNetwork();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
+  const isDownloading = updateProgress?.status === 'downloading' || updateProgress?.status === 'extracting';
+  const downloadPercent = updateProgress?.totalBytes 
+    ? Math.min(100, Math.max(0, Math.round((updateProgress.downloadedBytes / updateProgress.totalBytes) * 100))) 
+    : (updateProgress?.status === 'extracting' ? 100 : 0);
+
   const isConveyorsRoute = location.pathname === '/conveyors';
   const isClanRoute = location.pathname === '/clan';
   const bgClasses = isConveyorsRoute 
@@ -67,26 +72,35 @@ export default function Header() {
           )}
 
           {status === 'online' && (
-            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-100/80 dark:bg-slate-800/50 rounded-full text-xs text-slate-600 dark:text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div 
+              className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-100/80 dark:bg-slate-800/50 rounded-full text-xs text-slate-600 dark:text-slate-300 transition-colors"
+              title={isDownloading ? `Загрузка обновления: ${downloadPercent}%` : undefined}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isDownloading ? 'bg-blue-500' : 'bg-emerald-500'} animate-pulse`} />
               <span className="font-medium">
-                {t('online_count')} {onlineCount.toLocaleString()}
+                {t('online_count')} {onlineCount.toLocaleString()}{isDownloading ? ` (${downloadPercent}%)` : ''}
               </span>
             </div>
           )}
           {status === 'connecting' && (
-            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-100/80 dark:bg-slate-800/50 rounded-full text-xs text-amber-600 dark:text-amber-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+            <div 
+              className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-100/80 dark:bg-slate-800/50 rounded-full text-xs text-amber-600 dark:text-amber-400 transition-colors"
+              title={isDownloading ? `Загрузка обновления: ${downloadPercent}%` : undefined}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isDownloading ? 'bg-blue-500 animate-pulse' : 'bg-amber-500 animate-ping'}`} />
               <span className="font-medium">
-                {t('status_connecting', 'Подключение...')}
+                {t('status_connecting', 'Подключение...')}{isDownloading ? ` (${downloadPercent}%)` : ''}
               </span>
             </div>
           )}
           {status === 'offline' && (
-            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-100/80 dark:bg-slate-800/50 rounded-full text-xs text-slate-400 dark:text-slate-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            <div 
+              className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-100/80 dark:bg-slate-800/50 rounded-full text-xs text-slate-400 dark:text-slate-500 transition-colors"
+              title={isDownloading ? `Загрузка обновления: ${downloadPercent}%` : undefined}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isDownloading ? 'bg-blue-500 animate-pulse' : 'bg-slate-400'}`} />
               <span className="font-medium">
-                {t('status_offline', 'Не в сети')}
+                {t('status_offline', 'Не в сети')}{isDownloading ? ` (${downloadPercent}%)` : ''}
               </span>
             </div>
           )}
