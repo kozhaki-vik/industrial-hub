@@ -4435,8 +4435,6 @@ export default function ClanManager() {
       if (aConfig.btnQuestionEnabled !== false) {
         adButtons.push({ id: 'question', label: t('clan_auto_v2_1011', 'Вопрос администрации'), emoji: '<:infocircle:1571506482585927770>', style: 'secondary' });
       }
-      // 'Разработать Discord-бота' всегда активна и всегда внизу
-      adButtons.push({ id: 'bot', label: 'Разработать Discord-бота', emoji: '🤖', style: 'secondary' });
 
       return {
         tabTitle: t('clan_auto_v2_1020', 'Панель рекламы'),

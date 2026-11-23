@@ -3,8 +3,8 @@ import { ClanManagerContext } from '../ClanManagerContext';
 import {
   Megaphone, Eye, EyeOff, RotateCcw, Trash2, CheckCircle2,
   Upload, Loader2, AlertCircle, HardDrive, ScrollText, ArrowRight, ArrowLeft,
-  Palette, Sparkles, ShoppingBag, Handshake, DollarSign, HelpCircle, Bot,
-  Lock, RefreshCw, MessageSquare, ShieldCheck, Check, Image as ImageIcon
+  Palette, Sparkles, ShoppingBag, Handshake, DollarSign, HelpCircle,
+  RefreshCw, MessageSquare, ShieldCheck, Check, Image as ImageIcon
 } from 'lucide-react';
 import { DEFAULT_ADS_BANNER, normalizeImageUrl } from '../../utils/urlHelper';
 import { uploadBanner, deleteBanner } from '../../services/uploadService';
@@ -612,7 +612,7 @@ export default function AdsTab() {
                   </span>
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Включайте или отключайте нужные кнопки для участников сервера. Кнопка «Разработать Discord-бота» всегда активна и расположена в самом низу.
+                  Включайте или отключайте нужные кнопки для участников сервера.
                 </p>
               </div>
             </div>
@@ -692,30 +692,6 @@ export default function AdsTab() {
                   activeColor="purple"
                   size="sm"
                 />
-              </div>
-            </div>
-
-            {/* 5. Разработать Discord-бота (Всегда активна и всегда внизу) */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/25 border border-indigo-200/80 dark:border-indigo-800/60">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                  <Bot className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Разработать Discord-бота</span>
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
-                      Всегда внизу
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                    Кнопка заказа Discord-бота от Industrial Studio. Всегда активна и размещается в самом низу панели.
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-semibold px-3 py-1.5 bg-white dark:bg-slate-900 rounded-xl border border-indigo-200 dark:border-indigo-800/60 shadow-2xs shrink-0">
-                <Lock className="w-3.5 h-3.5" />
-                <span>Активна</span>
               </div>
             </div>
           </div>
