@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, Key, Eye, EyeOff, Server, Lock, Trash2, DownloadCloud, Wrench, Terminal, ChevronDown, ChevronUp } from 'lucide-react';
+import { Activity, Cpu, HardDrive, Wifi, ShieldCheck, PlayCircle, BarChart3, Clock, AlertTriangle, ArrowLeft, RefreshCw, FolderOpen, Flame, Check, Copy, Key, Eye, EyeOff, Server, Lock, Trash2, DownloadCloud, Wrench, Terminal, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pingUrl, getHardwareInfo, checkAppIntegrity, getAppPath, getAppVersionInfo, checkRustIntegrity, getAppDataPath, openLogFolder, getRecentLogs } from '../services/diagnostics';
 import { getButtonStats } from '../services/analytics';
@@ -184,6 +184,11 @@ export default function Developer() {
     setPings(p => ({ ...p, internet2: resInt2 }));
   };
 
+  const handleOpenPath = (targetPath) => {
+    if (!targetPath || targetPath === 'Not Set' || targetPath === 'Unknown') return;
+    window.electronAPI?.shell?.openPath(targetPath);
+  };
+
   const runIntegrity = async () => {
     setIntegrity({ status: 'loading' });
     setRustIntegrity({ status: 'loading' });
@@ -317,27 +322,80 @@ export default function Developer() {
             <HardDrive className="w-5 h-5 text-orange-500" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{t('dev_path_title')}</h3>
           </div>
-          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 mb-4 break-all">
-            <div className="flex items-start gap-2">
-              <button onClick={() => window.electronAPI?.shell?.openPath(rustPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title={t('dev_open_folder', 'Открыть папку')}>
-                <FolderOpen className="w-4 h-4 mt-0.5" />
-              </button>
-              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_path_rust')} </span> {rustPath}</p>
-            </div>
-            <div className="flex items-start gap-2">
-              <button onClick={() => window.electronAPI?.shell?.openPath(appPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title={t('dev_open_folder', 'Открыть папку')}>
-                <FolderOpen className="w-4 h-4 mt-0.5" />
-              </button>
-              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_path_app')} </span> {appPath}</p>
-            </div>
-            <div className="flex items-start gap-2">
-              <button onClick={() => window.electronAPI?.shell?.openPath(appDataPath)} className="text-orange-500 hover:text-orange-600 p-0.5 rounded transition-colors" title={t('dev_open_folder', 'Открыть папку')}>
-                <FolderOpen className="w-4 h-4 mt-0.5" />
-              </button>
-              <p><span className="font-semibold text-slate-800 dark:text-slate-200 block sm:inline">{t('dev_app_data', 'Данные приложения (Настройки, Аналитика):')} </span> {appDataPath}</p>
-            </div>
+          <div className="space-y-2.5 mb-4">
+            {/* Rust Path */}
+            <button
+              type="button"
+              onClick={() => handleOpenPath(rustPath)}
+              disabled={!rustPath || rustPath === 'Not Set'}
+              className="w-full group flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-orange-50/60 dark:bg-slate-800/40 dark:hover:bg-orange-950/20 border border-slate-200/60 hover:border-orange-300 dark:border-slate-800 dark:hover:border-orange-800/50 transition-all text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 shadow-2xs"
+              title={t('dev_open_in_explorer', 'Нажмите, чтобы открыть в проводнике')}
+            >
+              <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors shrink-0 mt-0.5">
+                <FolderOpen className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-300 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                    {t('dev_path_rust')}
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-500 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <span className="text-xs font-mono text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 break-all transition-colors underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 group-hover:decoration-orange-500">
+                  {rustPath || t('dev_not_set', 'Не задан')}
+                </span>
+              </div>
+            </button>
+
+            {/* App Path */}
+            <button
+              type="button"
+              onClick={() => handleOpenPath(appPath)}
+              disabled={!appPath}
+              className="w-full group flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-orange-50/60 dark:bg-slate-800/40 dark:hover:bg-orange-950/20 border border-slate-200/60 hover:border-orange-300 dark:border-slate-800 dark:hover:border-orange-800/50 transition-all text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 shadow-2xs"
+              title={t('dev_open_in_explorer', 'Нажмите, чтобы открыть в проводнике')}
+            >
+              <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors shrink-0 mt-0.5">
+                <FolderOpen className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-300 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                    {t('dev_path_app')}
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-500 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <span className="text-xs font-mono text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 break-all transition-colors underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 group-hover:decoration-orange-500">
+                  {appPath || t('dev_not_set', 'Не задан')}
+                </span>
+              </div>
+            </button>
+
+            {/* App Data Path */}
+            <button
+              type="button"
+              onClick={() => handleOpenPath(appDataPath)}
+              disabled={!appDataPath}
+              className="w-full group flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-orange-50/60 dark:bg-slate-800/40 dark:hover:bg-orange-950/20 border border-slate-200/60 hover:border-orange-300 dark:border-slate-800 dark:hover:border-orange-800/50 transition-all text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 shadow-2xs"
+              title={t('dev_open_in_explorer', 'Нажмите, чтобы открыть в проводнике')}
+            >
+              <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors shrink-0 mt-0.5">
+                <FolderOpen className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-300 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                    {t('dev_app_data', 'Данные приложения (Настройки, Аналитика):')}
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-500 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <span className="text-xs font-mono text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 break-all transition-colors underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 group-hover:decoration-orange-500">
+                  {appDataPath || t('dev_not_set', 'Не задан')}
+                </span>
+              </div>
+            </button>
           </div>
-          <button onClick={runIntegrity} className="mb-4 w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors">
+          <button onClick={runIntegrity} className="mb-4 w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
             {t('dev_path_check_btn2')}
           </button>
           
@@ -354,14 +412,36 @@ export default function Developer() {
                       {t('dev_path_overall')} {integrity.status === 'ok' ? t('dev_path_status_ok') : t('dev_path_status_fail')}
                     </div>
                     {integrity.details?.map((d, i) => (
-                      <div key={i} className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
-                        <span className="text-slate-600 dark:text-slate-400">{d.name}</span>
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => d.fullPath && handleOpenPath(d.fullPath)}
+                        disabled={!d.exists}
+                        className={`w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left transition-colors border-b border-slate-100 dark:border-slate-700/50 last:border-0 ${
+                          d.exists 
+                            ? 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50 cursor-pointer group' 
+                            : 'opacity-70 cursor-not-allowed'
+                        }`}
+                        title={d.fullPath ? `${t('dev_open_in_explorer', 'Открыть в проводнике')}: ${d.fullPath}` : ''}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={`text-xs font-mono transition-colors ${
+                            d.exists 
+                              ? 'text-slate-700 dark:text-slate-300 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:underline' 
+                              : 'text-slate-400'
+                          }`}>
+                            {d.name}
+                          </span>
+                          {d.exists && (
+                            <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          )}
+                        </div>
                         {d.exists ? (
-                          <ShieldCheck className="w-4 h-4 text-green-500" />
+                          <ShieldCheck className="w-4 h-4 text-green-500 shrink-0" />
                         ) : (
-                          <AlertTriangle className="w-4 h-4 text-red-500" />
+                          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
                         )}
-                      </div>
+                      </button>
                     ))}
                   </>
                 )}
@@ -378,14 +458,36 @@ export default function Developer() {
                       {t('dev_status_word', 'Статус: ')}{rustIntegrity.status === 'ok' ? t('dev_status_ok_all') : t('dev_status_fail_missing')}
                     </div>
                     {rustIntegrity.details?.map((d, i) => (
-                      <div key={i} className="flex items-center justify-between py-1 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
-                        <span className="text-slate-600 dark:text-slate-400">{d.name}</span>
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => d.fullPath && handleOpenPath(d.fullPath)}
+                        disabled={!d.exists}
+                        className={`w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-left transition-colors border-b border-slate-100 dark:border-slate-700/50 last:border-0 ${
+                          d.exists 
+                            ? 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50 cursor-pointer group' 
+                            : 'opacity-70 cursor-not-allowed'
+                        }`}
+                        title={d.fullPath ? `${t('dev_open_in_explorer', 'Открыть в проводнике')}: ${d.fullPath}` : ''}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={`text-xs font-mono transition-colors ${
+                            d.exists 
+                              ? 'text-slate-700 dark:text-slate-300 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:underline' 
+                              : 'text-slate-400'
+                          }`}>
+                            {d.name}
+                          </span>
+                          {d.exists && (
+                            <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          )}
+                        </div>
                         {d.exists ? (
-                          <ShieldCheck className="w-4 h-4 text-green-500" />
+                          <ShieldCheck className="w-4 h-4 text-green-500 shrink-0" />
                         ) : (
-                          <AlertTriangle className="w-4 h-4 text-red-500" />
+                          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
                         )}
-                      </div>
+                      </button>
                     ))}
                   </>
                 ) : null}

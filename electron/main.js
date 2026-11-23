@@ -1975,13 +1975,35 @@ instanceLockPromise.then(() => {
   ipcMain.handle('shell:openPath', async (event, filePath) => {
     if (filePath) {
       try {
-        const allowedRoots = [app.getPath('userData'), store.get('rustPath')].filter(Boolean);
-        const isAllowed = allowedRoots.some(root => path.resolve(filePath).startsWith(path.resolve(root)));
+        const rustP = store.get('rustPath');
+        const allowedRoots = [
+          app.getPath('userData'),
+          app.getPath('appData'),
+          app.getPath('logs'),
+          app.getAppPath(),
+          path.dirname(process.execPath),
+          rustP
+        ].filter(Boolean);
+
+        const resolvedTarget = path.resolve(filePath);
+        const isAllowed = allowedRoots.some(root => {
+          const resolvedRoot = path.resolve(root);
+          return resolvedTarget === resolvedRoot || resolvedTarget.startsWith(resolvedRoot + path.sep);
+        });
+
         if (!isAllowed) {
           console.error('Blocked shell:openPath to unauthorized path:', filePath);
           return false;
         }
-        await shell.openPath(filePath);
+
+        if (fs.existsSync(resolvedTarget)) {
+          const stat = fs.statSync(resolvedTarget);
+          if (stat.isFile()) {
+            shell.showItemInFolder(resolvedTarget);
+            return true;
+          }
+        }
+        await shell.openPath(resolvedTarget);
         return true;
       } catch (err) {
         console.error('shell:openPath error:', err);
