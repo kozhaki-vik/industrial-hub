@@ -5077,128 +5077,44 @@ const contextValue = {
                   {clanTabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
-                    const isRecruitment = tab.id === 'recruitment';
-                    const isAds = tab.id === 'ads';
-                    const showRecSub = isRecruitment && isRecruitmentExpanded;
-                    const showAdsSub = isAds && isAdsExpanded;
 
                     return (
-                      <React.Fragment key={tab.id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isRecruitment) {
-                              if (activeTab === 'recruitment') {
-                                setIsRecruitmentExpanded(prev => !prev);
-                              } else {
-                                setActiveTab('recruitment');
-                                setIsRecruitmentExpanded(true);
-                              }
-                            } else if (isAds) {
-                              if (activeTab === 'ads') {
-                                setIsAdsExpanded(prev => !prev);
-                              } else {
-                                setActiveTab('ads');
-                                setIsAdsExpanded(true);
-                              }
-                            } else {
-                              setActiveTab(tab.id);
-                            }
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
-                            isActive
-                              ? 'bg-blue-600 text-white shadow-2xs font-semibold'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {Icon && <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
-                            <span className="truncate">{tab.label}</span>
-                          </div>
-                          {(isRecruitment || isAds) && (
-                            <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${(isRecruitment ? showRecSub : showAdsSub) ? 'rotate-180' : ''} ${isActive ? 'text-white/80' : 'text-slate-400'}`} />
-                          )}
-                          {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all text-left whitespace-nowrap cursor-pointer shrink-0 ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-2xs font-semibold'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {Icon && <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />}
+                          <span className="truncate">{tab.label}</span>
+                        </div>
+                        {tab.id === 'roster' && rosterData?.roster?.length > 0 && (
+                          <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                            {rosterData.roster.length}
+                          </span>
+                        )}
+                        {tab.id === 'applications' && pendingAppsCount > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
+                            {pendingAppsCount}
+                          </span>
+                        )}
+                        {tab.id === 'ad_tickets' && (
+                          openAdTicketsCount > 0 ? (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
+                              {openAdTicketsCount}
+                            </span>
+                          ) : adTicketsData?.length > 0 ? (
                             <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-                              {rosterData.roster.length}
+                              {adTicketsData.length}
                             </span>
-                          )}
-                          {tab.id === 'applications' && pendingAppsCount > 0 && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold bg-amber-500 text-white shadow-xs">
-                              {pendingAppsCount}
-                            </span>
-                          )}
-                          {tab.id === 'ad_tickets' && (
-                            openAdTicketsCount > 0 ? (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-md font-mono font-bold bg-blue-500 text-white shadow-xs">
-                                {openAdTicketsCount}
-                              </span>
-                            ) : adTicketsData?.length > 0 ? (
-                              <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-                                {adTicketsData.length}
-                              </span>
-                            ) : null
-                          )}
-                        </button>
-
-                        {/* Recruitment Sub-Tabs */}
-                        {showRecSub && (
-                          <div className="pl-3 pr-1 py-0.5 space-y-1 flex flex-col transition-all">
-                            {recruitmentSubTabs.map(sub => {
-                              const isSubActive = activeTab === 'recruitment' && recruitmentSubTab === sub.id;
-                              const SubIcon = sub.icon;
-                              return (
-                                <button
-                                  key={sub.id}
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab('recruitment');
-                                    setRecruitmentSubTab(sub.id);
-                                  }}
-                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
-                                    isSubActive
-                                      ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-500 pl-2 shadow-2xs'
-                                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
-                                  }`}
-                                >
-                                  {SubIcon && <SubIcon className={`w-3 h-3 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />}
-                                  <span className="truncate">{sub.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                          ) : null
                         )}
-
-                        {/* Ads Sub-Tabs */}
-                        {showAdsSub && (
-                          <div className="pl-3 pr-1 py-0.5 space-y-1 flex flex-col transition-all">
-                            {adsSubTabs.map(sub => {
-                              const isSubActive = activeTab === 'ads' && adsSubTab === sub.id;
-                              const SubIcon = sub.icon;
-                              return (
-                                <button
-                                  key={sub.id}
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab('ads');
-                                    setAdsSubTab(sub.id);
-                                  }}
-                                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all text-left whitespace-nowrap cursor-pointer ${
-                                    isSubActive
-                                      ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-500 pl-2 shadow-2xs'
-                                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
-                                  }`}
-                                >
-                                  {SubIcon && <SubIcon className={`w-3 h-3 shrink-0 ${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />}
-                                  <span className="truncate">{sub.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </React.Fragment>
+                      </button>
                     );
                   })}
                 </div>
