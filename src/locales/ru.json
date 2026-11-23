@@ -721,7 +721,7 @@
   "clan_button_closed_label": "Текст кнопки при закрытом наборе",
   "clan_button_closed_placeholder": "Набор закрыт",
   "clan_recruitment_include_meta": "Добавлять в конец описания контакты лидеров и ссылку",
-  "clan_recruitment_include_meta_hint": "Если выключено, в Embed будет отображаться только ваш собственный текст выше.",
+  "clan_recruitment_include_meta_hint": "Если выключено, будет отображаться только ваш собственный текст",
   "clan_ai_preview_btn": "Предпросмотр",
   "clan_ai_preview_active_btn": "Скрыть предпросмотр",
   "clan_ai_preview_badge": "Предпросмотр ИИ",

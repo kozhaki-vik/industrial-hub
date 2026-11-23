@@ -707,7 +707,7 @@
   "clan_button_closed_label": "Closed Button Label",
   "clan_button_closed_placeholder": "Recruitment Closed",
   "clan_recruitment_include_meta": "Append leader contacts and server invite to description",
-  "clan_recruitment_include_meta_hint": "If disabled, the embed will display only your custom text above.",
+  "clan_recruitment_include_meta_hint": "If disabled, only your custom text will be displayed",
   "clan_ai_preview_btn": "Preview",
   "clan_ai_preview_active_btn": "Hide Preview",
   "clan_ai_preview_badge": "AI Preview",

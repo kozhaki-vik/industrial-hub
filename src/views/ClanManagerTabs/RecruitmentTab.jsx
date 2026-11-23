@@ -990,7 +990,7 @@ export default function RecruitmentTab() {
                     )}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {t('clan_recruitment_include_meta_hint', 'Если выключено, в Embed будет отображаться только ваш собственный текст выше.')}
+                    {t('clan_recruitment_include_meta_hint', 'Если выключено, будет отображаться только ваш собственный текст')}
                   </p>
                 </div>
               </div>

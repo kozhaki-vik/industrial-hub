@@ -721,7 +721,7 @@
   "clan_button_closed_label": "Текст кнопки при закритому наборі",
   "clan_button_closed_placeholder": "Набір закрито",
   "clan_recruitment_include_meta": "Додавати наприкінці опису контакти лідерів та посилання",
-  "clan_recruitment_include_meta_hint": "Якщо вимкнено, в Embed відображатиметься лише ваш власний текст вище.",
+  "clan_recruitment_include_meta_hint": "Якщо вимкнено, відображатиметься лише ваш власний текст",
   "clan_ai_preview_btn": "Попередній перегляд",
   "clan_ai_preview_active_btn": "Сховати попередній перегляд",
   "clan_ai_preview_badge": "Перегляд ШІ",
