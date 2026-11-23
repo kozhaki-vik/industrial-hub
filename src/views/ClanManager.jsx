@@ -2796,9 +2796,9 @@ export default function ClanManager() {
   const adsSubTabs = useMemo(() => [
     { id: 'panel', label: t('clan_ads_sub_panel', 'Панель рекламы'), icon: Megaphone },
     { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
-    { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
+    { id: 'partner', label: t('clan_ads_sub_partner', 'Партнерство'), icon: Handshake },
     { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
-    { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle }
+    { id: 'question', label: t('clan_ads_sub_question', 'Вопросы'), icon: HelpCircle }
   ], [t]);
 
   useEffect(() => {
@@ -4378,7 +4378,7 @@ export default function ClanManager() {
       if (adsSubTab === 'partner') {
         return {
           type: 'message',
-          tabTitle: t('clan_ads_sub_partner', 'Тикет: Заключить партнерство'),
+          tabTitle: 'Тикет: Заключить партнерство',
           channelName: 'тикет-partner_clan',
           embed: {
             title: t('clan_ads_ticket_partner_title', 'Партнерство'),
@@ -4409,7 +4409,7 @@ export default function ClanManager() {
       if (adsSubTab === 'question') {
         return {
           type: 'message',
-          tabTitle: t('clan_ads_sub_question', 'Тикет: Вопрос администрации'),
+          tabTitle: 'Тикет: Вопрос администрации',
           channelName: 'тикет-admin_question',
           embed: {
             title: t('clan_ads_ticket_question_title', 'Вопрос администрации'),

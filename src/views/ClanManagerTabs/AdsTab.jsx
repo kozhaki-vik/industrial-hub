@@ -59,7 +59,9 @@ export default function AdsTab() {
     let isMounted = true;
     getPresetBanners().then(data => {
       if (isMounted && Array.isArray(data)) {
-        setPresetBanners(data);
+        // Exclude 'rust_raid' preset in Ads section (clan raid is not appropriate as ready ad banner)
+        const filtered = data.filter(p => p.id !== 'rust_raid' && !p.fileName?.toLowerCase().includes('rust_raid'));
+        setPresetBanners(filtered);
       }
     }).catch(err => console.warn('[AdsTab] Error loading preset banners:', err.message));
     return () => { isMounted = false; };
@@ -239,9 +241,9 @@ export default function AdsTab() {
     return [
       { id: 'panel', label: t('clan_ads_sub_panel', 'Панель рекламы'), icon: Megaphone },
       { id: 'buy', label: t('clan_ads_sub_buy', 'Заказать рекламу'), icon: ShoppingBag },
-      { id: 'partner', label: t('clan_ads_sub_partner', 'Заключить партнерство'), icon: Handshake },
+      { id: 'partner', label: t('clan_ads_sub_partner', 'Партнерство'), icon: Handshake },
       { id: 'price', label: t('clan_ads_sub_price', 'Узнать цену'), icon: DollarSign },
-      { id: 'question', label: t('clan_ads_sub_question', 'Вопрос администрации'), icon: HelpCircle }
+      { id: 'question', label: t('clan_ads_sub_question', 'Вопросы'), icon: HelpCircle }
     ];
   }, [contextAdsSubTabs, t]);
 
@@ -272,7 +274,7 @@ export default function AdsTab() {
               key={sub.id}
               type="button"
               onClick={() => setActiveSubTab(sub.id)}
-              className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
+              className={`flex-1 min-w-[95px] sm:min-w-[110px] flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
                 isSubActive
                   ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm border-slate-200/80 dark:border-slate-700'
                   : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50'
@@ -934,7 +936,7 @@ export default function AdsTab() {
               onClick={() => setActiveSubTab('question')}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
             >
-              <span>Перейти к разделу «Вопрос администрации»</span>
+              <span>Перейти к разделу «Вопросы»</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
