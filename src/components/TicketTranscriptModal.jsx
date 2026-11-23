@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   X, ScrollText, Download, ExternalLink, RefreshCw, AlertCircle, 
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
+import { enrichTranscriptHtml } from '../utils/discordEmojis';
 
 export default function TicketTranscriptModal({
   isOpen,
@@ -18,6 +19,11 @@ export default function TicketTranscriptModal({
 }) {
   const { t } = useTranslation();
   const [copiedId, setCopiedId] = useState(false);
+
+  // Automatically enrich HTML to render Discord custom emojis as inline images
+  const processedHtml = useMemo(() => {
+    return enrichTranscriptHtml(html);
+  }, [html]);
 
   // Close on Escape key
   useEffect(() => {
@@ -49,9 +55,9 @@ export default function TicketTranscriptModal({
   };
 
   const handleDownload = () => {
-    if (!html) return;
+    if (!processedHtml) return;
     try {
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const blob = new Blob([processedHtml], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -67,9 +73,9 @@ export default function TicketTranscriptModal({
   };
 
   const handleOpenNewWindow = () => {
-    if (!html) return;
+    if (!processedHtml) return;
     try {
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const blob = new Blob([processedHtml], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
     } catch (e) {
@@ -150,7 +156,7 @@ export default function TicketTranscriptModal({
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2 shrink-0 ml-3">
-            {html && (
+            {processedHtml && (
               <>
                 <button
                   type="button"
@@ -223,9 +229,9 @@ export default function TicketTranscriptModal({
                 </button>
               )}
             </div>
-          ) : html ? (
+          ) : processedHtml ? (
             <iframe
-              srcDoc={html}
+              srcDoc={processedHtml}
               title="Discord Ticket Transcript"
               sandbox="allow-scripts allow-same-origin"
               className="w-full h-full border-0 bg-[#313338]"

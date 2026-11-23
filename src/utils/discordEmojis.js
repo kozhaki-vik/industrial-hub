@@ -618,5 +618,54 @@ export function renderTextWithDiscordEmojis(text, imgClass = 'w-3.5 h-3.5') {
   });
 }
 
+/**
+ * Post-processes full HTML transcript archives (live or cached) to render
+ * custom Discord application emojis as high-fidelity inline images.
+ */
+export function enrichTranscriptHtml(html) {
+  if (!html || typeof html !== 'string') return html;
+  let out = html;
+
+  // 1. Ensure .discord-emoji CSS is present
+  if (!out.includes('.discord-emoji')) {
+    const emojiCss = `
+        /* Discord Custom Emojis */
+        .discord-emoji {
+            width: 1.375em;
+            height: 1.375em;
+            vertical-align: -0.2em;
+            object-fit: contain;
+            display: inline-block;
+            margin: 0 1px;
+        }
+    </style>`;
+    if (out.includes('</style>')) {
+      out = out.replace('</style>', emojiCss);
+    } else if (out.includes('</head>')) {
+      out = out.replace('</head>', `<style>.discord-emoji { width: 1.375em; height: 1.375em; vertical-align: -0.2em; object-fit: contain; display: inline-block; margin: 0 1px; }</style></head>`);
+    }
+  }
+
+  // 2. Replace <:name:id> or <a:name:id> (both escaped &lt;...&gt; and raw <...>)
+  out = out.replace(/(?:&lt;|<)(a)?:([a-zA-Z0-9_~-]+):(\d{16,22})(?:&gt;|>)/g, (match, anim, name, id) => {
+    const ext = anim ? 'gif' : 'png';
+    return `<img class="discord-emoji" src="https://cdn.discordapp.com/emojis/${id}.${ext}?size=48&quality=lossless" alt=":${name}:" title=":${name}:" loading="lazy" />`;
+  });
+
+  // 3. Replace custom emoji shortcodes :name: outside of tags
+  out = out.replace(/(<[^>]+>)|:([a-zA-Z0-9_~-]+):/g, (match, isTag, rawName) => {
+    if (isTag) return isTag;
+    const clean = rawName.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const normalized = rawName.toLowerCase().replace(/_/g, '-');
+    const id = APP_EMOJI_NAME_TO_ID[clean] || APP_EMOJI_NAME_TO_ID[normalized] || APP_EMOJI_NAME_TO_ID[rawName.toLowerCase()];
+    if (id) {
+      return `<img class="discord-emoji" src="https://cdn.discordapp.com/emojis/${id}.png?size=48&quality=lossless" alt=":${rawName}:" title=":${rawName}:" loading="lazy" />`;
+    }
+    return match;
+  });
+
+  return out;
+}
+
 export { EMOJI_FILES, APP_EMOJI_IDS };
 export default resolveDiscordEmoji;
